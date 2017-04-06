@@ -115,7 +115,7 @@ public class FakeController implements MqttCallback{
 		MqttPublish publish = new MqttPublish(topic, message);
  
 		publish.getTopicName();
-		adapterManager.getQueue().enqueue(7, new Queueable(QueueType.MON_DEV_MESSAGE,publish));
+		adapterManager.getQueue().enqueue(7, new Queueable(QueueType.MQTT_DEV_MESSAGE,publish));
 	}
  
 }
