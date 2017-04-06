@@ -1,6 +1,6 @@
 package com.advicetec.MessageProcessor;
 
-import com.advicetec.FogClasses.Processor;
+import com.advicetec.core.Processor;
 import com.advicetec.language.transformation.InterpreterSw;
 
 

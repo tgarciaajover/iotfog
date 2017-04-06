@@ -1,8 +1,8 @@
 package com.advicetec.monitorAdapter;
 
-import com.advicetec.FogClasses.Manager;
 import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.configuration.ConfigurationManager;
+import com.advicetec.core.Manager;
 
 public class AdapterManager extends Manager implements Runnable
 {

@@ -4,7 +4,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import com.advicetec.FogClasses.MeasuredAttributeValue;
+
+import com.advicetec.core.MeasuredAttributeValue;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -45,15 +46,14 @@ public class MeasureAttributeValueStore {
 
 	/**
 	 * Given a key, it returns an element from the cache if it is there.
-	 * If the value is not in the 
-	 * @param key
+	 * If the value is not in the cache, this method returns NULL.
+	 * @param key 
 	 * @return
 	 */
 	public MeasuredAttributeValue getFromCache(String key){
 		MeasuredAttributeValue fromCache = cache.getIfPresent(key);
 		if(fromCache != null)
 			return fromCache;
-
 		return null;
 	}
 

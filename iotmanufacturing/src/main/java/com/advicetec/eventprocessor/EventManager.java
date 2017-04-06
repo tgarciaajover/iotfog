@@ -1,9 +1,9 @@
 package com.advicetec.eventprocessor;
 
-import com.advicetec.FogClasses.Manager;
 import com.advicetec.MessageProcessor.MessageHandler;
 import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.configuration.ConfigurationManager;
+import com.advicetec.core.Manager;
 import com.advicetec.monitorAdapter.AdapterManager;
 
 public class EventManager extends Manager

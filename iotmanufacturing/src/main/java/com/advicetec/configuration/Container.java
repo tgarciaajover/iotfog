@@ -8,11 +8,11 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.advicetec.FogClasses.Attribute;
-import com.advicetec.FogClasses.AttributeType;
-import com.advicetec.FogClasses.MeasuredAttributeValue;
-import com.advicetec.FogClasses.MeasuredEntityType;
-import com.advicetec.FogClasses.MeasuringUnit;
+import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeType;
+import com.advicetec.core.MeasuredAttributeValue;
+import com.advicetec.core.MeasuredEntityType;
+import com.advicetec.core.MeasuringUnit;
 
 public abstract class Container 
 {

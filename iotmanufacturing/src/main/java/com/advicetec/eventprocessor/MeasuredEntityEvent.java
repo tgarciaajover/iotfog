@@ -2,8 +2,8 @@ package com.advicetec.eventprocessor;
 
 import java.util.List;
 
-import com.advicetec.FogClasses.MeasuredAttributeValue;
-import com.advicetec.FogClasses.MeasuredEntity;
+import com.advicetec.core.MeasuredAttributeValue;
+import com.advicetec.core.MeasuredEntity;
 
 public class MeasuredEntityEvent extends Event 
 {

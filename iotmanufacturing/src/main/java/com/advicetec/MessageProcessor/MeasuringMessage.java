@@ -1,8 +1,8 @@
 package com.advicetec.MessageProcessor;
 
-import com.advicetec.FogClasses.MeasuredEntity;
 import com.advicetec.configuration.InputOutputPort;
 import com.advicetec.configuration.MonitoringDevice;
+import com.advicetec.core.MeasuredEntity;
 
 public abstract class MeasuringMessage extends UnifiedMessage {
 

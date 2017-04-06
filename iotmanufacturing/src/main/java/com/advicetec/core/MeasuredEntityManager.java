@@ -1,4 +1,4 @@
-package com.advicetec.FogClasses;
+package com.advicetec.core;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ public class MeasuredEntityManager {
 		entities = new ArrayList<MeasuredEntityFacade>();
 	}
 
-	public MeasuredEntityManager getInstance(){
+	public static MeasuredEntityManager getInstance(){
 		if(instance == null){
 			instance = new MeasuredEntityManager();
 		}

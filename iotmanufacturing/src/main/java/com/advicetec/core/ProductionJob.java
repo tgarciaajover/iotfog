@@ -1,4 +1,4 @@
-package com.advicetec.FogClasses;
+package com.advicetec.core;
 
 import java.util.HashMap;
 import java.util.Map;

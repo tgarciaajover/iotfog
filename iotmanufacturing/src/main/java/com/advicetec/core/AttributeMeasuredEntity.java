@@ -1,4 +1,4 @@
-package com.advicetec.FogClasses;
+package com.advicetec.core;
 
 import java.util.concurrent.TimeUnit; 
 
@@ -12,9 +12,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class AttributeMeasuredEntity 
 {
-	 Attribute type; 
-     int updateTime;
-     TimeUnit timeunit;
+	 private Attribute type; 
+     private int updateTime;
+     private TimeUnit timeunit;
      
      
 	 public AttributeMeasuredEntity( Attribute type, int updateTime,

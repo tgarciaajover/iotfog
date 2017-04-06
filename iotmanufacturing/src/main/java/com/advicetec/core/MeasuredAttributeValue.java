@@ -1,4 +1,4 @@
-package com.advicetec.FogClasses;
+package com.advicetec.core;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -113,5 +113,9 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	public boolean store() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+	
+	public Attribute getAttribute(){
+		return type;
 	}
 }
