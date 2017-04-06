@@ -8,21 +8,21 @@ import com.advicetec.FogClasses.MeasuredAttributeValue;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-public class Store {
+public class MeasureAttributeValueStore {
 
-	private static Store instance = null;
+	private static MeasureAttributeValueStore instance = null;
 	Connection conn  = null; 
 	PreparedStatement pst = null;
 
 	static Cache<String, MeasuredAttributeValue> cache;
 	PreparedStatement preparedStatement;
 
-	protected Store(){
+	protected MeasureAttributeValueStore(){
 	}
 
-	public static Store getInstance(){
+	public static MeasureAttributeValueStore getInstance(){
 		if(instance == null){
-			instance = new Store();
+			instance = new MeasureAttributeValueStore();
 
 			cache = Caffeine.newBuilder()
 					.initialCapacity(100)

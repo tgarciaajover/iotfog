@@ -2,6 +2,14 @@ package com.advicetec.FogClasses;
 
 import java.util.concurrent.TimeUnit; 
 
+/**
+ * Relates an attribute and when it changes its value.
+ * If the attribute does not update its value, it is a constant, updateTime is -1.
+ * IF the attribute value is updated by demand, updateTime is 0.
+ * 
+ * @author user
+ *
+ */
 public class AttributeMeasuredEntity 
 {
 	 Attribute type; 

@@ -104,10 +104,10 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	
 	public String toString(){
 		//TODO
-		return "Parent: "+ getParent() +"\n"
-				+"Parent type: "+ getParentType().getValue() +"\n"
-				+"When: "+ Timestamp.valueOf(getTimeStamp())+"\n"
-				+ "value: "+ getValue();
+		return "Parent: "+ getParent()
+				+", Parent type: "+ getParentType().getValue()
+				+", When: "+ Timestamp.valueOf(getTimeStamp())
+				+", Value: "+ getValue();
 	}
 
 	public boolean store() {

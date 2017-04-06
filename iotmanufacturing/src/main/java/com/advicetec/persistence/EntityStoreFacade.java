@@ -2,24 +2,33 @@ package com.advicetec.persistence;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.advicetec.FogClasses.MeasuredAttributeValue;
 
+/**
+ * This facade exists for each 
+ * @author user
+ *
+ */
 public class EntityStoreFacade {
 
-	private Store store;
+	private MeasureAttributeValueStore store;
 	
 	/**
 	 * Map with key DATETIME and value String Primary Key for the database.
 	 */
 	private SortedMap<LocalDateTime,String> map;
 	
+	private Map<String,SortedMap<LocalDateTime,String>> attMap;
+	
 	
 	public EntityStoreFacade(){
-		store = Store.getInstance();
+		store = MeasureAttributeValueStore.getInstance();
 		map = new TreeMap<LocalDateTime, String>();
+		
 	}
 	
 	public int size(){
@@ -41,7 +50,11 @@ public class EntityStoreFacade {
 		return getFromCache(keyArray);
 	}
 	
-	
+	/**
+	 * Returns a list with the last N attribute values. 
+	 * @param n 
+	 * @return
+	 */
 	public ArrayList<MeasuredAttributeValue> getLast(int n){
 		ArrayList<MeasuredAttributeValue> maValues = new ArrayList<MeasuredAttributeValue>();
 		String[] keyArray = (String[]) map.values().toArray();
@@ -55,6 +68,15 @@ public class EntityStoreFacade {
 			return maValues;
 		}
 	}
+	
+	public ArrayList<MeasuredAttributeValue> getLast(String attName, int n){
+		ArrayList<MeasuredAttributeValue> maValues = new ArrayList<MeasuredAttributeValue>();
+		
+		
+		
+		return maValues;
+	}
+	
 	
 	private ArrayList<MeasuredAttributeValue> getFromCache(String[] keyArray){
 		ArrayList<MeasuredAttributeValue> maValues = new ArrayList<MeasuredAttributeValue>();

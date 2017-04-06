@@ -13,9 +13,7 @@
 		<antlr4.plugin.version>4.5.2</antlr4.plugin.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-
-
-
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -29,7 +27,6 @@
 				</configuration>
 				<executions>
 					<execution>
-						<id>antlr</id>
 						<goals>
 							<goal>antlr4</goal>
 						</goals>

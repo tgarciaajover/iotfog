@@ -14,6 +14,7 @@ public class AttributeValue
 	String parent;
 	MeasuredEntityType parentType;
 	
+	
 	public AttributeValue(String key, Attribute type, Object value, String parent, MeasuredEntityType parentType) {
 		super();
 		
