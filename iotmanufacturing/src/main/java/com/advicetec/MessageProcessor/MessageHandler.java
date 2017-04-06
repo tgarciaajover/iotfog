@@ -33,15 +33,15 @@ public class MessageHandler implements Runnable
 					switch (um.getType())
 					{
 						case SAMPLE:
+							SampleMessage sample = (SampleMessage) um;
+							SampleProcessor processor = new SampleProcessor(sample);
+							processor.process();
 							break;
-						
-						case BARCODE:
-							break;
-						
-						case RFID:
-							break;
-						
+												
 						case BROKER_MESSAGE:
+							break;
+						
+						case INVALID:
 							break;
 					}
 					

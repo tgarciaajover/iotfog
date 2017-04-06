@@ -4,11 +4,9 @@ public enum UnifiedMessageType
 {
 
 
-	   BARCODE(0,"Barcode"),
-	   SAMPLE(1,"Sample"),
-	   RFID(2,"Radio Frequence ID"),
-	   BROKER_MESSAGE(3, "Broker Message"),
-	   INVALID(4,"Invalid Event");
+	   SAMPLE(0,"Sample"),
+	   BROKER_MESSAGE(1, "Broker Message"),
+	   INVALID(2,"Invalid Event");
 	  
 	   private int code;
 	   private String name;

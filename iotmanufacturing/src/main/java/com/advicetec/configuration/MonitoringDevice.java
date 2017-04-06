@@ -12,10 +12,12 @@ public class MonitoringDevice extends ConfigurationObject
 	private String mac_addres;
 	private String ip_address;
 	private Map<Integer, InputOutputPort> inputOutputPorts;
+	private Map<String, Integer> portsByLabel; 
 	
 	public MonitoringDevice(Integer id) {
 		super(id);
 		inputOutputPorts = new HashMap<Integer, InputOutputPort>();
+		portsByLabel = new HashMap<String, Integer>();
 	}
 	
 	public DeviceType getType() {
@@ -53,8 +55,24 @@ public class MonitoringDevice extends ConfigurationObject
 		return this.inputOutputPorts.get(id);
 	}
 	
+	public InputOutputPort getInputOutputPort(String portLabel){
+		Integer id = this.portsByLabel.get(portsByLabel);
+		return  getInputOutputPort(id);
+	}
+	
+	public String getTranformation(String portLabel){
+		Integer id = this.portsByLabel.get(portsByLabel);
+		return  getInputOutputPort(id).getTransformationText();
+	}
+	
+	public String getBehavior(String portLabel){
+		Integer id = this.portsByLabel.get(portsByLabel);
+		return  getInputOutputPort(id).getBehaviorText();		
+	}
+	
 	public void putInputOutputPort(InputOutputPort iop){
 		this.inputOutputPorts.put(iop.getId(), iop);
+		this.portsByLabel.put(iop.getPortLabel(), iop.getId());
 	}
 	
 }

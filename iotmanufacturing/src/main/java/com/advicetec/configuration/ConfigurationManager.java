@@ -86,4 +86,5 @@ public class ConfigurationManager
 	{
 		return this.monitoringDevices.getByMacAddress(macAddress);
 	}
+	
 }

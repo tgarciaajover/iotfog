@@ -10,7 +10,7 @@ public class MonitoringDeviceContainer extends Container
 {
 
 	static String sqlSelect1 = "SELECT id, type_id, descr, ip_address, mac_address, serial FROM setup_monitoringdevice";
-	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id FROM setup_inputoutputport";
+	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id, behavior_text, port_label FROM setup_inputoutputport";
 
 	private Map<String, Integer> indexByMac;
 
@@ -59,8 +59,10 @@ public class MonitoringDeviceContainer extends Container
 			{
 				Integer id     			= rs2.getInt("id"); 
 		        String transformation	= rs2.getString("transformation_text");
-		        Integer deviceId    = rs2.getInt("device_id");
+		        Integer deviceId    	= rs2.getInt("device_id");
 		        Integer signalTypeId	= rs2.getInt("signal_type_id");
+		        String behaviorText		= rs2.getString("behavior_text");
+		        String portLabel		= rs2.getString("port_label");
 		        		        
 		        MonitoringDevice device= (MonitoringDevice) this.getObject(deviceId);
 		        Signal signal = (Signal)  this.getReferencedObject("Signal", signalTypeId);
@@ -68,6 +70,8 @@ public class MonitoringDeviceContainer extends Container
 		        InputOutputPort port = new InputOutputPort(id);
 		        port.setSignalType(signal);
 		        port.setTransformationText(transformation);
+		        port.setBehaviorText(behaviorText);
+		        port.setPortLabel(portLabel);
 		        
 		        device.putInputOutputPort(port);
 			}

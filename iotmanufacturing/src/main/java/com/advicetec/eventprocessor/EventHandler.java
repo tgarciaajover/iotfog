@@ -1,7 +1,5 @@
 package com.advicetec.eventprocessor;
 
-import com.advicetec.MessageProcessor.UnifiedMessage;
-import com.advicetec.monitorAdapter.Mqtt2UnifiedMessage;
 import com.advicetec.mpmcqueue.PriorityQueue;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
