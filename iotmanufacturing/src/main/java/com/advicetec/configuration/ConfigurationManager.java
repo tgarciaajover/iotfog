@@ -87,4 +87,15 @@ public class ConfigurationManager
 		return this.monitoringDevices.getByMacAddress(macAddress);
 	}
 	
+	public String getTransformation(String macAddress, String portLabel){
+		return this.monitoringDevices.getByMacAddress(macAddress).getTranformation(portLabel);
+	}
+	
+	public String getBehaviour(String macAddress, String portLabel){
+		return this.monitoringDevices.getByMacAddress(macAddress).getBehavior(portLabel);
+	}
+	
+	public String getClassName(String macAddress, String portLabel){
+		return this.monitoringDevices.getByMacAddress(macAddress).getClassName(portLabel);
+	}
 }

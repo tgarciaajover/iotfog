@@ -30,7 +30,7 @@ public class SignalTypeContainer extends Container
 		        
 		        SignalType object = new SignalType(id);
 		        object.setName(name);
-		        object.setClass_name(class_name);
+		        object.setClassName(class_name);
 		        super.configuationObjects.put(id, object);
 		      
 			}

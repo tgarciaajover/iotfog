@@ -4,7 +4,7 @@ public class SignalType extends ConfigurationObject
 {
 
 	private String name;
-	private String class_name;
+	private String className;
 	
 	public SignalType(Integer id) {
 		super(id);
@@ -17,11 +17,11 @@ public class SignalType extends ConfigurationObject
 	public void setName(String name) {
 		this.name = name;
 	}
-	public String getClass_name() {
-		return class_name;
+	public String getClassName() {
+		return className;
 	}
-	public void setClass_name(String class_name) {
-		this.class_name = class_name;
+	public void setClassName(String class_name) {
+		this.className = class_name;
 	}
 	
 }

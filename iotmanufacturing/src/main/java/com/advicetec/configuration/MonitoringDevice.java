@@ -75,4 +75,9 @@ public class MonitoringDevice extends ConfigurationObject
 		this.portsByLabel.put(iop.getPortLabel(), iop.getId());
 	}
 	
+	public String getClassName(String portLabel){
+		Integer id = this.portsByLabel.get(portsByLabel);
+		return  getInputOutputPort(id).getSignalType().getType().getClassName();
+	}
+	
 }
