@@ -9,13 +9,14 @@ import java.util.List;
  * @author user
  *
  */
-public class MeasuredEntityManager {
+public class MeasuredEntityManager extends Manager {
 	
 	private static MeasuredEntityManager instance=null;
 	
 	private List<MeasuredEntityFacade> entities;
 	
 	private MeasuredEntityManager(){
+		super("MeasuredEntity");
 		entities = new ArrayList<MeasuredEntityFacade>();
 	}
 

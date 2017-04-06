@@ -15,21 +15,25 @@ public class MeasureAttributeValueStore {
 	Connection conn  = null; 
 	PreparedStatement pst = null;
 
-	static Cache<String, MeasuredAttributeValue> cache;
+	private static Cache<String, MeasuredAttributeValue> cache;
 	PreparedStatement preparedStatement;
 
-	protected MeasureAttributeValueStore(){
+	private MeasureAttributeValueStore(){
+	}
+	
+	
+	public static void setCache(int initialCapacity, int maxSize){
+		cache = Caffeine.newBuilder()
+				.initialCapacity(initialCapacity)
+				.maximumSize(maxSize)
+				.recordStats()
+				.build();
 	}
 
 	public static MeasureAttributeValueStore getInstance(){
 		if(instance == null){
 			instance = new MeasureAttributeValueStore();
-
-			cache = Caffeine.newBuilder()
-					.initialCapacity(100)
-					.maximumSize(50)
-					.recordStats()
-					.build();
+			setCache(1000,1000);// default values
 		}
 		return instance;
 	}
@@ -57,6 +61,7 @@ public class MeasureAttributeValueStore {
 		return null;
 	}
 
+	
 	public void commit(MeasuredAttributeValue value){
 		try {
 			Class.forName("org.postgresql.Driver");
