@@ -12,7 +12,7 @@ public class EventManager extends Manager
 	private static EventManager instance=null;
 	private static ConfigurationManager confManager = null;
 	
-	public EventManager getInstance()
+	public static EventManager getInstance()
 	{
 		if (instance==null)
 			instance = new EventManager(); 
@@ -31,7 +31,7 @@ public class EventManager extends Manager
 		int number = Integer.valueOf(getProperty("NumProcessHandlers")); 
 		for (int i = 0; i < number; i++) 
 		{
-			Thread t = new Thread(new EventHandler());
+			Thread t = new Thread(new EventHandler(instance.getQueue()));
 			
 		}
 	}	

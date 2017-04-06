@@ -10,10 +10,10 @@ public class MessageManager extends Manager
 {
 
 	private static MessageManager instance=null;
-	private static ConfigurationManager confManager = null;
-	private static EventManager evntManager = null;
+	private ConfigurationManager confManager = null;
+	private EventManager evntManager = null;
 	
-	public MessageManager getInstance()
+	public static MessageManager getInstance()
 	{
 		if (instance==null)
 			instance = new MessageManager(); 
@@ -32,7 +32,7 @@ public class MessageManager extends Manager
 		int number = Integer.valueOf(getProperty("NumProcessHandlers")); 
 		for (int i = 0; i < number; i++) 
 		{
-			Thread t = new Thread(new MessageHandler());
+			Thread t = new Thread(new MessageHandler(instance.getQueue(), evntManager.getQueue()));
 			
 		}
 	}	

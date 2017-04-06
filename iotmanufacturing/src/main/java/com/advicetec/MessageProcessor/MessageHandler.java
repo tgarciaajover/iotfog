@@ -24,12 +24,12 @@ public class MessageHandler implements Runnable
 
 			while (true)
 			{
-				UnifiedMessage message = (UnifiedMessage) fromQueue.pop();
+				Queueable obj = (Queueable) fromQueue.pop();
 				
-				if (message.getType() == QueueType.UNIFIED_MESSAGE)
+				if (obj.getType() == QueueType.UNIFIED_MESSAGE)
 				{
 					// TODO: include priority parameter for the type of message. 
-					 = toQueue.enqueue(7, um);
+					// = toQueue.enqueue(7, um);
 				}		
 				
 			}

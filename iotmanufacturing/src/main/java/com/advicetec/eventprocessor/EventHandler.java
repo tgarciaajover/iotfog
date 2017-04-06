@@ -25,17 +25,17 @@ public class EventHandler implements Runnable
 				Queueable obj = (Queueable) queue.pop();
 				Event evnt = (Event) obj.getContent();
 				
-				switch evnt.getEvntType()
+				switch (evnt.getEvntType())
 				{
 				
-				case EventType.MEASURING_ENTITY_EVENT:
+				case MEASURING_ENTITY_EVENT:
 				    MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
 				    MeasuredEntityEventProcessor processor = new MeasuredEntityEventProcessor(measuEntyEvt);
 				    processor.process();
 				    break;
 				
-				case EventType.META_MODEL_EVENT:
-					MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
+				case META_MODEL_EVENT:
+					// MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
 					break;
 				}
 			}

@@ -1,6 +1,7 @@
 package com.advicetec.monitorAdapter;
 
 import com.advicetec.FogClasses.Manager;
+import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.configuration.ConfigurationManager;
 
 public class AdapterManager extends Manager implements Runnable
@@ -8,9 +9,9 @@ public class AdapterManager extends Manager implements Runnable
 
 	private static AdapterManager instance=null;
 	private static ConfigurationManager confManager = null; 
-	private static 
+	private static MessageManager messManager = null;
 	
-	public AdapterManager getInstance()
+	public static AdapterManager getInstance()
 	{
 		if (instance==null)
 			instance = new AdapterManager();
@@ -22,6 +23,7 @@ public class AdapterManager extends Manager implements Runnable
 	{
 		super("AdapterManager");	
 		confManager = ConfigurationManager.getInstance();
+		messManager = MessageManager.getInstance();
 	}
 	
 	
@@ -36,7 +38,7 @@ public class AdapterManager extends Manager implements Runnable
 		int number = Integer.valueOf(getProperty("NumAdapterHandlers")); 
 		for (int i = 0; i < number; i++) 
 		{
-			Thread t = new Thread(new AdapterHandler());
+			Thread t = new Thread(new AdapterHandler(instance.getQueue(),messManager.getQueue()));
 			
 		}
 	}
