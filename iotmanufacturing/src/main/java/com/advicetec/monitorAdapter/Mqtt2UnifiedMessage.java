@@ -10,8 +10,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish;
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage;
 
-import com.advicetec.FogClasses.MeasuredEntity;
-import com.advicetec.FogClasses.MeasuredEntityManager;
+import com.advicetec.core.MeasuredEntity;
+import com.advicetec.core.MeasuredEntityFacade;
 import com.advicetec.MessageProcessor.SampleMessage;
 import com.advicetec.MessageProcessor.UnifiedMessageType;
 import com.advicetec.MessageProcessor.UnifiedMessage;
@@ -62,9 +62,16 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 			values = object.translate(mqttMessage.getPayload());
 			// TODO: call the measuredEntititiesFacade by mac address.
 			
-			MeasuredEntityManager entManager = MeasuredEntityManager.getInstance();  
-			MeasuredEntity entity = entManager.getFacadeOfEntityById(entityId)
-			return new SampleMessage(device, device.getInputOutputPort(portLabel), entity, values, transformation);
+			 String measuringEntityId = confManager.getMeasuredEntity(deviceID, portLabel);
+			 if (measuringEntityId != null){
+				 return new SampleMessage(device, device.getInputOutputPort(portLabel), measuringEntityId, values, transformation);
+			 } else {
+				 // TODO: register the error in the log file. 
+				 System.out.println("No Measuring Entity Registered for the device:" + deviceID + " port:" + portLabel);
+				 return null;
+			 }
+				 
+			
 
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block

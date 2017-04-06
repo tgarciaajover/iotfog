@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.advicetec.FogClasses.AttributeType;
+import com.advicetec.core.AttributeType;
 import com.advicetec.configuration.SystemConstants;
 
 public class MqttSerialInput implements Translator

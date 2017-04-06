@@ -2,17 +2,19 @@ package com.advicetec.MessageProcessor;
 
 import com.advicetec.configuration.InputOutputPort;
 import com.advicetec.configuration.MonitoringDevice;
-import com.advicetec.core.MeasuredEntity;
 
 public abstract class MeasuringMessage extends UnifiedMessage {
 
 	MonitoringDevice mDevice;
 	InputOutputPort port;
-	MeasuredEntity mEntity;
+	String mEntity;
 	
 	
-	public MeasuringMessage(UnifiedMessageType type) {
+	public MeasuringMessage(UnifiedMessageType type, MonitoringDevice device, InputOutputPort port, String entityId) {
 		super(type);
+		this.mDevice = device;
+		this.port = port;
+		this.mEntity = entityId;
 	}
 	
 	public MonitoringDevice getmDevice() {
@@ -27,10 +29,10 @@ public abstract class MeasuringMessage extends UnifiedMessage {
 	public void setPort(InputOutputPort port) {
 		this.port = port;
 	}
-	public MeasuredEntity getmEntity() {
+	public String getmEntity() {
 		return mEntity;
 	}
-	public void setmEntity(MeasuredEntity mEntity) {
+	public void setmEntity(String mEntity) {
 		this.mEntity = mEntity;
 	}
 

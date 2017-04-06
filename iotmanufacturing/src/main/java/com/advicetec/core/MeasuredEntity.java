@@ -18,7 +18,7 @@ import com.advicetec.persistence.MeasureAttributeValueStore;
 public class MeasuredEntity 
 {
     private String id;
-    private MeasuredEntityType type; 
+    protected MeasuredEntityType type; 
     private LocalDateTime startDateTimeStatus;	// last time interval
     
     private Map<String, MeasuredAttributeValue> measures;  // TODO: Should be a cache with write.

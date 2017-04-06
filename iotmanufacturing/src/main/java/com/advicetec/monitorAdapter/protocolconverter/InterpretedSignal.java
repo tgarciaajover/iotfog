@@ -1,6 +1,6 @@
 package com.advicetec.monitorAdapter.protocolconverter;
 
-import com.advicetec.FogClasses.AttributeType;
+import com.advicetec.core.AttributeType;
 
 /*
  * This class represents the signal once converted to the atomic types managed by the language.

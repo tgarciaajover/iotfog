@@ -45,6 +45,7 @@ public class AdapterHandler implements Runnable
 						um = mq2Um.getUnifiedMessage();
 						
 						if (um != null){
+							//TODO: to define the priority for the message.
 							toQueue.enqueue(7, um);
 						} 
 						
