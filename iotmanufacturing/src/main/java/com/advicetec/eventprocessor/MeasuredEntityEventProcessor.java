@@ -1,5 +1,6 @@
 package com.advicetec.eventprocessor;
 
+import com.advicetec.FogClasses.Processor;
 import com.advicetec.language.behavior.InterpreterSw;
 
 public class MeasuredEntityEventProcessor implements Processor

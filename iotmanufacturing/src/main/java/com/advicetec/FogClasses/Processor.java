@@ -1,4 +1,4 @@
-package com.advicetec.eventprocessor;
+package com.advicetec.FogClasses;
 
 public interface Processor 
 {
