@@ -25,13 +25,6 @@ public class AdapterManager extends Manager implements Runnable
 		confManager = ConfigurationManager.getInstance();
 		messManager = MessageManager.getInstance();
 	}
-	
-	
-	public void executeEventHandler()
-	{
-		
-	}
-
 
 	public void run() {
 		
@@ -39,6 +32,13 @@ public class AdapterManager extends Manager implements Runnable
 		for (int i = 0; i < number; i++) 
 		{
 			Thread t = new Thread(new AdapterHandler(instance.getQueue(),messManager.getQueue()));
+			t.start();
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
 		}
 	}

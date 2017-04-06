@@ -32,6 +32,13 @@ public class EventManager extends Manager
 		for (int i = 0; i < number; i++) 
 		{
 			Thread t = new Thread(new EventHandler(instance.getQueue()));
+			t.start();
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
 		}
 	}	

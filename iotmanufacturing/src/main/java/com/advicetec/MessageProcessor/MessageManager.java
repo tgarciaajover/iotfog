@@ -33,7 +33,13 @@ public class MessageManager extends Manager
 		for (int i = 0; i < number; i++) 
 		{
 			Thread t = new Thread(new MessageHandler(instance.getQueue(), evntManager.getQueue()));
-			
+			t.start();
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}	
 }
