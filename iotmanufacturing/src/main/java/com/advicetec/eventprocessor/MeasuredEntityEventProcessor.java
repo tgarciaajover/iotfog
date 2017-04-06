@@ -1,5 +1,7 @@
 package com.advicetec.eventprocessor;
 
+import com.advicetec.language.behavior.InterpreterSw;
+
 public class MeasuredEntityEventProcessor implements Processor
 {
 
@@ -14,9 +16,13 @@ public class MeasuredEntityEventProcessor implements Processor
 	public void process() 
 	{
 		InterpreterSw interpreter = new InterpreterSw();
-		
-		
-
+		try 
+		{
+			interpreter.process(this.event.getBehaviorTransformation());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	

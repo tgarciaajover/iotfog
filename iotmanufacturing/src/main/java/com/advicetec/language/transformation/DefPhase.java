@@ -3,7 +3,6 @@ package com.advicetec.language.transformation;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 import com.advicetec.language.TransformationGrammarBaseListener;
 import com.advicetec.language.TransformationGrammarParser;

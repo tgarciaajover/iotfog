@@ -10,10 +10,8 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish;
 
-import com.advicetec.FogClasses.AdapterManager;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
-import com.sun.corba.se.impl.ior.WireObjectKeyTemplate;
 
 /**
  * This class emulates the controller behavior by pushing MQTT messages

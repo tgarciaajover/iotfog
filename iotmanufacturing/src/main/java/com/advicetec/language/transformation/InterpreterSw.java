@@ -40,11 +40,8 @@ public class InterpreterSw
 
     }
     
-    public void process(String[] args) throws Exception {
-
-		String program = args.length > 1 ? args[1] : "test/test." + EXTENSION;
-
-		System.out.println("Interpreting file " + program);
+    public void process(String program) throws Exception 
+    {
 
 		TransformationGrammarLexer lexer = new TransformationGrammarLexer(new ANTLRFileStream(program));
 
@@ -75,12 +72,5 @@ public class InterpreterSw
 
         System.out.println("Interpreter phase finished globals" + ref.globals.toString());
         
-
-    }    
-
-    public static void main(String[] args) throws Exception {
-
-        new InterpreterSw().process(args);
-
     }    
 }

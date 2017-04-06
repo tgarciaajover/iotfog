@@ -10,7 +10,13 @@ public abstract class UnifiedMessage
 	 */
 	private LocalDateTime timestamp;
 	private UUID uuid;
+	private UnifiedMessageType type;
 	
+	public UnifiedMessage(UnifiedMessageType type) {
+		super();
+		this.type = type;
+	}
+
 	protected	LocalDateTime getTimestamp() {
 		return timestamp;
 	}
@@ -27,6 +33,8 @@ public abstract class UnifiedMessage
 		this.uuid = uuid;
 	}
 	
-	
+	protected UnifiedMessageType getType() {
+		return type;
+	}
 
 }

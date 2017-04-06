@@ -44,11 +44,8 @@ public class SyntaxChecking
 
     }
     
-    public void process(String[] args) throws Exception {
-
-		String program = args.length > 1 ? args[1] : "test/test." + EXTENSION;
-
-		System.out.println("Interpreting file " + program);
+    public void process(String program) throws Exception 
+    {
 
 		BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(new ANTLRFileStream(program));
 
@@ -88,9 +85,4 @@ public class SyntaxChecking
 
     }    
 
-    public static void main(String[] args) throws Exception {
-
-        new SyntaxChecking().process(args);
-
-    }    
 }

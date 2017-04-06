@@ -1,21 +1,13 @@
 package com.advicetec.MessageProcessor;
 
-import com.advicetec.monitorAdapter.SampleType;
 
 public class SampleMessage extends MeasuringMessage {
 
-	SampleType type;
 	byte[] value;
-	public SampleMessage(SampleType type, byte[] value) {
-		super();
-		this.type = type;
+	
+	public SampleMessage(byte[] value) {
+		super(UnifiedMessageType.SAMPLE);
 		this.value = value;
-	}
-	public SampleType getType() {
-		return type;
-	}
-	public void setType(SampleType type) {
-		this.type = type;
 	}
 	public byte[] getValue() {
 		return value;
@@ -25,6 +17,6 @@ public class SampleMessage extends MeasuringMessage {
 	}
 	
 	public String toString(){
-		return "Sample Message: Type = "+type+" value = "+ value.toString();
+		return "Sample Message: Type = "+getType().getName()+" value = "+ value.toString();
 	}
 }

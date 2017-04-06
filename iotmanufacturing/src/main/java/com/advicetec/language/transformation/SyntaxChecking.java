@@ -41,7 +41,8 @@ public class SyntaxChecking
 
     }
     
-    public void process(String program) throws Exception {
+    public void process(String program) throws Exception 
+    {
 
 		TransformationGrammarLexer lexer = new TransformationGrammarLexer(new ANTLRFileStream(program));
 
@@ -80,7 +81,5 @@ public class SyntaxChecking
         
         System.out.println("Refphase finished globals" + def.globals.toString());
        
-
     }    
-
 }

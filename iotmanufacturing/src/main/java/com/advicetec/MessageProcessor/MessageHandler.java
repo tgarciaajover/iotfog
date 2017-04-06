@@ -28,6 +28,23 @@ public class MessageHandler implements Runnable
 				
 				if (obj.getType() == QueueType.UNIFIED_MESSAGE)
 				{
+					UnifiedMessage um = (UnifiedMessage) obj.getContent();
+					
+					switch (um.getType())
+					{
+						case SAMPLE:
+							break;
+						
+						case BARCODE:
+							break;
+						
+						case RFID:
+							break;
+						
+						case BROKER_MESSAGE:
+							break;
+					}
+					
 					// TODO: include priority parameter for the type of message. 
 					// = toQueue.enqueue(7, um);
 				}		
