@@ -1,14 +1,21 @@
-package com.advicetec.core;
+package com.advicetec.measuredentitity;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeValue;
+import com.advicetec.core.MeasuringUnit;
+
 /**
  * This class models the JobID.
  */
-public class ProductionEntity extends MeasuredEntity 
+public abstract class ProductionEntity extends MeasuredEntity 
 {
-	Map<String, AttributeValue> expected;
+	protected int producedUnits;
+	protected int defectiveUnits;
+	
+	protected Map<String, AttributeValue> expected;
 	
 	public ProductionEntity(String id, MeasuredEntityType type) 
 	{
@@ -28,5 +35,6 @@ public class ProductionEntity extends MeasuredEntity
 	{
 		return this.expected.get(attribute.getName());
 	}
-		
+	
+	
 }

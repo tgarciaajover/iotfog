@@ -1,19 +1,10 @@
 package com.advicetec.configuration;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import com.advicetec.core.Configurable;
 
-public class ConfigurationManager
+public class ConfigurationManager extends Configurable
 {
-	
 	private static ConfigurationManager instance=null;
-	
-	private Properties properties;
 	
 	private SignalUnitContainer signalUnits;
 	private SignalTypeContainer signalTypes;
@@ -33,14 +24,11 @@ public class ConfigurationManager
 	
 	private ConfigurationManager() 
 	{
-		super();
-		
-		this.properties = new Properties();
-		loadConfigurationFile("ConfigurationManager");
-		
-		String server = this.properties.getProperty("server");
-		String user = this.properties.getProperty("user");
-		String password = this.properties.getProperty("password");
+		super("ConfigurationManager");
+
+		String server = properties.getProperty("server");
+		String user = properties.getProperty("user");
+		String password = properties.getProperty("password");
 		
 		signalUnits = new SignalUnitContainer(server, user,password);
 		signalTypes = new SignalTypeContainer(server, user, password);
@@ -49,29 +37,6 @@ public class ConfigurationManager
 		monitoringDevices = new MonitoringDeviceContainer(server, user, password);
 	}
 
-	private void loadConfigurationFile(String filename)
-	{
-		String filenamerel = "resources/" + filename;
-		File configFile = new File(filenamerel);
-		 
-		try 
-		{
-		    FileReader reader = new FileReader(configFile);
-		    this.properties.load(reader);		 		 
-		    reader.close();
-		} catch (FileNotFoundException ex) {
-		    // TODO include in the log file
-			System.out.println("File" + filename + " not found");
-		} catch (IOException ex) {
-			// TODO include in the log file
-			System.out.println("Input Output error reading the file:" + filename );
-		}
-	}
-	
-	public String getProperty (String propName)
-	{
-		return this.properties.getProperty(propName);
-	}
 	
 	public synchronized void loadConfiguration()
 	{

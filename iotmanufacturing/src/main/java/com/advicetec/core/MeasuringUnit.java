@@ -1,5 +1,10 @@
 package com.advicetec.core;
 
+/**
+ * This class describes the measure unit. e.g. Kilograms.
+ * @author user
+ *
+ */
 public class MeasuringUnit 
 {
 	String symbol;  // identifier.

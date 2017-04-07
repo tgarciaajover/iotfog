@@ -1,4 +1,4 @@
-package com.advicetec.core;
+package com.advicetec.measuredentitity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import com.advicetec.core.Attribute;
 import com.advicetec.persistence.MeasureAttributeValueStore;
 
 

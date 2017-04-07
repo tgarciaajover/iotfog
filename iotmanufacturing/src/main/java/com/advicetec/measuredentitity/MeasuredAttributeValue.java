@@ -1,10 +1,12 @@
-package com.advicetec.core;
+package com.advicetec.measuredentitity;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
+import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.Storable;
 
 public class MeasuredAttributeValue extends AttributeValue implements Storable

@@ -1,6 +1,8 @@
-package com.advicetec.core;
+package com.advicetec.measuredentitity;
 
 import java.util.concurrent.TimeUnit; 
+
+import com.advicetec.core.Attribute;
 
 /**
  * Relates an attribute and when it changes its value.

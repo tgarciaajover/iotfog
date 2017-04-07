@@ -1,5 +1,7 @@
 package com.advicetec.core;
 
+import com.advicetec.measuredentitity.MeasuredEntityType;
+
 public class AttributeValue 
 {
 	

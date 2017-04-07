@@ -1,17 +1,20 @@
-package com.advicetec.core;
+package com.advicetec.measuredentitity;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeValue;
+
 public class ProductionJob 
 {
 
-	String id;
-	MeasuredEntityType type;
-	ProductionEntity planned;
-	ProductionEntity executed;
-	Map<String, AttributeValue> expected;
-	Map<String, MeasuredAttributeValue> measures;
+	private String id;
+	private MeasuredEntityType type;
+	private ProductionEntity planned;
+	private ProductionEntity executed;
+	private Map<String, AttributeValue> expected;
+	private Map<String, MeasuredAttributeValue> measures;
 
 	public ProductionJob(String id, ProductionEntity planned, ProductionEntity executed) {
 		super();

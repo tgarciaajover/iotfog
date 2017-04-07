@@ -1,4 +1,4 @@
-package com.advicetec.core;
+package com.advicetec.measuredentitity;
 
 public enum MeasuringStatus 
 {

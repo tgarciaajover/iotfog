@@ -4,16 +4,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.advicetec.core.Attribute;
-import com.advicetec.core.AttributeType;
-import com.advicetec.core.MeasuredAttributeValue;
-import com.advicetec.core.MeasuredEntityType;
-import com.advicetec.core.MeasuringUnit;
 
+/**
+ * This class stores all configuration objects into a database.
+ * @author user
+ *
+ */
 public abstract class Container 
 {
 		

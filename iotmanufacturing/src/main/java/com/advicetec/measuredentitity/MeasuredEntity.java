@@ -1,4 +1,4 @@
-package com.advicetec.core;
+package com.advicetec.measuredentitity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.advicetec.core.Attribute;
+import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.MeasureAttributeValueStore;
 
 /**
@@ -15,16 +17,16 @@ import com.advicetec.persistence.MeasureAttributeValueStore;
  * @author user
  *
  */
-public class MeasuredEntity 
+public abstract class MeasuredEntity 
 {
-    private String id;
-    private MeasuredEntityType type; 
-    private LocalDateTime startDateTimeStatus;	// last time interval
+    protected String id;
+    protected MeasuredEntityType type; 
+    protected LocalDateTime startDateTimeStatus;	// last time interval
     
-    private Map<String, MeasuredAttributeValue> measures;  // TODO: Should be a cache with write.
-    private Map<String, StatusInterval> intervals;		 // TODO: Should be a cache with write.
+    protected Map<String, MeasuredAttributeValue> measures;  // TODO: Should be a cache with write.
+    protected Map<String, StatusInterval> intervals;		 // TODO: Should be a cache with write.
     
-    private List<AttributeMeasuredEntity> attributes;
+    protected List<AttributeMeasuredEntity> attributes;
     
     public MeasuredEntity(String id, MeasuredEntityType type) 
     {

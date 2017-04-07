@@ -1,9 +1,10 @@
-package com.advicetec.core;
+package com.advicetec.measuredentitity;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.Storable;
 
 public class StatusInterval implements Storable
