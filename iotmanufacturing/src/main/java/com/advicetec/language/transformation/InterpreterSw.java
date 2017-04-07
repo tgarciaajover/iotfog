@@ -59,45 +59,55 @@ public class InterpreterSw
         TransformationGrammarParser parser = new TransformationGrammarParser(tokens);
 
         parser.setBuildParseTree(true);
-
+        
         ParseTree tree = parser.program();
 
-        // show tree in text form
-        // System.out.println(tree.toStringTree(parser));
-
+	    String mainProgramStr = (parser.getTokenNames())[TransformationGrammarLexer.PROGRAM];
+	    
+	    // Token names come with a ' at the begin and end. We remove them. 
+	    mainProgramStr = mainProgramStr.replace("'", "");
+        
         ParseTreeWalker walker = new ParseTreeWalker();
 
         DefPhase def = new DefPhase();
-
+        
         walker.walk(def, tree);
         
         System.out.println("Defphase finished globals: " + def.globals.toString());
-        
-        // create next phase and feed symbol table info from def to ref phase
-        MemorySpace globals = new MemorySpace("globals");  
-        
-        String programStr = lexer.getRuleNames()[TransformationGrammarLexer.PROGRAM];
-        Symbol symbol = def.globals.resolve(programStr);
-        
+                                
+        Symbol symbol = def.globals.resolve(mainProgramStr);
+                
         if ( symbol == null ) {
-            throw new RuntimeException("no program defined " + programStr);
+            throw new RuntimeException("no program defined " + mainProgramStr);
         }
 
         if ( symbol instanceof VariableSymbol ) {
-        	throw new RuntimeException(programStr + " is not a function");
+        	throw new RuntimeException(mainProgramStr + " is not a function");
         }
 
         if ( symbol instanceof AttributeSymbol ) {
-        	throw new RuntimeException(programStr + " is not a function");
+        	throw new RuntimeException(mainProgramStr + " is not a function");
         }
 
         if ( symbol instanceof UnitMeasureSymbol ) {
-        	throw new RuntimeException(programStr + " is not a function");
+        	throw new RuntimeException(mainProgramStr + " is not a function");
         }
 
         TransformationSymbol ts = (TransformationSymbol) symbol;
         Map<String, Symbol> parametersDef =  ts.getMembers();
 
+        // create next phase and feed symbol table info from def to ref phase
+        MemorySpace globals = new MemorySpace("globals");  
+        
+        // pass the parameters to the program. 
+        int i = 0;
+        for (Symbol argS : ((TransformationSymbol)ts).getMembers().values()) {
+            VariableSymbol arg = (VariableSymbol)argS;
+            ASTNode argValue = new ASTNode(parameters.get(i).getValue()); 
+            globals.put(arg.getName(), argValue);
+            i++;
+        }
+        
         // The following code verifies the number of parameters given.
         int argCount = parameters.size();
         if ( argCount==0 )
@@ -116,23 +126,14 @@ public class InterpreterSw
         		throw new RuntimeException("program " + ts.getName() + " parameters not required and provided");
         	}
         	else if (((TransformationSymbol)ts).getMembers().size()!=argCount){
-        		throw new RuntimeException("program " + ts.getName() + " wrong number of parameters");
+        		throw new RuntimeException("program " + ts.getName() + " wrong number of parameters" + "size:" + ((TransformationSymbol)ts).getMembers().size() + "given:" + argCount);
         	}
         }
                 
-        // pass the parameters to the program. 
-        int i = 0;
-        for (Symbol argS : ((TransformationSymbol)ts).getMembers().values()) {
-            VariableSymbol arg = (VariableSymbol)argS;
-            ASTNode argValue = new ASTNode(parameters.get(i).getValue()); 
-            globals.put(arg.getName(), argValue);
-            i++;
-        }
-        
         Interpreter ref = new Interpreter(def.globals, globals, def.scopes);
         ref.visit(tree);
 
-        System.out.println("Interpreter phase finished globals" + ref.globals.toString());
+        System.out.println("Interpreter phase finished " + ref.globals.toString());
         
     }    
 }

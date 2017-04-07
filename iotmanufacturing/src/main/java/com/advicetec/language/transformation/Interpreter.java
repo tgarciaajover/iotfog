@@ -6,7 +6,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
@@ -66,9 +68,10 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		// For memory evaluation
 		stack = new Stack<TransformationSpace>(); // call stack
+		
+		System.out.println("Interpreter main");
 	}
 	
-	@Override 
 	public ASTNode visitProgram(TransformationGrammarParser.ProgramContext ctx) 
 	{ 
 		System.out.println("visitProgram");
@@ -142,8 +145,17 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         
         ASTNode result = null;
         stack.push(fspace);        // PUSH new arg, local scope
-        this.visit( ((FunctionSymbol)fs).block ); 
+        this.visit( ((TransformationSymbol)fs).block ); 
 
+        System.out.println("ending program:" + currentSpace.getkeys());
+        
+        // Copies the program stack to global stack to be returned to the interpreter caller.
+        Set<String> keys = currentSpace.getkeys();
+        for (Iterator<String> iterator = keys.iterator(); iterator.hasNext();) {
+			String id = (String) iterator.next();
+			saveSpace.put(id, currentSpace.get(id));
+		} 
+        
         stack.pop();               // POP arg, locals
         currentSpace = saveSpace;
         

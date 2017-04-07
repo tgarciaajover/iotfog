@@ -43,6 +43,13 @@ public class DefPhase extends TransformationGrammarBaseListener
 		
 		// Defines the function in the current scope.
 		currentScope.define(program);
+		
+		// Push: set function's parent to current
+		saveScope(ctx, program); 
+		
+		// Current Scope is now function scope
+		currentScope = program;
+		
 
 	}
 	
@@ -87,7 +94,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 		
 	}
 	
-	public void exitFormalparameter(TransformationGrammarParser.ProgramparameterContext ctx) 
+	public void exitProgramparameter(TransformationGrammarParser.ProgramparameterContext ctx) 
 	{ 
 		defineVar(ctx.type(), ctx.ID().getSymbol());
 	}
@@ -137,8 +144,6 @@ public class DefPhase extends TransformationGrammarBaseListener
 		System.out.println("Define unit: " + unt.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 
-	
-	
 	public void defineVar(TransformationGrammarParser.TypeContext typeCtx, Token nameToken)
 	{
 		int typeTokenType = typeCtx.start.getType();
