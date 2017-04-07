@@ -1,5 +1,7 @@
 package com.advicetec.language.behavior;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.antlr.v4.runtime.ANTLRFileStream;
@@ -9,14 +11,20 @@ import org.antlr.v4.runtime.tree.*;
 
 import com.advicetec.language.BehaviorGrammarLexer;
 import com.advicetec.language.BehaviorGrammarParser;
+import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.ArraySymbol;
+import com.advicetec.language.ast.AttributeSymbol;
+import com.advicetec.language.ast.BehaviorSymbol;
 import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.UnitMeasureSymbol;
+import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class InterpreterSw 
 {
 
-	private static final String EXTENSION = "properties";
+	private DefPhase defPhase;
 	
     public static Symbol.Type getType(int tokenType) {
 
@@ -28,7 +36,8 @@ public class InterpreterSw
             case BehaviorGrammarParser.K_STR : return Symbol.Type.tSTRING;
             case BehaviorGrammarParser.K_BOOL : return Symbol.Type.tBOOL;
             case BehaviorGrammarParser.K_DATETIME : return Symbol.Type.tDATETIME;
-
+            case BehaviorGrammarParser.K_DATE : return Symbol.Type.tDATE;
+            case BehaviorGrammarParser.K_TIME : return Symbol.Type.tTIME;
         }
 
         return Symbol.Type.tINVALID;
@@ -42,7 +51,13 @@ public class InterpreterSw
 
     }
     
-    public void process(String program) throws Exception 
+    /**
+     * 
+     * @param program
+     * @param parameters
+     * @throws Exception
+     */
+    public void process(String program, List<InterpretedSignal> parameters) throws Exception 
     {
 
 		BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(new ANTLRFileStream(program));
@@ -55,21 +70,77 @@ public class InterpreterSw
 
         ParseTree tree = parser.program();
 
-        // show tree in text form
-        // System.out.println(tree.toStringTree(parser));
+	    String mainProgramStr = (parser.getTokenNames())[BehaviorGrammarLexer.PROGRAM];
+
+	    // Token names come with a ' at the begin and end. We remove them. 
+	    mainProgramStr = mainProgramStr.replace("'", "");
 
         ParseTreeWalker walker = new ParseTreeWalker();
 
         DefPhase def = new DefPhase();
 
         walker.walk(def, tree);
-        
-        System.out.println("Defphase finished globals: " + def.globals.toString());
+       
+        System.out.println("Defphase finished globals: " + def.getGlobalScope().toString());
 
         // create next phase and feed symbol table info from def to ref phase
         MemorySpace globals = new MemorySpace("globals");  
         
-        Interpreter ref = new Interpreter(def.globals, globals, def.scopes);
+        String programStr = lexer.getRuleNames()[BehaviorGrammarLexer.PROGRAM];
+                                
+        Symbol symbol = defPhase.getGlobalScope().resolve(mainProgramStr);
+                
+        if ( symbol == null ) {
+            throw new RuntimeException("no program defined " + programStr);
+        }
+
+        if ( symbol instanceof VariableSymbol ) {
+        	throw new RuntimeException(programStr + " is not a function");
+        }
+
+        if ( symbol instanceof AttributeSymbol ) {
+        	throw new RuntimeException(programStr + " is not a function");
+        }
+
+        if ( symbol instanceof UnitMeasureSymbol ) {
+        	throw new RuntimeException(programStr + " is not a function");
+        }
+
+        BehaviorSymbol ts = (BehaviorSymbol) symbol;
+        Map<String, Symbol> parametersDef =  ts.getMembers();
+
+        // The following code verifies the number of parameters given.
+        int argCount = parameters.size();
+        if ( argCount==0 )
+        {
+        	if (
+        		 (((BehaviorSymbol)ts).getMembers() !=null) && 
+        		 (((BehaviorSymbol)ts).getMembers().size() !=0) )
+        	{
+        		throw new RuntimeException("program " + ts.getName() + " parameters required but not given");
+        	}
+        }
+        
+        if (argCount > 0)
+        {
+        	if ( ((BehaviorSymbol)ts).getMembers()==null ){
+        		throw new RuntimeException("program " + ts.getName() + " parameters not required and provided");
+        	}
+        	else if (((BehaviorSymbol)ts).getMembers().size()!=argCount){
+        		throw new RuntimeException("program " + ts.getName() + " wrong number of parameters");
+        	}
+        }
+                
+        // pass the parameters to the program. 
+        int i = 0;
+        for (Symbol argS : ((BehaviorSymbol)ts).getMembers().values()) {
+            VariableSymbol arg = (VariableSymbol)argS;
+            ASTNode argValue = new ASTNode(parameters.get(i).getValue()); 
+            globals.put(arg.getName(), argValue);
+            i++;
+        }
+
+        Interpreter ref = new Interpreter(def.getGlobalScope(), globals, def.getScopes());
         ref.visit(tree);
         
         System.out.println("Interpreter phase finished");
@@ -78,7 +149,7 @@ public class InterpreterSw
         Set<String> ids = ref.globals.getkeys();
         for (String id : ids ) 
         {
-        	Symbol sym = def.globals.resolve(id);
+        	Symbol sym = def.getGlobalScope().resolve(id);
         	 
         	System.out.println("Global variable:" + id);
         	
@@ -88,11 +159,11 @@ public class InterpreterSw
         		
         		System.out.println("Num Elements:" + numElements);
         		
-        		for (int i = 0; i < numElements; i++)
+        		for (int j = 0; i < numElements; j++)
         		{
         			if (sym.getType() == Symbol.Type.tFLOAT){
-        				Double val = (ref.globals.get(id).asDoubleVector())[i];
-        				System.out.println("Vector " + id + "position : " + i + "value" + val);
+        				Double val = (ref.globals.get(id).asDoubleVector())[j];
+        				System.out.println("Vector " + id + "position : " + j + "value" + val);
         			}
         			
         			if (sym.getType() == Symbol.Type.tINT){

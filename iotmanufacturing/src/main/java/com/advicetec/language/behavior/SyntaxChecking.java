@@ -72,7 +72,7 @@ public class SyntaxChecking
 
         // create next phase and feed symbol table info from def to ref phase
 
-        RefPhase ref = new RefPhase(def.globals, def.scopes);
+        RefPhase ref = new RefPhase(def.getGlobalScope(), def.getScopes());
         walker.walk(ref, tree);
         
         for (SyntaxError e : collector.getErrors()) {
@@ -80,7 +80,7 @@ public class SyntaxChecking
             System.out.println(RecognitionExceptionUtil.formatVerbose(e));
         }
         
-        System.out.println("Defphase finished globals" + def.globals.toString());
+        System.out.println("Defphase finished globals" + def.getGlobalScope().toString());
         
 
     }    

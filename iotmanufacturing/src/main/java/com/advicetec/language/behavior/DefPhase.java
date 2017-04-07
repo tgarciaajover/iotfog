@@ -16,6 +16,8 @@ import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.language.ast.BehaviorSymbol;
+
 
 import org.antlr.v4.runtime.Token;
 import org.codehaus.plexus.compiler.CompilerException;
@@ -23,16 +25,33 @@ import org.codehaus.plexus.compiler.CompilerException;
 public class DefPhase extends BehaviorGrammarBaseListener 
 {
 
-	ParseTreeProperty<Scope> scopes = new ParseTreeProperty<Scope>();
-	GlobalScope globals;
+	private ParseTreeProperty<Scope> scopes = new ParseTreeProperty<Scope>();
+	private GlobalScope globals;
 	
 	// Define symbols in this scope
-	Scope currentScope;
+	private Scope currentScope;
 	
 	public void enterProgram(BehaviorGrammarParser.ProgramContext ctx)
 	{
 		globals = new GlobalScope();
 		currentScope = globals;
+		String name = ctx.PROGRAM().getText();
+
+		// Transformation program does not have a return value.
+		Symbol.Type type = SyntaxChecking.getType(BehaviorGrammarParser.K_VOID);
+
+		// push new scope by making new one that points to enclosing scope
+		BehaviorSymbol program = new BehaviorSymbol(name, type, ctx.block(), currentScope);
+
+		// Defines the function in the current scope.
+		currentScope.define(program);
+	
+		
+		// Push: set function's parent to current
+		saveScope(ctx, program); 
+		
+		// Current Scope is now function scope
+		currentScope = program;
 	}
 	
 	public void exitProgram(BehaviorGrammarParser.ProgramContext ctx)
@@ -40,6 +59,12 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		System.out.println("Exit program: " );
 		System.out.println(globals);
 	}
+	
+	public void exitProgramparameter(BehaviorGrammarParser.ProgramparameterContext ctx) 
+	{ 
+		defineVar(ctx.type(), ctx.ID().getSymbol());
+	}
+
 	
 	public void enterFunction_dec(BehaviorGrammarParser.Function_decContext ctx)
 	{
@@ -222,6 +247,14 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		currentScope.define(var);
 		
 		System.out.println("Define var: " + var.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
+	}
+
+	public GlobalScope getGlobalScope(){
+		return globals;
+	}
+	
+	public ParseTreeProperty<Scope> getScopes(){
+		return scopes;
 	}
 	
 }

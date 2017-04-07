@@ -1,6 +1,5 @@
 package com.advicetec.language.transformation;
 
-
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
@@ -91,7 +90,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 		currentScope = currentScope.getEnclosingScope();
 	}
 
-	public void exitFormalparameter(TransformationGrammarParser.ProgramparameterContext ctx) 
+	public void exitProgramparameter(TransformationGrammarParser.ProgramparameterContext ctx) 
 	{ 
 		defineVar(ctx.type(), ctx.ID().getSymbol());
 	}
@@ -138,8 +137,6 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 		System.out.println("Define unit: " + unt.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
-
-
 
 	public void defineVar(TransformationGrammarParser.TypeContext typeCtx, Token nameToken)
 	{

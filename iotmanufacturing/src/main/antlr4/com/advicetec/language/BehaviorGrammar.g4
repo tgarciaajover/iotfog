@@ -1,9 +1,12 @@
 grammar BehaviorGrammar;
 
-program : PROGRAM ID PR_OPN formalparameters? PR_CLS
-		   BR_OPN (sentence)* BR_CLS 
+program : PROGRAM ID PR_OPN programparameters? PR_CLS block 
 		   (function_dec)*
 		  ;  
+
+programparameters : programparameter (',' programparameter)*;
+
+programparameter : type ID;
 
 function_dec : type ID PR_OPN formalparameters? PR_CLS block // example: int function(int param1, int param2, ..) { ... } 
 			;   

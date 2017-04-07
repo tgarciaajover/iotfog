@@ -7,7 +7,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
@@ -19,6 +21,8 @@ import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.ArrayAttributeSymbol;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
+import com.advicetec.language.ast.BehaviorSpace;
+import com.advicetec.language.ast.BehaviorSymbol;
 import com.advicetec.language.ast.FunctionSpace;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
@@ -66,6 +70,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		
 		// For memory evaluation
 		stack = new Stack<FunctionSpace>(); // call stack
+		System.out.println("Interpreter main");
 	}
 	
 	@Override 
@@ -76,11 +81,92 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		currentScope = globalScope; 
 		currentSpace = globals;
 		
-		for (BehaviorGrammarParser.SentenceContext sentence : ctx.sentence() )
-		{
-			this.visit(sentence);
-		}
-		return ASTNode.VOID;
+        String fname = ctx.PROGRAM().getText();
+        Symbol fs = currentScope.resolve(fname);
+
+        if ( fs == null ) {
+            listener.error( "no such function: " + fname);
+            throw new RuntimeException("no such function: " + fname);
+        }
+
+        if ( fs instanceof VariableSymbol ) {
+        	listener.error( fname + " is not a function");
+        	throw new RuntimeException(fname + " is not a function");
+        }
+
+        BehaviorSpace fspace = new BehaviorSpace((BehaviorSymbol) fs);
+        MemorySpace saveSpace = currentSpace;
+        Scope saveScope = currentScope; 
+        currentSpace = fspace;
+
+        // update the current scope to the one defined in the function. 
+        currentScope = (BehaviorSymbol) fs;
+
+        // Counts the number of parameters included.
+        int argCount = 0;
+        BehaviorGrammarParser.ProgramparametersContext listParams = ctx.programparameters();        
+        if (listParams != null)
+        {
+        	for ( BehaviorGrammarParser.ProgramparameterContext expres : listParams.programparameter())
+        		argCount++;
+        }
+        
+        System.out.println("num params:" + argCount);
+
+        // check for argument compatibility
+        if ( argCount==0 )
+        {
+        	if (
+        		 (((BehaviorSymbol)fs).getMembers() !=null) && 
+        		 (((BehaviorSymbol)fs).getMembers().size() !=0) )
+        	{
+        		throw new RuntimeException("function " + fs.getName() + " arguments required but not given");
+        	}
+        }
+        
+        if (argCount > 0)
+        {
+        	if ( ((BehaviorSymbol)fs).getMembers()==null ){
+        		throw new RuntimeException("function " + fs.getName() + " arguments not required and provided");
+        	}
+        	else if (((BehaviorSymbol)fs).getMembers().size()!=argCount){
+        		throw new RuntimeException("function " + fs.getName() + " wrong number of parameters");
+        	}
+        }
+        
+        if (listParams != null)
+        {
+	        int i = 0; // define args according to order in formalArgs
+	        for (Symbol argS : ((BehaviorSymbol)fs).getMembers().values()) {
+	            VariableSymbol arg = (VariableSymbol)argS;
+	            ASTNode argValue = this.visit(listParams.programparameter(i)); 
+	            fspace.put(arg.getName(), argValue);
+	            i++;
+	        }
+        }
+        
+        ASTNode result = null;
+        stack.push(fspace);        // PUSH new arg, local scope
+        this.visit( ((BehaviorSymbol)fs).block ); 
+
+        System.out.println("ending program:" + currentSpace.getkeys());
+        
+        // Copies the program stack to global stack to be returned to the interpreter caller.
+        Set<String> keys = currentSpace.getkeys();
+        for (Iterator<String> iterator = keys.iterator(); iterator.hasNext();) {
+			String id = (String) iterator.next();
+			saveSpace.put(id, currentSpace.get(id));
+		} 
+        
+        stack.pop();               // POP arg, locals
+        currentSpace = saveSpace;
+        
+        // goes up in the current scope.
+        currentScope = saveScope;
+        System.out.println("Starting function: "+ fname + "Ending currentScope:" + currentScope.getScopeName());        
+        
+        return result;
+
 	}
 	
 	@Override 
@@ -818,6 +904,18 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	     } 
 	}
     
+	public ASTNode visitProgramparameters(BehaviorGrammarParser.ProgramparameterContext ctx) 
+	{ 
+		String id = ctx.getText();
+		System.out.println("Visit Program Parameter:" + id);
+				
+        ASTNode value = globals.get(id);
+        if(value == null) {
+            throw new RuntimeException("no such parameter: " + id);
+        }
+        
+        return value;
+	}
     /** Return scope holding id's value; current func space or global. */
     public MemorySpace getSpaceWithSymbol(String id) 
     {
