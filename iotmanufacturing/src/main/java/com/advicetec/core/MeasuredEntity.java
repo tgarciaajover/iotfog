@@ -7,46 +7,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.advicetec.measuredentitity.AttributeMeasuredEntity;
+import com.advicetec.measuredentitity.MeasuredAttributeValue;
+import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.advicetec.measuredentitity.MeasuringStatus;
+import com.advicetec.measuredentitity.ReasonCode;
+import com.advicetec.measuredentitity.StatusInterval;
 import com.advicetec.persistence.MeasureAttributeValueStore;
 
-/**
- * Represents the resulting the measuring process.
- * It stores the values into cache.
- * 
- * @author user
- *
- */
-public class MeasuredEntity 
-{
-    private String id;
-    protected MeasuredEntityType type; 
-    private LocalDateTime startDateTimeStatus;	// last time interval
-    
-    private Map<String, MeasuredAttributeValue> measures;  // TODO: Should be a cache with write.
-    private Map<String, StatusInterval> intervals;		 // TODO: Should be a cache with write.
-    
-    private List<AttributeMeasuredEntity> attributes;
-    
-    public MeasuredEntity(String id, MeasuredEntityType type) 
-    {
-		super();
-		this.id = id;
-		this.type = type;
-		startDateTimeStatus = LocalDateTime.now();
-		//measures = new HashMap<String, MeasuredAttributeValue>();
-		intervals = new HashMap<String, StatusInterval>();
-		attributes = new ArrayList<AttributeMeasuredEntity>();
-	}
-
-package com.advicetec.core;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.advicetec.persistence.MeasureAttributeValueStore;
 
 /**
  * Represents the resulting the measuring process.

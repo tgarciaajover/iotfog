@@ -2,11 +2,11 @@ package com.advicetec.MessageProcessor;
 
 import java.util.List;
 
-import com.advicetec.core.MeasuredEntityFacade;
-import com.advicetec.core.MeasuredEntityManager;
 import com.advicetec.core.Processor;
 import com.advicetec.language.transformation.InterpreterSw;
 import com.advicetec.language.transformation.SyntaxChecking;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
+import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 

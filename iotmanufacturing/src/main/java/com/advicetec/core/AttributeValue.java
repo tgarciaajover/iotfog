@@ -5,9 +5,9 @@ import com.advicetec.measuredentitity.MeasuredEntityType;
 public class AttributeValue 
 {
 	
-	String key;
-	Attribute type;
-	Object value;
+	protected String key;
+	protected Attribute type;
+	protected Object value;
 	
 	// informative members.
 	/**

@@ -2,18 +2,12 @@ package com.advicetec.monitorAdapter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish;
-import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage;
 
-import com.advicetec.core.MeasuredEntity;
-import com.advicetec.core.MeasuredEntityFacade;
 import com.advicetec.MessageProcessor.SampleMessage;
-import com.advicetec.MessageProcessor.UnifiedMessageType;
 import com.advicetec.MessageProcessor.UnifiedMessage;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.MonitoringDevice;
@@ -25,7 +19,6 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 {
 
 	private MqttPublish mqttMessage;
-	private UnifiedMessage unifiedMessage;
 	
 	public Mqtt2UnifiedMessage(){
 		
