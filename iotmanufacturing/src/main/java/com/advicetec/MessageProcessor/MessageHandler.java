@@ -1,11 +1,16 @@
 package com.advicetec.MessageProcessor;
 
-import com.advicetec.monitorAdapter.AdapterHandler;
-import com.advicetec.monitorAdapter.Mqtt2UnifiedMessage;
 import com.advicetec.mpmcqueue.PriorityQueue;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
 
+/**
+ * This class is in charge of process the semantic transformation and
+ * create a list of Attributes which later will queue to the Event Processor.
+ * 
+ * @author user
+ *
+ */
 public class MessageHandler implements Runnable
 {
 

@@ -58,12 +58,6 @@
 			<version>${antlr4.plugin.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.jpavlich</groupId>
-			<artifactId>ast-visualizer</artifactId>
-			<version>[0.0.1,)</version>
-		</dependency>
-
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>

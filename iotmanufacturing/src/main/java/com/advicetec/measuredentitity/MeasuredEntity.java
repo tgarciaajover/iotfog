@@ -23,7 +23,7 @@ public abstract class MeasuredEntity
     protected MeasuredEntityType type; 
     protected LocalDateTime startDateTimeStatus;	// last time interval
     
-    protected Map<String, MeasuredAttributeValue> measures;  // TODO: Should be a cache with write.
+    protected MeasureAttributeValueStore measures;  // TODO: Should be a cache with write.
     protected Map<String, StatusInterval> intervals;		 // TODO: Should be a cache with write.
     
     protected List<AttributeMeasuredEntity> attributes;

@@ -3,8 +3,6 @@ package com.advicetec.MessageProcessor;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
 import com.advicetec.eventprocessor.EventManager;
-import com.advicetec.monitorAdapter.AdapterHandler;
-import com.advicetec.monitorAdapter.AdapterManager;
 
 public class MessageManager extends Manager 
 {

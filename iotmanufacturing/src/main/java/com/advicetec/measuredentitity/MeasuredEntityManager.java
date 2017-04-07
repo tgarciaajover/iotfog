@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.advicetec.core.Configurable;
-import com.advicetec.core.Manager;
+import com.advicetec.persistence.MeasureAttributeValueStore;
 
 /**
  * This class manages the list of entities.
@@ -21,6 +21,22 @@ public class MeasuredEntityManager extends Configurable {
 	private MeasuredEntityManager(){
 		super("MeasuredEntity");
 		entities = new ArrayList<MeasuredEntityFacade>();
+		
+		String[] machines = properties.getProperty("machines").split(",");
+		String initCapacity = properties.getProperty("cache_initialCapacity");
+		String maxSize = properties.getProperty("cache_maxSize");
+		
+		// creates an instance if it is not exists
+		MeasureAttributeValueStore.getInstance();
+		// sets cache parameters
+		MeasureAttributeValueStore.setCache(
+				Integer.parseInt(initCapacity), Integer.parseInt(maxSize));
+
+		for (int i = 0; i < machines.length; i++) {
+			Machine m = new Machine(machines[i], MeasuredEntityType.MACHINE);
+			MeasuredEntityFacade f = new MeasuredEntityFacade(m);
+			entities.add(f);
+		}
 	}
 
 	public static MeasuredEntityManager getInstance(){
@@ -37,7 +53,7 @@ public class MeasuredEntityManager extends Configurable {
 	 */
 	private boolean entityAlreadyExists(final MeasuredEntity entity){	
 		for (MeasuredEntityFacade facade : entities) {
-			if(facade.getEntity().equals(entity)){
+			if(facade.getEntity().getId().equals(entity)){
 				return true;
 			}
 		}
