@@ -3,6 +3,7 @@ package com.advicetec.MessageProcessor;
 import com.advicetec.mpmcqueue.PriorityQueue;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
+import com.advicetec.persistence.StatusStore;
 
 /**
  * This class is in charge of process the semantic transformation and

@@ -12,6 +12,7 @@ import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarLexer;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.AttributeSymbol;
+import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.TransformationSymbol;
@@ -20,9 +21,10 @@ import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class InterpreterSw 
-{
-
+{	
 	private static final String EXTENSION = "properties";
+	
+	private DefPhase defPhase;
 	
     public static Symbol.Type getType(int tokenType) {
 
@@ -44,11 +46,15 @@ public class InterpreterSw
 
     public static void error(Token t, String msg) 
     {
-
         System.err.printf("line %d:%d %s\n", t.getLine(), t.getCharPositionInLine(),msg);
-
     }
     
+    /**
+     * 
+     * @param program
+     * @param parameters
+     * @throws Exception
+     */
     public void process(String program, List<InterpretedSignal> parameters) throws Exception 
     {
 
@@ -67,17 +73,17 @@ public class InterpreterSw
 
         ParseTreeWalker walker = new ParseTreeWalker();
 
-        DefPhase def = new DefPhase();
+        defPhase = new DefPhase();
 
-        walker.walk(def, tree);
+        walker.walk(defPhase, tree);
         
-        System.out.println("Defphase finished globals: " + def.globals.toString());
+        System.out.println("Defphase finished globals: " + defPhase.getGlobalScope().toString());
         
         // create next phase and feed symbol table info from def to ref phase
         MemorySpace globals = new MemorySpace("globals");  
         
         String programStr = lexer.getRuleNames()[TransformationGrammarLexer.PROGRAM];
-        Symbol symbol = def.globals.resolve(programStr);
+        Symbol symbol = defPhase.getGlobalScope().resolve(programStr);
         
         if ( symbol == null ) {
             throw new RuntimeException("no program defined " + programStr);
@@ -129,10 +135,13 @@ public class InterpreterSw
             i++;
         }
         
-        Interpreter ref = new Interpreter(def.globals, globals, def.scopes);
+        Interpreter ref = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes());
         ref.visit(tree);
 
         System.out.println("Interpreter phase finished globals" + ref.globals.toString());
-        
-    }    
+    } 
+    
+    public GlobalScope getGlobalScope(){
+    	return defPhase.getGlobalScope();
+    }
 }

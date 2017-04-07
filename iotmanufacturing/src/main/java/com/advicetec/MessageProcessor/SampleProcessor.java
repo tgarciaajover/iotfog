@@ -3,18 +3,20 @@ package com.advicetec.MessageProcessor;
 import java.util.List;
 
 import com.advicetec.core.Processor;
+import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.transformation.InterpreterSw;
 import com.advicetec.language.transformation.SyntaxChecking;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
+import com.advicetec.persistence.StatusStore;
 
 
 public class SampleProcessor implements Processor 
 {
 
-	SampleMessage sample;
-	
+	private SampleMessage sample;
+	private InterpreterSw interpreter;
 	
 	public SampleProcessor(SampleMessage sample) {
 		super();
@@ -42,8 +44,10 @@ public class SampleProcessor implements Processor
 			
 			// Then, we read parameters from message and pass them to the interpreter as global variables.
 			List<InterpretedSignal> list = sample.getValues();
-			InterpreterSw interpreter = new InterpreterSw();
+			interpreter = new InterpreterSw();
 			interpreter.process(program,list);
+			// stores the status of attributes
+			StatusStore.getInstance().importSymbols(measuringEntity,interpreter.getGlobalScope().getAttributes());
 		
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
@@ -51,5 +55,6 @@ public class SampleProcessor implements Processor
 		}		
 
 	}
-
+	
+	
 }

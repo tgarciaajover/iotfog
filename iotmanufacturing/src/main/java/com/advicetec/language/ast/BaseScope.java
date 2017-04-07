@@ -1,5 +1,6 @@
 package com.advicetec.language.ast;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -42,6 +43,17 @@ public abstract class BaseScope implements Scope
 	public String toString() 
 	{ 
 		return symbols.keySet().toString(); 
+	}
+	
+	public Map<String, Symbol> getAttributes(){
+		Map<String, Symbol> map = new HashMap<String, Symbol>();
+		for (String key : symbols.keySet()) {
+			Symbol symbol = symbols.get(key);
+			if(symbol instanceof AttributeSymbol){
+				map.put(key, symbol);
+			}
+		}
+		return map;
 	}
 
 }

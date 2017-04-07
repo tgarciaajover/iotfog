@@ -2,7 +2,7 @@ package com.advicetec.core;
 
 import com.advicetec.measuredentitity.MeasuredEntityType;
 
-public class AttributeValue 
+public  class AttributeValue 
 {
 	
 	protected String key;
