@@ -21,8 +21,6 @@ public class LanguageBehaviorTest
 		String program = "test/behaviortest." + EXTENSION;
 
 		System.out.println("Interpreting file " + program);
-
-		
 		
 		List<InterpretedSignal> list = new ArrayList<InterpretedSignal>();
 		LocalDateTime current = LocalDateTime.of(2017, 3, 9, 19, 46, 45);
@@ -36,7 +34,7 @@ public class LanguageBehaviorTest
 		InterpreterSw interpreter = new InterpreterSw();
 		try 
 		{
-			interpreter.process(program);
+			interpreter.process(program, list);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
