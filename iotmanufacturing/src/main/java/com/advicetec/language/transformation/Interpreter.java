@@ -12,16 +12,21 @@ import java.util.Stack;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.Token;
 
+import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseVisitor;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.FunctionSpace;
+import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.ReturnValue;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.TransformationSpace;
+import com.advicetec.language.ast.TransformationSymbol;
+import com.advicetec.language.ast.VariableSymbol;
 
 public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 {
@@ -46,7 +51,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	
 	MemorySpace globals;
 	MemorySpace currentSpace;
-	Stack<FunctionSpace> stack; // call stack
+	Stack<TransformationSpace> stack; // call stack
 	
 	// used to compare floating point numbers
     public static final double SMALL_VALUE = 0.00000000001;
@@ -60,7 +65,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		this.currentScope = _globalScope;
 		
 		// For memory evaluation
-		stack = new Stack<FunctionSpace>(); // call stack
+		stack = new Stack<TransformationSpace>(); // call stack
 	}
 	
 	@Override 
@@ -71,11 +76,83 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		currentScope = globalScope; 
 		currentSpace = globals;
 		
-		for (TransformationGrammarParser.SentenceContext sentence : ctx.sentence() )
-		{
-			this.visit(sentence);
-		}
-		return ASTNode.VOID;
+        String fname = ctx.PROGRAM().getText();
+        Symbol fs = currentScope.resolve(fname);
+
+        if ( fs == null ) {
+            listener.error( "no such function: " + fname);
+            throw new RuntimeException("no such function: " + fname);
+        }
+
+        if ( fs instanceof VariableSymbol ) {
+        	listener.error( fname + " is not a function");
+        	throw new RuntimeException(fname + " is not a function");
+        }
+
+        TransformationSpace fspace = new TransformationSpace((TransformationSymbol) fs);
+        MemorySpace saveSpace = currentSpace;
+        Scope saveScope = currentScope; 
+        currentSpace = fspace;
+
+        // update the current scope to the one defined in the function. 
+        currentScope = (TransformationSymbol) fs;
+
+        // Counts the number of parameters included.
+        int argCount = 0;
+        TransformationGrammarParser.ProgramparametersContext listParams = ctx.programparameters();        
+        if (listParams != null)
+        {
+        	for ( TransformationGrammarParser.ProgramparameterContext expres : listParams.programparameter())
+        		argCount++;
+        }
+        
+        System.out.println("num params:" + argCount);
+
+        // check for argument compatibility
+        if ( argCount==0 )
+        {
+        	if (
+        		 (((TransformationSymbol)fs).getMembers() !=null) && 
+        		 (((TransformationSymbol)fs).getMembers().size() !=0) )
+        	{
+        		throw new RuntimeException("function " + fs.getName() + " arguments required but not given");
+        	}
+        }
+        
+        if (argCount > 0)
+        {
+        	if ( ((TransformationSymbol)fs).getMembers()==null ){
+        		throw new RuntimeException("function " + fs.getName() + " arguments not required and provided");
+        	}
+        	else if (((TransformationSymbol)fs).getMembers().size()!=argCount){
+        		throw new RuntimeException("function " + fs.getName() + " wrong number of parameters");
+        	}
+        }
+        
+        if (listParams != null)
+        {
+	        int i = 0; // define args according to order in formalArgs
+	        for (Symbol argS : ((TransformationSymbol)fs).getMembers().values()) {
+	            VariableSymbol arg = (VariableSymbol)argS;
+	            ASTNode argValue = this.visit(listParams.programparameter(i)); 
+	            fspace.put(arg.getName(), argValue);
+	            i++;
+	        }
+        }
+        
+        ASTNode result = null;
+        stack.push(fspace);        // PUSH new arg, local scope
+        this.visit( ((FunctionSymbol)fs).block ); 
+
+        stack.pop();               // POP arg, locals
+        currentSpace = saveSpace;
+        
+        // goes up in the current scope.
+        currentScope = saveScope;
+        System.out.println("Starting function: "+ fname + "Ending currentScope:" + currentScope.getScopeName());        
+        
+        return result;
+
 	}
 	
 	@Override 
@@ -392,105 +469,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		return new ASTNode(ret);
 	}
-	
-	/*
-	@Override 
-	public ASTNode visitCall(TransformationGrammarParser.CallContext ctx) 
-	{ 
-        
-		System.out.println("visitCall");
 		
-		// Resolve function's name
-        String fname = ctx.ID().getText();
-        Symbol fs = currentScope.resolve(fname);
-
-        if ( fs == null ) {
-            listener.error( "no such function: " + fname);
-            throw new RuntimeException("no such function: " + fname);
-        }
-
-        if ( fs instanceof VariableSymbol ) {
-        	listener.error( fname + " is not a function");
-        	throw new RuntimeException(fname + " is not a function");
-        }
-        
-        FunctionSpace fspace = new FunctionSpace((FunctionSymbol) fs);
-        MemorySpace saveSpace = currentSpace;
-        Scope saveScope = currentScope; 
-        currentSpace = fspace;
-        
-        // update the current scope to the one defined in the function. 
-        currentScope = (FunctionSymbol) fs;
-
-        System.out.println("Starting function: "+ fname + " currentScope:" + currentScope.getScopeName());
-        
-        // Counts the number of parameters included.
-        int argCount = 0;
-        TransformationGrammarParser.ExpressionListContext listParams = ctx.expressionList();        
-        if (listParams != null)
-        {
-        	for ( TransformationGrammarParser.ExpressionContext expres : listParams.expression())
-        		argCount++;
-        }
-        
-        System.out.println("num params:" + argCount);
-        
-        // check for argument compatibility
-        if ( argCount==0 )
-        {
-        	if (
-        		 (((FunctionSymbol)fs).getMembers() !=null) && 
-        		 (((FunctionSymbol)fs).getMembers().size() !=0) )
-        	{
-        		throw new RuntimeException("function " + fs.getName() + " arguments required but not given");
-        	}
-        }
-        
-        if (argCount > 0)
-        {
-        	if ( ((FunctionSymbol)fs).getMembers()==null ){
-        		throw new RuntimeException("function " + fs.getName() + " arguments not required and provided");
-        	}
-        	else if (((FunctionSymbol)fs).getMembers().size()!=argCount){
-        		throw new RuntimeException("function " + fs.getName() + " wrong number of parameters");
-        	}
-        }
-        
-        if (listParams != null){
-	        int i = 0; // define args according to order in formalArgs
-	        for (Symbol argS : ((FunctionSymbol)fs).getMembers().values()) {
-	            VariableSymbol arg = (VariableSymbol)argS;
-	            ASTNode argValue = this.visit(listParams.expression(i)); 
-	            fspace.put(arg.getName(), argValue);
-	            i++;
-	        }
-        }
-        
-        // TODO: verify the type of parameter.
-        
-        ASTNode result = null;
-        stack.push(fspace);        // PUSH new arg, local scope
-        try 
-        { 
-        	this.visit( ((FunctionSymbol)fs).block ); 
-        } // do the call
-        catch (ReturnValue rv) 
-        { 
-        	result = rv.value; 
-        } // trap return value
-        
-        stack.pop();               // POP arg, locals
-        currentSpace = saveSpace;
-        
-        // goes up in the current scope.
-        currentScope = saveScope;
-        System.out.println("Starting function: "+ fname + "Ending currentScope:" + currentScope.getScopeName());
-        return result;
-
-	}
-	*/
-	
-	
 	@Override 
 	public ASTNode visitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
@@ -613,6 +592,19 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	    } 
 	}
     
+	public ASTNode visitFormalparameters(TransformationGrammarParser.ProgramparameterContext ctx) 
+	{ 
+		String id = ctx.getText();
+		System.out.println("Visit Program Parameter:" + id);
+				
+        ASTNode value = globals.get(id);
+        if(value == null) {
+            throw new RuntimeException("no such parameter: " + id);
+        }
+        
+        return value;
+	}
+	
     /** Return scope holding id's value; current func space or global. */
     public MemorySpace getSpaceWithSymbol(String id) 
     {

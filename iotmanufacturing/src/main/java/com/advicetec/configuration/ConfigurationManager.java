@@ -63,4 +63,8 @@ public class ConfigurationManager extends Configurable
 	public String getClassName(String macAddress, String portLabel){
 		return this.monitoringDevices.getByMacAddress(macAddress).getClassName(portLabel);
 	}
+	
+	public String getMeasuredEntity(String macAddress, String portLabel){
+		return this.monitoringDevices.getByMacAddress(macAddress).getInputOutputPort(portLabel).getMeasuringEntity();
+	}
 }

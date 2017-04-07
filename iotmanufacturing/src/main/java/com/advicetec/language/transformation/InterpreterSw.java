@@ -1,5 +1,8 @@
 package com.advicetec.language.transformation;
 
+import java.util.List;
+import java.util.Map;
+
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
@@ -7,8 +10,14 @@ import org.antlr.v4.runtime.tree.*;
 
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarLexer;
+import com.advicetec.language.ast.ASTNode;
+import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.TransformationSymbol;
+import com.advicetec.language.ast.UnitMeasureSymbol;
+import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class InterpreterSw 
 {
@@ -40,7 +49,7 @@ public class InterpreterSw
 
     }
     
-    public void process(String program) throws Exception 
+    public void process(String program, List<InterpretedSignal> parameters) throws Exception 
     {
 
 		TransformationGrammarLexer lexer = new TransformationGrammarLexer(new ANTLRFileStream(program));
@@ -63,9 +72,62 @@ public class InterpreterSw
         walker.walk(def, tree);
         
         System.out.println("Defphase finished globals: " + def.globals.toString());
-
+        
         // create next phase and feed symbol table info from def to ref phase
         MemorySpace globals = new MemorySpace("globals");  
+        
+        String programStr = lexer.getRuleNames()[TransformationGrammarLexer.PROGRAM];
+        Symbol symbol = def.globals.resolve(programStr);
+        
+        if ( symbol == null ) {
+            throw new RuntimeException("no program defined " + programStr);
+        }
+
+        if ( symbol instanceof VariableSymbol ) {
+        	throw new RuntimeException(programStr + " is not a function");
+        }
+
+        if ( symbol instanceof AttributeSymbol ) {
+        	throw new RuntimeException(programStr + " is not a function");
+        }
+
+        if ( symbol instanceof UnitMeasureSymbol ) {
+        	throw new RuntimeException(programStr + " is not a function");
+        }
+
+        TransformationSymbol ts = (TransformationSymbol) symbol;
+        Map<String, Symbol> parametersDef =  ts.getMembers();
+
+        // The following code verifies the number of parameters given.
+        int argCount = parameters.size();
+        if ( argCount==0 )
+        {
+        	if (
+        		 (((TransformationSymbol)ts).getMembers() !=null) && 
+        		 (((TransformationSymbol)ts).getMembers().size() !=0) )
+        	{
+        		throw new RuntimeException("program " + ts.getName() + " parameters required but not given");
+        	}
+        }
+        
+        if (argCount > 0)
+        {
+        	if ( ((TransformationSymbol)ts).getMembers()==null ){
+        		throw new RuntimeException("program " + ts.getName() + " parameters not required and provided");
+        	}
+        	else if (((TransformationSymbol)ts).getMembers().size()!=argCount){
+        		throw new RuntimeException("program " + ts.getName() + " wrong number of parameters");
+        	}
+        }
+                
+        // pass the parameters to the program. 
+        int i = 0;
+        for (Symbol argS : ((TransformationSymbol)ts).getMembers().values()) {
+            VariableSymbol arg = (VariableSymbol)argS;
+            ASTNode argValue = new ASTNode(parameters.get(i).getValue()); 
+            globals.put(arg.getName(), argValue);
+            i++;
+        }
         
         Interpreter ref = new Interpreter(def.globals, globals, def.scopes);
         ref.visit(tree);

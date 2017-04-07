@@ -12,8 +12,10 @@ import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.LocalScope;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.language.behavior.SyntaxChecking;
 
 import org.antlr.v4.runtime.Token;
 
@@ -30,6 +32,18 @@ public class DefPhase extends TransformationGrammarBaseListener
 	{
 		globals = new GlobalScope();
 		currentScope = globals;
+
+		String name = ctx.PROGRAM().getText();
+		
+		// Transformation program does not have a return value.
+		Symbol.Type type = SyntaxChecking.getType(TransformationGrammarParser.K_VOID);
+		
+		// push new scope by making new one that points to enclosing scope
+		TransformationSymbol program = new TransformationSymbol(name, type, ctx.block(), currentScope);
+		
+		// Defines the function in the current scope.
+		currentScope.define(program);
+
 	}
 	
 	public void exitProgram(TransformationGrammarParser.ProgramContext ctx)
@@ -73,7 +87,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 		
 	}
 	
-	public void exitFormalparameter(TransformationGrammarParser.FormalparameterContext ctx) 
+	public void exitFormalparameter(TransformationGrammarParser.ProgramparameterContext ctx) 
 	{ 
 		defineVar(ctx.type(), ctx.ID().getSymbol());
 	}

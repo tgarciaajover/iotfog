@@ -1,10 +1,10 @@
 grammar TransformationGrammar;
 
-program : PROGRAM ID PR_OPN formalparameters? PR_CLS BR_OPN (sentence)* BR_CLS;  
+program : PROGRAM ID PR_OPN programparameters? PR_CLS block;  
 
-formalparameters : formalparameter (',' formalparameter)*;
+programparameters : programparameter (',' programparameter)*;
 
-formalparameter : type ID;
+programparameter : type ID;
 
 type : K_FLOAT | K_INT  | K_BOOL | K_STR | K_VOID | K_DATETIME | K_TIME | K_DATE;
 

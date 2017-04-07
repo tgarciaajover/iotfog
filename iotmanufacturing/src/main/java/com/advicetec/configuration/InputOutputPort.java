@@ -11,6 +11,7 @@ public class InputOutputPort extends ConfigurationObject  {
 	private String transformationText;
 	private String behaviorText;
 	private String portLabel;
+	private String measuringEntity; 
 	
 	public String getPortLabel() {
 		return portLabel;
@@ -46,6 +47,14 @@ public class InputOutputPort extends ConfigurationObject  {
 
 	public void setBehaviorText(String behaviorText) {
 		this.behaviorText = behaviorText;
+	}
+
+	public String getMeasuringEntity() {
+		return measuringEntity;
+	}
+
+	public void setMeasuringEntity(String measuringEntity) {
+		this.measuringEntity = measuringEntity;
 	}
 	
 }

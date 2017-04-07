@@ -1,36 +1,40 @@
 package com.advicetec.MessageProcessor;
 
+import java.util.List;
+
+import com.advicetec.configuration.InputOutputPort;
+import com.advicetec.configuration.MonitoringDevice;
+import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class SampleMessage extends MeasuringMessage 
 {
 
-	byte[] value;
+	List<InterpretedSignal> values;
 	private String meaningTransformation;
 	
-	public SampleMessage(byte[] value) {
-		super(UnifiedMessageType.SAMPLE);
-		this.value = value;
+	public SampleMessage(MonitoringDevice device, InputOutputPort port, String entityId, List<InterpretedSignal> values, String meaningTransformation) 
+	{
+		super(UnifiedMessageType.SAMPLE, device, port, entityId);
+		this.values = values;
+		this.meaningTransformation = meaningTransformation;
 	}
 	
-	public byte[] getValue() {
-		return value;
-	}
-	
-	public void setValue(byte[] value) {
-		this.value = value;
+	public List<InterpretedSignal> getValue() {
+		return values;
 	}
 	
 	public String toString(){
-		return "Sample Message: Type = "+getType().getName()+" value = "+ value.toString();
+		return "Sample Message: Type = "+getType().getName()+" value = "+ values.toString();
 	}
 	
 	public String getMeaningTransformation() {
 		return meaningTransformation;
 	}
-	
-	public void setMeaningTransformation(String meaningTransformation) {
-		this.meaningTransformation = meaningTransformation;
+
+	public List<InterpretedSignal> getValues() {
+		return values;
 	}
+	
 	
 	
 }
