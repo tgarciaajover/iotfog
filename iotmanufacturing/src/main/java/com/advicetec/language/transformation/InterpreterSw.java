@@ -65,12 +65,14 @@ public class InterpreterSw
         TransformationGrammarParser parser = new TransformationGrammarParser(tokens);
 
         parser.setBuildParseTree(true);
-
+        
         ParseTree tree = parser.program();
 
-        // show tree in text form
-        // System.out.println(tree.toStringTree(parser));
-
+	    String mainProgramStr = (parser.getTokenNames())[TransformationGrammarLexer.PROGRAM];
+	    
+	    // Token names come with a ' at the begin and end. We remove them. 
+	    mainProgramStr = mainProgramStr.replace("'", "");
+        
         ParseTreeWalker walker = new ParseTreeWalker();
 
         defPhase = new DefPhase();
@@ -83,8 +85,9 @@ public class InterpreterSw
         MemorySpace globals = new MemorySpace("globals");  
         
         String programStr = lexer.getRuleNames()[TransformationGrammarLexer.PROGRAM];
-        Symbol symbol = defPhase.getGlobalScope().resolve(programStr);
-        
+                                
+        Symbol symbol = defPhase.getGlobalScope().resolve(mainProgramStr);
+                
         if ( symbol == null ) {
             throw new RuntimeException("no program defined " + programStr);
         }
