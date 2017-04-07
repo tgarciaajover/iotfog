@@ -667,7 +667,8 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
         	}
         }
         
-        if (listParams != null){
+        if (listParams != null)
+        {
 	        int i = 0; // define args according to order in formalArgs
 	        for (Symbol argS : ((FunctionSymbol)fs).getMembers().values()) {
 	            VariableSymbol arg = (VariableSymbol)argS;

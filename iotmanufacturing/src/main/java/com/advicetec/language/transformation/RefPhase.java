@@ -35,12 +35,12 @@ public class RefPhase extends TransformationGrammarBaseListener
 		System.out.println("refPhase exit program: ");
 	}	
 	
-	public void enterFormalparameters(TransformationGrammarParser.FormalparametersContext ctx) 
+	public void enterFormalparameters(TransformationGrammarParser.ProgramparametersContext ctx) 
 	{ 
 		System.out.println("refPhase enter formal parameters: ");
 	}
 	
-	public void exitFormalparameters(TransformationGrammarParser.FormalparametersContext ctx) 
+	public void exitFormalparameters(TransformationGrammarParser.ProgramparametersContext ctx) 
 	{ 
 		System.out.println("refPhase exit formal parameters: ");
 	}
