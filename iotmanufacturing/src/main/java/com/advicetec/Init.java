@@ -8,7 +8,7 @@ public class Init {
 	public static void main(String[] args) {
 		
 		// caches initiation
-		StatusStore.getInstance();
+		//		StatusStore.getInstance();
 		
 		AdapterManager adapterManager = AdapterManager.getInstance();
 		Thread managerThread = new Thread(); 

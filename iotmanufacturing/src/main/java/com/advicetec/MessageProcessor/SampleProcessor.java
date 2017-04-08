@@ -48,7 +48,7 @@ public class SampleProcessor implements Processor
 			interpreter.process(program,list);
 			// stores the status of attributes
 			entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap());
-			entityFacade.importAttributeValues(interpreter.)
+			entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());
 		
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block

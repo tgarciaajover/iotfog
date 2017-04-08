@@ -9,6 +9,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.advicetec.core.Attribute;
+import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.MeasureAttributeValueStore;
@@ -37,7 +38,7 @@ public class MeasuredEntityFacade {
 
 	public MeasuredEntityFacade(MeasuredEntity entity) {
 		this.entity = entity;
-		status = new StatusStore(entity.getId());
+		status = new StatusStore();
 	}
 
 	public MeasuredEntity getEntity() {
@@ -79,13 +80,14 @@ public class MeasuredEntityFacade {
 		
 		// update status
 		status.setAttribute(attribute);
+		
 	}
 
 	
 	public MeasuredEntityFacade(){
 		store = MeasureAttributeValueStore.getInstance();
 		attMap = new HashMap<String, SortedMap<LocalDateTime,String>>();
-		status = new StatusStore(entity.getId());
+		status = new StatusStore();
 	}
 
 	/**
@@ -207,11 +209,19 @@ public class MeasuredEntityFacade {
 	}
 
 	public void importSymbols(Map<String, Symbol> symbolMap) {
-		
-		
+		status.importSymbols(symbolMap);
 	}
 	
 	public Collection<Attribute> getStatus(){
 		return status.getStatus();
 	}
+
+	public void importAttributeValues(Map<String, ASTNode> valueMap) {
+		status.importAttributeValues(valueMap,entity.getId(),entity.getType());
+	}
+	
+	public Collection<AttributeValue> getAttributeValues(){
+		return status.getAttributeValues();
+	}
+	
 }
