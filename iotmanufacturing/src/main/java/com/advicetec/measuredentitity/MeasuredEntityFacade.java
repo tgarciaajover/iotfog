@@ -10,6 +10,7 @@ import java.util.TreeMap;
 
 import com.advicetec.core.Attribute;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.MeasureAttributeValueStore;
 import com.advicetec.persistence.StatusStore;
 
@@ -118,12 +119,25 @@ public class MeasuredEntityFacade {
 	 * @param attName
 	 * @return
 	 */
-	public MeasuredAttributeValue getOldestByAttributeName(String attName){
+	public AttributeValue getOldestByAttributeName(String attName){
 		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
 		if(internalMap == null){
 			return null;
 		}
 		return store.getFromCache(internalMap.get(internalMap.firstKey()));
+	}
+
+	/**
+	 * Returns the newest Measured Attribute Value for a given Attribute name.
+	 * @param attName
+	 * @return
+	 */
+	public AttributeValue getNewestByAttributeName(String attName){
+		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
+		if(internalMap == null){
+			return null;
+		}
+		return store.getFromCache(internalMap.get(internalMap.lastKey()));
 	}
 
 

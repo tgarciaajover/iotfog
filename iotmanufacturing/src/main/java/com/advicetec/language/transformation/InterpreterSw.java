@@ -22,9 +22,9 @@ import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class InterpreterSw 
 {	
-	private static final String EXTENSION = "properties";
 	
 	private DefPhase defPhase;
+	private Interpreter interpreter;
 	
     public static Symbol.Type getType(int tokenType) {
 
@@ -138,13 +138,17 @@ public class InterpreterSw
             i++;
         }
         
-        Interpreter ref = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes());
-        ref.visit(tree);
+        interpreter = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes());
+        interpreter.visit(tree);
 
-        System.out.println("Interpreter phase finished globals" + ref.globals.toString());
+        System.out.println("Interpreter phase finished globals" + interpreter.globals.toString());
     } 
     
     public GlobalScope getGlobalScope(){
     	return defPhase.getGlobalScope();
+    }
+    
+    public MemorySpace getGlobalSpace(){
+    	return interpreter.getGlobalSpace();
     }
 }

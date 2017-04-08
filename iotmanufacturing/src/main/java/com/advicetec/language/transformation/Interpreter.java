@@ -627,5 +627,8 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         return null;                                        // nowhere
     }
 
+	public MemorySpace getGlobalSpace(){
+		return globals;
+	}
 	
 }

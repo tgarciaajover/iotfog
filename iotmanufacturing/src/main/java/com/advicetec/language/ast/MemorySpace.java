@@ -19,4 +19,8 @@ public class MemorySpace
     public String toString() { return name+":"+members; }
     
     public Set<String> getkeys() { return members.keySet(); }
+
+	public Map<String, ASTNode> getSymbolMap(){
+		return members;
+	}
 }

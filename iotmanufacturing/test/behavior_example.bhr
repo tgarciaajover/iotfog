@@ -1,0 +1,69 @@
+program  main(attr boolean cycles)
+{
+
+    unit CYC "Cycles";
+    unit COT "Cycles over time";
+    unit CPM "Cycles per minute";
+    unit CPH "Cycles per hour";
+    unit MPC "Thousands per cycle";
+
+	attr float producing_cot unit COT;
+	attr float scrap_substractor unit COT;
+	attr float speed_min unit CPM;
+	attr float speed_hour unit CPH;
+	attr int   part_pulse_masked unit CYC;
+	attr float conversion_factor;
+	
+	// Get the values from 
+	attr boolean idle_condition = STATUS.master_reset;
+	attr boolean master_reset = STATUS.idle_condition;
+	attr boolean testing_inv; = STATUS.testing_inv;
+	attr boolean idle; = STATUS.idle;
+	attr float conversion_factor = STATUS.conversion_factor;
+	
+	// Constants.	
+	var producing_limit = 8;
+	var minutes_per_hour = 60; 
+	
+	producing_cot = count_over_time(cycles, Seconds, 60, 5);
+	scrap_substractor = producing_cot - reward_amount;
+	
+	speed_min  = count_over_time(cycles, Seconds, 60, 15);
+	speed_hour = speed_min * minutes_per_hour;
+	 
+	part_pulse_masked = cycles;
+	
+	if (producing_cot > producing_limit) 
+	{
+		part_pulse_total = testing_inv AND cycles;
+		pulses_millares = part_pulse_total * conversion_factor;
+		production_condition = testing_inv;
+	} else {
+	    idle_condition = true;
+	}
+
+    producing = latch (production_condition, idle_condition)
+    idle = idle_condition;
+    shift_change_idle_latch = latch(shift_change_idle_on)
+    shift_change_idle = shift_change_idle_latch AND shift_pulse_start;
+    
+    // ----
+    // --- Something not analyzed
+    // ----
+    // unschedule_time_pulse_change = pulse_on_change(unschedule_time);
+    
+    unschedule_time_pulse = unschedule_time AND unschedule_time_pulse_change;
+    supervised_shutdown = no_shift_schedule OR unschedule_time_pulse;
+    below_rate_count = count_over_time( part_pulse_masked, seconds, 30, 5)
+    if (below_rate_count < 2){         
+ 		below_rate_condition
+	}
+	
+    // ----
+    // --- Something not analyzed
+    // ----
+	// below_rate_exceeded = timer_operation(seconds);
+	
+	
+	
+}  

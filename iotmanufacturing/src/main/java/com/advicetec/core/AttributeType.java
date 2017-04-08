@@ -4,11 +4,14 @@ public enum AttributeType
 {
 	
 	   DOUBLE(0,"Double"),
-	   DATETIME(1,"Datetime"),
-	   STRING(2,"String"),
-	   INT(3,"Integer");
-	   //TODO
-	  
+	   INT(1,"Integer"),
+	   BOOLEAN(2,"Boolean"),
+	   STRING(3,"String"),		  
+	   DATETIME(4,"Datetime"),
+	   VOID(5,"Void"),
+	   DATE(6,"Date"),
+	   TIME(7,"Time");
+	   
 	   private int code;
 	   private String name;
 	   

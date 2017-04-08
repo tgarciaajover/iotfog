@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.*;
 
+import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarLexer;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.ast.ASTNode;
@@ -19,12 +20,15 @@ import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
+import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class InterpreterSw 
 {
 
 	private DefPhase defPhase;
+	private Interpreter interpreter; 
 	
     public static Symbol.Type getType(int tokenType) {
 
@@ -57,7 +61,7 @@ public class InterpreterSw
      * @param parameters
      * @throws Exception
      */
-    public void process(String program, List<InterpretedSignal> parameters) throws Exception 
+    public void process(String program, String entityId, List<AttributeValue> parameters) throws Exception 
     {
 
 		BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(new ANTLRFileStream(program));
@@ -77,11 +81,11 @@ public class InterpreterSw
 
         ParseTreeWalker walker = new ParseTreeWalker();
 
-        DefPhase def = new DefPhase();
+        defPhase = new DefPhase();
 
-        walker.walk(def, tree);
+        walker.walk(defPhase, tree);
        
-        System.out.println("Defphase finished globals: " + def.getGlobalScope().toString());
+        System.out.println("Defphase finished globals: " + defPhase.getGlobalScope().toString());
 
         // create next phase and feed symbol table info from def to ref phase
         MemorySpace globals = new MemorySpace("globals");  
@@ -140,16 +144,19 @@ public class InterpreterSw
             i++;
         }
 
-        Interpreter ref = new Interpreter(def.getGlobalScope(), globals, def.getScopes());
-        ref.visit(tree);
+        MeasuredEntityManager manager = MeasuredEntityManager.getInstance();
+        MeasuredEntityFacade facade = manager.getFacadeOfEntityById(entityId);
+        
+        interpreter = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
+        interpreter.visit(tree);
         
         System.out.println("Interpreter phase finished");
         int numElements;
         
-        Set<String> ids = ref.globals.getkeys();
+        Set<String> ids = interpreter.globals.getkeys();
         for (String id : ids ) 
         {
-        	Symbol sym = def.getGlobalScope().resolve(id);
+        	Symbol sym = defPhase.getGlobalScope().resolve(id);
         	 
         	System.out.println("Global variable:" + id);
         	
@@ -162,20 +169,24 @@ public class InterpreterSw
         		for (int j = 0; i < numElements; j++)
         		{
         			if (sym.getType() == Symbol.Type.tFLOAT){
-        				Double val = (ref.globals.get(id).asDoubleVector())[j];
+        				Double val = (interpreter.globals.get(id).asDoubleVector())[j];
         				System.out.println("Vector " + id + "position : " + j + "value" + val);
         			}
         			
         			if (sym.getType() == Symbol.Type.tINT){
-        				Integer val = (ref.globals.get(id).asIntegerVector())[i];
+        				Integer val = (interpreter.globals.get(id).asIntegerVector())[i];
         				System.out.println("Vector " + id + "position : " + i + "value" + val.toString());
         			}
         		}
         	}
         	else
         	{
-        		System.out.println("global varId: " + id + " value:" +  ref.globals.get(id).toString());
+        		System.out.println("global varId: " + id + " value:" +  interpreter.globals.get(id).toString());
         	}
         }
     }    
+
+    public Map<String, ASTNode> getGlobalValues(){
+    	return interpreter.getGlobalSpace().getSymbolMap();
+    }
 }

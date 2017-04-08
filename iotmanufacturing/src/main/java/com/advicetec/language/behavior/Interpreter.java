@@ -15,6 +15,7 @@ import java.util.Stack;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.Token;
 
+import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarBaseVisitor;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.ast.ASTNode;
@@ -30,7 +31,9 @@ import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.ReturnValue;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.Type;
 import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
 
 public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 {
@@ -52,6 +55,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	GlobalScope globalScope; // Global scope is filled by the parser
 	ParseTreeProperty<Scope> scopes;  // The definition for the rest of scopes
 	Scope currentScope;
+	MeasuredEntityFacade facade;
 	
 	MemorySpace globals;
 	MemorySpace currentSpace;
@@ -60,13 +64,14 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	// used to compare floating point numbers
     public static final double SMALL_VALUE = 0.00000000001;
 
-	Interpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes)
+	Interpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, MeasuredEntityFacade facade)
 	{
 		// Variable for symbol definition.
 		this.globalScope = _globalScope;
 		this.globals = _globals;
 		this.scopes = scopes;
 		this.currentScope = _globalScope;
+		this.facade = facade; 
 		
 		// For memory evaluation
 		stack = new Stack<FunctionSpace>(); // call stack
@@ -263,6 +268,39 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		String id = ctx.ID().getText();
 	    currentSpace.put(id, new ASTNode(new Object()));         // store
 		return ASTNode.VOID;	
+	}
+	
+	public ASTNode visitStatus(BehaviorGrammarParser.StatusContext ctx) 
+	{ 
+		String attributeId = ctx.ID().getText(); 
+		AttributeValue value = (AttributeValue) facade.getNewestByAttributeName(attributeId);
+		Symbol symbol = currentScope.resolve(attributeId);
+				
+		switch (value.getAttribute().getType()){
+		case INT:
+			if (symbol.getType() == Symbol.Type.tINT){
+				return ASTNode(value.getValue()); 
+			} else {
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type int" );
+			}
+			break;
+		case DATETIME:
+			break;
+		case DOUBLE:
+			break;
+		case STRING:
+			break;
+		case BOOLEAN:
+			break;
+		case DATE:
+			break;
+		case TIME:
+			break;
+		case VOID:
+			break;
+		}
+		
+		
 	}
 		
 	public ASTNode visitAtrib_dec(BehaviorGrammarParser.Atrib_decContext ctx) 
@@ -925,6 +963,10 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
         if ( globals.get(id)!=null ) return globals;        // in globals?
         return null;                                        // nowhere
     }
+
+	public MemorySpace getGlobalSpace(){
+		return globals;
+	}
 
 	
 }

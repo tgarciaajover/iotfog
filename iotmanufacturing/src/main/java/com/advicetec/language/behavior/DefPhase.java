@@ -62,7 +62,8 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	
 	public void exitProgramparameter(BehaviorGrammarParser.ProgramparameterContext ctx) 
 	{ 
-		defineVar(ctx.type(), ctx.ID().getSymbol());
+		// The parameter does not have a unit of measure defined in the language.
+		defineAttribute(ctx.type(), ctx.ID().getSymbol(), null);
 	}
 
 	

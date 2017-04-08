@@ -6,7 +6,7 @@ program : PROGRAM ID PR_OPN programparameters? PR_CLS block
 
 programparameters : programparameter (',' programparameter)*;
 
-programparameter : type ID;
+programparameter : ATTRIBUTE type ID;
 
 function_dec : type ID PR_OPN formalparameters? PR_CLS block // example: int function(int param1, int param2, ..) { ... } 
 			;   
@@ -80,6 +80,7 @@ expression : ID  PR_OPN expressionList?  PR_CLS  					# Call // func call like f
 			| MINUS expression                     					# unaryMinusExpr
  			| NOT expression                        				# notExpr
  			| token													# ref_split
+ 			| status												# ref_status
  			| ID '[' expression ']'                     		    # ExprArrayIndex // arrayId[i]
 		    | expression op=( MULT | DIVI | MOD ) expression  		# Mult
 			| expression op=(PLUS | MINUS) expression  				# AddSub
@@ -91,6 +92,9 @@ expression : ID  PR_OPN expressionList?  PR_CLS  					# Call // func call like f
 			;
 
 token 		: TOKEN PR_OPN ex1=expression ',' ex2=expression ',' ex3=expression PR_CLS
+	;
+
+status		: STATUS DOT ID
 	;
 						
 atom 		:	ID								# Var
@@ -157,6 +161,7 @@ UNIT 		: 'unit';
 TOKEN 		: 'token'; 
 DISPLAY 	: 'display';
 SAVE		: 'save';
+STATUS 		: 'STATUS';
 
 STRING : '"' .*?  '"';
 
