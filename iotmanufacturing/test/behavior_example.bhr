@@ -25,7 +25,7 @@ program  main(attr boolean cycles)
 	var producing_limit = 8;
 	var minutes_per_hour = 60; 
 	
-	producing_cot = count_over_time(cycles, Seconds, 60, 5);
+	producing_cot = count_over_time(cycles, SECONDS, 60, 5);
 	scrap_substractor = producing_cot - reward_amount;
 	
 	speed_min  = count_over_time(cycles, Seconds, 60, 15);

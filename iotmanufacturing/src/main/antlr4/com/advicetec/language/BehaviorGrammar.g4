@@ -26,7 +26,8 @@ sentence : block									# ref_block
 			| function_dec SEMICOLON			  	# ref_function_dec
 			| if_stat 								# ref_if_start
 			| display								# ref_display
-			| save									# ref_save			
+			| save									# ref_save	
+			| count_over_time						# ref_count_over_time		
 			| RETURN expression SEMICOLON		   	# ref_return
 			| assign								# ref_assign
 			| assign_vec							# ref_assign_vec
@@ -60,6 +61,9 @@ display  	: DISPLAY PR_OPN expression PR_CLS SEMICOLON
 	;
 
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
+	;
+
+count_over_time : COUNT_OVER_TIME PR_OPN ATTRIBUTE ID COMMA TIMEUNIT COMMA INT COMMA INT PR_CLS SEMICOLON
 	;
 
 block 		:  BR_OPN (sentence)* BR_CLS  // Possibly Empty Block of Sentences.
@@ -154,6 +158,8 @@ TIME_TEXT :
 
 MONTH : JAN | FEB | MAR | APR | MAY | JUN | JUL | AUG | SEP | OCT | NOV | DEC;
 
+TIMEUNIT : SECOND | MINUTE | HOUR;
+
 PROGRAM : 	'program';
 ATTRIBUTE 	: 'attr';
 VARIABLE 	: 'var';
@@ -162,6 +168,7 @@ TOKEN 		: 'token';
 DISPLAY 	: 'display';
 SAVE		: 'save';
 STATUS 		: 'STATUS';
+COUNT_OVER_TIME : 'count_over_time';
 
 STRING : '"' .*?  '"';
 
@@ -223,6 +230,10 @@ SEP : [Ss][Ee][Pp] ;
 OCT : [Oo][Cc][Tt] ; 
 NOV : [Nn][Oo][Vv] ;
 DEC : [Dd][Ee][Cc] ;
+
+SECOND 	: 'SECOND';
+MINUTE	: 'MINUTE';
+HOUR   	: 'HOUR';
 
 ID	: 	[a-zA-Z_][a-zA-Z0-9_]*;
 INT4 : DIGIT DIGIT DIGIT DIGIT;
