@@ -275,32 +275,50 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		String attributeId = ctx.ID().getText(); 
 		AttributeValue value = (AttributeValue) facade.getNewestByAttributeName(attributeId);
 		Symbol symbol = currentScope.resolve(attributeId);
+		Object valObj = value.getValue();
 				
 		switch (value.getAttribute().getType()){
 		case INT:
-			if (symbol.getType() == Symbol.Type.tINT){
-				return ASTNode(value.getValue()); 
-			} else {
+			if (symbol.getType() != Symbol.Type.tINT){
 				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type int" );
 			}
 			break;
 		case DATETIME:
+			if (symbol.getType() != Symbol.Type.tDATETIME){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type datetime" );
+			}
 			break;
 		case DOUBLE:
+			if (symbol.getType() != Symbol.Type.tFLOAT){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type float" );
+			}
 			break;
 		case STRING:
+			if (symbol.getType() != Symbol.Type.tSTRING){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type string" );
+			}
 			break;
 		case BOOLEAN:
+			if (symbol.getType() != Symbol.Type.tBOOL){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type boolean" );
+			}
 			break;
 		case DATE:
+			if (symbol.getType() != Symbol.Type.tDATE){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type date" );
+			}
 			break;
 		case TIME:
+			if (symbol.getType() != Symbol.Type.tTIME){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type time" );
+			}
 			break;
 		case VOID:
-			break;
+			throw new RuntimeException("the attribute given: " + attributeId + " is registered in the status as type void" );
 		}
 		
-		
+		return new ASTNode(valObj); 
+				
 	}
 		
 	public ASTNode visitAtrib_dec(BehaviorGrammarParser.Atrib_decContext ctx) 
@@ -729,6 +747,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		
 		return new ASTNode(ret);
 	}
+	
 	@Override 
 	public ASTNode visitCall(BehaviorGrammarParser.CallContext ctx) 
 	{ 
@@ -845,7 +864,6 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
-    // if override
     @Override
     public ASTNode visitIf_stat(BehaviorGrammarParser.If_statContext ctx) {
 
@@ -873,7 +891,6 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
         return ASTNode.VOID;
     }
 
-    // log override
     @Override
     public ASTNode visitLog(BehaviorGrammarParser.LogContext  ctx) {
         ASTNode value = this.visit(ctx.expression());
