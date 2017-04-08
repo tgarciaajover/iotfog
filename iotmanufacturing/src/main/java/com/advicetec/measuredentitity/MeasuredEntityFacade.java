@@ -2,13 +2,16 @@ package com.advicetec.measuredentitity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import com.advicetec.core.Attribute;
+import com.advicetec.language.ast.Symbol;
 import com.advicetec.persistence.MeasureAttributeValueStore;
+import com.advicetec.persistence.StatusStore;
 
 
 /**
@@ -23,6 +26,7 @@ public class MeasuredEntityFacade {
 
 	private MeasureAttributeValueStore store;
 	private MeasuredEntity entity;
+	private StatusStore status;
 
 	/**
 	 * Map with key DATETIME and value String Primary Key for the database.
@@ -31,8 +35,8 @@ public class MeasuredEntityFacade {
 
 
 	public MeasuredEntityFacade(MeasuredEntity entity) {
-		super();
 		this.entity = entity;
+		status = new StatusStore(entity.getId());
 	}
 
 	public MeasuredEntity getEntity() {
@@ -71,12 +75,16 @@ public class MeasuredEntityFacade {
 	public void registerAttributeValue(Attribute attribute, Object value, LocalDateTime timeStamp) throws Exception{
 		MeasuredAttributeValue measure = entity.getMeasureAttributeValue(attribute, value, timeStamp);
 		MeasureAttributeValueStore.getInstance().cacheStore(measure);
+		
+		// update status
+		status.setAttribute(attribute);
 	}
 
 	
 	public MeasuredEntityFacade(){
 		store = MeasureAttributeValueStore.getInstance();
 		attMap = new HashMap<String, SortedMap<LocalDateTime,String>>();
+		status = new StatusStore(entity.getId());
 	}
 
 	/**
@@ -182,5 +190,14 @@ public class MeasuredEntityFacade {
 			maValues.add(store.getFromCache(key));
 		}
 		return maValues;
+	}
+
+	public void importSymbols(Map<String, Symbol> symbolMap) {
+		
+		
+	}
+	
+	public Collection<Attribute> getStatus(){
+		return status.getStatus();
 	}
 }

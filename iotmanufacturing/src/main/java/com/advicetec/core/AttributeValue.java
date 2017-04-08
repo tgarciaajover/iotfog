@@ -2,6 +2,11 @@ package com.advicetec.core;
 
 import com.advicetec.measuredentitity.MeasuredEntityType;
 
+/**
+ * This class models the attribute values from People.
+ * @author user
+ *
+ */
 public  class AttributeValue 
 {
 	

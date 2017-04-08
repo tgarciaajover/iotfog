@@ -7,18 +7,25 @@ package com.advicetec.core;
  */
 public class Attribute 
 {
-	String name;
-	AttributeType type;	
-	MeasuringUnit unit;
-
+	private String name;
+	private AttributeType type;
+	// non mandatory
+	private MeasuringUnit unit;
+	
+	
 	public Attribute(String name, AttributeType type, MeasuringUnit unit) 
 	{
-		super();
 		this.name = name;
 		this.type = type;
 		this.unit = unit;
 	}
+	
+	
+	public Attribute(String name, AttributeType type){
+		this(name,type,null);
+	}
 
+	
 	public String getName() {
 		return name;
 	}

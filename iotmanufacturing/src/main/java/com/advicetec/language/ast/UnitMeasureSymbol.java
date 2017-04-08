@@ -7,7 +7,7 @@ package com.advicetec.language.ast;
  */
 public class UnitMeasureSymbol extends Symbol 
 {
-	String description;
+	private String description;
 	
 	public UnitMeasureSymbol(String name, String descr) 
 	{ 
@@ -15,5 +15,8 @@ public class UnitMeasureSymbol extends Symbol
 		this.description = descr;
 	}
 	
+	public String getDescription(){
+		return description;
+	}
 		
 }

@@ -7,6 +7,7 @@ public enum AttributeType
 	   DATETIME(1,"Datetime"),
 	   STRING(2,"String"),
 	   INT(3,"Integer");
+	   //TODO
 	  
 	   private int code;
 	   private String name;
@@ -22,6 +23,10 @@ public enum AttributeType
 	   
 	   public String getName() {
 		  return this.name;
+	   }
+	   
+	   public boolean equals(AttributeType o){
+		   return this.name.equals(o.getName());
 	   }
 
 }

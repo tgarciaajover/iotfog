@@ -8,20 +8,25 @@ package com.advicetec.core;
 public class MeasuringUnit 
 {
 	String symbol;  // identifier.
-	String name;    // description.
+	String description;    // description.
 	
-	public MeasuringUnit( String symbol, String name) {
+	public MeasuringUnit( String symbol, String description) {
 		super();
 		this.symbol = symbol;
-		this.name = name;
+		this.description = description;
 	}
 
 	public String getSymbol() {
 		return symbol;
 	}
 
-	public String getName() {
-		return name;
+	public String getDescription() {
+		return description;
+	}
+	
+	public boolean equals (MeasuringUnit other){
+		return ( other.getDescription().equalsIgnoreCase(this.getDescription()) && 
+				other.getSymbol().equalsIgnoreCase(this.getSymbol()));
 	}
 	
 }

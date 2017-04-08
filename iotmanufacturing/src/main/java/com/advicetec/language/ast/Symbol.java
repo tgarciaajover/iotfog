@@ -5,7 +5,7 @@ package com.advicetec.language.ast;
  * @author andres
  *
  */
-public class Symbol
+public abstract class Symbol
 {
 
 	public static enum Type {tINVALID, tVOID, tINT, tFLOAT, tSTRING, tBOOL, tDATETIME, tDATE, tTIME}

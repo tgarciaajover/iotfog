@@ -45,15 +45,8 @@ public abstract class BaseScope implements Scope
 		return symbols.keySet().toString(); 
 	}
 	
-	public Map<String, Symbol> getAttributes(){
-		Map<String, Symbol> map = new HashMap<String, Symbol>();
-		for (String key : symbols.keySet()) {
-			Symbol symbol = symbols.get(key);
-			if(symbol instanceof AttributeSymbol){
-				map.put(key, symbol);
-			}
-		}
-		return map;
+	public Map<String, Symbol> getSymbolMap(){
+		return symbols;
 	}
 
 }

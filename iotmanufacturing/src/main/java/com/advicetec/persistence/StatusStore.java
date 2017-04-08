@@ -5,30 +5,30 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeType;
+import com.advicetec.core.MeasuringUnit;
+import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 
 /**
- * This class implements 
+ * This class stores the measured entity status.
  * @author user
  *
  */
 public class StatusStore {
-	
-	private static StatusStore instance = null;
-	private static HashMap<String, HashMap<String, MeasuredAttributeValue>> store; 
 
-	private StatusStore(){	}
-	
-	public static StatusStore getInstance(){
-		if(instance == null){
-			instance = new StatusStore();
-			store = new HashMap<String, HashMap<String, MeasuredAttributeValue>>();
-		}
-		return instance;
+	private String measuredEntity;
+	private HashMap<String, Attribute> store; 
+
+	public StatusStore(String measuredEntity){
+		this.measuredEntity = measuredEntity;
+		store = new HashMap<String, Attribute>();
 	}
-	
+
 	/**
 	 * Stores the Measured Attribute into the status store.
 	 * 
@@ -37,48 +37,90 @@ public class StatusStore {
 	 * @param value Attribute Value.
 	 * @return The previous value for that Attribute of null if there is not previous.
 	 */
-	public MeasuredAttributeValue setAttribute( String entityName, MeasuredAttributeValue value){
-		if(!store.containsKey(entityName)){
-			store.put(entityName, new HashMap<String, MeasuredAttributeValue>());
+	public Attribute setAttribute( Attribute value)throws Exception{
+
+		// if the attribute already exists in the list, verify units and type
+		if(store.containsKey(value.getName())){
+			Attribute old = store.get(value.getName());
+			if( !value.getType().equals(old.getType()) || !value.getUnit().equals(old.getUnit())){
+				throw new Exception("Error -- attribute has different unit or type");
+			}
 		}
-		HashMap<String, MeasuredAttributeValue> internalMap = store.get(entityName);
-		
-		return internalMap.put(value.getAttribute().getName(), value);
+		return store.put(value.getName(), value);
 	}
-	
-	
+
+
 	/**
 	 * Returns a collection of Measured Attribute Values
-	 * @param entityName
 	 * @return
 	 */
-	public Collection<MeasuredAttributeValue> getStatusByEntityName(String entityName){
-		if(!store.containsKey(entityName)){
-			return null;
-		}
-		return store.get(entityName).values();
+	public Collection<Attribute> getStatus(){
+		return store.values();
 	}
-	
-	
-	public void setAttribute( String entityName, Collection<MeasuredAttributeValue> values){
-		if(!store.containsKey(entityName)){
-			store.put(entityName, new HashMap<String, MeasuredAttributeValue>());
-		}
-		HashMap<String, MeasuredAttributeValue> internalMap = store.get(entityName);
-		
-		for (Iterator it = values.iterator(); it.hasNext();) {
-			MeasuredAttributeValue v = (MeasuredAttributeValue) it.next();	
-			internalMap.put(v.getAttribute().getName(), v);
+
+
+	public void setAttributes( Collection<Attribute> attributes) throws Exception{
+		for (Attribute attribute : attributes) {
+			setAttribute(attribute);
 		}
 	}
 
 	/**
-	 * Imports a symbol table from the interpreter to a Attributes
+	 * Imports a symbol table from the interpreter to the Attribute List.
 	 * @param measuringEntity
-	 * @param map
+	 * @param map 
+	 * @param attrMap
 	 */
-	public void importSymbols(String measuringEntity, Map<String, Symbol> map) {
-		
-		//TODO 
+	public void importSymbols(String measuringEntity, Map<String, Symbol> symbols ) {
+
+		Map<String, Attribute> attributes = new HashMap<String, Attribute>();
+
+		for (Map.Entry<String, Symbol> entry : symbols.entrySet()) {
+			if(entry.getValue() instanceof AttributeSymbol){
+				AttributeSymbol attSymbol = (AttributeSymbol) entry.getValue(); 
+				String attrName = attSymbol.getName();
+				
+				String attrUnitName = attSymbol.getUnitOfMeasure();
+				
+				// MeasuringUnit
+				MeasuringUnit measurinUnit = null;
+				if(symbols.containsKey(attrUnitName) && 
+						(symbols.get(attrUnitName) instanceof UnitMeasureSymbol)){
+					UnitMeasureSymbol unitMeasureSymbol = (UnitMeasureSymbol) symbols.get(attrUnitName); 
+					measurinUnit = new MeasuringUnit(unitMeasureSymbol.getName(), unitMeasureSymbol.getDescription());
+				}
+				
+				// AttributeType
+				AttributeType attributeType = null;
+				switch (attSymbol.getType()) {
+				case tINT:
+					attributeType = AttributeType.INT;
+					break;
+
+				case tFLOAT:
+					attributeType = AttributeType.DOUBLE;
+					break;
+					
+				case tDATETIME:
+					attributeType = AttributeType.DATETIME;
+					break;
+					
+				case tSTRING:
+					attributeType = AttributeType.STRING;
+					break;
+				default:
+					break;
+				}
+				Attribute newAttr = new Attribute(attrName, attributeType, measurinUnit);
+				
+			}
+			store.put(measuringEntity, attributes);
+		}
 	}
+	
+	
 }
+
+
+
+
