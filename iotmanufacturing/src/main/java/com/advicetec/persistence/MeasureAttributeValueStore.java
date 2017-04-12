@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import com.advicetec.core.AttributeValue;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -15,7 +16,7 @@ public class MeasureAttributeValueStore {
 	Connection conn  = null; 
 	PreparedStatement pst = null;
 
-	private static Cache<String, MeasuredAttributeValue> cache;
+	private static Cache<String, AttributeValue> cache;
 	PreparedStatement preparedStatement;
 
 	private MeasureAttributeValueStore(){
@@ -38,13 +39,13 @@ public class MeasureAttributeValueStore {
 		return instance;
 	}
 
-	public Cache<String, MeasuredAttributeValue> getCache(){
+	public Cache<String, AttributeValue> getCache(){
 		return cache; 
 	}
 
 
 
-	public void cacheStore(MeasuredAttributeValue mav){
+	public void cacheStore(AttributeValue mav){
 		cache.put(mav.getKey(), mav);
 	}
 
@@ -54,7 +55,7 @@ public class MeasureAttributeValueStore {
 	 * @param key 
 	 * @return
 	 */
-	public MeasuredAttributeValue getFromCache(String key){
+	public AttributeValue getFromCache(String key){
 		MeasuredAttributeValue fromCache = cache.getIfPresent(key);
 		if(fromCache != null)
 			return fromCache;
@@ -62,7 +63,7 @@ public class MeasureAttributeValueStore {
 	}
 
 	
-	public void commit(MeasuredAttributeValue value){
+	public void commit(AttributeValue value){
 		try {
 			Class.forName("org.postgresql.Driver");
 			conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/iotajover", "iotajover", "iotajover");

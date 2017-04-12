@@ -971,7 +971,79 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
         
         return value;
 	}
-    /** Return scope holding id's value; current func space or global. */
+    
+	public ASTNode visitCount_over_time(BehaviorGrammarParser.Count_over_timeContext ctx) 
+	{ 
+		// Obtain parameters given.
+		String attributeId  = ctx.ID().getText();
+		String timeUnit = ctx.TIMEUNIT().getText();
+		int range = Integer.valueOf(ctx.range.getText());
+		int update =  Integer.valueOf(ctx.range.getText());		
+		
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime from = now;
+		
+		if (timeUnit.compareTo("SECOND") == 0){
+			from = now.minusSeconds(range);
+		}
+			
+		else if (timeUnit.compareTo("MINUTE") == 0){
+			from = now.minusMinutes(range);
+		}
+			
+		else if (timeUnit.compareTo("HOUR") == 0){
+			from = now.minusHours(range);
+		}
+		
+		// Call the facade to get the attribute value during the interval. 
+		List<AttributeValue> values = facade.getByIntervalByAttributeName(attributeId, from, now);
+		Symbol symbol = currentScope.resolve(attributeId);
+		Object valObj = value.getValue();
+				
+		switch (value.getAttribute().getType()){
+		case INT:
+			if (symbol.getType() != Symbol.Type.tINT){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type int" );
+			}
+			break;
+		case DATETIME:
+			if (symbol.getType() != Symbol.Type.tDATETIME){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type datetime" );
+			}
+			break;
+		case DOUBLE:
+			if (symbol.getType() != Symbol.Type.tFLOAT){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type float" );
+			}
+			break;
+		case STRING:
+			if (symbol.getType() != Symbol.Type.tSTRING){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type string" );
+			}
+			break;
+		case BOOLEAN:
+			if (symbol.getType() != Symbol.Type.tBOOL){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type boolean" );
+			}
+			break;
+		case DATE:
+			if (symbol.getType() != Symbol.Type.tDATE){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type date" );
+			}
+			break;
+		case TIME:
+			if (symbol.getType() != Symbol.Type.tTIME){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type time" );
+			}
+			break;
+		case VOID:
+			throw new RuntimeException("the attribute given: " + attributeId + " is registered in the status as type void" );
+		}
+
+		
+	}
+	
+	/** Return scope holding id's value; current func space or global. */
     public MemorySpace getSpaceWithSymbol(String id) 
     {
         if (stack.size()>0 && stack.peek().get(id)!=null) { // in top stack?

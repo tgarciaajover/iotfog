@@ -63,7 +63,7 @@ display  	: DISPLAY PR_OPN expression PR_CLS SEMICOLON
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
 	;
 
-count_over_time : COUNT_OVER_TIME PR_OPN ATTRIBUTE ID COMMA TIMEUNIT COMMA INT COMMA INT PR_CLS SEMICOLON
+count_over_time : COUNT_OVER_TIME PR_OPN ATTRIBUTE ID COMMA TIMEUNIT COMMA range=INT COMMA update=INT PR_CLS SEMICOLON
 	;
 
 block 		:  BR_OPN (sentence)* BR_CLS  // Possibly Empty Block of Sentences.
