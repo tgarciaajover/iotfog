@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -151,7 +152,7 @@ public class MeasuredEntityFacade {
 	 * @param to Time to.
 	 * @return
 	 */
-	public ArrayList<MeasuredAttributeValue> getByIntervalByAttributeName(
+	public ArrayList<AttributeValue> getByIntervalByAttributeName(
 			String attrName, LocalDateTime from, LocalDateTime to){
 
 		if(!attMap.containsKey(attrName)){
@@ -173,8 +174,8 @@ public class MeasuredEntityFacade {
 	 * values for the given attribute name.
 	 * 
 	 */
-	public ArrayList<MeasuredAttributeValue> getLastNbyAttributeName(String attrName, int n){
-		ArrayList<MeasuredAttributeValue> maValues = new ArrayList<MeasuredAttributeValue>();
+	public List<AttributeValue> getLastNbyAttributeName(String attrName, int n){
+		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
 		
 		if(!attMap.containsKey(attrName)){
 			return null;
@@ -199,8 +200,8 @@ public class MeasuredEntityFacade {
 	 * @param keyArray
 	 * @return
 	 */
-	private ArrayList<MeasuredAttributeValue> getFromCache(String[] keyArray){
-		ArrayList<MeasuredAttributeValue> maValues = new ArrayList<MeasuredAttributeValue>();
+	private ArrayList<AttributeValue> getFromCache(String[] keyArray){
+		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
 		for (String key : keyArray) {
 			
 			maValues.add(store.getFromCache(key));

@@ -86,4 +86,11 @@ public class MeasuredEntityManager extends Configurable {
 		return null;
 	}
 	
+	/**
+	 * REST implementation, return object serialization.
+	 * @return
+	 */
+	public String JSON(){
+		return null;
+	}
 }

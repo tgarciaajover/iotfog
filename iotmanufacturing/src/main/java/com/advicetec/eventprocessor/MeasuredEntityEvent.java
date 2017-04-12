@@ -9,8 +9,8 @@ public class MeasuredEntityEvent extends Event
 {
 
 	private String behaviorTransformation;
-	MeasuredEntity entity;
-	List<AttributeValue> parameters; 
+	private MeasuredEntity entity;
+	private List<AttributeValue> parameters; 
 	
 	public MeasuredEntityEvent(String behavior, MeasuredEntity entity, List<AttributeValue> parameters) 
 	{

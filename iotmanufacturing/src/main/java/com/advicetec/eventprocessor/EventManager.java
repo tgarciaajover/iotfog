@@ -6,6 +6,7 @@ import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
 import com.advicetec.monitorAdapter.AdapterManager;
 
+
 public class EventManager extends Manager
 {
 
@@ -39,7 +40,6 @@ public class EventManager extends Manager
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
 		}
 	}	
 

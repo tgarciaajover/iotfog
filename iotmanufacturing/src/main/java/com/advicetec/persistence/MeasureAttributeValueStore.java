@@ -56,7 +56,7 @@ public class MeasureAttributeValueStore {
 	 * @return
 	 */
 	public AttributeValue getFromCache(String key){
-		MeasuredAttributeValue fromCache = cache.getIfPresent(key);
+		AttributeValue fromCache = cache.getIfPresent(key);
 		if(fromCache != null)
 			return fromCache;
 		return null;

@@ -15,7 +15,9 @@ import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 
 /**
- * This class stores the measured entity status.
+ * This class stores the measured entity status which comprises
+ * the list of attributes and the attribute values.
+ * 
  * @author user
  *
  */
