@@ -32,23 +32,24 @@ public class StatusStore {
 	}
 
 	/**
-	 * Stores the Measured Attribute into the status store.
+	 * Stores the Measured Attribute into the Status.
 	 * 
 	 * @param entityName Name or id for the measured entity.
 	 * @param attrName Name or Id for the attribute.
-	 * @param value Attribute Value.
+	 * @param attribute Attribute Value.
 	 * @return The previous value for that Attribute of null if there is not previous.
 	 */
-	public Attribute setAttribute( Attribute value)throws Exception{
+	public void setAttribute( Attribute attribute)throws Exception{
 
-		// if the attribute already exists in the list, verify units and type
-		if(attributes.containsKey(value.getName())){
-			Attribute old = attributes.get(value.getName());
-			if( !value.getType().equals(old.getType()) || !value.getUnit().equals(old.getUnit())){
+		// if the attribute already exists in the list, then verify units and type
+		if(attributes.containsKey(attribute.getName())){
+			Attribute old = attributes.get(attribute.getName());
+			if( !attribute.getType().equals(old.getType()) || !attribute.getUnit().equals(old.getUnit())){
 				throw new Exception("Error -- attribute has different unit or type");
 			}
 		}
-		return attributes.put(value.getName(), value);
+		// updates the value
+		attributes.put(attribute.getName(), attribute);
 	}
 
 
@@ -126,8 +127,10 @@ public class StatusStore {
 	}
 
 	/**
-	 * This method 
-	 * @param valueMap
+	 * 
+	 * @param valueMap 
+	 * @param parent Identificator from the MeasuredEntity
+	 * @param parentType Type of the Measured Entity.
 	 */
 	public void importAttributeValues(Map<String, ASTNode> valueMap, String parent, MeasuredEntityType parentType) {
 
@@ -136,31 +139,31 @@ public class StatusStore {
 				ASTNode node = valueMap.get(att.getName());
 				switch(att.getType()){
 				case BOOLEAN:
-					values.put(att.getName(), new AttributeValue(att.getName(), att, node.asBoolean(), parent, parentType));
+					setAttributeValue(att, node.asBoolean(), parent, parentType);
 					break;
 
 				case INT:
-					values.put(att.getName(), new AttributeValue(att.getName(), att, node.asInterger(), parent, parentType));
+					setAttributeValue(att, node.asInterger(), parent, parentType);
 					break;
 
 				case DOUBLE:
-					values.put(att.getName(), new AttributeValue(att.getName(), att, node.asDouble(), parent, parentType));
+					setAttributeValue(att, node.asDouble(), parent, parentType);
 					break;
 
 				case STRING:
-					values.put(att.getName(), new AttributeValue(att.getName(), att, node.asString(), parent, parentType));
+					setAttributeValue(att, node.asString(), parent, parentType);
 					break;
 
 				case DATETIME:
-					values.put(att.getName(), new AttributeValue(att.getName(), att, node.asDateTime(), parent, parentType));
+					setAttributeValue(att, node.asDateTime(), parent, parentType);
 					break;
 
 				case DATE:
-					values.put(att.getName(), new AttributeValue(att.getName(), att, node.asDate(), parent, parentType));
+					setAttributeValue(att, node.asDate(), parent, parentType);
 					break;
 
 				case TIME:
-					values.put(att.getName(), new AttributeValue(att.getName(), att, node.asTime(), parent, parentType));
+					setAttributeValue(att, node.asTime(), parent, parentType);
 					break;
 
 				default:
@@ -171,9 +174,33 @@ public class StatusStore {
 	}
 
 
+	/**
+	 * Adds to the STATUS a new Attribute Value.
+	 * @param attributeValue The attribute value to be set.
+	 */
+	public void setAttributeValue(AttributeValue attributeValue) {
+		// check if the attribute is already in the attribute list.
+		if(!attributes.containsKey(attributeValue.getKey())){
+			attributes.put(attributeValue.getKey(), attributeValue.getAttribute());
+		}
+		values.put(attributeValue.getKey(), attributeValue);
+	}
+
+	/**
+	 * Adds to the STATUS a new Attribute Value.
+	 * @param att The Attribute
+	 * @param value The Value
+	 * @param parent Id of the measured entity
+	 * @param parentType Type of measured entity.
+	 */
+	public void setAttributeValue(Attribute att, Object value,String parent, MeasuredEntityType parentType) {
+		setAttributeValue(new AttributeValue(att.getName(), att, value, parent, parentType));
+	}
+
 	public Collection<AttributeValue> getAttributeValues(){
 		return values.values();
 	}
+	
 }
 
 

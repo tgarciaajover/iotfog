@@ -67,7 +67,22 @@ public class MeasuredEntityFacade {
 		return entity.registerMeasureEntityAttibute(newAttribute);
 	}
 	
-	
+	public void setAttribute(Attribute attribute) throws Exception{
+		// returns the previous value
+		status.setAttribute(attribute);
+
+	}
+
+	/**
+	 * Sets or updates the attribute value into the status and store.
+	 * @param attrValue
+	 */
+	public void setAttributeValue(AttributeValue attrValue){
+		store(new MeasuredAttributeValue(attrValue.getAttribute(), attrValue.getValue(),
+				attrValue.getParent(), attrValue.getParentType(), LocalDateTime.now()));
+		status.setAttributeValue(attrValue);
+	}
+
 	/**
 	 * Stores a new value for the attribute.
 	 * @param attribute
@@ -226,3 +241,4 @@ public class MeasuredEntityFacade {
 	}
 	
 }
+
