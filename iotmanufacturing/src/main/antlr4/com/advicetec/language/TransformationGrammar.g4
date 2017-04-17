@@ -18,6 +18,7 @@ sentence : block									# ref_block
 			| save									# ref_save
 			| RETURN expression SEMICOLON		   	# ref_return
 			| assign								# ref_assign
+ 			| round									# ref_round 			
 			| log 									# ref_log
 			| OTHER {System.err.println("unknown char: " + $OTHER.text);} #ref_other
 			;
@@ -50,6 +51,10 @@ condition_block
  : expression block
  ;
 
+round : ROUND PR_OPN expression COMMA INT1 PR_CLS
+	; 
+
+
 log : LOG expression SEMICOLON
  ;
 
@@ -73,8 +78,9 @@ atom :		ID								# Var
 			| TEXT_DATE						# Date
 			| TEXT_TIME						# Time
 			| TEXT_DATETIME					# Datetime
-			| INT  							# Integer
+			| INT1							# digit
 			| INT4							# Year
+			| INT  							# Integer
 			| FLOAT							# Float
 			| BOOLEAN					    # Boolean
 			| STRING						# Str
@@ -128,7 +134,8 @@ UNIT 		: 'unit';
 DISPLAY 	: 'display';
 SAVE		: 'save';
 TOKEN 		: 'token';
-TREND		: 'trend';  
+TREND		: 'trend';
+ROUND 		: 'round';  
 
 OR 		: 	'||';
 AND 	: 	'&&';
@@ -193,6 +200,7 @@ STRING : '"' .*?  '"';
 
 ID		: [a-zA-Z_][a-zA-Z0-9_]*;
 NAME 	: [a-zA-Z_][a-zA-Z0-9_]*;
+INT1 	: DIGIT;
 INT4 	: DIGIT DIGIT DIGIT DIGIT;
 INT		: DIGIT+;
 FLOAT 	: DIGIT+ '.' DIGIT+;

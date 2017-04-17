@@ -279,6 +279,27 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         return value;
 	}
 
+	public ASTNode visitRound(TransformationGrammarParser.RoundContext ctx) 
+	{ 
+		ASTNode value = this.visit(ctx.expression());
+		long numdecimals = Integer.valueOf(ctx.INT1().getText());
+		
+		if (value.isDouble() || value.isInteger()){
+			if (value.isDouble()){
+				Double valueD = new Double(value.asDouble());
+				valueD = valueD * numdecimals;
+				long tmp = Math.round(valueD);
+				valueD = ((double)tmp / numdecimals);
+				return new ASTNode(valueD);
+			} else {
+				Integer ret = new Integer(value.asInterger());
+				return new ASTNode(ret);
+			}
+		} else {
+			throw new RuntimeException("Only numbers are posible to round");
+		}
+	}
+		
 	@Override 
 	public ASTNode visitRef_return(TransformationGrammarParser.Ref_returnContext ctx) 
 	{ 
@@ -298,6 +319,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	public ASTNode visitYear(TransformationGrammarParser.YearContext ctx) 
 	{ 
 		System.out.println("visitYear");
+		return new ASTNode(Integer.valueOf(ctx.getText()));
+	}
+	
+	public ASTNode visitDigit(TransformationGrammarParser.DigitContext ctx) 
+	{ 
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 	

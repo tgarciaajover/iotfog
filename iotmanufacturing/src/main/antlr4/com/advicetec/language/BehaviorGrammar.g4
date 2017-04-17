@@ -33,6 +33,7 @@ sentence : block									# ref_block
 			| assign								# ref_assign
 			| assign_vec							# ref_assign_vec
 			| expression SEMICOLON				  	# ref_call
+			| round									# ref_round 	
 			| log 									# ref_log
 			| OTHER {System.err.println("unknown char: " + $OTHER.text);} #ref_other
 			;
@@ -79,6 +80,9 @@ condition_block
  : expression block
  ;
 
+round : ROUND PR_OPN expression COMMA INT1 PR_CLS
+	; 
+
 log 		: LOG expression SEMICOLON
  ;
 
@@ -109,6 +113,7 @@ atom 		:	ID								# Var
 		| TIME							# Time
 		| DATETIME						# Datetime
 		| INT4 							# Year
+		| INT1							# digit
 		| INT							# Integer
 		| FLOAT 						# Float
 		| BOOLEAN					    # Boolean
@@ -174,6 +179,7 @@ STATUS 		: 'STATUS';
 COUNT_OVER_TIME : 'count_over_time';
 MAX_OVER_TIME	: 'max_over_time';
 TREND		: 'trend';
+ROUND 		: 'round';
 
 STRING : '"' .*?  '"';
 
@@ -241,6 +247,7 @@ MINUTE	: 'MINUTE';
 HOUR   	: 'HOUR';
 
 ID	: 	[a-zA-Z_][a-zA-Z0-9_]*;
+INT1 	: DIGIT;
 INT4 : DIGIT DIGIT DIGIT DIGIT;
 INT	:	DIGIT+;
 FLOAT : DIGIT+ '.' DIGIT+;
