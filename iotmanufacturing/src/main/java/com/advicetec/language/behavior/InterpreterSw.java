@@ -87,6 +87,17 @@ public class InterpreterSw
        
         System.out.println("Defphase finished globals: " + defPhase.getGlobalScope().toString());
 
+        // Update the attribute parameters, because the language only references the attribute as 
+        // a parameter, we have to actually bring the definition into the global scope 
+        
+        for (int i=0; i < parameters.size(); i++)
+        {
+        	AttributeValue attrValue = parameters.get(i);
+        	AttributeSymbol symbol = (AttributeSymbol)defPhase.getGlobalScope().resolve(attrValue.getAttribute().getName());
+        	symbol.setUnitOfMeasure(attrValue.getAttribute().getUnit().getSymbol());
+        	symbol.setTrend(attrValue.getAttribute().getTrend());
+        }
+        
         // create next phase and feed symbol table info from def to ref phase
         MemorySpace globals = new MemorySpace("globals");  
         
@@ -138,7 +149,7 @@ public class InterpreterSw
         // pass the parameters to the program. 
         int i = 0;
         for (Symbol argS : ((BehaviorSymbol)ts).getMembers().values()) {
-            VariableSymbol arg = (VariableSymbol)argS;
+            AttributeSymbol arg = (AttributeSymbol)argS;
             ASTNode argValue = new ASTNode(parameters.get(i).getValue()); 
             globals.put(arg.getName(), argValue);
             i++;

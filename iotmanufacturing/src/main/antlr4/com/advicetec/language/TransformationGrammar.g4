@@ -25,9 +25,8 @@ sentence : block									# ref_block
 var_dec		: VARIABLE type ID (ASG expression)? SEMICOLON
 	;
 
-atrib_dec 	: ATTRIBUTE type id1=ID  (ASG expression)? (UNIT id2=ID)? SEMICOLON
+atrib_dec 	: ATTRIBUTE type id1=ID  (ASG expression)? (UNIT id2=ID)? (TREND)? SEMICOLON
 	;
-
 
 unit_dec	: UNIT ID STRING SEMICOLON
 	; 
@@ -128,7 +127,8 @@ VARIABLE 	: 'var';
 UNIT 		: 'unit';
 DISPLAY 	: 'display';
 SAVE		: 'save';
-TOKEN 		: 'token';  
+TOKEN 		: 'token';
+TREND		: 'trend';  
 
 OR 		: 	'||';
 AND 	: 	'&&';

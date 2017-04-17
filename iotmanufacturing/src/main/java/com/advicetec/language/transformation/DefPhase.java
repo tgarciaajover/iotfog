@@ -107,16 +107,21 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 	public void exitAtrib_dec(TransformationGrammarParser.Atrib_decContext ctx) 
 	{ 
-		defineAttribute(ctx.type(), ctx.id1, ctx.id2);
+		if (ctx.TREND() ==null){
+			defineAttribute(ctx.type(), ctx.id1, ctx.id2, false);
+		}
+		else{
+			defineAttribute(ctx.type(), ctx.id1, ctx.id2, true);
+		}
 	}
 
-	public void defineAttribute(TransformationGrammarParser.TypeContext typeCtx, Token nameToken, Token unit)
+	public void defineAttribute(TransformationGrammarParser.TypeContext typeCtx, Token nameToken, Token unit, boolean trend)
 	{
 		int typeTokenType = typeCtx.start.getType();
 
 		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
 
-		AttributeSymbol atr = new AttributeSymbol(nameToken.getText(), type);
+		AttributeSymbol atr = new AttributeSymbol(nameToken.getText(), type, trend);
 
 		if (unit != null)
 			atr.setUnitOfMeasure(unit.getText());

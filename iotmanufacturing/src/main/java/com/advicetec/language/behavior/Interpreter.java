@@ -15,6 +15,7 @@ import java.util.Stack;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.Token;
 
+import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarBaseVisitor;
 import com.advicetec.language.BehaviorGrammarParser;
@@ -141,9 +142,9 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
         
         if (listParams != null)
         {
-	        int i = 0; // define args according to order in formalArgs
+	        int i = 0; // define args according to order in program parameters
 	        for (Symbol argS : ((BehaviorSymbol)fs).getMembers().values()) {
-	            VariableSymbol arg = (VariableSymbol)argS;
+	            AttributeSymbol arg = (AttributeSymbol)argS;
 	            ASTNode argValue = this.visit(listParams.programparameter(i)); 
 	            fspace.put(arg.getName(), argValue);
 	            i++;
@@ -978,8 +979,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		String attributeId  = ctx.ID().getText();
 		String timeUnit = ctx.TIMEUNIT().getText();
 		int range = Integer.valueOf(ctx.range.getText());
-		int update =  Integer.valueOf(ctx.range.getText());		
-		
+				
 		LocalDateTime now = LocalDateTime.now();
 		LocalDateTime from = now;
 		
@@ -997,50 +997,128 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		
 		// Call the facade to get the attribute value during the interval. 
 		List<AttributeValue> values = facade.getByIntervalByAttributeName(attributeId, from, now);
-		Symbol symbol = currentScope.resolve(attributeId);
-		Object valObj = value.getValue();
-				
-		switch (value.getAttribute().getType()){
-		case INT:
-			if (symbol.getType() != Symbol.Type.tINT){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type int" );
-			}
-			break;
-		case DATETIME:
-			if (symbol.getType() != Symbol.Type.tDATETIME){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type datetime" );
-			}
-			break;
-		case DOUBLE:
-			if (symbol.getType() != Symbol.Type.tFLOAT){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type float" );
-			}
-			break;
-		case STRING:
-			if (symbol.getType() != Symbol.Type.tSTRING){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type string" );
-			}
-			break;
-		case BOOLEAN:
-			if (symbol.getType() != Symbol.Type.tBOOL){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type boolean" );
-			}
-			break;
-		case DATE:
-			if (symbol.getType() != Symbol.Type.tDATE){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type date" );
-			}
-			break;
-		case TIME:
-			if (symbol.getType() != Symbol.Type.tTIME){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type time" );
-			}
-			break;
-		case VOID:
-			throw new RuntimeException("the attribute given: " + attributeId + " is registered in the status as type void" );
-		}
-
+		return new ASTNode(new Integer(values.size()));
 		
+	}
+	
+	public ASTNode visitMax_over_time(BehaviorGrammarParser.Max_over_timeContext ctx) 
+	{ 
+		// Obtain parameters given.
+		String attributeId  = ctx.ID().getText();
+		String timeUnit = ctx.TIMEUNIT().getText();
+		int range = Integer.valueOf(ctx.range.getText());
+				
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime from = now;
+		
+		if (timeUnit.compareTo("SECOND") == 0){
+			from = now.minusSeconds(range);
+		}
+			
+		else if (timeUnit.compareTo("MINUTE") == 0){
+			from = now.minusMinutes(range);
+		}
+			
+		else if (timeUnit.compareTo("HOUR") == 0){
+			from = now.minusHours(range);
+		}
+		
+		// Call the facade to get the attribute value during the interval. 
+		List<AttributeValue> values = facade.getByIntervalByAttributeName(attributeId, from, now);
+		
+		
+		Object maxValue = null;
+		for (int i = 0; i < values.size(); i++) {
+			AttributeValue value = values.get(i);
+			AttributeType type = value.getAttribute().getType();
+			
+			switch (type)
+			{
+			case DOUBLE:
+				Double doubleValue = (Double) value.getValue();
+				if (maxValue == null){
+					maxValue = doubleValue;
+				}
+				else {
+					if ((Double)maxValue < doubleValue){
+						maxValue = doubleValue;
+					}
+				}
+				break;
+
+			case INT:
+				Integer integerValue = (Integer) value.getValue();
+				if (maxValue == null){
+					maxValue = integerValue;
+				}
+				else {
+					if ((Integer)maxValue < integerValue){
+						maxValue = integerValue;
+					}
+				}
+				break;
+
+			case STRING:
+				String stringValue = (String) value.getValue();
+				if (maxValue == null){
+					maxValue = stringValue;
+				}
+				else {
+					if ( ((String)maxValue).compareTo(stringValue) < 0 ){
+						maxValue = stringValue;
+					}
+				}
+				break;
+
+			case DATETIME:
+				LocalDateTime dtTimeValue = (LocalDateTime) value.getValue();
+				if (maxValue == null){
+					maxValue = dtTimeValue;
+				}
+				else {
+					if ( ((LocalDateTime)maxValue).compareTo(dtTimeValue) < 0 ){
+						maxValue = dtTimeValue;
+					}
+				}
+				break;
+
+			case DATE:
+				LocalDate dtValue = (LocalDate) value.getValue();
+				if (maxValue == null){
+					maxValue = dtValue;
+				}
+				else {
+					if ( ((LocalDate)maxValue).compareTo(dtValue) < 0 ){
+						maxValue = dtValue;
+					}
+				}
+				break;
+
+			case TIME:
+				LocalTime timeValue = (LocalTime) value.getValue();
+				if (maxValue == null){
+					maxValue = timeValue;
+				}
+				else {
+					if ( ((LocalTime)maxValue).compareTo(timeValue) < 0 ){
+						maxValue = timeValue;
+					}
+				}
+				break;
+			
+			case VOID:
+				throw new RuntimeException("The Void type is not comparable with the operator maximum");
+			
+			case BOOLEAN:
+				throw new RuntimeException("The Boolean type is not comparable with the operator maximum");
+			
+			default:
+				throw new RuntimeException("unknown type: " + type.name());
+			}
+			
+		}
+		
+		return new ASTNode(maxValue);
 	}
 	
 	/** Return scope holding id's value; current func space or global. */
