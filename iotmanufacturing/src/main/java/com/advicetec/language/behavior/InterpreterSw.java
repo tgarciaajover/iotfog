@@ -16,6 +16,7 @@ import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.BehaviorSymbol;
+import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
@@ -197,7 +198,12 @@ public class InterpreterSw
         }
     }    
 
-    public Map<String, ASTNode> getGlobalValues(){
-    	return interpreter.getGlobalSpace().getSymbolMap();
+    public GlobalScope getGlobalScope(){
+    	return defPhase.getGlobalScope();
     }
+    
+    public MemorySpace getGlobalSpace(){
+    	return interpreter.getGlobalSpace();
+    }
+
 }
