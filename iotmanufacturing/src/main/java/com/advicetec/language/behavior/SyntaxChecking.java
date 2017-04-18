@@ -1,5 +1,7 @@
 package com.advicetec.language.behavior;
 
+import java.util.List;
+
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
@@ -36,15 +38,8 @@ public class SyntaxChecking
         return Symbol.Type.tINVALID;
 
     }
-
-    public static void error(Token t, String msg) 
-    {
-
-        System.err.printf("line %d:%d %s\n", t.getLine(), t.getCharPositionInLine(),msg);
-
-    }
     
-    public void process(String program) throws Exception 
+    public List<SyntaxError> process(String program) throws Exception 
     {
 
 		BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(new ANTLRFileStream(program));
@@ -72,15 +67,19 @@ public class SyntaxChecking
 
         // create next phase and feed symbol table info from def to ref phase
 
-        RefPhase ref = new RefPhase(def.getGlobalScope(), def.getScopes());
+        RefPhase ref = new RefPhase(parser, def.getGlobalScope(), def.getScopes());
         walker.walk(ref, tree);
         
-        for (SyntaxError e : collector.getErrors()) {
-            // RecognitionExceptionUtil is my custom class discussed next.
-            System.out.println(RecognitionExceptionUtil.formatVerbose(e));
+        List<SyntaxError> listErrors = collector.getErrors();
+        
+        // Add the custom errors created during the Ref phase. 
+        for (SyntaxError e : ref.getErrors())  { 
+        	listErrors.add(e);
         }
         
-        System.out.println("Defphase finished globals" + def.getGlobalScope().toString());
+        System.out.println("num errors:" + listErrors.size());
+        
+        return listErrors;
         
 
     }    

@@ -9,6 +9,8 @@ import java.util.List;
 import org.junit.Test;
 
 import com.advicetec.core.AttributeType;
+import com.advicetec.language.ast.RecognitionExceptionUtil;
+import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.transformation.InterpreterSw;
 import com.advicetec.language.transformation.SyntaxChecking;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
@@ -21,7 +23,7 @@ public class LanguageTransformationTest
 	public void Test_Semantic_Language()
 	{
 		
-		String program = "test/transformtest." + EXTENSION;
+		String program = "test/transformtest_withouterrors." + EXTENSION;
 
 		System.out.println("Interpreting file " + program);
 		
@@ -38,6 +40,7 @@ public class LanguageTransformationTest
 		try 
 		{
 			interpreter.process(program,list);
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -45,17 +48,25 @@ public class LanguageTransformationTest
 	}
 
 	@Test
-	public void Test_Sintax_Language()
+	public void Test_Syntax_Language()
 	{
 		
-		String program = "test/transformtest." + EXTENSION;
+		String program = "test/transformtest_errors." + EXTENSION;
 
-		System.out.println("Interpreting Sintax File " + program);
+		System.out.println("Interpreting Syntax File " + program);
 		
 		SyntaxChecking interpreter = new SyntaxChecking();
 		try 
 		{
-			interpreter.process(program);
+			List<SyntaxError> errorList = interpreter.process(program);
+			
+			assertEquals("the number of errors is not the expected value: 2",(int) 2, (int) errorList.size() );
+
+	        for (SyntaxError e : errorList) {
+	            // RecognitionExceptionUtil is my custom class discussed next.
+	            System.out.println(RecognitionExceptionUtil.formatVerbose(e));
+	        }
+	        
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

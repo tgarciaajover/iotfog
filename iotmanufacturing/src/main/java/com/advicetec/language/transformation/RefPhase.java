@@ -1,7 +1,11 @@
 package com.advicetec.language.transformation;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -13,19 +17,37 @@ import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.SyntaxError;
 
 public class RefPhase extends TransformationGrammarBaseListener 
 {
 
+	TransformationGrammarParser parser = null;
 	ParseTreeProperty<Scope> scopes;
 	GlobalScope globals;
 	Scope currentScope;
+	private ArrayList<SyntaxError> compilationErrors;
 	
 	
-	RefPhase(GlobalScope globals , ParseTreeProperty<Scope> scopes)
+	RefPhase(TransformationGrammarParser parser, GlobalScope globals , ParseTreeProperty<Scope> scopes)
 	{
 		this.scopes = scopes;
 		this.globals = globals;
+		this.parser = parser; 
+		compilationErrors = new ArrayList<SyntaxError>();
+	}
+    
+	public void error(Token t, ParserRuleContext ctx, String msg) 
+    {
+    	String error = new String("line" + t.getLine() + "." + t.getCharPositionInLine() + msg + "\n");
+    	SyntaxError e= new SyntaxError(error, t, this.parser, this.parser.getInputStream(), ctx); 
+    	this.compilationErrors.add(e);
+
+    }
+	
+	public List<SyntaxError> getErrors()
+	{
+		return this.compilationErrors;
 	}
 	
 	public void enterProgram(TransformationGrammarParser.ProgramContext ctx)
@@ -77,7 +99,7 @@ public class RefPhase extends TransformationGrammarBaseListener
 			
 			if ( var == null)
 			{
-				SyntaxChecking.error(ctx.id2, "no such Symbol: " + name);
+				this.error(ctx.id2, ctx, "no such Symbol: " + name);
 			}
 		}
 	}
@@ -93,11 +115,11 @@ public class RefPhase extends TransformationGrammarBaseListener
 			
 			if (var == null)
 			{
-				SyntaxChecking.error(ids.get(i).getSymbol(), "no such symbol: " + name);
+				this.error(ids.get(i).getSymbol(), ctx, "no such symbol: " + name);
 			}
 			
 			if (!(var instanceof AttributeSymbol)) {
-				SyntaxChecking.error(ids.get(i).getSymbol(), "no such Attribute Symbol: " + name);
+				this.error(ids.get(i).getSymbol(), ctx, "no such Attribute Symbol: " + name);
 			}		
 		}
 	}
@@ -108,7 +130,7 @@ public class RefPhase extends TransformationGrammarBaseListener
 		Symbol var = currentScope.resolve(packageStr);
 		
 		if (!(var instanceof ImportSymbol)) {
-			SyntaxChecking.error(ctx.pack, "no such Import Symbol: " + packageStr);
+			this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
 		}
 	}
 	
@@ -138,12 +160,12 @@ public class RefPhase extends TransformationGrammarBaseListener
 		
 		if ( var == null)
 		{
-			SyntaxChecking.error(ctx.ID().getSymbol(), "no such Symbol: " + name);
+			this.error(ctx.ID().getSymbol(), ctx, "no such Symbol: " + name);
 		}
 		
 		if (var instanceof FunctionSymbol) 
 		{
-			SyntaxChecking.error(ctx.ID().getSymbol(), name + " is not a Symbol" );
+			this.error(ctx.ID().getSymbol(), ctx, name + " is not a Symbol" );
 		}
 	}
 	
