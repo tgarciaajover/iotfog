@@ -64,6 +64,7 @@ public class RefPhase extends BehaviorGrammarBaseListener
 	{ 
 		System.out.println("refvar_def exit: ");
 	}
+	
 	public void exitAtrib_dec(BehaviorGrammarParser.Atrib_decContext ctx)
 	{ 
 

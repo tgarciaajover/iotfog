@@ -1,6 +1,18 @@
 grammar TransformationGrammar;
 
-program : PROGRAM ID PR_OPN programparameters? PR_CLS block;  
+program : (import_name)* PROGRAM ID PR_OPN programparameters? PR_CLS block;  
+
+import_name
+ : IMPORT dotted_names
+ ;
+
+dotted_names
+ : dotted_name ( ',' dotted_name )* SEMICOLON
+ ;
+
+dotted_name
+ : ID ( '.' ID )* ( AS nickname=ID )?
+ ;
 
 programparameters : programparameter (',' programparameter)*;
 
@@ -16,6 +28,7 @@ sentence : block									# ref_block
 			| if_stat 								# ref_if_start
 			| display								# ref_display
 			| save									# ref_save
+			| event									# ref_event
 			| RETURN expression SEMICOLON		   	# ref_return
 			| assign								# ref_assign
  			| round									# ref_round 			
@@ -41,19 +54,24 @@ display  	: DISPLAY PR_OPN expression PR_CLS SEMICOLON
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
 	;
 
+event		: EVENT PR_OPN eventparameters COMMA TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
+	;
+	
+eventparameters : (ID)? (',' ID )*
+	;
+	
 block :  BR_OPN (sentence)* BR_CLS  // Possibly Empty Block of Sentences.
 	;
 
 if_stat : IF condition_block (ELSE IF condition_block)* (ELSE block)?
- ;
+ 	;
 
 condition_block
  : expression block
- ;
+ 	;
 
 round : ROUND PR_OPN expression COMMA INT1 PR_CLS
 	; 
-
 
 log : LOG expression SEMICOLON
  ;
@@ -127,6 +145,8 @@ TIME_TEXT :
 
 MONTH : JAN | FEB | MAR | APR | MAY | JUN | JUL | AUG | SEP | OCT | NOV | DEC;
 
+TIMEUNIT : SECOND | MINUTE | HOUR;
+
 PROGRAM 	: 'transform';
 ATTRIBUTE 	: 'attr';
 VARIABLE 	: 'var';
@@ -135,7 +155,10 @@ DISPLAY 	: 'display';
 SAVE		: 'save';
 TOKEN 		: 'token';
 TREND		: 'trend';
-ROUND 		: 'round';  
+ROUND 		: 'round'; 
+IMPORT 		: 'import'; 
+AS 			: 'as';
+EVENT		: 'event';
 
 OR 		: 	'||';
 AND 	: 	'&&';
@@ -197,6 +220,10 @@ NOV : [Nn][Oo][Vv] ;
 DEC : [Dd][Ee][Cc] ;
 
 STRING : '"' .*?  '"';
+
+SECOND 	: 'SECOND';
+MINUTE	: 'MINUTE';
+HOUR   	: 'HOUR';
 
 ID		: [a-zA-Z_][a-zA-Z0-9_]*;
 NAME 	: [a-zA-Z_][a-zA-Z0-9_]*;

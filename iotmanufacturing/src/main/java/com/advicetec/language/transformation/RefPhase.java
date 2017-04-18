@@ -1,11 +1,16 @@
 package com.advicetec.language.transformation;
 
+import java.util.List;
+
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseListener;
+import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
+import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
 
@@ -75,6 +80,36 @@ public class RefPhase extends TransformationGrammarBaseListener
 			{
 				SyntaxChecking.error(ctx.id2, "no such Symbol: " + name);
 			}
+		}
+	}
+	
+	public void exitEventparameters(TransformationGrammarParser.EventparametersContext ctx) 
+	{ 
+		List<TerminalNode> ids = ctx.ID();
+		for (int i = 0; i < ids.size(); i++){
+			
+			String name = ids.get(i).getText();
+			
+			Symbol var = currentScope.resolve(name);
+			
+			if (var == null)
+			{
+				SyntaxChecking.error(ids.get(i).getSymbol(), "no such symbol: " + name);
+			}
+			
+			if (!(var instanceof AttributeSymbol)) {
+				SyntaxChecking.error(ids.get(i).getSymbol(), "no such Attribute Symbol: " + name);
+			}		
+		}
+	}
+	
+	public void exitEvent(TransformationGrammarParser.EventContext ctx) 
+	{ 
+		String packageStr = ctx.pack.getText();
+		Symbol var = currentScope.resolve(packageStr);
+		
+		if (!(var instanceof ImportSymbol)) {
+			SyntaxChecking.error(ctx.pack, "no such Import Symbol: " + packageStr);
 		}
 	}
 	

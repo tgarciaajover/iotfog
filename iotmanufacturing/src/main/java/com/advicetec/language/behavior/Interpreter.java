@@ -936,7 +936,12 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
     public ASTNode visitNotExpr(BehaviorGrammarParser.NotExprContext ctx) 
     { 
     	 ASTNode value = this.visit(ctx.expression());
-         return new ASTNode(!value.asBoolean());
+    	 
+    	 if (value.isBoolean()){
+    		 return new ASTNode(!value.asBoolean());
+    	 } else {
+    		 throw new RuntimeException("Negation can only be performed against boolean values");
+    	 }
     }
 
 	@Override 

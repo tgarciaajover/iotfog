@@ -575,7 +575,12 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
     public ASTNode visitNotExpr(TransformationGrammarParser.NotExprContext ctx) 
     { 
     	 ASTNode value = this.visit(ctx.expression());
-         return new ASTNode(!value.asBoolean());
+    	 
+    	 if (value.isBoolean()){
+    		 return new ASTNode(!value.asBoolean());
+    	 } else {
+    		 throw new RuntimeException("Negation can only be performed against boolean values");
+    	 }
     }
 
 	@Override 

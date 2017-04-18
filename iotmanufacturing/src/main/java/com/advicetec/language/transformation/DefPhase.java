@@ -1,13 +1,17 @@
 package com.advicetec.language.transformation;
 
+import java.util.List;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import com.advicetec.language.TransformationGrammarBaseListener;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
+import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.LocalScope;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
@@ -56,7 +60,29 @@ public class DefPhase extends TransformationGrammarBaseListener
 		System.out.println("Exit program: " );
 		System.out.println(globals);
 	}
+	
+	public void enterDotted_name(TransformationGrammarParser.Dotted_nameContext ctx)
+	{ 
+		List<TerminalNode> ids = ctx.ID();
+		String id;
+				
+		if (ctx.nickname == null){
+			id = ctx.getText();
+		} else {
+			id = ctx.nickname.getText();
+		}
 
+		ImportSymbol symbol = new ImportSymbol(id); 
+		
+		for (int i=0; i < ids.size() ; i++ )
+		{
+			String idStr = ids.get(i).getText();
+			symbol.addId(idStr);
+		}
+		
+		currentScope.define(symbol);
+	}
+	
 	public void saveScope(ParserRuleContext ctx, Scope s)
 	{
 		scopes.put(ctx, s);
@@ -81,7 +107,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 		// Current Scope is now function scope
 		currentScope = local;
 	}
-
+	
 	public void exitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
 		System.out.println("exitBlock" + currentScope);
