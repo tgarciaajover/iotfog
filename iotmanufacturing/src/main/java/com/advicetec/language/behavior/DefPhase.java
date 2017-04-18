@@ -46,7 +46,6 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		// Defines the function in the current scope.
 		currentScope.define(program);
 	
-		
 		// Push: set function's parent to current
 		saveScope(ctx, program); 
 		

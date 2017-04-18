@@ -1,6 +1,10 @@
 grammar TransformationGrammar;
 
-program : (import_name)* PROGRAM ID PR_OPN programparameters? PR_CLS block;  
+program : (import_name)* main
+	; 
+
+main : PROGRAM ID PR_OPN programparameters? PR_CLS block
+	;  
 
 import_name
  : IMPORT dotted_names

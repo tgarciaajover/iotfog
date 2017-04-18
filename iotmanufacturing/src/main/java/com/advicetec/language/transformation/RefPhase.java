@@ -30,45 +30,44 @@ public class RefPhase extends TransformationGrammarBaseListener
 	
 	public void enterProgram(TransformationGrammarParser.ProgramContext ctx)
 	{
-		System.out.println("refPhase enter program: ");
-		
+		// System.out.println("refPhase enter program: ");
 		currentScope = globals;
 	}	
 
 	public void exitProgram(TransformationGrammarParser.ProgramContext ctx) 
 	{ 
-		System.out.println("refPhase exit program: ");
+		// System.out.println("refPhase exit program: ");
 	}	
 	
 	public void enterFormalparameters(TransformationGrammarParser.ProgramparametersContext ctx) 
 	{ 
-		System.out.println("refPhase enter formal parameters: ");
+		// System.out.println("refPhase enter formal parameters: ");
 	}
 	
 	public void exitFormalparameters(TransformationGrammarParser.ProgramparametersContext ctx) 
 	{ 
-		System.out.println("refPhase exit formal parameters: ");
+		// System.out.println("refPhase exit formal parameters: ");
 	}
 	
 	public void enterType(TransformationGrammarParser.TypeContext ctx) 
 	{ 
-		System.out.println("refPhase enter type: ");
+		// System.out.println("refPhase enter type: ");
 	}
 	
 	public void enterRef_unit_def(TransformationGrammarParser.Ref_unit_defContext ctx) 
 	{ 
-		System.out.println("refPhase enter ref_unit: ");
+		// System.out.println("refPhase enter ref_unit: ");
 	}
 	
 	public void exitRef_var_def(TransformationGrammarParser.Ref_var_defContext ctx) 
 	{ 
-		System.out.println("refvar_def exit: ");
+		// System.out.println("refvar_def exit: ");
 	}
 	
 	public void exitAtrib_dec(TransformationGrammarParser.Atrib_decContext ctx)
 	{ 
 
-		System.out.println("in exit atrib dec : ");
+		// System.out.println("in exit atrib dec : ");
 		
 		// It verifies the unit of measure given as parameter.
 		if (ctx.id2 != null){
@@ -115,14 +114,14 @@ public class RefPhase extends TransformationGrammarBaseListener
 	
 	public void enterBlock(TransformationGrammarParser.BlockContext ctx)
 	{
-		System.out.println("refPhase enter Block: ");
+		// System.out.println("refPhase enter Block: ");
 		
 		currentScope = scopes.get(ctx); 
 	}
 	
 	public void exitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{
-		System.out.println("refPhase exist Block: ");
+		// System.out.println("refPhase exist Block: ");
 		
         currentScope = currentScope.getEnclosingScope();
 
@@ -133,7 +132,7 @@ public class RefPhase extends TransformationGrammarBaseListener
 				
 		String name = ctx.ID().getSymbol().getText();
 		
-		System.out.println("refPhase exist Variable : " + name);
+		// System.out.println("refPhase exist Variable : " + name);
 
 		Symbol var = currentScope.resolve(name);
 		

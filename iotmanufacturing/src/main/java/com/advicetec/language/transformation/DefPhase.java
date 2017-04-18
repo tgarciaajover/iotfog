@@ -33,9 +33,14 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 	public void enterProgram(TransformationGrammarParser.ProgramContext ctx)
 	{
+		System.out.println("Enter program");
 		globals = new GlobalScope();
 		currentScope = globals;
 
+	}
+
+	public void enterMain(TransformationGrammarParser.MainContext ctx) 
+	{
 		String name = ctx.PROGRAM().getText();
 
 		// Transformation program does not have a return value.
@@ -46,15 +51,15 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 		// Defines the function in the current scope.
 		currentScope.define(program);
-	
-		
+
 		// Push: set function's parent to current
 		saveScope(ctx, program); 
 		
 		// Current Scope is now function scope
 		currentScope = program;
-	}
 
+	}
+	
 	public void exitProgram(TransformationGrammarParser.ProgramContext ctx)
 	{
 		System.out.println("Exit program: " );
@@ -63,6 +68,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 	
 	public void enterDotted_name(TransformationGrammarParser.Dotted_nameContext ctx)
 	{ 
+		System.out.println("enterDotted_name");
 		List<TerminalNode> ids = ctx.ID();
 		String id;
 				
@@ -71,12 +77,15 @@ public class DefPhase extends TransformationGrammarBaseListener
 		} else {
 			id = ctx.nickname.getText();
 		}
-
+		
+		System.out.println("id:" + id);
+		
 		ImportSymbol symbol = new ImportSymbol(id); 
 		
 		for (int i=0; i < ids.size() ; i++ )
 		{
 			String idStr = ids.get(i).getText();
+			System.out.println("idStr:" + idStr);
 			symbol.addId(idStr);
 		}
 		
@@ -118,6 +127,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 	public void exitProgramparameter(TransformationGrammarParser.ProgramparameterContext ctx) 
 	{ 
+		System.out.println("parameter:" + ctx.ID().getText());
 		defineVar(ctx.type(), ctx.ID().getSymbol());
 	}
 

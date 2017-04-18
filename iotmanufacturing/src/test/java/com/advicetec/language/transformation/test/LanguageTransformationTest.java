@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import com.advicetec.core.AttributeType;
 import com.advicetec.language.transformation.InterpreterSw;
+import com.advicetec.language.transformation.SyntaxChecking;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class LanguageTransformationTest 
@@ -23,8 +24,6 @@ public class LanguageTransformationTest
 		String program = "test/transformtest." + EXTENSION;
 
 		System.out.println("Interpreting file " + program);
-
-		
 		
 		List<InterpretedSignal> list = new ArrayList<InterpretedSignal>();
 		LocalDateTime current = LocalDateTime.of(2017, 3, 9, 19, 46, 45);
@@ -43,7 +42,24 @@ public class LanguageTransformationTest
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-
 	}
+
+	@Test
+	public void Test_Sintax_Language()
+	{
+		
+		String program = "test/transformtest." + EXTENSION;
+
+		System.out.println("Interpreting Sintax File " + program);
+		
+		SyntaxChecking interpreter = new SyntaxChecking();
+		try 
+		{
+			interpreter.process(program);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 }

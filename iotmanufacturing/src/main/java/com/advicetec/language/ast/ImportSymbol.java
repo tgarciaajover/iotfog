@@ -10,6 +10,7 @@ public class ImportSymbol extends Symbol
 	public ImportSymbol(String name) 
 	{ 
 		super(name,Type.tVOID); 
+		longName = new ArrayList<String>();
 	}
 
 	public ArrayList<String> getLongName() {
