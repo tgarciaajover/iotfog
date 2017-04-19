@@ -67,10 +67,15 @@ public class MeasuredEntityFacade {
 		return entity.registerMeasureEntityAttibute(newAttribute);
 	}
 	
+	/**
+	 * Sets an Attribute.
+	 * @param attribute
+	 * @throws Exception If the new type of the attribute does not match the 
+	 * previous type.
+	 */
 	public void setAttribute(Attribute attribute) throws Exception{
 		// returns the previous value
 		status.setAttribute(attribute);
-
 	}
 
 	/**

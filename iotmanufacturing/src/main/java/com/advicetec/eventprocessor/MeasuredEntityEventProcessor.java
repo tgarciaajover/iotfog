@@ -20,6 +20,7 @@ public class MeasuredEntityEventProcessor implements Processor
 		try 
 		{
 			interpreter.process(this.event.getBehaviorTransformation());
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
