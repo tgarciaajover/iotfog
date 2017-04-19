@@ -27,11 +27,13 @@ sentence : block									# ref_block
 			| if_stat 								# ref_if_start
 			| display								# ref_display
 			| save									# ref_save	
-			| count_over_time						# ref_count_over_time		
+			| count_over_time						# ref_count_over_time
+			| max_over_time							# ref_max_over_time		
 			| RETURN expression SEMICOLON		   	# ref_return
 			| assign								# ref_assign
 			| assign_vec							# ref_assign_vec
 			| expression SEMICOLON				  	# ref_call
+			| round									# ref_round 	
 			| log 									# ref_log
 			| OTHER {System.err.println("unknown char: " + $OTHER.text);} #ref_other
 			;
@@ -45,7 +47,7 @@ assign_vec 	: ID '[' numElement=INT ']' ASG expression SEMICOLON
 var_dec 	: VARIABLE type ID (ASG expression)? SEMICOLON
 	;
 
-atrib_dec 	: ATTRIBUTE type id1=ID  (ASG expression)? (UNIT id2=ID)? SEMICOLON
+atrib_dec 	: ATTRIBUTE type id1=ID  (ASG expression)? (UNIT id2=ID)?  (TREND)? SEMICOLON
 	;
 
 unit_dec	: UNIT ID STRING SEMICOLON
@@ -63,7 +65,9 @@ display  	: DISPLAY PR_OPN expression PR_CLS SEMICOLON
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
 	;
 
-count_over_time : COUNT_OVER_TIME PR_OPN ATTRIBUTE ID COMMA TIMEUNIT COMMA range=INT COMMA update=INT PR_CLS SEMICOLON
+count_over_time : COUNT_OVER_TIME PR_OPN ATTRIBUTE ID COMMA TIMEUNIT COMMA range=INT PR_CLS SEMICOLON
+	;
+max_over_time : MAX_OVER_TIME PR_OPN ATTRIBUTE ID COMMA TIMEUNIT COMMA range=INT PR_CLS SEMICOLON
 	;
 
 block 		:  BR_OPN (sentence)* BR_CLS  // Possibly Empty Block of Sentences.
@@ -75,6 +79,9 @@ if_stat 	: IF condition_block (ELSE IF condition_block)* (ELSE block)?
 condition_block
  : expression block
  ;
+
+round : ROUND PR_OPN expression COMMA INT1 PR_CLS
+	; 
 
 log 		: LOG expression SEMICOLON
  ;
@@ -106,6 +113,7 @@ atom 		:	ID								# Var
 		| TIME							# Time
 		| DATETIME						# Datetime
 		| INT4 							# Year
+		| INT1							# digit
 		| INT							# Integer
 		| FLOAT 						# Float
 		| BOOLEAN					    # Boolean
@@ -169,6 +177,9 @@ DISPLAY 	: 'display';
 SAVE		: 'save';
 STATUS 		: 'STATUS';
 COUNT_OVER_TIME : 'count_over_time';
+MAX_OVER_TIME	: 'max_over_time';
+TREND		: 'trend';
+ROUND 		: 'round';
 
 STRING : '"' .*?  '"';
 
@@ -236,6 +247,7 @@ MINUTE	: 'MINUTE';
 HOUR   	: 'HOUR';
 
 ID	: 	[a-zA-Z_][a-zA-Z0-9_]*;
+INT1 	: DIGIT;
 INT4 : DIGIT DIGIT DIGIT DIGIT;
 INT	:	DIGIT+;
 FLOAT : DIGIT+ '.' DIGIT+;

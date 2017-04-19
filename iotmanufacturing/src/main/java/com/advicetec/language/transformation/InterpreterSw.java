@@ -125,7 +125,7 @@ public class InterpreterSw
         		throw new RuntimeException("program " + ts.getName() + " parameters not required and provided");
         	}
         	else if (((TransformationSymbol)ts).getMembers().size()!=argCount){
-        		throw new RuntimeException("program " + ts.getName() + " wrong number of parameters");
+        		throw new RuntimeException("program " + ts.getName() + " wrong number of parameters" + "tranfor defin num:" + ((TransformationSymbol)ts).getMembers().size() + "number:" + argCount);
         	}
         }
                 

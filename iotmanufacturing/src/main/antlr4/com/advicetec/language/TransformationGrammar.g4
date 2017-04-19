@@ -1,6 +1,22 @@
 grammar TransformationGrammar;
 
-program : PROGRAM ID PR_OPN programparameters? PR_CLS block;  
+program : (import_name)* main
+	; 
+
+main : PROGRAM ID PR_OPN programparameters? PR_CLS block
+	;  
+
+import_name
+ : IMPORT dotted_names
+ ;
+
+dotted_names
+ : dotted_name ( ',' dotted_name )* SEMICOLON
+ ;
+
+dotted_name
+ : ID ( '.' ID )* ( AS nickname=ID )?
+ ;
 
 programparameters : programparameter (',' programparameter)*;
 
@@ -16,8 +32,11 @@ sentence : block									# ref_block
 			| if_stat 								# ref_if_start
 			| display								# ref_display
 			| save									# ref_save
+			| timer									# ref_event
+			| repeat								# ref_repeat
 			| RETURN expression SEMICOLON		   	# ref_return
 			| assign								# ref_assign
+ 			| round									# ref_round 			
 			| log 									# ref_log
 			| OTHER {System.err.println("unknown char: " + $OTHER.text);} #ref_other
 			;
@@ -25,9 +44,8 @@ sentence : block									# ref_block
 var_dec		: VARIABLE type ID (ASG expression)? SEMICOLON
 	;
 
-atrib_dec 	: ATTRIBUTE type id1=ID  (ASG expression)? (UNIT id2=ID)? SEMICOLON
+atrib_dec 	: ATTRIBUTE type id1=ID  (ASG expression)? (UNIT id2=ID)? (TREND)? SEMICOLON
 	;
-
 
 unit_dec	: UNIT ID STRING SEMICOLON
 	; 
@@ -41,15 +59,24 @@ display  	: DISPLAY PR_OPN expression PR_CLS SEMICOLON
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
 	;
 
+timer		: TIMER PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
+	;
+
+repeat		: REPEAT PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
+	;
+	
 block :  BR_OPN (sentence)* BR_CLS  // Possibly Empty Block of Sentences.
 	;
 
 if_stat : IF condition_block (ELSE IF condition_block)* (ELSE block)?
- ;
+ 	;
 
 condition_block
  : expression block
- ;
+ 	;
+
+round : ROUND PR_OPN expression COMMA INT1 PR_CLS
+	; 
 
 log : LOG expression SEMICOLON
  ;
@@ -74,8 +101,9 @@ atom :		ID								# Var
 			| TEXT_DATE						# Date
 			| TEXT_TIME						# Time
 			| TEXT_DATETIME					# Datetime
-			| INT  							# Integer
+			| INT1							# digit
 			| INT4							# Year
+			| INT  							# Integer
 			| FLOAT							# Float
 			| BOOLEAN					    # Boolean
 			| STRING						# Str
@@ -122,13 +150,21 @@ TIME_TEXT :
 
 MONTH : JAN | FEB | MAR | APR | MAY | JUN | JUL | AUG | SEP | OCT | NOV | DEC;
 
+TIMEUNIT : SECOND | MINUTE | HOUR;
+
 PROGRAM 	: 'transform';
 ATTRIBUTE 	: 'attr';
 VARIABLE 	: 'var';
 UNIT 		: 'unit';
 DISPLAY 	: 'display';
 SAVE		: 'save';
-TOKEN 		: 'token';  
+TOKEN 		: 'token';
+TREND		: 'trend';
+ROUND 		: 'round'; 
+IMPORT 		: 'import'; 
+AS 			: 'as';
+TIMER		: 'timer';
+REPEAT		: 'repeat';
 
 OR 		: 	'||';
 AND 	: 	'&&';
@@ -191,8 +227,13 @@ DEC : [Dd][Ee][Cc] ;
 
 STRING : '"' .*?  '"';
 
+SECOND 	: 'SECOND';
+MINUTE	: 'MINUTE';
+HOUR   	: 'HOUR';
+
 ID		: [a-zA-Z_][a-zA-Z0-9_]*;
 NAME 	: [a-zA-Z_][a-zA-Z0-9_]*;
+INT1 	: DIGIT;
 INT4 	: DIGIT DIGIT DIGIT DIGIT;
 INT		: DIGIT+;
 FLOAT 	: DIGIT+ '.' DIGIT+;

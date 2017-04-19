@@ -46,7 +46,6 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		// Defines the function in the current scope.
 		currentScope.define(program);
 	
-		
 		// Push: set function's parent to current
 		saveScope(ctx, program); 
 		
@@ -63,7 +62,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	public void exitProgramparameter(BehaviorGrammarParser.ProgramparameterContext ctx) 
 	{ 
 		// The parameter does not have a unit of measure defined in the language.
-		defineAttribute(ctx.type(), ctx.ID().getSymbol(), null);
+		defineAttribute(ctx.type(), ctx.ID().getSymbol(), null, false);
 	}
 
 	
@@ -151,7 +150,12 @@ public class DefPhase extends BehaviorGrammarBaseListener
 
 	public void exitAtrib_dec(BehaviorGrammarParser.Atrib_decContext ctx) 
 	{ 
-		defineAttribute(ctx.type(), ctx.id1, ctx.id2);
+		if (ctx.TREND() == null){
+			defineAttribute(ctx.type(), ctx.id1, ctx.id2, false);
+		}
+		else{
+			defineAttribute(ctx.type(), ctx.id1, ctx.id2, true);
+		}
 	}
 	
 	public void exitVect_attrib_dec(BehaviorGrammarParser.Vect_attrib_decContext ctx) 
@@ -208,13 +212,13 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	
 	}
 
-	public void defineAttribute(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, Token unit)
+	public void defineAttribute(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, Token unit, boolean trend)
 	{
 		int typeTokenType = typeCtx.start.getType();
 		
 		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
 		
-		AttributeSymbol atr = new AttributeSymbol(nameToken.getText(), type);
+		AttributeSymbol atr = new AttributeSymbol(nameToken.getText(), type, trend);
 		
 		if (unit != null)
 			atr.setUnitOfMeasure(unit.getText());

@@ -2,6 +2,7 @@ package com.advicetec.language.ast;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.advicetec.language.BehaviorGrammarParser;
 
@@ -28,4 +29,8 @@ public class FunctionSymbol extends ScopedSymbol
         return name+"("+stripBrackets(orderedArgs.keySet().toString())+")";
     }
 
+    public Set<String> getkeys()
+    {
+    	return orderedArgs.keySet();
+    }
 }

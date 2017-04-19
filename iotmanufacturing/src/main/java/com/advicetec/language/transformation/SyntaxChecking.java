@@ -1,5 +1,8 @@
 package com.advicetec.language.transformation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
@@ -17,7 +20,9 @@ public class SyntaxChecking
 
 	private static final String EXTENSION = "properties";
 	
-    public static Symbol.Type getType(int tokenType) {
+	
+	
+	public static Symbol.Type getType(int tokenType) {
 
         switch ( tokenType ) 
         {
@@ -33,15 +38,8 @@ public class SyntaxChecking
         return Symbol.Type.tINVALID;
 
     }
-
-    public static void error(Token t, String msg) 
-    {
-
-        System.err.printf("line %d:%d %s\n", t.getLine(), t.getCharPositionInLine(),msg);
-
-    }
     
-    public void process(String program) throws Exception 
+    public List<SyntaxError> process(String program) throws Exception 
     {
 
 		TransformationGrammarLexer lexer = new TransformationGrammarLexer(new ANTLRFileStream(program));
@@ -65,21 +63,24 @@ public class SyntaxChecking
 
         walker.walk(def, tree);
         
-        System.out.println("Defphase finished");
+        // System.out.println("Defphase finished");
 
         // create next phase and feed symbol table info from def to ref phase
 
-        RefPhase ref = new RefPhase(def.getGlobalScope(), def.getScopes());
+        RefPhase ref = new RefPhase(parser, def.getGlobalScope(), def.getScopes());
 
         walker.walk(ref, tree);
-
-        for (SyntaxError e : collector.getErrors()) {
-            // RecognitionExceptionUtil is my custom class discussed next.
-            System.out.println(RecognitionExceptionUtil.formatVerbose(e));
-        }
-
         
-        System.out.println("Refphase finished globals" + def.getGlobalScope().toString());
+        List<SyntaxError> listErrors = collector.getErrors();
+        
+        // Add the custom errors created during the Ref phase. 
+        for (SyntaxError e : ref.getErrors())  { 
+        	listErrors.add(e);
+        }
+        
+        System.out.println("num errors:" + listErrors.size());
+        
+        return listErrors;
        
     }    
 }

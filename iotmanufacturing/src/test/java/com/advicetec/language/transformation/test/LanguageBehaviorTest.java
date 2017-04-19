@@ -6,9 +6,14 @@ import java.util.List;
 
 import org.junit.Test;
 
+import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
+import com.advicetec.core.AttributeValue;
+import com.advicetec.core.MeasuringUnit;
 import com.advicetec.language.behavior.InterpreterSw;
-import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
+import com.advicetec.measuredentitity.MeasuredAttributeValue;
+import com.advicetec.measuredentitity.MeasuredEntityType;
 
 public class LanguageBehaviorTest 
 {
@@ -22,19 +27,22 @@ public class LanguageBehaviorTest
 
 		System.out.println("Interpreting file " + program);
 		
-		List<InterpretedSignal> list = new ArrayList<InterpretedSignal>();
-		LocalDateTime current = LocalDateTime.of(2017, 3, 9, 19, 46, 45);
-		InterpretedSignal timeSignal = new InterpretedSignal(AttributeType.DATETIME, current );
-		list.add(timeSignal);
+		List<AttributeValue> list = new ArrayList<AttributeValue>();
 		
-		Integer value = 1;
-		InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.INT, value );
-		list.add(valueSignal);
+		MeasuringUnit cyc = new MeasuringUnit("CYC", "CYCLE"); 
+		Attribute attr = new Attribute("Cycles", AttributeType.INT, cyc,false,AttributeOrigin.TRANSFORMATION);
+		
+		Integer intValue = 1;
+		String measuredEntity = "1010";
+		LocalDateTime current = LocalDateTime.of(2017, 3, 9, 19, 46, 45);
+		MeasuredAttributeValue value = new MeasuredAttributeValue(attr,intValue, measuredEntity, MeasuredEntityType.MACHINE, current); 
+		
+		list.add(value);
 		
 		InterpreterSw interpreter = new InterpreterSw();
 		try 
 		{
-			interpreter.process(program, list);
+			interpreter.process(program, measuredEntity, list);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

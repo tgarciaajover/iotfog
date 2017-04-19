@@ -1,5 +1,7 @@
 package com.advicetec.language.ast;
 
+import java.util.Set;
+
 public interface Scope 
 {
 
@@ -16,5 +18,8 @@ public interface Scope
 
     /** Look up name in this scope or in parent scope if not here */
     public Symbol resolve(String name);
-		
+	
+    /** Return the name of the symbols included */
+    public Set<String> getkeys();
+    
 }
