@@ -1,12 +1,27 @@
 grammar BehaviorGrammar;
 
-program : PROGRAM ID PR_OPN programparameters? PR_CLS block 
+program : (import_name)* main
+	;
+
+main : PROGRAM ID PR_OPN programparameters? PR_CLS block 
 		   (function_dec)*
-		  ;  
+	;  
+
+import_name
+ : IMPORT dotted_names
+ ;
+
+dotted_names
+ : dotted_name ( ',' dotted_name )* SEMICOLON
+ ;
+
+dotted_name
+ : ID ( '.' ID )* ( AS nickname=ID )?
+ ;
 
 programparameters : programparameter (',' programparameter)*;
 
-programparameter : ATTRIBUTE type ID;
+programparameter : type ID;
 
 function_dec : type ID PR_OPN formalparameters? PR_CLS block // example: int function(int param1, int param2, ..) { ... } 
 			;   
@@ -28,7 +43,9 @@ sentence : block									# ref_block
 			| display								# ref_display
 			| save									# ref_save	
 			| count_over_time						# ref_count_over_time
-			| max_over_time							# ref_max_over_time		
+			| max_over_time							# ref_max_over_time	
+			| timer									# ref_event
+			| repeat								# ref_repeat				
 			| RETURN expression SEMICOLON		   	# ref_return
 			| assign								# ref_assign
 			| assign_vec							# ref_assign_vec
@@ -69,6 +86,13 @@ count_over_time : COUNT_OVER_TIME PR_OPN ATTRIBUTE ID COMMA TIMEUNIT COMMA range
 	;
 max_over_time : MAX_OVER_TIME PR_OPN ATTRIBUTE ID COMMA TIMEUNIT COMMA range=INT PR_CLS SEMICOLON
 	;
+
+timer		: TIMER PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
+	;
+
+repeat		: REPEAT PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
+	;
+
 
 block 		:  BR_OPN (sentence)* BR_CLS  // Possibly Empty Block of Sentences.
 	;
@@ -180,6 +204,10 @@ COUNT_OVER_TIME : 'count_over_time';
 MAX_OVER_TIME	: 'max_over_time';
 TREND		: 'trend';
 ROUND 		: 'round';
+IMPORT 		: 'import'; 
+AS 			: 'as';
+TIMER		: 'timer';
+REPEAT		: 'repeat';
 
 STRING : '"' .*?  '"';
 

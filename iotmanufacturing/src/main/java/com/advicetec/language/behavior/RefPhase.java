@@ -12,9 +12,11 @@ import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
+import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
+import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.VariableSymbol;
 
 public class RefPhase extends BehaviorGrammarBaseListener 
@@ -74,6 +76,52 @@ public class RefPhase extends BehaviorGrammarBaseListener
 			{
 				this.error(ctx.id2, ctx, "no such Symbol: " + name);
 			}
+		}
+	}
+		
+	public void enterTimer(BehaviorGrammarParser.TimerContext ctx) 
+	{ 
+		String packageStr = ctx.pack.getText();
+		Symbol var = currentScope.resolve(packageStr);
+		
+		if (var instanceof TimerSymbol) {
+			
+			Symbol impSymbol = currentScope.getParentScope().resolve(packageStr);
+			if (impSymbol instanceof ImportSymbol)
+			{
+				ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
+				for (String name : names){
+					((TimerSymbol) var).addId(name);
+				}
+				
+			} else {
+				this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
+			}
+		} else {
+			this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
+		}
+	}
+	
+	public void enterRepeat(BehaviorGrammarParser.RepeatContext ctx) 
+	{ 
+		String packageStr = ctx.pack.getText();
+		Symbol var = currentScope.resolve(packageStr);
+		
+		if (var instanceof TimerSymbol) {
+			
+			Symbol impSymbol = currentScope.getParentScope().resolve(packageStr);
+			if (impSymbol instanceof ImportSymbol)
+			{
+				ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
+				for (String name : names){
+					((TimerSymbol) var).addId(name);
+				}
+				
+			} else {
+				this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
+			}
+		} else {
+			this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
 		}
 	}
 	
