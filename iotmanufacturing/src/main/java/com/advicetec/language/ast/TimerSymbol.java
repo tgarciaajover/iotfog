@@ -33,4 +33,20 @@ public class TimerSymbol extends Symbol
 		this.longName.add(id);
 	}
 	
+	public List<String> getCompleteName(){
+		return longName;
+	}
+	
+	public long getMilliseconds(){
+		long valReturn = 0; 
+		if (timeUnit == TimeUnit.SECONDS){
+			valReturn = TimeUnit.SECONDS.toMillis(tunits);
+		} else if (timeUnit == TimeUnit.MINUTES){
+			valReturn = TimeUnit.MINUTES.toMillis(tunits);
+		} else if (timeUnit == TimeUnit.HOURS){
+			valReturn = TimeUnit.HOURS.toMillis(tunits);
+		}
+		
+		return valReturn;
+	}
 }

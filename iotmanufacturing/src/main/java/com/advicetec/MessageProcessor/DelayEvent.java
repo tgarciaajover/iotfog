@@ -9,7 +9,14 @@ import com.advicetec.eventprocessor.Event;
 public class DelayEvent implements Delayed
 {
 
+	/**
+	 * Event to process.
+	 */
 	private Event data;
+	
+	/**
+	 *  This number is in milliseconds.
+	 */
 	private long startTime;
 	
 	 
@@ -22,6 +29,10 @@ public class DelayEvent implements Delayed
 	public long getDelay(TimeUnit unit) {
 		long diff = startTime - System.currentTimeMillis();
 		return unit.convert(diff, TimeUnit.MILLISECONDS);
+	}
+	
+	public Event getEvent(){
+		return data;
 	}
 	
 	@Override
