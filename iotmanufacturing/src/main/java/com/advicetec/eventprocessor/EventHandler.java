@@ -1,5 +1,9 @@
 package com.advicetec.eventprocessor;
 
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+
+import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.mpmcqueue.PriorityQueue;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
@@ -8,10 +12,14 @@ public class EventHandler implements Runnable
 {
 
 	private PriorityQueue queue;
+
+	// This queue is to put the events.
+	private BlockingQueue toQueue;
 	
-	public EventHandler(PriorityQueue queue) {
+	public EventHandler(PriorityQueue queue, BlockingQueue toQueue) {
 		super();
 		this.queue = queue;
+		this.toQueue = toQueue;		
 	}
 
 	public void run() {
@@ -24,17 +32,21 @@ public class EventHandler implements Runnable
 				Event evnt = (Event) obj.getContent();
 				
 				switch (evnt.getEvntType())
-				{
-				
-				case MEASURING_ENTITY_EVENT:
-				    MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
-				    MeasuredEntityEventProcessor processor = new MeasuredEntityEventProcessor(measuEntyEvt);
-				    processor.process();
-				    break;
-				
-				case META_MODEL_EVENT:
-					// MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
-					break;
+				{				
+					case MEASURING_ENTITY_EVENT:
+					    MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
+					    MeasuredEntityEventProcessor processor = new MeasuredEntityEventProcessor(measuEntyEvt);
+					    List<DelayEvent> eventsToCreate = processor.process();
+						for ( int i=0; i < eventsToCreate.size(); i++){
+							DelayEvent event = eventsToCreate.get(i);
+							this.toQueue.put(event);
+						}							
+					    
+					    break;
+					
+					case META_MODEL_EVENT:
+						// MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
+						break;
 				}
 			}
 

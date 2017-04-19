@@ -59,7 +59,7 @@ public class SyntaxChecking
 
         ParseTreeWalker walker = new ParseTreeWalker();
 
-        DefPhase def = new DefPhase();
+        DefPhase def = new DefPhase(parser);
 
         walker.walk(def, tree);
         

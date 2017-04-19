@@ -33,8 +33,8 @@ import org.codehaus.plexus.compiler.CompilerException;
 public class DefPhase extends BehaviorGrammarBaseListener 
 {
 
-	private TransformationGrammarParser parser = null;
-	private ParseTreeProperty<Scope> scopes = new ParseTreeProperty<Scope>();
+	private BehaviorGrammarParser parser = null;
+	private ParseTreeProperty<Scope> scopes;
 	private GlobalScope globals;
 	
 	// Define symbols in this scope
@@ -42,13 +42,19 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	
 	// Define an array for storing syntax errors.
 	private ArrayList<SyntaxError> compilationErrors;
+
+	DefPhase(BehaviorGrammarParser parser)
+	{
+		this.scopes = new ParseTreeProperty<Scope>();
+		this.parser = parser;
+		this.compilationErrors = new ArrayList<SyntaxError>();
+	}	
 	
 	public void enterProgram(BehaviorGrammarParser.ProgramContext ctx)
 	{
 		System.out.println("Enter program");
 		globals = new GlobalScope();
 		currentScope = globals;
-		compilationErrors = new ArrayList<SyntaxError>();
 	}		
 
 	public void error(Token t, ParserRuleContext ctx, String msg) 

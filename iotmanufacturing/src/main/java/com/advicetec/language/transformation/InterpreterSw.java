@@ -18,6 +18,8 @@ import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
+import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class InterpreterSw 
@@ -55,7 +57,7 @@ public class InterpreterSw
      * @param parameters
      * @throws Exception
      */
-    public void process(String program, List<InterpretedSignal> parameters) throws Exception 
+    public void process(String program, String entityId, List<InterpretedSignal> parameters) throws Exception 
     {
 
 		TransformationGrammarLexer lexer = new TransformationGrammarLexer(new ANTLRFileStream(program));
@@ -71,11 +73,11 @@ public class InterpreterSw
 	    String mainProgramStr = (parser.getTokenNames())[TransformationGrammarLexer.PROGRAM];
 	    
 	    // Token names come with a ' at the begin and end. We remove them. 
-	    mainProgramStr = mainProgramStr.replace("'", "");
+	    mainProgramStr = mainProgramStr.replace("'","");
         
         ParseTreeWalker walker = new ParseTreeWalker();
 
-        defPhase = new DefPhase();
+        defPhase = new DefPhase(parser);
 
         walker.walk(defPhase, tree);
         
@@ -137,8 +139,11 @@ public class InterpreterSw
             globals.put(arg.getName(), argValue);
             i++;
         }
-        
-        interpreter = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes());
+
+        MeasuredEntityManager manager = MeasuredEntityManager.getInstance();
+        MeasuredEntityFacade facade = manager.getFacadeOfEntityById(entityId);
+
+        interpreter = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
         interpreter.visit(tree);
 
         System.out.println("Interpreter phase finished globals" + interpreter.globals.toString());

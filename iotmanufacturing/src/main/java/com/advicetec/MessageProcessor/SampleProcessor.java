@@ -52,8 +52,8 @@ public class SampleProcessor implements Processor
 			if (errorList.size() == 0){ 
 				// Then, we read parameters from message and pass them to the interpreter as global variables.
 				List<InterpretedSignal> list = sample.getValues();
-				interpreter = new InterpreterSw();
-				interpreter.process(program,list);
+				InterpreterSw interpreter = new InterpreterSw();
+				interpreter.process(program,measuringEntity,list);
 				// stores the status of attributes
 				entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap());
 				entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());

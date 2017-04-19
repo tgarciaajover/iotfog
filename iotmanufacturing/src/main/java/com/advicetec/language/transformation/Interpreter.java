@@ -30,6 +30,7 @@ import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.TransformationSpace;
 import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
 
 public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 {
@@ -51,6 +52,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	GlobalScope globalScope; // Global scope is filled by the parser
 	ParseTreeProperty<Scope> scopes;  // The definition for the rest of scopes
 	Scope currentScope;
+	MeasuredEntityFacade facade;
 	
 	MemorySpace globals;
 	MemorySpace currentSpace;
@@ -59,13 +61,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	// used to compare floating point numbers
     public static final double SMALL_VALUE = 0.00000000001;
 
-	Interpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes)
+	Interpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, MeasuredEntityFacade facade)
 	{
 		// Variable for symbol definition.
 		this.globalScope = _globalScope;
 		this.globals = _globals;
 		this.scopes = scopes;
 		this.currentScope = _globalScope;
+		this.facade = facade;
 		
 		// For memory evaluation
 		stack = new Stack<TransformationSpace>(); // call stack

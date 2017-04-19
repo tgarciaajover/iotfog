@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.tree.*;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarLexer;
 import com.advicetec.language.BehaviorGrammarParser;
+import com.advicetec.language.TransformationGrammarLexer;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
@@ -62,7 +63,7 @@ public class InterpreterSw
      * @param parameters
      * @throws Exception
      */
-    public void process(String program, String entityId, List<AttributeValue> parameters) throws Exception 
+    public void process(String program, String entityId, List<InterpretedSignal> parameters) throws Exception 
     {
 
 		BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(new ANTLRFileStream(program));
@@ -75,29 +76,19 @@ public class InterpreterSw
 
         ParseTree tree = parser.program();
 
-	    String mainProgramStr = (parser.getTokenNames())[BehaviorGrammarLexer.PROGRAM];
+	    String mainProgramStr = (parser.getTokenNames())[TransformationGrammarLexer.PROGRAM];
 
 	    // Token names come with a ' at the begin and end. We remove them. 
-	    mainProgramStr = mainProgramStr.replace("'", "");
+	    mainProgramStr = mainProgramStr.replace("'","");
 
         ParseTreeWalker walker = new ParseTreeWalker();
 
-        defPhase = new DefPhase();
+        defPhase = new DefPhase(parser);
 
         walker.walk(defPhase, tree);
        
         System.out.println("Defphase finished globals: " + defPhase.getGlobalScope().toString());
 
-        // Update the attribute parameters, because the language only references the attribute as 
-        // a parameter, we have to actually bring the definition into the global scope 
-        
-        for (int i=0; i < parameters.size(); i++)
-        {
-        	AttributeValue attrValue = parameters.get(i);
-        	AttributeSymbol symbol = (AttributeSymbol)defPhase.getGlobalScope().resolve(attrValue.getAttribute().getName());
-        	symbol.setUnitOfMeasure(attrValue.getAttribute().getUnit().getSymbol());
-        	symbol.setTrend(attrValue.getAttribute().getTrend());
-        }
         
         // create next phase and feed symbol table info from def to ref phase
         MemorySpace globals = new MemorySpace("globals");  
@@ -150,7 +141,7 @@ public class InterpreterSw
         // pass the parameters to the program. 
         int i = 0;
         for (Symbol argS : ((BehaviorSymbol)ts).getMembers().values()) {
-            AttributeSymbol arg = (AttributeSymbol)argS;
+            VariableSymbol arg = (VariableSymbol)argS;
             ASTNode argValue = new ASTNode(parameters.get(i).getValue()); 
             globals.put(arg.getName(), argValue);
             i++;
@@ -162,40 +153,7 @@ public class InterpreterSw
         interpreter = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
         interpreter.visit(tree);
         
-        System.out.println("Interpreter phase finished");
-        int numElements;
-        
-        Set<String> ids = interpreter.globals.getkeys();
-        for (String id : ids ) 
-        {
-        	Symbol sym = defPhase.getGlobalScope().resolve(id);
-        	 
-        	System.out.println("Global variable:" + id);
-        	
-        	if (sym instanceof ArraySymbol){
-        		ArraySymbol ar  = (ArraySymbol) sym; 
-        		numElements = ar.getNumElements();
-        		
-        		System.out.println("Num Elements:" + numElements);
-        		
-        		for (int j = 0; i < numElements; j++)
-        		{
-        			if (sym.getType() == Symbol.Type.tFLOAT){
-        				Double val = (interpreter.globals.get(id).asDoubleVector())[j];
-        				System.out.println("Vector " + id + "position : " + j + "value" + val);
-        			}
-        			
-        			if (sym.getType() == Symbol.Type.tINT){
-        				Integer val = (interpreter.globals.get(id).asIntegerVector())[i];
-        				System.out.println("Vector " + id + "position : " + i + "value" + val.toString());
-        			}
-        		}
-        	}
-        	else
-        	{
-        		System.out.println("global varId: " + id + " value:" +  interpreter.globals.get(id).toString());
-        	}
-        }
+        System.out.println("Interpreter phase finished globals" + interpreter.globals.toString());
     }    
 
     public GlobalScope getGlobalScope(){

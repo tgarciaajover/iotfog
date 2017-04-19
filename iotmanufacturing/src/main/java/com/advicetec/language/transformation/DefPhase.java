@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseListener;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.AttributeSymbol;
@@ -29,19 +30,24 @@ public class DefPhase extends TransformationGrammarBaseListener
 {
 
 	private TransformationGrammarParser parser = null;
-	private ParseTreeProperty<Scope> scopes = new ParseTreeProperty<Scope>();
+	private ParseTreeProperty<Scope> scopes; 
 	private GlobalScope globals;
 	// Define symbols in this scope
 	private Scope currentScope;
 	private ArrayList<SyntaxError> compilationErrors;
 
+	DefPhase(TransformationGrammarParser parser)
+	{
+		this.scopes = new ParseTreeProperty<Scope>();
+		this.parser = parser;
+		this.compilationErrors = new ArrayList<SyntaxError>();
+	}
 
 	public void enterProgram(TransformationGrammarParser.ProgramContext ctx)
 	{
 		System.out.println("Enter program");
 		globals = new GlobalScope();
 		currentScope = globals;
-		compilationErrors = new ArrayList<SyntaxError>();
 	}
 
 	public void error(Token t, ParserRuleContext ctx, String msg) 
