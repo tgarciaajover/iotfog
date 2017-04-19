@@ -79,7 +79,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	
 	public ASTNode visitMain(TransformationGrammarParser.MainContext ctx) 
 	{ 
-		// System.out.println("visitMain");
+		System.out.println("visitMain");
 		
 		currentScope = globalScope; 
 		currentSpace = globals;
@@ -156,7 +156,8 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         
         // Copies the program stack to global stack to be returned to the interpreter caller.
         Set<String> keys = currentSpace.getkeys();
-        for (Iterator<String> iterator = keys.iterator(); iterator.hasNext();) {
+        for (Iterator<String> iterator = keys.iterator(); iterator.hasNext();) 
+        {
 			String id = (String) iterator.next();
 			saveSpace.put(id, currentSpace.get(id));
 		} 
@@ -164,10 +165,17 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         stack.pop();               // POP arg, locals
         currentSpace = saveSpace;
         
-        // goes up in the current scope.
-        currentScope = saveScope;
-        // System.out.println("Starting function: "+ fname + "Ending currentScope:" + currentScope.getScopeName());        
+        // Copies the block scope to the global scope to be returned to the interpreter caller.
+        Set<String> keysymbols = scopes.get(ctx.block()).getkeys();
+        for (Iterator<String> iterator = keysymbols.iterator(); iterator.hasNext();) 
+        {
+			String id = (String) iterator.next();
+			saveScope.define(scopes.get(ctx.block()).resolve(id));
+		} 
         
+        
+        // goes up in the current scope.
+        currentScope = saveScope;        
         return result;
 
 	}
@@ -175,21 +183,20 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitVar_dec(TransformationGrammarParser.Var_decContext ctx) 
 	{ 
-		// System.out.println("visitVar_dec");
+		String id = ctx.ID().getText();
+		System.out.println("visitVar_dec" + id);
 		
 		// the declaration includes an assignment
 		if (ctx.ASG() != null)
 		{
-			String id = ctx.ID().getText();
 	        ASTNode value = this.visit(ctx.expression());
+	        Symbol s = currentScope.resolve(id);
+	        VerifyAssign(s, value);
 	        currentSpace.put(id, value);         // store
-	        
 	        return value;
-			
 		}
 		else
 		{
-			String id = ctx.ID().getText();
 	        currentSpace.put(id, new ASTNode(new Object()));         // store
 			return ASTNode.VOID;	
 		}
@@ -207,7 +214,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	public ASTNode visitAtrib_dec(TransformationGrammarParser.Atrib_decContext ctx) 
 	{ 
 		String id = ctx.id1.getText();
-		// System.out.println("visitAtrib_dec:" + id);
+		System.out.println("visitAtrib_dec:" + id);
 		
 		// the declaration includes an assignment
 		if (ctx.ASG() != null)
@@ -217,8 +224,9 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			// It verifies if the expression correspond to another attribute. In such 
 			// case check whether or not they manages the same units.
 			String id2 = ctx.expression().getText();
-			Symbol s = currentScope.resolve(id2) ;
-			if (s instanceof AttributeSymbol ){
+			Symbol s = currentScope.resolve(id2);
+			if (s instanceof AttributeSymbol )
+			{
 				AttributeSymbol s1 = (AttributeSymbol) s;
 				
 				// System.out.println("s1 unit:" + s1.getUnitOfMeasure() + "sysattr : " + sysAttr.getUnitOfMeasure());
@@ -226,6 +234,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 				if (s1.getUnitOfMeasure() != sysAttr.getUnitOfMeasure() )
 				{
 			        ASTNode value = this.visit(ctx.expression());
+			        VerifyAssign(s1, value);
 			        currentSpace.put(id, value);         // store
 			        return value;						
 				}
@@ -237,7 +246,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			}
 			else
 			{
-			    ASTNode value = this.visit(ctx.expression());
+				System.out.println("before attribute assign"); 
+				ASTNode value = this.visit(ctx.expression());
+				
+				System.out.println("value to assign:" + value.toString());
+				VerifyAssign(sysAttr, value);
 			    currentSpace.put(id, value);         // store
 			    return value;					
 			}
@@ -253,19 +266,75 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	public ASTNode visitAssign(TransformationGrammarParser.AssignContext ctx) 
 	{ 
 		
-		// System.out.println("visitAssign");
-		
 		String id = ctx.ID().getText();
+		
+		System.out.println("visitAssign" + id);
+		
         ASTNode value = this.visit(ctx.expression());
-
+        Symbol symbol = currentScope.resolve(id) ;
         // var assign ^('=' a expr)
         MemorySpace space = getSpaceWithSymbol(id);
         if ( space==null ) 
         	space = currentSpace; // create in current space
-
+        
+        VerifyAssign(symbol, value);
         space.put(id, value);         // store
         
         return value;
+	}
+	
+	public void VerifyAssign(Symbol symbol, ASTNode value)
+	{
+		if ((symbol instanceof VariableSymbol) ||
+		    (symbol instanceof AttributeSymbol)) {
+			
+			switch (symbol.getType())
+			{
+			case tINT:
+				if (!(value.isInteger())){
+					throw new RuntimeException("The value given is not an integer type");
+				}
+				break;
+			case tDATETIME:
+				if (!(value.isDateTime())){
+					throw new RuntimeException("the value given is not a datetime type");
+				}
+				break;
+			case tFLOAT:
+				if (!(value.isDouble() || value.isInteger())) {
+					throw new RuntimeException("The value given is not a float type");
+				}
+				break;
+			case tSTRING:
+				if (!(value.isString())){
+					throw new RuntimeException("The value given is not a string type");
+				}
+				break;
+			case tBOOL:
+				if (!(value.isBoolean())){
+					throw new RuntimeException("The value given is not a boolean type");
+				}
+				break;
+			case tDATE:
+				if (!(value.isDate())){
+					throw new RuntimeException("The value given is not a date type");
+				}
+				break;
+			case tTIME:
+				if (!(value.isTime())){
+					throw new RuntimeException("The value given is not a time type");
+				}
+				break;
+			case tVOID:
+				throw new RuntimeException("The value given is of type void");
+
+			case tINVALID:
+				throw new RuntimeException("The value given is of type invalid");
+			}	
+		}
+		else {
+			throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + symbol.getName());
+		}
 	}
 	
 	@Override 
@@ -273,7 +342,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	{ 
 				
 		String id = ctx.getText();
-		// System.out.println("visitVar:" + id);
+		System.out.println("visitVar:" + id);
 				
 		MemorySpace space = getSpaceWithSymbol(id); 
         ASTNode value = space.get(id);
@@ -316,19 +385,20 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitInteger(TransformationGrammarParser.IntegerContext ctx) 
 	{ 
-		// System.out.println("visitInteger");
+		System.out.println("visitInteger");
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 
 	@Override
 	public ASTNode visitYear(TransformationGrammarParser.YearContext ctx) 
 	{ 
-		// System.out.println("visitYear");
+		System.out.println("visitYear");
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 	
 	public ASTNode visitDigit(TransformationGrammarParser.DigitContext ctx) 
 	{ 
+		System.out.println("visitDigit");
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 	
@@ -376,11 +446,42 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
         switch (ctx.op.getType()) {
             case TransformationGrammarParser.MULT:
-                return new ASTNode(left.asDouble() * right.asDouble());
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode((Integer)(left.asInterger() * right.asInterger()));
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Double)(left.asDouble() * right.asInterger()));
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Double)(left.asInterger() * right.asDouble()));
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode((Double)(left.asDouble() * right.asDouble()));
+            	} else {
+            		throw new RuntimeException("operators are not numbers");
+            	}
             case TransformationGrammarParser.DIVI:
-                return new ASTNode(left.asDouble() / right.asDouble());
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode((Double)((double)left.asInterger() / (double) right.asInterger()));
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Double)(left.asDouble() / (double) right.asInterger()));
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Double)(left.asInterger() / (double) right.asDouble()));
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode((Double)(left.asDouble() / right.asDouble()));
+            	} else {
+            		throw new RuntimeException("operators are not numbers");
+            	}
+            	
             case TransformationGrammarParser.MOD:
-                return new ASTNode(left.asDouble() % right.asDouble());
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode((Double)((double)left.asInterger() % (double) right.asInterger()));
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Double)(left.asDouble() % (double) right.asInterger()));
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Double)(left.asInterger() % (double) right.asDouble()));
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode((Double)(left.asDouble() % right.asDouble()));
+            	} else {
+            		throw new RuntimeException("operators are not numbers");
+            	}
             default:
                 throw new RuntimeException("unknown operator: " + TransformationGrammarParser.tokenNames[ctx.op.getType()]);
         }
@@ -396,11 +497,33 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
         switch (ctx.op.getType()) {
             case TransformationGrammarParser.PLUS:
-                return left.isDouble() && right.isDouble() ?
-                        new ASTNode(left.asDouble() + right.asDouble()) :
-                        new ASTNode(left.asString() + right.asString());
+
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode(left.asInterger() + right.asInterger());
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Double)left.asDouble() +  right.asInterger());
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Double) (left.asInterger() + right.asDouble()));
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode(left.asDouble() + right.asDouble());
+            	} else if (left.isString() && right.isString()){
+            		new ASTNode(left.asString() + right.asString());
+		    	} else {
+		    		throw new RuntimeException("operators are not numbers or strings");
+		    	}
+                        
             case TransformationGrammarParser.MINUS:
-                return new ASTNode(left.asDouble() - right.asDouble());
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode(left.asInterger() - right.asInterger());
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Double)left.asDouble() -  right.asInterger());
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Double) (left.asInterger() - right.asDouble()));
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode(left.asDouble() - right.asDouble());
+            	} else {
+		    		throw new RuntimeException("operators are not numbers");
+		    	}
             default:
                 throw new RuntimeException("unknown operator: " + TransformationGrammarParser.tokenNames[ctx.op.getType()]);
         }
@@ -415,8 +538,18 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		ASTNode left = this.visit(ctx.expression(0));
         ASTNode right = this.visit(ctx.expression(1));
-        
-        return new ASTNode(Math.pow(left.asDouble(), right.asDouble()));
+
+    	if (left.isInteger() && right.isInteger()){
+    		return new ASTNode((Double) Math.pow(left.asInterger(), right.asInterger()));
+    	} else if (left.isDouble() && right.isInteger()){
+    		return new ASTNode((Double) Math.pow(left.asDouble(), right.asInterger()));
+    	} else if (left.isInteger() && right.isDouble()){
+    		return new ASTNode((Double) Math.pow(left.asInterger(), right.asDouble()));
+    	} else if (left.isDouble() && right.isDouble()){
+    		return new ASTNode((Double) Math.pow(left.asDouble(), right.asDouble()));
+    	} else {
+    		throw new RuntimeException("operators are not numbers");
+    	}        
 	}
 	
 	@Override 
@@ -430,13 +563,56 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
         switch (ctx.op.getType()) {
             case TransformationGrammarParser.LT:
-                return new ASTNode(left.asDouble() < right.asDouble());
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode((Boolean) (left.asInterger() < right.asInterger()));
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Boolean) (left.asDouble() < right.asInterger()));
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Boolean) (left.asInterger() < right.asDouble()));
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode((Boolean) (left.asDouble() < right.asDouble()));
+            	} else {
+            		throw new RuntimeException("operators are not numbers");
+            	}        
+
             case TransformationGrammarParser.LTEQ:
-                return new ASTNode(left.asDouble() <= right.asDouble());
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode((Boolean) (left.asInterger() <= right.asInterger()));
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Boolean) (left.asDouble() <= right.asInterger()));
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Boolean) (left.asInterger() <= right.asDouble()));
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode((Boolean) (left.asDouble() <= right.asDouble()));
+            	} else {
+            		throw new RuntimeException("operators are not numbers");
+            	}        
             case TransformationGrammarParser.GT:
-                return new ASTNode(left.asDouble() > right.asDouble());
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode((Boolean) (left.asInterger() > right.asInterger()));
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Boolean) (left.asDouble() > right.asInterger()));
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Boolean) (left.asInterger() > right.asDouble()));
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode((Boolean) (left.asDouble() > right.asDouble()));
+            	} else {
+            		throw new RuntimeException("operators are not numbers");
+            	}        
+
             case TransformationGrammarParser.GTEQ:
-                return new ASTNode(left.asDouble() >= right.asDouble());
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode((Boolean) (left.asInterger() >= right.asInterger()));
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Boolean) (left.asDouble() >= right.asInterger()));
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Boolean) (left.asInterger() >= right.asDouble()));
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode((Boolean) (left.asDouble() >= right.asDouble()));
+            	} else {
+            		throw new RuntimeException("operators are not numbers");
+            	}        
+
             default:
                 throw new RuntimeException("unknown operator: " + TransformationGrammarParser.tokenNames[ctx.op.getType()]);
         }
@@ -446,20 +622,58 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	public ASTNode visitEqualityExpr(TransformationGrammarParser.EqualityExprContext ctx) 
 	{ 
 		
-		// System.out.println("visitEqualityExpr");
+		System.out.println("visitEqualityExpr");
 		
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
 
         switch (ctx.op.getType()) {
             case TransformationGrammarParser.EQ:
-                return left.isDouble() && right.isDouble() ?
-                        new ASTNode(Math.abs(left.asDouble() - right.asDouble()) < SMALL_VALUE) :
-                        new ASTNode(left.equals(right));
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode((Boolean) (left.asInterger() == right.asInterger()));
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Boolean) (Math.abs( left.asDouble() - right.asInterger()) < SMALL_VALUE) );
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Boolean) (Math.abs( left.asInterger() - right.asDouble()) < SMALL_VALUE) );
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode((Boolean) (Math.abs( left.asDouble() - right.asDouble()) < SMALL_VALUE) );
+            	} else if (left.isString() && right.isString()){
+            		return new ASTNode((Boolean) (left.asString()).equals(right.asString()) );
+		    	} else if (left.isBoolean() && right.isBoolean()){
+		    		return new ASTNode((Boolean) (left.asBoolean()).equals(right.asBoolean()) );
+		    	} else if (left.isDate() && right.isDate()){
+		    		return new ASTNode((Boolean) (left.asDate()).equals(right.asDate()) );
+		    	} else if (left.isDateTime() && right.isDateTime()){
+		    		return new ASTNode((Boolean) (left.asDateTime()).equals(right.asDateTime()) );
+		    	} else if (left.isTime() && right.isTime()){
+		    		return new ASTNode((Boolean) (left.asTime()).equals(right.asTime()) );
+		    	} else {
+            		throw new RuntimeException("operators are not of the same type");
+            	}        
+
             case TransformationGrammarParser.NEQ:
-                return left.isDouble() && right.isDouble() ?
-                        new ASTNode(Math.abs(left.asDouble() - right.asDouble()) >= SMALL_VALUE) :
-                        new ASTNode(!left.equals(right));
+            	if (left.isInteger() && right.isInteger()){
+            		return new ASTNode((Boolean) (left.asInterger() != right.asInterger()));
+            	} else if (left.isDouble() && right.isInteger()){
+            		return new ASTNode((Boolean) (Math.abs( left.asDouble() - right.asInterger()) > SMALL_VALUE) );
+            	} else if (left.isInteger() && right.isDouble()){
+            		return new ASTNode((Boolean) (Math.abs( left.asInterger() - right.asDouble()) > SMALL_VALUE) );
+            	} else if (left.isDouble() && right.isDouble()){
+            		return new ASTNode((Boolean) (Math.abs( left.asDouble() - right.asDouble()) > SMALL_VALUE) );
+            	} else if (left.isString() && right.isString()){
+            		return new ASTNode((Boolean) !(left.asString()).equals(right.asString()) );
+		    	} else if (left.isBoolean() && right.isBoolean()){
+		    		return new ASTNode((Boolean) !(left.asBoolean()).equals(right.asBoolean()) );
+		    	} else if (left.isDate() && right.isDate()){
+		    		return new ASTNode((Boolean) !(left.asDate()).equals(right.asDate()) );
+		    	} else if (left.isDateTime() && right.isDateTime()){
+		    		return new ASTNode((Boolean) !(left.asDateTime()).equals(right.asDateTime()) );
+		    	} else if (left.isTime() && right.isTime()){
+		    		return new ASTNode((Boolean) !(left.asTime()).equals(right.asTime()) );
+		    	} else {
+            		throw new RuntimeException("operators are not of the same type");
+            	}        
+
             default:
                 throw new RuntimeException("unknown operator: " + TransformationGrammarParser.tokenNames[ctx.op.getType()]);
         }
@@ -472,7 +686,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
-        return new ASTNode(left.asBoolean() && right.asBoolean());
+    	if (left.isBoolean() && right.isBoolean()){
+    		return new ASTNode(left.asBoolean() && right.asBoolean());
+    	} else {
+    		throw new RuntimeException("operators are not of boolean type");
+    	}
 
 	}
 	
@@ -483,7 +701,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
-        return new ASTNode(left.asBoolean() || right.asBoolean());
+    	if (left.isBoolean() && right.isBoolean()){
+    		return new ASTNode(left.asBoolean() || right.asBoolean());
+    	} else {
+    		throw new RuntimeException("operators are not of boolean type");
+    	}
 	}
 	
 	public ASTNode visitToken(TransformationGrammarParser.TokenContext ctx) 
@@ -535,8 +757,9 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
     // if override
     @Override
-    public ASTNode visitIf_stat(TransformationGrammarParser.If_statContext ctx) {
-
+    public ASTNode visitIf_stat(TransformationGrammarParser.If_statContext ctx) 
+    {
+    	// System.out.println("Visit if");
         List<TransformationGrammarParser.Condition_blockContext> conditions =  ctx.condition_block();
 
         boolean evaluatedBlock = false;
@@ -544,10 +767,12 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         for(TransformationGrammarParser.Condition_blockContext condition : conditions) {
 
             ASTNode evaluated = this.visit(condition.expression());
-
+            
+            System.out.println("evaluated:" + evaluated.toString());
+            
             if(evaluated.asBoolean()) {
                 evaluatedBlock = true;
-                // evaluate this block whose expr==true
+                System.out.println("entering if");
                 this.visit(condition.block());
                 break;
             }
@@ -573,7 +798,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
     public ASTNode visitUnaryMinusExpr(TransformationGrammarParser.UnaryMinusExprContext ctx) 
     { 
     	ASTNode value = this.visit(ctx.expression());
-        return new ASTNode(-value.asDouble());
+    	if (value.isInteger()){
+    		return new ASTNode(value.asInterger() * -1);
+    	} else if (value.isDouble()) {
+    		return new ASTNode(value.asDouble() * -1);
+    	} else {
+    		throw new RuntimeException("operator is not a number");
+    	}
     }
     
     @Override 

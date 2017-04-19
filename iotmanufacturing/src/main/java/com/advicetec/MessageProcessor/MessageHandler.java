@@ -1,5 +1,7 @@
 package com.advicetec.MessageProcessor;
 
+import java.util.concurrent.BlockingQueue;
+
 import com.advicetec.mpmcqueue.PriorityQueue;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
@@ -16,7 +18,12 @@ public class MessageHandler implements Runnable
 {
 
 	private PriorityQueue fromQueue;
+	
+	// This queue is to put the events that need to be executed right now.
 	private PriorityQueue toQueue;
+	
+	// This queue is used to put the events that need to be scheduled for later execution.
+	private BlockingQueue queue; 
 
 	public MessageHandler(PriorityQueue fromQueue, PriorityQueue toQueue) {
 		super();
@@ -42,6 +49,10 @@ public class MessageHandler implements Runnable
 							SampleMessage sample = (SampleMessage) um;
 							SampleProcessor processor = new SampleProcessor(sample);
 							processor.process();
+
+							// TODO: include priority parameter for the type of message. 
+							// = toQueue.enqueue(7, um);
+							
 							break;
 												
 						case BROKER_MESSAGE:
@@ -51,8 +62,6 @@ public class MessageHandler implements Runnable
 							break;
 					}
 					
-					// TODO: include priority parameter for the type of message. 
-					// = toQueue.enqueue(7, um);
 				}		
 				
 			}

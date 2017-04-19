@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.advicetec.core.Processor;
 import com.advicetec.language.ast.GlobalScope;
+import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.transformation.InterpreterSw;
 import com.advicetec.language.transformation.SyntaxChecking;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -40,15 +41,18 @@ public class SampleProcessor implements Processor
 		try 
 		{
 			// First, we verify the transformation.
-			sintaxChecking.process(program);
+			List<SyntaxError> errorList = sintaxChecking.process(program);
 			
-			// Then, we read parameters from message and pass them to the interpreter as global variables.
-			List<InterpretedSignal> list = sample.getValues();
-			interpreter = new InterpreterSw();
-			interpreter.process(program,list);
-			// stores the status of attributes
-			entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap());
-			entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());
+			// If no errors, then process.
+			if (errorList.size() == 0){ 
+				// Then, we read parameters from message and pass them to the interpreter as global variables.
+				List<InterpretedSignal> list = sample.getValues();
+				interpreter = new InterpreterSw();
+				interpreter.process(program,list);
+				// stores the status of attributes
+				entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap());
+				entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());
+			}
 		
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block

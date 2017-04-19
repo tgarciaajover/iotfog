@@ -32,7 +32,8 @@ sentence : block									# ref_block
 			| if_stat 								# ref_if_start
 			| display								# ref_display
 			| save									# ref_save
-			| event									# ref_event
+			| timer									# ref_event
+			| repeat								# ref_repeat
 			| RETURN expression SEMICOLON		   	# ref_return
 			| assign								# ref_assign
  			| round									# ref_round 			
@@ -58,10 +59,10 @@ display  	: DISPLAY PR_OPN expression PR_CLS SEMICOLON
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
 	;
 
-event		: EVENT PR_OPN eventparameters COMMA TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
+timer		: TIMER PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
 	;
-	
-eventparameters : (ID)? (',' ID )*
+
+repeat		: REPEAT PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
 	;
 	
 block :  BR_OPN (sentence)* BR_CLS  // Possibly Empty Block of Sentences.
@@ -162,7 +163,8 @@ TREND		: 'trend';
 ROUND 		: 'round'; 
 IMPORT 		: 'import'; 
 AS 			: 'as';
-EVENT		: 'event';
+TIMER		: 'timer';
+REPEAT		: 'repeat';
 
 OR 		: 	'||';
 AND 	: 	'&&';

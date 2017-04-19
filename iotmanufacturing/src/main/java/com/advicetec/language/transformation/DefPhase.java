@@ -1,6 +1,7 @@
 package com.advicetec.language.transformation;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
@@ -15,10 +16,11 @@ import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.LocalScope;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
-import com.advicetec.language.behavior.SyntaxChecking;
+import com.advicetec.language.transformation.SyntaxChecking;
 
 import org.antlr.v4.runtime.Token;
 
@@ -88,6 +90,55 @@ public class DefPhase extends TransformationGrammarBaseListener
 		scopes.put(ctx, s);
 	}
 
+	public void enterTimer(TransformationGrammarParser.TimerContext ctx) 
+	{ 
+		// by default seconds
+		TimeUnit unitTimer = TimeUnit.SECONDS;
+		if (ctx.TIMEUNIT().getText().compareTo("SECOND") == 0){
+			unitTimer = TimeUnit.SECONDS;
+		}
+		if (ctx.TIMEUNIT().getText().compareTo("MINUTE") == 0){
+			unitTimer = TimeUnit.MINUTES;
+		}
+		if (ctx.TIMEUNIT().getText().compareTo("HOUR") == 0){
+			unitTimer = TimeUnit.HOURS;
+		}
+		
+		int tunit = Integer.valueOf(ctx.INT().getText());
+		String behaviorName = ctx.pack.getText();
+		
+		TimerSymbol tSymbol = new TimerSymbol(behaviorName,unitTimer,tunit, false);
+
+		// Define the symbol in the current scope
+		currentScope.define(tSymbol);
+		
+	}
+
+	public void enterRepeat(TransformationGrammarParser.RepeatContext ctx) 
+	{ 
+		// by default seconds
+		TimeUnit unitTimer = TimeUnit.SECONDS;
+		if (ctx.TIMEUNIT().getText().compareTo("SECOND") == 0){
+			unitTimer = TimeUnit.SECONDS;
+		}
+		if (ctx.TIMEUNIT().getText().compareTo("MINUTE") == 0){
+			unitTimer = TimeUnit.MINUTES;
+		}
+		if (ctx.TIMEUNIT().getText().compareTo("HOUR") == 0){
+			unitTimer = TimeUnit.HOURS;
+		}
+		
+		int tunit = Integer.valueOf(ctx.INT().getText());
+		String behaviorName = ctx.pack.getText();
+		
+		TimerSymbol tSymbol = new TimerSymbol(behaviorName,unitTimer,tunit, true);
+
+		// Define the symbol in the current scope
+		currentScope.define(tSymbol);
+		
+	}
+	
+	
 	public void enterBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
 
@@ -165,16 +216,19 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 	public void defineVar(TransformationGrammarParser.TypeContext typeCtx, Token nameToken)
 	{
+
 		int typeTokenType = typeCtx.start.getType();
 
 		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
-
+		
 		VariableSymbol var = new VariableSymbol(nameToken.getText(), type);
 
 		// Define the symbol in the current scope
 		currentScope.define(var);
 
-		// System.out.println("Define var: " + var.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
+		System.out.println("Define var: " + var.getName() + 
+								" scopeName:" + currentScope.getScopeName() + 
+									"tokenType:" + typeTokenType + " type:" + type.name());
 	}
 
 	public GlobalScope getGlobalScope()

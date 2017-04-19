@@ -18,6 +18,7 @@ import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
+import com.advicetec.language.ast.TimerSymbol;
 
 public class RefPhase extends TransformationGrammarBaseListener 
 {
@@ -103,34 +104,50 @@ public class RefPhase extends TransformationGrammarBaseListener
 			}
 		}
 	}
-	
-	public void exitEventparameters(TransformationGrammarParser.EventparametersContext ctx) 
-	{ 
-		List<TerminalNode> ids = ctx.ID();
-		for (int i = 0; i < ids.size(); i++){
-			
-			String name = ids.get(i).getText();
-			
-			Symbol var = currentScope.resolve(name);
-			
-			if (var == null)
-			{
-				this.error(ids.get(i).getSymbol(), ctx, "no such symbol: " + name);
-			}
-			
-			if (!(var instanceof AttributeSymbol)) {
-				this.error(ids.get(i).getSymbol(), ctx, "no such Attribute Symbol: " + name);
-			}		
-		}
-	}
-	
-	public void exitEvent(TransformationGrammarParser.EventContext ctx) 
+		
+	public void enterTimer(TransformationGrammarParser.TimerContext ctx) 
 	{ 
 		String packageStr = ctx.pack.getText();
 		Symbol var = currentScope.resolve(packageStr);
 		
-		if (!(var instanceof ImportSymbol)) {
-			this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
+		if (var instanceof TimerSymbol) {
+			
+			Symbol impSymbol = currentScope.getParentScope().resolve(packageStr);
+			if (impSymbol instanceof ImportSymbol)
+			{
+				ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
+				for (String name : names){
+					((TimerSymbol) var).addId(name);
+				}
+				
+			} else {
+				this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
+			}
+		} else {
+			this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
+		}
+	}
+	
+	public void enterRepeat(TransformationGrammarParser.RepeatContext ctx) 
+	{ 
+		String packageStr = ctx.pack.getText();
+		Symbol var = currentScope.resolve(packageStr);
+		
+		if (var instanceof TimerSymbol) {
+			
+			Symbol impSymbol = currentScope.getParentScope().resolve(packageStr);
+			if (impSymbol instanceof ImportSymbol)
+			{
+				ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
+				for (String name : names){
+					((TimerSymbol) var).addId(name);
+				}
+				
+			} else {
+				this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
+			}
+		} else {
+			this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
 		}
 	}
 	
@@ -154,7 +171,7 @@ public class RefPhase extends TransformationGrammarBaseListener
 				
 		String name = ctx.ID().getSymbol().getText();
 		
-		// System.out.println("refPhase exist Variable : " + name);
+		System.out.println("refPhase exist Variable : " + name);
 
 		Symbol var = currentScope.resolve(name);
 		
@@ -165,7 +182,7 @@ public class RefPhase extends TransformationGrammarBaseListener
 		
 		if (var instanceof FunctionSymbol) 
 		{
-			this.error(ctx.ID().getSymbol(), ctx, name + " is not a Symbol" );
+			this.error(ctx.ID().getSymbol(), ctx, name + " is a Function Symbol" );
 		}
 	}
 	

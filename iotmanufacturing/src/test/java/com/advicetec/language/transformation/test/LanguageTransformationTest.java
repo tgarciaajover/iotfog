@@ -5,12 +5,15 @@ import static org.junit.Assert.assertEquals;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
 import com.advicetec.core.AttributeType;
 import com.advicetec.language.ast.RecognitionExceptionUtil;
+import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
+import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.transformation.InterpreterSw;
 import com.advicetec.language.transformation.SyntaxChecking;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
@@ -25,7 +28,7 @@ public class LanguageTransformationTest
 		
 		String program = "test/transformtest_withouterrors." + EXTENSION;
 
-		System.out.println("Interpreting file " + program);
+		System.out.println("Interpreting file:" + program);
 		
 		List<InterpretedSignal> list = new ArrayList<InterpretedSignal>();
 		LocalDateTime current = LocalDateTime.of(2017, 3, 9, 19, 46, 45);
@@ -40,6 +43,15 @@ public class LanguageTransformationTest
 		try 
 		{
 			interpreter.process(program,list);
+			Map<String, Symbol> globalScope = interpreter.getGlobalScope().getSymbolMap();
+			
+			TransformationSymbol transform = (TransformationSymbol) globalScope.get("transform");
+				
+			Map<String, Symbol> transforScope = transform.getMembers();
+			
+			for (String name : transforScope.keySet()){
+				System.out.println(name);
+			}
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -53,7 +65,7 @@ public class LanguageTransformationTest
 		
 		String program = "test/transformtest_errors." + EXTENSION;
 
-		System.out.println("Interpreting Syntax File " + program);
+		System.out.println("Syntax Check:" + program);
 		
 		SyntaxChecking interpreter = new SyntaxChecking();
 		try 

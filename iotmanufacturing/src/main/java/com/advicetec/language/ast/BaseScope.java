@@ -1,8 +1,8 @@
 package com.advicetec.language.ast;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class BaseScope implements Scope
 {
@@ -49,4 +49,8 @@ public abstract class BaseScope implements Scope
 		return symbols;
 	}
 
+	public Set<String> getkeys() 
+	{ 
+		return symbols.keySet(); 
+	}
 }

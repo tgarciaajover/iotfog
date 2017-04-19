@@ -877,6 +877,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		System.out.println("VisitBlock");
 		
 		currentScope = scopes.get(ctx);
+		
 		System.out.println(currentScope);
 		
 		for (BehaviorGrammarParser.SentenceContext sentence : ctx.sentence() )
