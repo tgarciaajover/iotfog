@@ -10,10 +10,18 @@ import java.util.Map;
 import org.junit.Test;
 
 import com.advicetec.core.AttributeType;
+import com.advicetec.language.ast.ArraySymbol;
+import com.advicetec.language.ast.AttributeSymbol;
+import com.advicetec.language.ast.BehaviorSymbol;
+import com.advicetec.language.ast.BuiltInTypeSymbol;
+import com.advicetec.language.ast.FunctionSymbol;
+import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.RecognitionExceptionUtil;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
+import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.TransformationSymbol;
+import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.language.transformation.InterpreterSw;
 import com.advicetec.language.transformation.SyntaxChecking;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
@@ -44,13 +52,28 @@ public class LanguageTransformationTest
 		{
 			interpreter.process(program,list);
 			Map<String, Symbol> globalScope = interpreter.getGlobalScope().getSymbolMap();
-			
-			TransformationSymbol transform = (TransformationSymbol) globalScope.get("transform");
-				
-			Map<String, Symbol> transforScope = transform.getMembers();
-			
-			for (String name : transforScope.keySet()){
-				System.out.println(name);
+							
+			for (String name : globalScope.keySet())
+			{
+				Symbol symbol = globalScope.get(name);
+				if (symbol instanceof AttributeSymbol) 
+					System.out.println("AttributenSymbol:" + name);
+				if (symbol instanceof FunctionSymbol) 
+					System.out.println("FunctionSymbol:" + name);
+				if (symbol instanceof ArraySymbol)
+					System.out.println("ArraySymbol:" + name);
+				if (symbol instanceof BehaviorSymbol)
+					System.out.println("BehaviorSymbol:" + name);
+				if (symbol instanceof BuiltInTypeSymbol)
+					System.out.println("BuiltInTypeSymbol:" + name);
+				if (symbol instanceof ImportSymbol)
+					System.out.println("ImportSymbol:" + name);
+				if (symbol instanceof TimerSymbol)
+					System.out.println("TimerSymbol:" + name);
+				if (symbol instanceof TransformationSymbol)
+					System.out.println("TransformationSymbol:" + name);
+				if (symbol instanceof VariableSymbol)
+					System.out.println("VariableSymbol:" + name);
 			}
 			
 		} catch (Exception e) {
@@ -58,7 +81,7 @@ public class LanguageTransformationTest
 			e.printStackTrace();
 		}
 	}
-
+	/*
 	@Test
 	public void Test_Syntax_Language()
 	{
@@ -84,5 +107,5 @@ public class LanguageTransformationTest
 			e.printStackTrace();
 		}
 	}
-
+	*/
 }

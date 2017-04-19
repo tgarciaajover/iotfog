@@ -1,0 +1,16 @@
+// Behavior Speed
+program  behavior()
+{
+
+    unit CPM "Cycles per minute";
+    unit CPH "Cycles per hour";
+
+	attr float speed_min unit CPM;
+	attr float speed_hour unit CPH;
+
+	var minutes_per_hour = 60; 
+	
+	speed_min = count_over_time(production_pulse, SECONDS, 60);
+	speed_hour = speed_min * minutes_per_hour;
+	
+}  

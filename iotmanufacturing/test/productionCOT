@@ -1,0 +1,39 @@
+// Este es el programa productionCOT.
+
+program  behavior()
+{
+
+    unit CYC "Cycles";
+    unit COT "Cycles over time";
+    unit CPM "Cycles per minute";
+    unit CPH "Cycles per hour";
+    unit MPC "Thousands per cycle";
+
+	attr float producing_cot unit COT;
+	attr float scrap_substractor unit COT;
+	
+	// Get the values from 
+	attr boolean idle_condition;
+	attr boolean idle;
+	attr float conversion_factor = STATUS.conversion_factor;
+
+	
+	// Constants.	
+	var float producing_limit = 8;
+	var int minutes_per_hour = 60; 
+	
+	// Cuenta los pulsos del ultimo minuto.
+	producing_cot = count_over_time(production_pulse, SECONDS, 60);
+	scrap_substractor = producing_cot - reward_amount;
+	
+	if (producing_cot <= producing_limit) 
+	{
+		production_condition = testing_inv;
+		idle_condition = false;
+	} else {
+	    idle_condition = true;
+	}
+	
+	idle = idle_condition;
+		
+}  

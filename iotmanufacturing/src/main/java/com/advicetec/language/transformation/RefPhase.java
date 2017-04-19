@@ -43,7 +43,6 @@ public class RefPhase extends TransformationGrammarBaseListener
     	String error = new String("line" + t.getLine() + "." + t.getCharPositionInLine() + msg + "\n");
     	SyntaxError e= new SyntaxError(error, t, this.parser, this.parser.getInputStream(), ctx); 
     	this.compilationErrors.add(e);
-
     }
 	
 	public List<SyntaxError> getErrors()

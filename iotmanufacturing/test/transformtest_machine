@@ -1,0 +1,39 @@
+import inyection.machine1.eventProdutionCOT as productionCOT;
+import inyection.machine1.eventSpeed as speed;
+
+
+transform main(int digital) 
+{
+
+   unit CYC "Cycle";
+   unit COT "Cycles over time";
+   
+   var float producing_limit = 8;
+   attr float conversion_factor = STATUS.conversion_factor;     // Convierte de pulsos a millares.
+   
+  // Tasa de production(ciclos por minuto) 
+   attr float producing_cot unit COT = STATUS.producing_cot;
+
+   // Si esta en test la maquina o no (test_inv 1 si no esta en pruebas, 0 si esta en pruebas  )
+   attr int testing_inv = STATUS.testing_inv;
+   
+   // La primera vez que entra a esta transformacion, el sistema crea el atributo.
+   attr int production_pulse = digital;  
+   attr int part_pulse_masked = production_pulse;
+   
+   attr int part_pulse_total;
+   attr float pulses_millares; 
+      
+   if (producing_cot > producing_limit) 
+   {
+		part_pulse_total = testing_inv AND digital;  // 1 cuando la maquina esta en ejecucion de una orden de production, 0 en caso contrario
+		pulses_millares = part_pulse_total * conversion_factor; // millares siendo producidos.
+   } 
+   
+   // Cada cinco segundos ejecuta el programa productionCOT
+   repeat(SECOND,5, productionCOT);    
+   
+   // Cada quince segundos ejecuta el programa speed
+   repeat(SECOND,15, speed);  
+      
+}

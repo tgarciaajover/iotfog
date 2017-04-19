@@ -1,5 +1,6 @@
 package com.advicetec.language.transformation;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -10,12 +11,12 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import com.advicetec.language.TransformationGrammarBaseListener;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.AttributeSymbol;
-import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.LocalScope;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
@@ -27,10 +28,12 @@ import org.antlr.v4.runtime.Token;
 public class DefPhase extends TransformationGrammarBaseListener 
 {
 
+	private TransformationGrammarParser parser = null;
 	private ParseTreeProperty<Scope> scopes = new ParseTreeProperty<Scope>();
 	private GlobalScope globals;
 	// Define symbols in this scope
 	private Scope currentScope;
+	private ArrayList<SyntaxError> compilationErrors;
 
 
 	public void enterProgram(TransformationGrammarParser.ProgramContext ctx)
@@ -38,9 +41,16 @@ public class DefPhase extends TransformationGrammarBaseListener
 		System.out.println("Enter program");
 		globals = new GlobalScope();
 		currentScope = globals;
-
+		compilationErrors = new ArrayList<SyntaxError>();
 	}
 
+	public void error(Token t, ParserRuleContext ctx, String msg) 
+    {
+    	String error = new String("line" + t.getLine() + "." + t.getCharPositionInLine() + msg + "\n");
+    	SyntaxError e= new SyntaxError(error, t, this.parser, this.parser.getInputStream(), ctx); 
+    	this.compilationErrors.add(e);
+    }
+	
 	public void enterMain(TransformationGrammarParser.MainContext ctx) 
 	{
 		String name = ctx.PROGRAM().getText();
@@ -138,10 +148,11 @@ public class DefPhase extends TransformationGrammarBaseListener
 		
 	}
 	
-	
 	public void enterBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
 
+		System.out.println("Entering block" + currentScope);
+		
 		// push new scope by making new one that points to enclosing scope
 		LocalScope local = new LocalScope(currentScope);
 
@@ -154,7 +165,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 	
 	public void exitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
-		// System.out.println("exitBlock" + currentScope);
+		System.out.println("exitBlock" + currentScope);
 
 		// pop scope
 		currentScope = currentScope.getEnclosingScope();
@@ -197,9 +208,13 @@ public class DefPhase extends TransformationGrammarBaseListener
 		if (unit != null)
 			atr.setUnitOfMeasure(unit.getText());
 
-		// Define the symbol in the current scope
-		currentScope.define(atr);
-
+		
+		if (globals.resolve(nameToken.getText()) != null){
+			// Define the symbol in the global scope
+			this.error(nameToken, typeCtx, "Attribute has been defined before: " + nameToken.getText());
+		} else {
+			globals.define(atr);
+		}
 		// System.out.println("Define attribute: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 

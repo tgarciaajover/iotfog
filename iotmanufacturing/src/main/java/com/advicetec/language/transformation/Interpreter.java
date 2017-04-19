@@ -26,6 +26,7 @@ import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.ReturnValue;
 import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.TransformationSpace;
 import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.VariableSymbol;
@@ -153,27 +154,10 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         this.visit( ((TransformationSymbol)fs).block ); 
 
         // System.out.println("ending program:" + currentSpace.getkeys());
-        
-        // Copies the program stack to global stack to be returned to the interpreter caller.
-        Set<String> keys = currentSpace.getkeys();
-        for (Iterator<String> iterator = keys.iterator(); iterator.hasNext();) 
-        {
-			String id = (String) iterator.next();
-			saveSpace.put(id, currentSpace.get(id));
-		} 
-        
+                
         stack.pop();               // POP arg, locals
         currentSpace = saveSpace;
-        
-        // Copies the block scope to the global scope to be returned to the interpreter caller.
-        Set<String> keysymbols = scopes.get(ctx.block()).getkeys();
-        for (Iterator<String> iterator = keysymbols.iterator(); iterator.hasNext();) 
-        {
-			String id = (String) iterator.next();
-			saveScope.define(scopes.get(ctx.block()).resolve(id));
-		} 
-        
-        
+                
         // goes up in the current scope.
         currentScope = saveScope;        
         return result;
@@ -190,7 +174,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		if (ctx.ASG() != null)
 		{
 	        ASTNode value = this.visit(ctx.expression());
-	        Symbol s = currentScope.resolve(id);
+	        Symbol s = currentScope.resolve(id);	        
 	        VerifyAssign(s, value);
 	        currentSpace.put(id, value);         // store
 	        return value;
@@ -234,8 +218,23 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 				if (s1.getUnitOfMeasure() != sysAttr.getUnitOfMeasure() )
 				{
 			        ASTNode value = this.visit(ctx.expression());
-			        VerifyAssign(s1, value);
-			        currentSpace.put(id, value);         // store
+
+			        Symbol symbol = currentScope.resolve(id) ;
+			        MemorySpace space = null;
+			        
+			        if ((symbol instanceof VariableSymbol) || (symbol instanceof AttributeSymbol)) 
+			        {
+				        space = getSpaceWithSymbol(id);
+				        if ( space==null ){ 
+				        	space = currentSpace; // create in current space
+				        }
+			        } else {
+			        	throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + symbol.getName());
+			        }
+			        
+			        VerifyAssign(symbol, value);
+			        space.put(id, value);         // store
+			        			        
 			        return value;						
 				}
 				else 
@@ -248,11 +247,24 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			{
 				System.out.println("before attribute assign"); 
 				ASTNode value = this.visit(ctx.expression());
+
+		        Symbol symbol = currentScope.resolve(id) ;
+		        MemorySpace space = null;
+		        
+		        if ((symbol instanceof VariableSymbol) || (symbol instanceof AttributeSymbol)) 
+		        {
+			        space = getSpaceWithSymbol(id);
+			        if ( space==null ){ 
+			        	space = currentSpace; // create in current space
+			        }
+		        } else {
+		        	throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + symbol.getName());
+		        }
+		        
+		        VerifyAssign(symbol, value);
+		        space.put(id, value);         // store
 				
-				System.out.println("value to assign:" + value.toString());
-				VerifyAssign(sysAttr, value);
-			    currentSpace.put(id, value);         // store
-			    return value;					
+				return value;					
 			}
 		}
 		else
@@ -272,10 +284,17 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
         ASTNode value = this.visit(ctx.expression());
         Symbol symbol = currentScope.resolve(id) ;
-        // var assign ^('=' a expr)
-        MemorySpace space = getSpaceWithSymbol(id);
-        if ( space==null ) 
-        	space = currentSpace; // create in current space
+        MemorySpace space = null;
+        
+        if ((symbol instanceof VariableSymbol) || (symbol instanceof AttributeSymbol)) 
+        {
+	        space = getSpaceWithSymbol(id);
+	        if ( space==null ){ 
+	        	space = currentSpace; // create in current space
+	        }
+        } else {
+        	throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + symbol.getName());
+        }
         
         VerifyAssign(symbol, value);
         space.put(id, value);         // store
@@ -285,57 +304,52 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	
 	public void VerifyAssign(Symbol symbol, ASTNode value)
 	{
-		if ((symbol instanceof VariableSymbol) ||
-		    (symbol instanceof AttributeSymbol)) {
 			
-			switch (symbol.getType())
-			{
-			case tINT:
-				if (!(value.isInteger())){
-					throw new RuntimeException("The value given is not an integer type");
-				}
-				break;
-			case tDATETIME:
-				if (!(value.isDateTime())){
-					throw new RuntimeException("the value given is not a datetime type");
-				}
-				break;
-			case tFLOAT:
-				if (!(value.isDouble() || value.isInteger())) {
-					throw new RuntimeException("The value given is not a float type");
-				}
-				break;
-			case tSTRING:
-				if (!(value.isString())){
-					throw new RuntimeException("The value given is not a string type");
-				}
-				break;
-			case tBOOL:
-				if (!(value.isBoolean())){
-					throw new RuntimeException("The value given is not a boolean type");
-				}
-				break;
-			case tDATE:
-				if (!(value.isDate())){
-					throw new RuntimeException("The value given is not a date type");
-				}
-				break;
-			case tTIME:
-				if (!(value.isTime())){
-					throw new RuntimeException("The value given is not a time type");
-				}
-				break;
-			case tVOID:
-				throw new RuntimeException("The value given is of type void");
+		switch (symbol.getType())
+		{
+		case tINT:
+			if (!(value.isInteger())){
+				throw new RuntimeException("The value given is not an integer type");
+			}
+			break;
+		case tDATETIME:
+			if (!(value.isDateTime())){
+				throw new RuntimeException("the value given is not a datetime type");
+			}
+			break;
+		case tFLOAT:
+			if (!(value.isDouble() || value.isInteger())) {
+				throw new RuntimeException("The value given is not a float type");
+			}
+			break;
+		case tSTRING:
+			if (!(value.isString())){
+				throw new RuntimeException("The value given is not a string type");
+			}
+			break;
+		case tBOOL:
+			if (!(value.isBoolean())){
+				throw new RuntimeException("The value given is not a boolean type");
+			}
+			break;
+		case tDATE:
+			if (!(value.isDate())){
+				throw new RuntimeException("The value given is not a date type");
+			}
+			break;
+		case tTIME:
+			if (!(value.isTime())){
+				throw new RuntimeException("The value given is not a time type");
+			}
+			break;
+		case tVOID:
+			throw new RuntimeException("The value given is of type void");
 
-			case tINVALID:
-				throw new RuntimeException("The value given is of type invalid");
-			}	
-		}
-		else {
-			throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + symbol.getName());
-		}
+		case tINVALID:
+			throw new RuntimeException("The value given is of type invalid");
+		}	
 	}
+	
 	
 	@Override 
 	public ASTNode visitVar(TransformationGrammarParser.VarContext ctx) 
@@ -734,7 +748,39 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		return new ASTNode(ret);
 	}
+	
+	public ASTNode visitRepeat(TransformationGrammarParser.RepeatContext ctx) 
+	{ 
+		String name = ctx.ID().getText();
+		Symbol symbol =  currentScope.resolve(name);
 		
+		if (symbol instanceof TimerSymbol){
+			TimerSymbol timer = (TimerSymbol) symbol;
+			GlobalScope global = getGlobalScope();
+			global.define(timer);
+		} else {
+			throw new RuntimeException("The symbol is not a Timer symbol");
+		}
+		
+		return ASTNode.VOID;
+	}
+
+	public ASTNode visitTimer(TransformationGrammarParser.TimerContext ctx) 
+	{ 
+		String name = ctx.ID().getText();
+		Symbol symbol =  currentScope.resolve(name);
+		
+		if (symbol instanceof TimerSymbol){
+			TimerSymbol timer = (TimerSymbol) symbol;
+			GlobalScope global = getGlobalScope();
+			global.define(timer);
+		} else {
+			throw new RuntimeException("The symbol is not a Timer symbol");
+		}
+		
+		return ASTNode.VOID;
+	}
+	
 	@Override 
 	public ASTNode visitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
@@ -896,6 +942,10 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
 	public MemorySpace getGlobalSpace(){
 		return globals;
+	}
+	
+	public GlobalScope getGlobalScope(){
+		return globalScope;
 	}
 	
 }
