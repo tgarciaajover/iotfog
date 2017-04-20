@@ -40,9 +40,9 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	public void dbInsert(PreparedStatement pstmt) {
 		try 
 		{
-			pstmt.setString(1, getParent());							// Set the parent
+			pstmt.setString(1, getGenerator());							// Set the parent
 			pstmt.setTimestamp(2, Timestamp.valueOf(getTimeStamp()));   // timestamp
-			pstmt.setInt(3, getParentType().getValue());          		// owner_type
+			pstmt.setInt(3, getGeneratorType().getValue());          		// owner_type
 			pstmt.setString(4, getAttribute().getName());      			// Attribute Name
 			switch ( getAttribute().getType().getValue() )
 			{
@@ -88,9 +88,9 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 		
 		try 
 		{
-			pstmt.setString(1, getParent());   // id_owner
+			pstmt.setString(1, getGenerator());   // id_owner
 			pstmt.setTimestamp(2, Timestamp.valueOf(getTimeStamp()) );    // timestamp
-			pstmt.setInt(3, getParentType().getValue());          // owner_type
+			pstmt.setInt(3, getGeneratorType().getValue());          // owner_type
 			pstmt.setString(4, getAttribute().getName());      // Attribute Name
 			pstmt.addBatch();
 
@@ -106,8 +106,8 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	
 	public String toString(){
 		//TODO
-		return "Parent: "+ getParent()
-				+", Parent type: "+ getParentType().getValue()
+		return "Parent: "+ getGenerator()
+				+", Parent type: "+ getGeneratorType().getValue()
 				+", When: "+ Timestamp.valueOf(getTimeStamp())
 				+", Value: "+ getValue();
 	}

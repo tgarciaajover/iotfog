@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.Storable;
 
-public class StatusInterval implements Storable
+public class StateInterval implements Storable
 {
   
 	private String key;
@@ -23,7 +23,7 @@ public class StatusInterval implements Storable
 	private final String SQL_Delete = "DELETE FROM measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to)" + "VALUES(?,?,?,?)";
 			
 	
-	public StatusInterval(MeasuringStatus status, ReasonCode reason,
+	public StateInterval(MeasuringStatus status, ReasonCode reason,
 			TimeInterval interval,String parent, MeasuredEntityType parentType ) {
 		super();
 		

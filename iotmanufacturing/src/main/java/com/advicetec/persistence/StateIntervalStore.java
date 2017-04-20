@@ -5,21 +5,20 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import com.advicetec.core.AttributeValue;
-import com.advicetec.measuredentitity.MeasuredAttributeValue;
+import com.advicetec.measuredentitity.StateInterval;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-public class MeasureAttributeValueStore {
+public class StateIntervalStore {
 
-	private static MeasureAttributeValueStore instance = null;
+	private static StateIntervalStore instance = null;
 	Connection conn  = null; 
 	PreparedStatement pst = null;
 
-	private static Cache<String, AttributeValue> cache;
+	private static Cache<String, StateInterval> cache;
 	PreparedStatement preparedStatement;
 
-	private MeasureAttributeValueStore(){
+	private StateIntervalStore(){
 	}
 	
 	
@@ -31,22 +30,24 @@ public class MeasureAttributeValueStore {
 				.build();
 	}
 
-	public static MeasureAttributeValueStore getInstance(){
+	public static StateIntervalStore getInstance(){
 		if(instance == null){
-			instance = new MeasureAttributeValueStore();
+			instance = new StateIntervalStore();
 			setCache(1000,1000);// default values
 		}
 		return instance;
 	}
 
-	public Cache<String, AttributeValue> getCache(){
+	public Cache<String, StateInterval> getCache(){
 		return cache; 
 	}
 
-
-
-	public void cacheStore(AttributeValue mav){
-		cache.put(mav.getKey(), mav);
+	/**
+	 * Stores an interval.
+	 * @param interval
+	 */
+	public void cacheStore(StateInterval interval){
+		cache.put(interval.getKey(), interval);
 	}
 
 	/**
@@ -55,21 +56,21 @@ public class MeasureAttributeValueStore {
 	 * @param key 
 	 * @return
 	 */
-	public AttributeValue getFromCache(String key){
+	public StateInterval getFromCache(String key){
 		return cache.getIfPresent(key);
 	}
 
 	/**
-	 * Stores the Measured Attribute Value into the database.
-	 * @param value The value to be committed.
+	 * Stores the interval into the database.
+	 * @param interval
 	 */
-	public void commit(MeasuredAttributeValue value){
+	public void commit(StateInterval interval){
 		try {
 			Class.forName("org.postgresql.Driver");
 			conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/iotajover", "iotajover", "iotajover");
 			conn.setAutoCommit(false);
-			pst = conn.prepareStatement(value.getPreparedInsertText());
-			value.dbInsert(pst);
+			pst = conn.prepareStatement(interval.getPreparedInsertText());
+			interval.dbInsert(pst);
 			pst.executeBatch();
 			conn.commit();
 		} catch (ClassNotFoundException e) {

@@ -9,7 +9,12 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.json.JSONArray;
+import org.restlet.representation.Representation;
+import org.restlet.resource.Get;
+
 import com.advicetec.core.Attribute;
+import com.advicetec.core.TimeInterval;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.core.AttributeValue;
@@ -29,7 +34,7 @@ public class MeasuredEntityFacade {
 
 	private MeasureAttributeValueStore store;
 	private MeasuredEntity entity;
-	private StatusStore status;
+	private StatusStore state;
 
 	/**
 	 * Map with key DATETIME and value String Primary Key for the database.
@@ -39,7 +44,7 @@ public class MeasuredEntityFacade {
 
 	public MeasuredEntityFacade(MeasuredEntity entity) {
 		this.entity = entity;
-		status = new StatusStore();
+		state = new StatusStore();
 	}
 
 	public MeasuredEntity getEntity() {
@@ -75,7 +80,7 @@ public class MeasuredEntityFacade {
 	 */
 	public void setAttribute(Attribute attribute) throws Exception{
 		// returns the previous value
-		status.setAttribute(attribute);
+		state.setAttribute(attribute);
 	}
 
 	/**
@@ -84,8 +89,8 @@ public class MeasuredEntityFacade {
 	 */
 	public void setAttributeValue(AttributeValue attrValue){
 		store(new MeasuredAttributeValue(attrValue.getAttribute(), attrValue.getValue(),
-				attrValue.getParent(), attrValue.getParentType(), LocalDateTime.now()));
-		status.setAttributeValue(attrValue);
+				attrValue.getGenerator(), attrValue.getGeneratorType(), LocalDateTime.now()));
+		state.setAttributeValue(attrValue);
 	}
 
 	/**
@@ -100,7 +105,7 @@ public class MeasuredEntityFacade {
 		MeasureAttributeValueStore.getInstance().cacheStore(measure);
 		
 		// update status
-		status.setAttribute(attribute);
+		state.setAttribute(attribute);
 		
 	}
 
@@ -108,7 +113,7 @@ public class MeasuredEntityFacade {
 	public MeasuredEntityFacade(){
 		store = MeasureAttributeValueStore.getInstance();
 		attMap = new HashMap<String, SortedMap<LocalDateTime,String>>();
-		status = new StatusStore();
+		state = new StatusStore();
 	}
 
 	/**
@@ -230,20 +235,32 @@ public class MeasuredEntityFacade {
 	}
 
 	public void importSymbols(Map<String, Symbol> symbolMap) {
-		status.importSymbols(symbolMap);
+		state.importSymbols(symbolMap);
 	}
 	
 	public Collection<Attribute> getStatus(){
-		return status.getStatus();
+		return state.getStatus();
 	}
 
 	public void importAttributeValues(Map<String, ASTNode> valueMap) {
-		status.importAttributeValues(valueMap,entity.getId(),entity.getType());
+		state.importAttributeValues(valueMap,entity.getId(),entity.getType());
 	}
 	
 	public Collection<AttributeValue> getAttributeValues(){
-		return status.getAttributeValues();
+		return state.getAttributeValues();
 	}
+	
+	public void getJsonStatesByInterval(TimeInterval timeInterval){
+		entity.getStateByInterval(timeInterval);
+	}
+	
+	@Get
+	public Representation attributeValuesToJson(final String entityId){
+		JSONArray array = new JSONArray(getAttributeValues());
+		// TODO return array;
+		return null;
+	}
+	
 	
 }
 

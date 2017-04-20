@@ -4,8 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.JSONObject;
-
+import org.json.JSONArray;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
@@ -203,10 +202,12 @@ public class StatusStore {
 		return values.values();
 	}
 	
-	public JSONObject getJsonAtrributesValues(){
-		JSONObject jsonValues = new JSONObject();
-		
-		return jsonValues;
+	/**
+	 * Returns the Entity Status as JSON array.
+	 * @return
+	 */
+	public JSONArray getJsonAtrributesValues(){
+		return new JSONArray(getAttributeValues());
 	}
 }
 

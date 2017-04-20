@@ -18,8 +18,8 @@ public class AttributeValue
 	/**
 	 * Describes the origin measured entity, job, machine, etc.
 	 */
-	String parent;
-	MeasuredEntityType parentType;
+	protected String generator;
+	protected MeasuredEntityType parentType;
 	
 	/**
 	 * 
@@ -35,7 +35,7 @@ public class AttributeValue
 		this.key =  key;
 		this.type = type;
 		this.value = value;
-		this.parent = parent;
+		this.generator = parent;
 		this.parentType = parentType;
 	}
 
@@ -50,12 +50,12 @@ public class AttributeValue
 	}
 
 
-	public String getParent() {
-		return parent;
+	public String getGenerator() {
+		return generator;
 	}
 
 
-	public MeasuredEntityType getParentType() {
+	public MeasuredEntityType getGeneratorType() {
 		return parentType;
 	}
 

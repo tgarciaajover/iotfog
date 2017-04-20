@@ -24,9 +24,10 @@ public abstract class MeasuredEntity
     protected LocalDateTime startDateTimeStatus;	// last time interval
     
     protected MeasureAttributeValueStore measures;  // TODO: Should be a cache with write.
-    protected Map<String, StatusInterval> intervals;		 // TODO: Should be a cache with write.
+    protected Map<String, StateInterval> intervals;		 // TODO: Should be a cache with write.
     
     protected List<AttributeMeasuredEntity> attributes;
+    
     
     public MeasuredEntity(String id, MeasuredEntityType type) 
     {
@@ -35,7 +36,7 @@ public abstract class MeasuredEntity
 		this.type = type;
 		startDateTimeStatus = LocalDateTime.now();
 		//measures = new HashMap<String, MeasuredAttributeValue>();
-		intervals = new HashMap<String, StatusInterval>();
+		intervals = new HashMap<String, StateInterval>();
 		attributes = new ArrayList<AttributeMeasuredEntity>();
 	}
 
@@ -68,7 +69,7 @@ public abstract class MeasuredEntity
     
     public void registerInterval(MeasuringStatus status, ReasonCode reasonCode, TimeInterval interval)
     {
-    	StatusInterval interval_tmp = new StatusInterval(status, reasonCode, interval, getId(), getType());
+    	StateInterval interval_tmp = new StateInterval(status, reasonCode, interval, getId(), getType());
     	this.intervals.put(interval_tmp.getKey(), interval_tmp);
     }
     
@@ -83,4 +84,9 @@ public abstract class MeasuredEntity
     public boolean equals(MeasuredEntity other){
     	return this.id.equals(other.getId());
     }
+
+	public void getStateByInterval(TimeInterval timeInterval) {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -1,18 +1,10 @@
 package com.advicetec.measuredentitity;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.restlet.representation.Representation;
-import org.restlet.resource.Get;
-
-import com.advicetec.core.AttributeValue;
 import com.advicetec.core.Configurable;
 import com.advicetec.persistence.MeasureAttributeValueStore;
-import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonObjectFormatVisitor;
 
 /**
  * This class manages the list of entities.
@@ -91,27 +83,6 @@ public class MeasuredEntityManager extends Configurable {
 				return facade;
 			}
 		}
-		return null;
-	}
-	
-	/**
-	 * REST implementation, return object serialization.
-	 * @return
-	 */
-	public String JSON(){
-		return null;
-	}
-	
-	@Get
-	public Representation toJson(final String entityId){
-		Collection<AttributeValue> attrValues = 
-				getFacadeOfEntityById(entityId).getAttributeValues();
-		JSONArray array = new JSONArray();
-		for (AttributeValue att : attrValues) {
-			JSONObject jo = new JSONObject(att);
-			array.put(attrValues);
-		}
-		// TODO return array;
 		return null;
 	}
 }
