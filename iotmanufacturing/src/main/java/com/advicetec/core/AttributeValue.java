@@ -7,7 +7,7 @@ import com.advicetec.measuredentitity.MeasuredEntityType;
  * @author user
  *
  */
-public  class AttributeValue 
+public class AttributeValue 
 {
 	
 	protected String key;
@@ -21,7 +21,14 @@ public  class AttributeValue
 	String parent;
 	MeasuredEntityType parentType;
 	
-	
+	/**
+	 * 
+	 * @param key Identifier
+	 * @param type Type
+	 * @param value Value
+	 * @param parent Describes the origin of the measuring entity. e.g. machine, jobid
+	 * @param parentType Type of parent.
+	 */
 	public AttributeValue(String key, Attribute type, Object value, String parent, MeasuredEntityType parentType) {
 		super();
 		

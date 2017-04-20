@@ -1,4 +1,4 @@
-package com.advicetec.sync;
+package com.advicetec.rest;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

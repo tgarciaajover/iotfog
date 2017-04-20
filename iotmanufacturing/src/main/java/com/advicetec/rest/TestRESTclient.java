@@ -1,4 +1,4 @@
-package com.advicetec.sync;
+package com.advicetec.rest;
 
 import java.net.URI;
 

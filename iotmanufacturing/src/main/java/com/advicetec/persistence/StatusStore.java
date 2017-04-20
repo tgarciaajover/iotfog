@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.json.JSONObject;
+
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
@@ -201,6 +203,11 @@ public class StatusStore {
 		return values.values();
 	}
 	
+	public JSONObject getJsonAtrributesValues(){
+		JSONObject jsonValues = new JSONObject();
+		
+		return jsonValues;
+	}
 }
 
 
