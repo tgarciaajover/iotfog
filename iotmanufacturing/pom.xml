@@ -109,17 +109,6 @@
     	</dependency>
 
     	<dependency>
-      		<groupId>org.glassfish.jersey.archetypes</groupId>
-      		<artifactId>jersey-quickstart-webapp</artifactId>
-      		<version>2.25.1</version>
-    	</dependency>
-
-    	<dependency>
-      		<groupId>org.glassfish.jersey.core</groupId>
-      		<artifactId>jersey-client</artifactId>
-      		<version>2.25.1</version>
-    	</dependency>
-    	<dependency>
 			<groupId>org.restlet.jse</groupId>
 			<artifactId>org.restlet</artifactId>
 			<version>${lib-restlet-version}</version>
