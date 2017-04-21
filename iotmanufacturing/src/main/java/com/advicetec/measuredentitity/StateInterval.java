@@ -24,13 +24,13 @@ public class StateInterval implements Storable
 			
 	
 	public StateInterval(MeasuringStatus status, ReasonCode reason,
-			TimeInterval interval,String parent, MeasuredEntityType parentType ) {
+			TimeInterval timeInterval,String parent, MeasuredEntityType parentType ) {
 		super();
 		
-		this.key = interval.toString();
+		this.key = timeInterval.toString();
 		this.status = status;
 		this.reason = reason;
-		this.interval = interval;
+		this.interval = timeInterval;
 		this.parent = parent;
 		this.parentType = parentType;
 	}

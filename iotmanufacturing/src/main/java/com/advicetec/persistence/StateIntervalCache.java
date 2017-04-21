@@ -5,20 +5,21 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.StateInterval;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-public class StateIntervalStore {
+public class StateIntervalCache {
 
-	private static StateIntervalStore instance = null;
+	private static StateIntervalCache instance = null;
 	Connection conn  = null; 
 	PreparedStatement pst = null;
 
 	private static Cache<String, StateInterval> cache;
 	PreparedStatement preparedStatement;
 
-	private StateIntervalStore(){
+	private StateIntervalCache(){
 	}
 	
 	
@@ -30,9 +31,9 @@ public class StateIntervalStore {
 				.build();
 	}
 
-	public static StateIntervalStore getInstance(){
+	public static StateIntervalCache getInstance(){
 		if(instance == null){
-			instance = new StateIntervalStore();
+			instance = new StateIntervalCache();
 			setCache(1000,1000);// default values
 		}
 		return instance;
@@ -43,11 +44,12 @@ public class StateIntervalStore {
 	}
 
 	/**
-	 * Stores an interval.
+	 * Stores an state interval and its measuring entity name. 
 	 * @param interval
 	 */
-	public void cacheStore(StateInterval interval){
-		cache.put(interval.getKey(), interval);
+	public void storeToCache(String measureEntityName, StateInterval interval){
+		// the key is composed of entity name + start time + end time
+		cache.put(measureEntityName+interval.getKey(), interval);
 	}
 
 	/**

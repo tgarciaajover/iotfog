@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.advicetec.core.Configurable;
-import com.advicetec.persistence.MeasureAttributeValueStore;
+import com.advicetec.persistence.MeasureAttributeValueCache;
 
 /**
  * This class manages the list of entities.
@@ -27,9 +27,9 @@ public class MeasuredEntityManager extends Configurable {
 		String maxSize = properties.getProperty("cache_maxSize");
 		
 		// creates an instance if it is not exists
-		MeasureAttributeValueStore.getInstance();
+		MeasureAttributeValueCache.getInstance();
 		// sets cache parameters
-		MeasureAttributeValueStore.setCache(
+		MeasureAttributeValueCache.setCache(
 				Integer.parseInt(initCapacity), Integer.parseInt(maxSize));
 
 		for (int i = 0; i < machines.length; i++) {
