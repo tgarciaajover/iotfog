@@ -106,10 +106,10 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	
 	public String toString(){
 		//TODO
-		return "Parent: "+ getGenerator()
-				+", Parent type: "+ getGeneratorType().getValue()
-				+", When: "+ Timestamp.valueOf(getTimeStamp())
-				+", Value: "+ getValue();
+		return "{\"parent\": "+ getGenerator()
+				+",\"parent_type\":"+ getGeneratorType().getValue()
+				+",\"timestamp\": "+ Timestamp.valueOf(getTimeStamp())
+				+",\"value\": "+ getValue()+"}";
 	}
 
 	public boolean store() {
