@@ -263,9 +263,10 @@ public final class MeasuredEntityFacade {
 	public void registerInterval(MeasuringStatus status, ReasonCode reasonCode, TimeInterval interval)
     {
     	StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType());
+    	stateInterval.setKey(entity.getId()+stateInterval.getKey());
     	// key in the map and the cache must be consistent
     	intervalMap.put(interval.getStartDateTime(),stateInterval.getKey());
-    	StateIntervalCache.getInstance().storeToCache(entity.getId(),stateInterval);
+    	StateIntervalCache.getInstance().storeToCache(stateInterval);
     }
 	
 	@Get
@@ -304,8 +305,8 @@ public final class MeasuredEntityFacade {
 	}
 
 	/**
-	 * Commands to the cache to store their values into the database and 
-	 * clean the cache.
+	 * Commands to the cache to store their attribute values into the database 
+	 * and clean the cache.
 	 */
 	public void storeAllAttributeValues(){
 		attValueCache.bulkCommit(getAllKeysFromAttributeMap());
@@ -317,6 +318,14 @@ public final class MeasuredEntityFacade {
 			attKeys.addAll(map.values());
 		}
 		return attKeys;
+	}
+	
+	/**
+	 * Commands to the cache to store all intervals into the database 
+	 * and clean the cache.
+	 */
+	public void storeAllStateIntervals(){
+		stateCache.bulkCommit(new ArrayList<String>(intervalMap.values()));
 	}
 }
 

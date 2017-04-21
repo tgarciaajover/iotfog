@@ -4,13 +4,21 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
-import com.advicetec.measuredentitity.MeasuredEntity;
+import com.advicetec.core.AttributeValue;
+import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.StateInterval;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 public class StateIntervalCache {
+	
+	private final static String DB_URL = "jdbc:postgresql://localhost:5432/iotajover";
+	private final static String DB_USER = "iotajover";
+	private final static String DB_PASS = "iotajover";
+	private final static String DB_DRIVER = "org.postgresql.Driver";
 
 	private static StateIntervalCache instance = null;
 	Connection conn  = null; 
@@ -47,9 +55,9 @@ public class StateIntervalCache {
 	 * Stores an state interval and its measuring entity name. 
 	 * @param interval
 	 */
-	public void storeToCache(String measureEntityName, StateInterval interval){
+	public void storeToCache(StateInterval interval){
 		// the key is composed of entity name + start time + end time
-		cache.put(measureEntityName+interval.getKey(), interval);
+		cache.put(interval.getKey(), interval);
 	}
 
 	/**
@@ -68,11 +76,54 @@ public class StateIntervalCache {
 	 */
 	public void commit(StateInterval interval){
 		try {
-			Class.forName("org.postgresql.Driver");
-			conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/iotajover", "iotajover", "iotajover");
+			Class.forName(DB_DRIVER);
+			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 			conn.setAutoCommit(false);
+			
 			pst = conn.prepareStatement(interval.getPreparedInsertText());
 			interval.dbInsert(pst);
+			
+			pst.executeBatch();
+			conn.commit();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		finally{
+			if(pst!=null)
+			{
+				try
+				{
+					pst.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+
+			if(conn!=null) 
+			{
+				try
+				{
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public void bulkCommit(List<String> keys){
+		try {
+			Class.forName(DB_DRIVER);
+			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			conn.setAutoCommit(false);
+			pst = conn.prepareStatement(StateInterval.SQL_Insert);
+			Map<String,StateInterval> subSet = cache.getAllPresent(keys);
+			for (StateInterval interval :subSet.values()) {
+				interval.dbInsert(pst);
+				pst.addBatch();
+			}
 			pst.executeBatch();
 			conn.commit();
 		} catch (ClassNotFoundException e) {

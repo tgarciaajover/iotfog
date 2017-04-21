@@ -125,6 +125,7 @@ public class MeasureAttributeValueCache {
 				if(value instanceof MeasuredAttributeValue){
 					MeasuredAttributeValue mav = (MeasuredAttributeValue) value;
 					mav.dbInsert(pst);
+					pst.addBatch();
 				}
 			}
 			pst.executeBatch();

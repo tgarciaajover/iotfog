@@ -19,8 +19,8 @@ public class StateInterval implements Storable
 	private String parent;
 	private MeasuredEntityType parentType;
 	
-	private final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code)" + "VALUES(?,?,?,?,?,?)";
-	private final String SQL_Delete = "DELETE FROM measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to)" + "VALUES(?,?,?,?)";
+	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code)" + "VALUES(?,?,?,?,?,?)";
+	public static final String SQL_Delete = "DELETE FROM measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to)" + "VALUES(?,?,?,?)";
 			
 	
 	public StateInterval(MeasuringStatus status, ReasonCode reason,
@@ -108,6 +108,10 @@ public class StateInterval implements Storable
 	public boolean store() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	void setKey(String newKey) {
+		this.key = newKey;
 	}	
 	
 }
