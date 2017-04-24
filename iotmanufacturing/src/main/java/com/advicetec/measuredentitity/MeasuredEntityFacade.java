@@ -12,6 +12,7 @@ import java.util.TreeMap;
 import org.json.JSONArray;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
+import org.w3c.dom.Document;
 
 import com.advicetec.core.Attribute;
 import com.advicetec.core.TimeInterval;
@@ -326,6 +327,10 @@ public final class MeasuredEntityFacade {
 	 */
 	public void storeAllStateIntervals(){
 		stateCache.bulkCommit(new ArrayList<String>(intervalMap.values()));
+	}
+	
+	public void getXmlStatus(Document doc){
+		 status.toXml(doc);
 	}
 }
 

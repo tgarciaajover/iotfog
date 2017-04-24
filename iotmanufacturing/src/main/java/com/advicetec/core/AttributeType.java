@@ -1,5 +1,7 @@
 package com.advicetec.core;
 
+import javax.xml.bind.annotation.XmlAttribute;
+
 public enum AttributeType 
 {
 	
@@ -20,10 +22,11 @@ public enum AttributeType
 	      this.name = name;
 	   }
 	   
+	   @XmlAttribute
 	   public int getValue() {
 	      return this.code;
 	   }
-	   
+	   @XmlAttribute
 	   public String getName() {
 		  return this.name;
 	   }

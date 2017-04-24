@@ -1,11 +1,18 @@
 package com.advicetec.core;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+
 
 /**
  * Describes the attribute.
  * @author user
  *
  */
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Attribute 
 {
 	private String name;
@@ -46,7 +53,7 @@ public class Attribute
 		this(name,type,null);
 	}
 
-	
+	@XmlAttribute
 	public String getName() {
 		return name;
 	}
@@ -60,6 +67,7 @@ public class Attribute
 		return this.type;
 	}
 	
+	@XmlAttribute
 	public boolean getTrend(){
 		return trend;
 	}

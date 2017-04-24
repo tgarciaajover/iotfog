@@ -2,7 +2,11 @@ package com.advicetec.core;
 
 import java.util.Objects;
 
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import org.hamcrest.core.IsInstanceOf;
+import org.w3c.dom.Element;
 
 /**
  * This class describes the measure unit. e.g. Kilograms.
@@ -11,8 +15,8 @@ import org.hamcrest.core.IsInstanceOf;
  */
 public class MeasuringUnit 
 {
-	String symbol;  // identifier.
-	String description;    // description.
+	private String symbol;  // identifier.
+	private String description;    // description.
 	
 	public MeasuringUnit( String symbol, String description) {
 		super();
@@ -20,10 +24,12 @@ public class MeasuringUnit
 		this.description = description;
 	}
 
+	@XmlAttribute
 	public String getSymbol() {
 		return symbol;
 	}
 
+	@XmlAttribute
 	public String getDescription() {
 		return description;
 	}
@@ -42,5 +48,5 @@ public class MeasuringUnit
 				other.getSymbol().equalsIgnoreCase(this.getSymbol()));
 		}
 	}
-	
+
 }

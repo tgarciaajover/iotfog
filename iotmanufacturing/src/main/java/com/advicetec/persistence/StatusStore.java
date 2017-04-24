@@ -4,7 +4,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.json.JSONArray;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
@@ -208,6 +218,21 @@ public class StatusStore {
 	 */
 	public JSONArray getJsonAtrributesValues(){
 		return new JSONArray(getAttributeValues());
+	}
+	
+	public Document toXml() throws ParserConfigurationException, JAXBException{
+		 Document doc = DocumentBuilderFactory.newInstance()
+				.newDocumentBuilder().newDocument();
+		Element root = doc.createElement("status");
+		JAXBContext jc = JAXBContext.newInstance(Attribute.class);
+		Marshaller m = jc.createMarshaller();
+		for (Attribute attr : attributes.values()) {
+			Node node = doc.createElement("attribute");
+			m.marshal(attr, node);
+		}
+		doc.appendChild(root);
+		
+		return doc;
 	}
 }
 

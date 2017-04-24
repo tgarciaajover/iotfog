@@ -1,5 +1,7 @@
 package com.advicetec.core;
 
+import javax.xml.bind.annotation.XmlAttribute;
+
 
 public enum AttributeOrigin {
 
@@ -14,11 +16,11 @@ public enum AttributeOrigin {
 	      this.code = value;
 	      this.name = name;
 	   }
-	   
+	   @XmlAttribute
 	   public int getValue() {
 	      return this.code;
 	   }
-	   
+	   @XmlAttribute
 	   public String getName() {
 		  return this.name;
 	   }
