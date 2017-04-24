@@ -47,10 +47,12 @@ public class LanguageTransformationTest
 		InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.INT, value );
 		list.add(valueSignal);
 		
+		String entityId = "None";
+		
 		InterpreterSw interpreter = new InterpreterSw();
 		try 
 		{
-			interpreter.process(program,list);
+			interpreter.process(program,entityId, list);
 			Map<String, Symbol> globalScope = interpreter.getGlobalScope().getSymbolMap();
 							
 			for (String name : globalScope.keySet())
@@ -81,7 +83,7 @@ public class LanguageTransformationTest
 			e.printStackTrace();
 		}
 	}
-	/*
+	
 	@Test
 	public void Test_Syntax_Language()
 	{
@@ -107,5 +109,32 @@ public class LanguageTransformationTest
 			e.printStackTrace();
 		}
 	}
-	*/
+	
+
+	@Test
+	public void Test_Syntax_Language_Server()
+	{
+		
+		String program = "test/transformtest_errors." + EXTENSION;
+
+		System.out.println("Syntax Check:" + program);
+		
+		SyntaxChecking interpreter = new SyntaxChecking();
+		try 
+		{
+			List<SyntaxError> errorList = interpreter.process(program);
+			
+			assertEquals("the number of errors is not the expected value: 2",(int) 2, (int) errorList.size() );
+
+	        for (SyntaxError e : errorList) {
+	            // RecognitionExceptionUtil is my custom class discussed next.
+	            System.out.println(RecognitionExceptionUtil.formatVerbose(e));
+	        }
+	        
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 }

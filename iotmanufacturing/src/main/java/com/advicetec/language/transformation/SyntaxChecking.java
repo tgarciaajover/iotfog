@@ -7,6 +7,8 @@ import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarLexer;
@@ -20,7 +22,8 @@ public class SyntaxChecking
 
 	private static final String EXTENSION = "properties";
 	
-	
+	/**  Tag de XML given*/
+	private static final String PROGRAM = "program";
 	
 	public static Symbol.Type getType(int tokenType) {
 
@@ -39,6 +42,11 @@ public class SyntaxChecking
 
     }
     
+	public String getProgram(Document doc)
+	{
+		return  getElementTextContent(doc, PROGRAM);		
+	}
+	
     public List<SyntaxError> process(String program) throws Exception 
     {
 
@@ -83,4 +91,16 @@ public class SyntaxChecking
         return listErrors;
        
     }    
+
+    /**
+     * Helper method that returns the text content of an interior element of this XML document. 
+     * @param doc The XML document. 
+     * @param elementName The element name whose text content is to be retrieved.
+     * @return The text content
+     */
+    private String getElementTextContent(Document doc, String elementName) {
+      Element element = (Element) doc.getElementsByTagName(elementName).item(0);
+      return element.getTextContent();
+    }
+
 }

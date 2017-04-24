@@ -1,16 +1,20 @@
 package com.advicetec.iot.rest;
 
-import java.util.Collection;
+import java.util.List;
 
-import org.restlet.data.Status;
 import org.restlet.ext.xml.DomRepresentation;
 import org.restlet.representation.Representation;
-import org.restlet.resource.Get;
+import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 
-import com.advicetec.core.Attribute;
-import com.advicetec.measuredentitity.MeasuredEntityFacade;
-import com.advicetec.measuredentitity.MeasuredEntityManager;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import com.advicetec.language.ast.SyntaxError;
+import com.advicetec.language.transformation.SyntaxChecking;
 
 public class LanguageResource extends ServerResource 
 {
@@ -22,28 +26,40 @@ public class LanguageResource extends ServerResource
 	   * @throws Exception If problems occur making the representation.
 	   * Shouldn't occur in practice but if it does, Restlet will set the Status code. 
 	   */
-	  @Get
-	  public Representation getStatus() throws Exception {
+	  @Put
+	  public Representation checkSyntax(Representation representation) throws Exception {
+		  
+		  System.out.println("En Syntax Cheching");  
 	    // Create an empty XML representation.
+	    DomRepresentation input = new DomRepresentation(representation);
 	    DomRepresentation result = new DomRepresentation();
 	    // Get the contact's uniqueID from the URL.
-	    String uniqueID = (String)this.getRequestAttributes().get("uniqueID");
-	    // Look for it in the Entity Manager database.
+
+		SyntaxChecking sintaxChecking = new SyntaxChecking();
+
+	    // Convert the XML representation to the Java representation.
+	    String program = sintaxChecking.getProgram(input.getDocument());
 	    
-	    MeasuredEntityManager manager = MeasuredEntityManager.getInstance();
-	    MeasuredEntityFacade facade = manager.getFacadeOfEntityById(uniqueID);
+	    System.out.println("program:" + program);
 	    
-	     
-	    Collection<Attribute> collection = facade.getStatus();
-	    if (collection.size() == 0) {
-	      // The requested contact was not found, so set the Status to indicate this.
-	      getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
-	    } 
-	    else {
-	      // The requested contact was found, so add the Contact's XML representation to the response.
-	      result.setDocument(contact.toXml());
-	      // Status code defaults to 200 if we don't set it.
-	      }
+		List<SyntaxError> errorList = sintaxChecking.process(program);
+
+		System.out.println("termino de revisar el codigo- va a construir el xml con los errores");
+	    // Create the Document instance representing this XML.
+	    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+	    DocumentBuilder builder = factory.newDocumentBuilder();
+	    Document doc = builder.newDocument();
+	    
+	    Element rootElement = doc.createElement("errors");
+	    doc.appendChild(rootElement);
+
+	    for (SyntaxError error : errorList){
+	    	error.toXml(doc, rootElement);
+	    }
+	    	    
+	    // The requested contact was found, so add the Contact's XML representation to the response.
+	    result.setDocument(doc);
+	    	    
 	    // Return the representation.  The Status code tells the client if the representation is valid.
 	    return result;
 	  }

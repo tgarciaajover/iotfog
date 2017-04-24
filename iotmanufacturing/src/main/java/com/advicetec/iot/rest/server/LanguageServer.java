@@ -5,7 +5,7 @@ import org.restlet.Component;
 import org.restlet.Restlet;
 import org.restlet.data.Protocol;
 import org.restlet.routing.Router;
-import com.advicetec.server.resource.server.MeasuringDeviceResource;
+import com.advicetec.iot.rest.LanguageResource;
 
 /**
  * A simple HTTP server that provides access to a "Language Syntax Checker" via a REST interface.
@@ -56,7 +56,7 @@ public class LanguageServer extends Application {
       // Create a router restlet.
       Router router = new Router(getContext());
       // Attach the resources to the router.
-      router.attach("/checker/{text}", LanguageResource.class);
+      router.attach("/checker/{Text}", LanguageResource.class);
       // Return the root router
       return router;
   }
