@@ -1,4 +1,4 @@
-package com.advicetec.rest;
+package com.advicetec.iot.rest;
 
 
 import org.restlet.representation.Representation;

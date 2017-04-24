@@ -1,4 +1,4 @@
-package com.advicetec.rest;
+package com.advicetec.iot.rest;
 
 import java.net.URI;
 
@@ -22,7 +22,7 @@ public class TestRESTclient {
 //		System.out.println(response+"\n"+ plain+"\n"+xml+"\n"+html);
 
 	}
-//
+
 //	private static URI getBaseURI() {
 //		return UriBuilder.fromUri("http://localhost:8080/com.advicetec.rest").build();
 //	}

@@ -1,4 +1,4 @@
-package com.advicetec.rest;
+package com.advicetec.iot.rest;
 
 import static org.junit.Assert.assertEquals;
 
