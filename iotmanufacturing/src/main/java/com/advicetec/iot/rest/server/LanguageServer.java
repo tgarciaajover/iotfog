@@ -8,17 +8,17 @@ import org.restlet.routing.Router;
 import com.advicetec.server.resource.server.MeasuringDeviceResource;
 
 /**
- * A simple HTTP server that provides access to a "MesuringDevice Cache" via a REST interface.
+ * A simple HTTP server that provides access to a "Language Syntax Checker" via a REST interface.
  * This class does two things: 
  *   (1) it sets up and runs a web application (via the main() method), and 
  *   (2) it defines how URLs sent to this web application get dispatched to ServerResources that handle them.
  * @author Philip Johnson
  */
-public class StatusServer extends Application {
+public class LanguageServer extends Application {
   
   /**
    * Starts a server running on the specified port.
-   * The context root will be "statusserver".
+   * The context root will be "languageserver".
    * We create a separate runServer method, rather than putting this code into the main() method,
    * so that we can run tests on a separate port.  
    * 
@@ -31,9 +31,9 @@ public class StatusServer extends Application {
     Component component = new Component();
     component.getServers().add(Protocol.HTTP, port);
     // Create an application (this class).
-    Application application = new StatusServer();
+    Application application = new LanguageServer();
     // Attach the application to the component with a defined contextRoot.
-    String contextRoot = "/statusserver";
+    String contextRoot = "/languageserver";
     component.getDefaultHost().attach(contextRoot, application);
     component.start();
   }
@@ -44,7 +44,7 @@ public class StatusServer extends Application {
    * @throws Exception If problems occur.
    */
   public static void main(String[] args) throws Exception {
-    runServer(8111);
+    runServer(8112);
   }   
   
   /**
@@ -56,7 +56,7 @@ public class StatusServer extends Application {
       // Create a router restlet.
       Router router = new Router(getContext());
       // Attach the resources to the router.
-      router.attach("/status/{uniqueID}", StatusResource.class);
+      router.attach("/checker/{text}", LanguageResource.class);
       // Return the root router
       return router;
   }

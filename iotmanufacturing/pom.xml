@@ -150,6 +150,12 @@
 			<version>${lib-restlet-version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.restlet.jee</groupId>
+			<artifactId>org.restlet.ext.xml</artifactId>
+			<version>${lib-restlet-version}</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20160810</version>
