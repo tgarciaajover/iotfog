@@ -144,11 +144,20 @@
 			<artifactId>org.restlet.ext.jsslutils</artifactId>
 			<version>${lib-restlet-version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.restlet.jse</groupId>
+			<artifactId>org.restlet.ext.json</artifactId>
+			<version>${lib-restlet-version}</version>
+		</dependency>
+		
+		
 		<dependency>
 			<groupId>org.restlet.jee</groupId>
 			<artifactId>org.restlet</artifactId>
 			<version>${lib-restlet-version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.restlet.jee</groupId>
 			<artifactId>org.restlet.ext.xml</artifactId>
@@ -166,6 +175,14 @@
 			<artifactId>javax.ws.rs-api</artifactId>
 			<version>2.0</version>
 		</dependency>
+
+       <!-- https://mvnrepository.com/artifact/org.codehaus.jackson/jackson-mapper-asl -->
+       <dependency>
+           <groupId>org.codehaus.jackson</groupId>
+           <artifactId>jackson-mapper-asl</artifactId>
+           <version>1.9.9</version>
+       </dependency>
+
 	</dependencies>
 
 </project>
