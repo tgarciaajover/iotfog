@@ -23,7 +23,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.restlet.ext.xml.DomRepresentation;
 
-import com.advicetec.iot.rest.server.LanguageServer;
+import com.advicetec.iot.rest.server.ConfigurationServer;
 
 public class TestServerLanguage 
 {
@@ -40,7 +40,7 @@ public class TestServerLanguage
 	   */
 	  @BeforeClass
 	  public static void startServer () throws Exception {
-	    LanguageServer.runServer(testPort);
+	    ConfigurationServer.runServer(testPort);
 	  }
 	  
 	  

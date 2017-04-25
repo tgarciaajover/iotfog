@@ -5,7 +5,9 @@ import org.restlet.Component;
 import org.restlet.Restlet;
 import org.restlet.data.Protocol;
 import org.restlet.routing.Router;
+
 import com.advicetec.iot.rest.LanguageResource;
+import com.advicetec.iot.rest.SignalUnitResource;
 
 /**
  * A simple HTTP server that provides access to a "Language Syntax Checker" via a REST interface.
@@ -14,7 +16,7 @@ import com.advicetec.iot.rest.LanguageResource;
  *   (2) it defines how URLs sent to this web application get dispatched to ServerResources that handle them.
  * @author Philip Johnson
  */
-public class LanguageServer extends Application {
+public class ConfigurationServer extends Application {
   
   /**
    * Starts a server running on the specified port.
@@ -31,7 +33,7 @@ public class LanguageServer extends Application {
     Component component = new Component();
     component.getServers().add(Protocol.HTTP, port);
     // Create an application (this class).
-    Application application = new LanguageServer();
+    Application application = new ConfigurationServer();
     // Attach the application to the component with a defined contextRoot.
     String contextRoot = "/languageserver";
     component.getDefaultHost().attach(contextRoot, application);
@@ -57,6 +59,7 @@ public class LanguageServer extends Application {
       Router router = new Router(getContext());
       // Attach the resources to the router.
       router.attach("/checker/{Text}", LanguageResource.class);
+      router.attach("/SignalUnit/{uniqueID}", SignalUnitResource.class);
       // Return the root router
       return router;
   }

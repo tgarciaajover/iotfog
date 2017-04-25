@@ -30,5 +30,6 @@ public class SignalUnitTest
 		
 		assertEquals("Import from Json does not work,",signalUnit.toJson(), signalUnit2.toJson() );
 		
+		System.out.println(signalUnit2.toJson());
 	}
 }
