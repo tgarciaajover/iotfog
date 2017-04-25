@@ -13,5 +13,8 @@ public abstract class ConfigurationObject
 		return id;
 	}
 	
+	public void setId(Integer id){
+		this.id= id;
+	}
 	
 }

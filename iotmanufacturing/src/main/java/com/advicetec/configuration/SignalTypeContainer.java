@@ -1,8 +1,13 @@
 package com.advicetec.configuration;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 
 public class SignalTypeContainer extends Container 
 {
@@ -46,5 +51,27 @@ public class SignalTypeContainer extends Container
 		super.disconnect();
 	}
 	
-	
+	public void fromJSON(String json){
+		
+		ObjectMapper mapper = new ObjectMapper();
+		
+		//Convert object to JSON string and pretty print
+		SignalType sTypeTemp;
+		try {
+		
+			sTypeTemp = mapper.readValue(json, SignalType.class);
+			super.configuationObjects.put(sTypeTemp.getId(), sTypeTemp);
+		
+		} catch (JsonParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+		
 }

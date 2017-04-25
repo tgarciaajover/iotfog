@@ -23,7 +23,7 @@ public abstract class Configurable {
 	
 	private void loadConfigurationFile(String filename)
 	{
-		String filenamerel = "resources/" + filename;
+		String filenamerel = "resources/" + filename + ".properties";
 		File configFile = new File(filenamerel);
 		 
 		try 

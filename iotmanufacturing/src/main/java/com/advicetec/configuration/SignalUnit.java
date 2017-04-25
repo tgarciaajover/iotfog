@@ -28,15 +28,7 @@ public class SignalUnit extends ConfigurationObject
 	public SignalUnit(@JsonProperty("id") Integer id) {
 		super(id);
 	}
-	
-	public Integer getId() {
-		return id;
-	}
-	
-	public void setId(Integer id) {
-		this.id = id;
-	}
-	
+		
 	public String getDescr() {
 		return descr;
 	}
@@ -75,32 +67,5 @@ public class SignalUnit extends ConfigurationObject
 		return jsonInString;
 	}
 	
-	
-	public void fromJSON(String json){
 		
-		ObjectMapper mapper = new ObjectMapper();
-		
-		//Convert object to JSON string and pretty print
-		SignalUnit unitTemp;
-		try {
-		
-			unitTemp = mapper.readValue(json, SignalUnit.class);
-			setId(unitTemp.getId());
-			setDescr(unitTemp.getDescr());
-			setCreate_date(unitTemp.getCreate_date());
-		
-		
-		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	}	
-	
 }

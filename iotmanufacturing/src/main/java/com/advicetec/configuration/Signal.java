@@ -1,16 +1,32 @@
 package com.advicetec.configuration;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 public class Signal extends ConfigurationObject
 {
 
 	private SignalUnit unit;
 	private SignalType type;
+	
+	@JsonProperty("class_name") 
 	private String descr;
+	
+	@JsonProperty("create_date") 
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
 	private LocalDateTime create_date;
 	
-	public Signal(Integer id) {
+	@JsonCreator
+	public Signal(@JsonProperty("id") Integer id) {
 		super(id);
 	}
 	
@@ -38,5 +54,28 @@ public class Signal extends ConfigurationObject
 	public void setCreate_date(LocalDateTime create_date) {
 		this.create_date = create_date;
 	}
+
+	public String toJson()
+	{
+		ObjectMapper mapper = new ObjectMapper();
+			
+		String jsonInString=null;
+		try {
+			
+			jsonInString = mapper.writeValueAsString(this);
+			
+			
+		} catch (JsonGenerationException e) {
+			// TODO: log the error
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return jsonInString;
+	}
+	
 	
 }
