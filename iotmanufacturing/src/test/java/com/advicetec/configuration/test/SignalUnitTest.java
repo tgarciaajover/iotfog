@@ -23,9 +23,7 @@ public class SignalUnitTest
 		
 		ConfigurationManager instance = ConfigurationManager.getInstance();
 		
-		SignalUnitContainer container = new SignalUnitContainer(instance.getProperty("server"),
-																instance.getProperty("user"),
-																instance.getProperty("password")); 
+		SignalUnitContainer container = instance.getSignalUnitContainer(); 
 		
 		container.fromJSON(jsonString);
 		SignalUnit signalUnit2 = (SignalUnit) container.getObject(1);

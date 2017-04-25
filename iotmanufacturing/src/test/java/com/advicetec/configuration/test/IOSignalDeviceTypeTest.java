@@ -7,16 +7,17 @@ import java.time.LocalDateTime;
 import org.junit.Test;
 
 import com.advicetec.configuration.ConfigurationManager;
+import com.advicetec.configuration.IOSignalDeviceType;
 import com.advicetec.configuration.Signal;
 import com.advicetec.configuration.SignalContainer;
 import com.advicetec.configuration.SignalType;
 import com.advicetec.configuration.SignalUnit;
 import com.advicetec.configuration.SignalUnitContainer;
 
-public class SignalTest 
+public class IOSignalDeviceTypeTest 
 {
 	@Test
-	public void Test_Signal_Unit() 
+	public void Test_IO_Signal_Device_Type() 
 	{
 		SignalUnit signalUnit = new SignalUnit(new Integer(1));
 		signalUnit.setDescr("CYC");
@@ -32,24 +33,12 @@ public class SignalTest
 		signal.setDescr("digital signal");
 		signal.setCreate_date(LocalDateTime.now());
 		
+		IOSignalDeviceType ioSignal = new IOSignalDeviceType(3);
+		ioSignal.setI_O("asdads");
+		ioSignal.setSignal(signal);
 		
-		String jsonString = signal.toJson();
-		System.out.println("signal" + jsonString);
-
-		ConfigurationManager instance = ConfigurationManager.getInstance();
-		
-		SignalContainer container = instance.getSignalContainer(); 
-		
-		container.fromJSON(jsonString);
-		Signal signal2 = (Signal) container.getObject(2);
-		
-		System.out.println(signal2.toJson());
-		assertEquals("Import from Json does not work,",signal.toJson(), signal2.toJson() );
-
-		SignalUnitContainer sUnitContainer = instance.getSignalUnitContainer();
-		SignalUnit signalUnit2 =  (SignalUnit) sUnitContainer.getObject(1);
-		
-		assertEquals("Import from Json does not work,",signalUnit.toJson(), signalUnit2.toJson() );
+		String jsonText = ioSignal.toJson();
+		System.out.println("IOSignal" + jsonText);
 		
 	}
 }

@@ -23,9 +23,7 @@ public class SignalTypeTest
 		
 		ConfigurationManager instance = ConfigurationManager.getInstance();
 		
-		SignalTypeContainer container = new SignalTypeContainer(instance.getProperty("server"),
-																instance.getProperty("user"),
-																instance.getProperty("password")); 
+		SignalTypeContainer container = instance.getSignalTypeContainer(); 
 		
 		container.fromJSON(jsonString);
 		SignalType signalType2 = (SignalType) container.getObject(1);
