@@ -1,17 +1,14 @@
 package com.advicetec.core;
 
+import java.io.IOException;
 import java.util.Objects;
 
 import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
-import org.hamcrest.core.IsInstanceOf;
-import org.w3c.dom.Element;
+import org.codehaus.jackson.map.ObjectMapper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * This class describes the measure unit. e.g. Kilograms.
@@ -59,7 +56,7 @@ public class MeasuringUnit
 		String json = null;
 		try {
 			json = new ObjectMapper().writeValueAsString(this);
-		} catch (JsonProcessingException e) {
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -69,7 +66,7 @@ public class MeasuringUnit
 	public String toString(){
 		StringBuilder build = new StringBuilder();
 		build.append("symbol: ").append(symbol).append(", ");
-		build.append("description: ").append(description).append("\n");
+		build.append("description: ").append(description);
 		return build.toString();
 	}
 }

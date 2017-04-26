@@ -1,5 +1,7 @@
 package com.advicetec.core;
 
+import java.io.IOException;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -7,12 +9,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.advicetec.core.serialization.AttributeOriginSerializer;
+import com.advicetec.core.serialization.AttributeOriginDeserializer;
+import com.advicetec.core.serialization.AttributeTypeDeserializer;
+import com.advicetec.core.serialization.AttributeTypeSerializer;
 import com.advicetec.core.serialization.MeasuringUnitSerializer;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.advicetec.core.serialization.MeasuringUnitDeserializer;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 
 /**
@@ -25,24 +32,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Attribute 
 {
 	private String name;
-	
+	@JsonSerialize(using = AttributeTypeSerializer.class)
+	@JsonDeserialize(using = AttributeTypeDeserializer.class)
 	private AttributeType type;
 	// non mandatory
 	@JsonSerialize(using = MeasuringUnitSerializer.class)
+	@JsonDeserialize(using = MeasuringUnitDeserializer.class)
 	private MeasuringUnit unit;
 	private boolean trend;
 
 	@JsonSerialize(using = AttributeOriginSerializer.class)
+	@JsonDeserialize(using = AttributeOriginDeserializer.class)
 	private AttributeOrigin origin;
-
-	public Attribute(String name, AttributeType type,  MeasuringUnit unit) 
-	{
-		this.name = name;
-		this.type = type;
-		this.unit = unit;
-		this.trend = false;
-		this.origin = AttributeOrigin.BEHAVIOR;
-	}
 
 	@JsonCreator
 	public Attribute(@JsonProperty("name") String name,@JsonProperty("type") AttributeType type, 
@@ -56,6 +57,14 @@ public class Attribute
 		this.origin = origin;
 	}
 
+	public Attribute(String name, AttributeType type,  MeasuringUnit unit) 
+	{
+		this.name = name;
+		this.type = type;
+		this.unit = unit;
+		this.trend = false;
+		this.origin = AttributeOrigin.BEHAVIOR;
+	}
 
 	public void setTrend(boolean newTrend){
 		trend = newTrend;
@@ -97,8 +106,8 @@ public class Attribute
 		String json = null;
 		try {
 			json = new ObjectMapper().writeValueAsString(this);
-		} catch (JsonProcessingException e) {
-			System.err.println("Cannot export as Attribute as the json object.");
+		} catch (IOException e) {
+			System.err.println("Cannot export this Attribute as the json object.");
 			e.printStackTrace();
 		}
 		return json;

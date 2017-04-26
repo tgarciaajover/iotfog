@@ -7,18 +7,20 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
 
-import com.advicetec.core.AttributeOrigin;
+import com.advicetec.core.Attribute;
 
-public class AttributeOriginSerializer extends JsonSerializer<AttributeOrigin> {
+public class MeasuredAttributeValueSerializer extends JsonSerializer<Attribute> {
 
 	@Override
-	public void serialize(AttributeOrigin origin, JsonGenerator jgen,
+	public void serialize(Attribute attr, JsonGenerator jgen,
 			SerializerProvider provider) throws IOException,
 			JsonProcessingException {
 		jgen.writeStartObject();
-		jgen.writeNumberField("value", origin.getValue());
-		jgen.writeStringField("name", origin.getName());
+		jgen.writeStringField("name", attr.getName());
+		jgen.writeObjectField("type", attr.getType());
+		jgen.writeStringField("unit", attr.getUnit().toJson());
 		jgen.writeEndObject();
 	}
 
+	
 }

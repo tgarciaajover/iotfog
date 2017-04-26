@@ -1,17 +1,26 @@
 package com.advicetec.core;
 
+import java.io.IOException;
+
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonSubTypes;
+import org.codehaus.jackson.annotate.JsonSubTypes.Type;
+import org.codehaus.jackson.annotate.JsonTypeInfo.Id;
+import org.codehaus.jackson.annotate.JsonTypeInfo;
 
+import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.codehaus.jackson.map.ObjectMapper;
 
 /**
  * This class models the attribute values from People.
  * @author user
  *
  */
+@JsonTypeInfo(use=Id.CLASS,include=JsonTypeInfo.As.PROPERTY,property="sub")
+@JsonSubTypes({@Type(value=MeasuredAttributeValue.class)})
 public class AttributeValue 
 {
 
@@ -93,7 +102,7 @@ public class AttributeValue
 		String json = null;
 		try {
 			json = new ObjectMapper().writeValueAsString(this);
-		} catch (JsonProcessingException e) {
+		} catch (IOException e) {
 			System.err.println("Cannot export as Attribute Value as the json object.");
 			e.printStackTrace();
 		}

@@ -3,18 +3,23 @@ package com.advicetec.iot.rest;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.Version;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.module.SimpleModule;
 import org.junit.Test;
-
 
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.MeasuringUnit;
+import com.advicetec.core.serialization.MeasuredAttributeValueDeserializer;
+import com.advicetec.core.serialization.MeasuredAttributeValueSerializer;
+import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 
 public class AttributeTest {
@@ -75,7 +80,7 @@ public class AttributeTest {
 		catch (IOException e) { e.printStackTrace();
 		}
 	}
-	
+
 
 	@Test
 	public void jsonAttribute(){
@@ -83,7 +88,6 @@ public class AttributeTest {
 		Attribute att = new Attribute("AttrName", AttributeType.DOUBLE,unit,
 				true,AttributeOrigin.BEHAVIOR);
 		
-		System.out.println(att.toString());
 		String json = att.toJson();
 		System.out.println(json);
 		
@@ -115,4 +119,35 @@ public class AttributeTest {
 		}
 		assertEquals("they don't match.",val.toString().trim(),val2.toString().trim());
 	}
+	
+	@Test
+	public void jsonMeasuredAttributeValue(){
+		MeasuringUnit unit = new MeasuringUnit("s", "Seconds");
+		Attribute att = new Attribute("AttrName", AttributeType.DOUBLE,unit,
+				true,AttributeOrigin.BEHAVIOR);
+		AttributeValue val= new AttributeValue("123", att, 10.0, "P00", MeasuredEntityType.MACHINE);
+		MeasuredAttributeValue mav = new MeasuredAttributeValue(att,val.getValue(),
+				val.getGenerator() , val.getGeneratorType(), LocalDateTime.now());
+		
+		System.out.println(mav.toJson());
+		System.out.println("Object1: "+mav.toString());
+		
+		ObjectMapper mapper = new ObjectMapper();
+		SimpleModule module = new SimpleModule("Simple Serializer", new Version(1, 0, 0,null));
+		module.addDeserializer(MeasuredAttributeValue.class, new MeasuredAttributeValueDeserializer());
+		module.addSerializer(MeasuredAttributeValue.class, new MeasuredAttributeValueSerializer());
+		
+		mapper.registerModule(module);
+		
+		MeasuredAttributeValue mav2 = null;
+		
+		try {
+			mav2 = mapper.readValue(val.toJson(), MeasuredAttributeValue.class);
+			System.out.println("Object2: "+mav2.toString().trim());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		assertEquals("Objects don't match.",mav.toString().trim(),mav2.toString().trim());
+	}
+	
 }

@@ -6,25 +6,27 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
 
+import com.advicetec.core.AttributeType;
 import com.advicetec.core.MeasuringUnit;
+
 import org.codehaus.jackson.JsonGenerator;
 
-public class MeasuringUnitSerializer extends JsonSerializer<MeasuringUnit> {
+public class AttributeTypeSerializer extends JsonSerializer<AttributeType> {
 
-	protected MeasuringUnitSerializer(Class<MeasuringUnit> t) {
+	protected AttributeTypeSerializer(Class<MeasuringUnit> t) {
 	}
 	
-	public MeasuringUnitSerializer() {
+	public AttributeTypeSerializer() {
 		super();
 	}
 
 	@Override
-	public void serialize(MeasuringUnit value, JsonGenerator jgen,
+	public void serialize(AttributeType value, JsonGenerator jgen,
 			SerializerProvider provider) throws IOException,
 			 JsonProcessingException {
 		jgen.writeStartObject();
-		jgen.writeStringField("symbol", value.getSymbol());
-		jgen.writeStringField("description", value.getDescription());
+		jgen.writeNumberField("value", value.getValue());
+		jgen.writeStringField("name", value.getName());
 		jgen.writeEndObject();
 	}
 }

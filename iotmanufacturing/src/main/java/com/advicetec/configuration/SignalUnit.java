@@ -15,7 +15,8 @@ public class SignalUnit extends ConfigurationObject
 {
 
 	
-	@JsonProperty("descr") private String descr;
+	@JsonProperty("descr") 
+	private String descr;
 	
 	@JsonProperty("create_date") 
 	@JsonSerialize(using = LocalDateTimeSerializer.class)

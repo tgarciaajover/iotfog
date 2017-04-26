@@ -5,19 +5,38 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
+import com.advicetec.configuration.LocalDateTimeDeserializer;
+import com.advicetec.configuration.LocalDateTimeSerializer;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.Storable;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class MeasuredAttributeValue extends AttributeValue implements Storable
 {
+	
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
 	LocalDateTime timeStamp;
 	
+	@JsonIgnore
 	public final static String SQL_Insert = "INSERT INTO MeasuredAttributeValue(id_owner, timestamp, owner_type, attribute_name, value_decimal, value_datetime, value_string, value_int) " + "VALUES(?,?,?,?,?,?,?,?)";
+	@JsonIgnore
 	public final static String SQL_Delete = "DELETE INTO MeasuredAttributeValue(id_owner, timestamp, owner_type, attribute_name) " + "VALUES(?,?,?,?)";
-		
-	public MeasuredAttributeValue(Attribute type, Object value, String parent, MeasuredEntityType parentType, 
-			LocalDateTime timeStamp) 
+	
+	@JsonCreator
+	public MeasuredAttributeValue(@JsonProperty("type")Attribute type, 
+			@JsonProperty("type")Object value, 
+			@JsonProperty("generator")String parent, 
+			@JsonProperty("generatorType")MeasuredEntityType parentType, 
+			@JsonProperty("timeStamp") LocalDateTime timeStamp) 
 	{
 		super(type.getName(), type, value, parent, parentType );
 		this.timeStamp = timeStamp;
@@ -28,6 +47,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 		return timeStamp;
 	}
 
+	@JsonIgnore
 	public String getPreparedInsertText() {
 		return SQL_Insert;
 	}
@@ -105,11 +125,9 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	}
 	
 	public String toString(){
-		//TODO
-		return "{\"parent\": "+ getGenerator()
-				+",\"parent_type\":"+ getGeneratorType().getValue()
-				+",\"timestamp\": "+ Timestamp.valueOf(getTimeStamp())
-				+",\"value\": "+ getValue()+"}";
+		StringBuilder sb = new StringBuilder(super.toString());
+		sb.append(", timestamp: ").append(timeStamp.toString());
+		return sb.toString();
 	}
 
 	public boolean store() {
@@ -119,5 +137,16 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	
 	public Attribute getType(){
 		return type;
+	}
+	
+	public String toJson(){
+		String json = null;
+		try {
+			json = new ObjectMapper().writeValueAsString(this);
+		} catch (JsonProcessingException e) {
+			System.err.println("Cannot export this Mesured Attribute Value as the json object.");
+			e.printStackTrace();
+		}
+		return json;
 	}
 }
