@@ -9,9 +9,10 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import javax.xml.bind.JAXBException;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.json.JSONArray;
-import org.restlet.representation.Representation;
-import org.restlet.resource.Get;
 import org.w3c.dom.Document;
 
 import com.advicetec.core.Attribute;
@@ -270,12 +271,6 @@ public final class MeasuredEntityFacade {
     	StateIntervalCache.getInstance().storeToCache(stateInterval);
     }
 	
-	@Get
-	public Representation attributeValuesToJson(){
-		JSONArray array = new JSONArray(getAttributeValues());
-		// TODO return array;
-		return null;
-	}
 	
 	/**
 	 * Returns a
@@ -289,6 +284,8 @@ public final class MeasuredEntityFacade {
 	public JSONArray statesByInterval(TimeInterval interval){
 		return new JSONArray(getStatesByInterval(interval.getStartDateTime(), interval.getEndDateTime()));
 	}
+	
+	public 
 	
 	/**
 	 * Returns the list of intervals between two datetimes.
@@ -313,6 +310,10 @@ public final class MeasuredEntityFacade {
 		attValueCache.bulkCommit(getAllKeysFromAttributeMap());
 	}
 
+	/**
+	 * Returns the list of keys from the map of attributes.
+	 * @return
+	 */
 	private List<String> getAllKeysFromAttributeMap() {
 		List<String> attKeys = new ArrayList<String>();
 		for(Map<LocalDateTime,String> map:attMap.values()){
@@ -329,8 +330,16 @@ public final class MeasuredEntityFacade {
 		stateCache.bulkCommit(new ArrayList<String>(intervalMap.values()));
 	}
 	
-	public void getXmlStatus(Document doc){
-		 status.toXml(doc);
+	/**
+	 * Returns the Entity Status into a XML document.
+	 * @return
+	 * @throws ParserConfigurationException
+	 * @throws JAXBException
+	 */
+	public Document getXmlStatus() throws ParserConfigurationException, JAXBException{
+		 return status.toXml();
 	}
+	
+	
 }
 

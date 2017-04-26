@@ -1,6 +1,10 @@
 package com.advicetec.core;
 
+import java.io.IOException;
+
 import javax.xml.bind.annotation.XmlAttribute;
+
+import org.codehaus.jackson.map.ObjectMapper;
 
 
 public enum AttributeOrigin {
@@ -27,5 +31,16 @@ public enum AttributeOrigin {
 	   
 	   public boolean equals(AttributeType o){
 		   return this.name.equals(o.getName());
+	   }
+	   
+	   public String toJson(){
+		   String json = null;
+		   try {
+			json = new ObjectMapper().writeValueAsString(this);
+		} catch (IOException e) {
+			System.err.println("Cannot serialize the AttributeOrigin object.");
+			e.printStackTrace();
+		}
+		   return json;
 	   }
 }

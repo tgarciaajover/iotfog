@@ -15,9 +15,12 @@ public class AttributeValueSerialization extends JsonSerializer<MeasuredAttribut
 	}
 
 	@Override
-	public void serialize(MeasuredAttributeValue measureAttValue, JsonGenerator jGen,
+	public void serialize(MeasuredAttributeValue measureAttValue, JsonGenerator jgen,
 			SerializerProvider serializer) throws IOException,
 			JsonProcessingException {
-		jGen.writeString(measureAttValue.toString());
+		jgen.writeStartObject();
+		//TODO jgen.write();
+		
+		jgen.writeEndObject();
 	}
 }

@@ -5,8 +5,13 @@ import java.util.Objects;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.hamcrest.core.IsInstanceOf;
 import org.w3c.dom.Element;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * This class describes the measure unit. e.g. Kilograms.
@@ -15,11 +20,12 @@ import org.w3c.dom.Element;
  */
 public class MeasuringUnit 
 {
-	private String symbol;  // identifier.
-	private String description;    // description.
+	private String symbol;  	// identifier.
+	private String description; // description.
 	
-	public MeasuringUnit( String symbol, String description) {
-		super();
+	@JsonCreator
+	public MeasuringUnit(@JsonProperty("symbol") String symbol,
+			@JsonProperty("description") String description) {
 		this.symbol = symbol;
 		this.description = description;
 	}
@@ -49,4 +55,21 @@ public class MeasuringUnit
 		}
 	}
 
+	public String toJson() {
+		String json = null;
+		try {
+			json = new ObjectMapper().writeValueAsString(this);
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return json;
+	}
+
+	public String toString(){
+		StringBuilder build = new StringBuilder();
+		build.append("symbol: ").append(symbol).append(", ");
+		build.append("description: ").append(description).append("\n");
+		return build.toString();
+	}
 }

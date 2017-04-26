@@ -1,6 +1,13 @@
 package com.advicetec.core;
 
+import java.io.IOException;
+
 import javax.xml.bind.annotation.XmlAttribute;
+
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 
 public enum AttributeType 
 {
@@ -14,7 +21,7 @@ public enum AttributeType
 	   DATE(6,"Date"),
 	   TIME(7,"Time");
 	   
-	   private int code;
+	   @JsonProperty("value") private int code;
 	   private String name;
 	   
 	   private AttributeType(int value, String name) {
@@ -35,4 +42,14 @@ public enum AttributeType
 		   return this.name.equals(o.getName());
 	   }
 
+	   public String toJson() {
+		   String json= null;
+		   try {
+			json = new ObjectMapper().writeValueAsString(this);
+		} catch (IOException e) {
+			System.err.println("Cannot map AttributeType object to Json.");
+			e.printStackTrace();
+		}
+		   return json;
+	   }
 }

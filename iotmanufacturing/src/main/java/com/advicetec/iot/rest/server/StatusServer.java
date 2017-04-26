@@ -5,7 +5,8 @@ import org.restlet.Component;
 import org.restlet.Restlet;
 import org.restlet.data.Protocol;
 import org.restlet.routing.Router;
-import com.advicetec.server.resource.server.MeasuringDeviceResource;
+
+import com.advicetec.iot.rest.StatusResource;
 
 /**
  * A simple HTTP server that provides access to a "MesuringDevice Cache" via a REST interface.

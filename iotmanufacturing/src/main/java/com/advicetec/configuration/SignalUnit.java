@@ -4,11 +4,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
@@ -65,7 +63,5 @@ public class SignalUnit extends ConfigurationObject
 		}
 		
 		return jsonInString;
-	}
-	
-		
+	}	
 }

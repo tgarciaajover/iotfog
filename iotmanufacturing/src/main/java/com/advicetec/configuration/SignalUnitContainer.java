@@ -37,7 +37,6 @@ public class SignalUnitContainer extends Container
 		        object.setDescr(descr);
 		        object.setCreate_date(timestamp.toLocalDateTime());
 		        super.configuationObjects.put(id, object);
-		      
 			}
 			
 			rs.close();
@@ -72,7 +71,6 @@ public class SignalUnitContainer extends Container
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 	}	
 	
 }
