@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Attribute 
 {
 	private String name;
+	
 	private AttributeType type;
 	// non mandatory
 	@JsonSerialize(using = MeasuringUnitSerializer.class)

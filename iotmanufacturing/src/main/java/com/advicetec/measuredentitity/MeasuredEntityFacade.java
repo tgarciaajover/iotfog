@@ -95,7 +95,7 @@ public final class MeasuredEntityFacade {
 	 * @param attrValue
 	 */
 	public void setAttributeValue(AttributeValue attrValue){
-		store(new MeasuredAttributeValue(attrValue.getAttribute(), attrValue.getValue(),
+		store(new MeasuredAttributeValue(attrValue.getType(), attrValue.getValue(),
 				attrValue.getGenerator(), attrValue.getGeneratorType(), LocalDateTime.now()));
 		status.setAttributeValue(attrValue);
 	}
@@ -141,7 +141,7 @@ public final class MeasuredEntityFacade {
 	public void store(MeasuredAttributeValue mav){
 		attValueCache.cacheStore(mav);
 		//map.put(mav.getTimeStamp(), mav.getKey());
-		String attName = mav.getAttribute().getName();
+		String attName = mav.getType().getName();
 		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
 		if(internalMap == null){
 			attMap.put(attName,new TreeMap<LocalDateTime, String>());

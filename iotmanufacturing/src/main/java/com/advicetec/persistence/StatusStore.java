@@ -192,7 +192,7 @@ public class StatusStore {
 	public void setAttributeValue(AttributeValue attributeValue) {
 		// check if the attribute is already in the attribute list.
 		if(!attributes.containsKey(attributeValue.getKey())){
-			attributes.put(attributeValue.getKey(), attributeValue.getAttribute());
+			attributes.put(attributeValue.getKey(), attributeValue.getType());
 		}
 		values.put(attributeValue.getKey(), attributeValue);
 	}

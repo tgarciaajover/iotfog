@@ -19,7 +19,7 @@ public enum MeasuredEntityType
 	   private String name;
 	   
 	   @JsonCreator
-	   private MeasuredEntityType(@JsonProperty("value")int value, 
+	   private MeasuredEntityType(@JsonProperty("code")int value, 
 			   @JsonProperty("name")String name) {
 	      this.code = value;
 	      this.name = name;

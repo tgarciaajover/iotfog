@@ -15,16 +15,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class AttributeValue 
 {
 
+	
 	protected String key;
+	
 	protected Attribute type;
+	
 	protected Object value;
 
 	// informative members.
 	/**
 	 * Describes the origin measured entity, job, machine, etc.
 	 */
+	
 	protected String generator;
-	protected MeasuredEntityType parentType;
+	
+	protected MeasuredEntityType generatorType;
 
 	/**
 	 * 
@@ -35,16 +40,17 @@ public class AttributeValue
 	 * @param parentType Type of parent.
 	 */
 	@JsonCreator
-	public AttributeValue(@JsonProperty("key")String key, @JsonProperty("type")Attribute type, 
-			@JsonProperty("value")Object value, @JsonProperty("generator")String parent, 
-			@JsonProperty("parentType")MeasuredEntityType parentType) {
+	public AttributeValue(@JsonProperty("key")String key, 
+			@JsonProperty("type")Attribute type, 
+			@JsonProperty("value")Object value, 
+			@JsonProperty("generator")String parent, 
+			@JsonProperty("generatorType")MeasuredEntityType parentType) {
 		super();
-
 		this.key =  key;
 		this.type = type;
 		this.value = value;
 		this.generator = parent;
-		this.parentType = parentType;
+		this.generatorType = parentType;
 	}
 
 
@@ -52,7 +58,7 @@ public class AttributeValue
 		return key;
 	}
 
-	public Attribute getAttribute()
+	public Attribute getType()
 	{
 		return type;
 	}
@@ -64,7 +70,7 @@ public class AttributeValue
 
 
 	public MeasuredEntityType getGeneratorType() {
-		return parentType;
+		return generatorType;
 	}
 
 
@@ -78,7 +84,7 @@ public class AttributeValue
 		sb.append("type: ").append(type.toString()).append(",");
 		sb.append("value: ").append(value.toString()).append(",");
 		sb.append("generator: ").append(generator).append(",");
-		sb.append("parent type: ").append(parentType.toString());
+		sb.append("generator type: ").append(generatorType.toString());
 		return sb.toString();
 	}
 

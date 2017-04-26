@@ -17,6 +17,8 @@ public class AttributeSerializer extends JsonSerializer<Attribute> {
 			JsonProcessingException {
 		jgen.writeStartObject();
 		jgen.writeStringField("name", attr.getName());
+		jgen.writeObjectField("type", attr.getType());
+		jgen.writeStringField("unit", attr.getUnit().toJson());
 		jgen.writeEndObject();
 	}
 

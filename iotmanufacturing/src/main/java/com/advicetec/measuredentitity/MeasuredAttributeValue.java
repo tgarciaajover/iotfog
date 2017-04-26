@@ -43,8 +43,8 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 			pstmt.setString(1, getGenerator());							// Set the parent
 			pstmt.setTimestamp(2, Timestamp.valueOf(getTimeStamp()));   // timestamp
 			pstmt.setInt(3, getGeneratorType().getValue());          		// owner_type
-			pstmt.setString(4, getAttribute().getName());      			// Attribute Name
-			switch ( getAttribute().getType().getValue() )
+			pstmt.setString(4, getType().getName());      			// Attribute Name
+			switch ( getType().getType().getValue() )
 			{
 				case 0:  // Double
 					pstmt.setDouble(5, (Double) getValue());		 // value_Decimal
@@ -91,7 +91,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 			pstmt.setString(1, getGenerator());   // id_owner
 			pstmt.setTimestamp(2, Timestamp.valueOf(getTimeStamp()) );    // timestamp
 			pstmt.setInt(3, getGeneratorType().getValue());          // owner_type
-			pstmt.setString(4, getAttribute().getName());      // Attribute Name
+			pstmt.setString(4, getType().getName());      // Attribute Name
 			pstmt.addBatch();
 
 		} catch (SQLException e) {
@@ -117,7 +117,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 		return false;
 	}
 	
-	public Attribute getAttribute(){
+	public Attribute getType(){
 		return type;
 	}
 }

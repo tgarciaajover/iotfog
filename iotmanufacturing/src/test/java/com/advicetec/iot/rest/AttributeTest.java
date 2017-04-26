@@ -82,6 +82,7 @@ public class AttributeTest {
 		MeasuringUnit unit = new MeasuringUnit("s", "Seconds");
 		Attribute att = new Attribute("AttrName", AttributeType.DOUBLE,unit,
 				true,AttributeOrigin.BEHAVIOR);
+		
 		System.out.println(att.toString());
 		String json = att.toJson();
 		System.out.println(json);
@@ -96,23 +97,22 @@ public class AttributeTest {
 		assertEquals("they don't match.",att.toString(),att2.toString());
 	}
 	
-	@Test
-	public void jsonMeasuredEntityType(){
-		MeasuredEntityType type = MeasuredEntityType.MACHINE;
-		
-	}
+	
 	@Test
 	public void jsonAttributeValue(){
-		Attribute att = new Attribute("AttrName", AttributeType.DOUBLE);
+		MeasuringUnit unit = new MeasuringUnit("s", "Seconds");
+		Attribute att = new Attribute("AttrName", AttributeType.DOUBLE,unit,
+				true,AttributeOrigin.BEHAVIOR);
 		AttributeValue val= new AttributeValue("123", att, 10.0, "P00", MeasuredEntityType.MACHINE);
+		
 		System.out.println(val.toJson());
 		AttributeValue val2 = null;
 		try {
 			val2 = new ObjectMapper().readValue(val.toJson(), AttributeValue.class);
-			System.out.println(val2.toString());
+			System.out.println(val2.toString().trim());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		assertEquals("they don't match.",att.toString(),val2.toString());
+		assertEquals("they don't match.",val.toString().trim(),val2.toString().trim());
 	}
 }
