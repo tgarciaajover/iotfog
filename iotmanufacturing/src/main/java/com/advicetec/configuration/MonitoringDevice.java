@@ -1,7 +1,9 @@
 package com.advicetec.configuration;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.codehaus.jackson.JsonGenerationException;
@@ -29,13 +31,15 @@ public class MonitoringDevice extends ConfigurationObject
 	@JsonProperty("ip_address") 
 	private String ip_address;
 	
-	private Map<Integer, InputOutputPort> inputOutputPorts;
+	@JsonProperty("io_ports")
+	protected List<InputOutputPort> inputOutputPorts;
+	
 	private Map<String, Integer> portsByLabel; 
 	
 	@JsonCreator
 	public MonitoringDevice(@JsonProperty("id") Integer id) {
 		super(id);
-		inputOutputPorts = new HashMap<Integer, InputOutputPort>();
+		inputOutputPorts = new ArrayList<InputOutputPort>();
 		portsByLabel = new HashMap<String, Integer>();
 	}
 	
@@ -81,7 +85,15 @@ public class MonitoringDevice extends ConfigurationObject
 	
 	@JsonIgnore
 	public InputOutputPort getInputOutputPort(Integer id){
-		return this.inputOutputPorts.get(id);
+
+		for (int i = 0; i < this.inputOutputPorts.size(); i++){
+			if (this.inputOutputPorts.get(i).getId() == id){
+				return this.inputOutputPorts.get(i);
+			}
+		}
+		
+		return null;
+		
 	}
 	
 	@JsonIgnore
@@ -103,7 +115,7 @@ public class MonitoringDevice extends ConfigurationObject
 	}
 	
 	public void putInputOutputPort(InputOutputPort iop){
-		this.inputOutputPorts.put(iop.getId(), iop);
+		this.inputOutputPorts.add(iop);
 		this.portsByLabel.put(iop.getPortLabel(), iop.getId());
 	}
 	

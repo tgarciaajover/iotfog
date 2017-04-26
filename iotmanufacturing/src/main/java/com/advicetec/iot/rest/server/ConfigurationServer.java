@@ -7,6 +7,7 @@ import org.restlet.Server;
 import org.restlet.data.Protocol;
 import org.restlet.routing.Router;
 
+import com.advicetec.iot.rest.DeviceTypeResource;
 import com.advicetec.iot.rest.LanguageResource;
 import com.advicetec.iot.rest.SignalResource;
 import com.advicetec.iot.rest.SignalTypeResource;
@@ -67,6 +68,7 @@ public class ConfigurationServer extends Application {
       router.attach("/SignalUnit/{uniqueID}", SignalUnitResource.class);
       router.attach("/SignalType/{uniqueID}", SignalTypeResource.class);
       router.attach("/Signal/{uniqueID}", SignalResource.class);
+      router.attach("/DeviceType/{uniqueID}", DeviceTypeResource.class);
       // Return the root router
       return router;
   }

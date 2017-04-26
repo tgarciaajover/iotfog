@@ -75,11 +75,15 @@ public class SignalResource extends ServerResource
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 		
+		System.out.println("Json:" + jsonText);
+		
 	    // Look for it in the Signal Database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
 	    SignalContainer signalCon = confManager.getSignalContainer();
 	    
 	    signalCon.fromJSON(jsonText);
+	    
+	    System.out.println("numElements:" + signalCon.size());
 	    
 	    getResponse().setStatus(Status.SUCCESS_OK);
 	    

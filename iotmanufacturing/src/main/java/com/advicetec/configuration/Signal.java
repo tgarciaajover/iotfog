@@ -17,7 +17,7 @@ public class Signal extends ConfigurationObject
 	private SignalUnit unit;
 	private SignalType type;
 	
-	@JsonProperty("class_name") 
+	@JsonProperty("descr") 
 	private String descr;
 	
 	@JsonProperty("create_date") 

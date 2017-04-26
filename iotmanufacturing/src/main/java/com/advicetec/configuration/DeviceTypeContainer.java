@@ -72,7 +72,12 @@ public class DeviceTypeContainer extends Container
 		super.disconnect();
 	}
 
-	public void fromJSON(String json){
+	public synchronized void deleteDeviceType(int uniqueID)
+	{
+		super.configuationObjects.remove(uniqueID);
+	}
+	
+	public synchronized void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();
 		
@@ -82,8 +87,8 @@ public class DeviceTypeContainer extends Container
 		
 			deviceTypeTemp = mapper.readValue(json, DeviceType.class);
 			SignalContainer signalContainer = (SignalContainer) this.getReferenceContainer("Signal");
-			for (Integer ikey : deviceTypeTemp.signals.keySet()){
-				IOSignalDeviceType ioDeviceType = deviceTypeTemp.signals.get(ikey);
+			for (int i=0; i < deviceTypeTemp.signals.size(); i++){
+				IOSignalDeviceType ioDeviceType = deviceTypeTemp.signals.get(i);
 				Signal signal = ioDeviceType.getSignal();
 				signalContainer.fromJSON(signal.toJson());
 			}

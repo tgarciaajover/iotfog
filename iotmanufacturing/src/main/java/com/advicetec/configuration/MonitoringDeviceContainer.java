@@ -94,6 +94,12 @@ public class MonitoringDeviceContainer extends Container
 		super.disconnect();
 	}
 
+	public synchronized void deleteMonitoringDevice(int uniqueID)
+	{
+		super.configuationObjects.remove(uniqueID);
+	}
+	
+	
 	public synchronized MonitoringDevice getByMacAddress(String macAddress)
 	{
 		Integer id = this.indexByMac.get(macAddress);
@@ -104,7 +110,7 @@ public class MonitoringDeviceContainer extends Container
 		
 	}
 	
-	public void fromJSON(String json){
+	public synchronized void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();
 		

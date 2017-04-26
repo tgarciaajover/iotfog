@@ -10,23 +10,23 @@ import org.restlet.data.Status;
 import org.json.JSONObject;
 
 import com.advicetec.configuration.ConfigurationManager;
-import com.advicetec.configuration.SignalType;
-import com.advicetec.configuration.SignalTypeContainer;
+import com.advicetec.configuration.DeviceType;
+import com.advicetec.configuration.DeviceTypeContainer;
 
-public class SignalTypeResource extends ServerResource  
+public class DeviceTypeResource extends ServerResource  
 {
 
 	  /**
-	   * Returns the Signal Type instance requested by the URL. 
+	   * Returns the Device Type instance requested by the URL. 
 	   * 
-	   * @return The JSON representation of the Signal Type, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
+	   * @return The JSON representation of the Signal, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
 	   * unique ID is not present.
 	   * 
 	   * @throws Exception If problems occur making the representation. Shouldn't occur in 
 	   * practice but if it does, Restlet will set the Status code. 
 	   */
 	  @Get("json")
-	  public Representation getSignaType() throws Exception {
+	  public Representation getDeviceType() throws Exception {
 
 		// Create an empty JSon representation.
 		Representation result;
@@ -34,19 +34,19 @@ public class SignalTypeResource extends ServerResource
 		// Get the contact's uniqueID from the URL.
 	    int uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 	    
-	    // Look for it in the Signal Unit database.
+	    // Look for it in the Signal database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
-	    SignalTypeContainer signalTypeCon = confManager.getSignalTypeContainer();
+	    DeviceTypeContainer deviceTypeCon = confManager.getDeviceTypeContainer();
 	    
-	    SignalType signalType = (SignalType) signalTypeCon.getObject(uniqueID);
-	    if (signalType == null) {
+	    DeviceType deviceType = (DeviceType) deviceTypeCon.getObject(uniqueID);
+	    if (deviceType == null) {
 	      // The requested contact was not found, so set the Status to indicate this.
 	      getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
 	      result = new JsonRepresentation("");
 	    } 
 	    else {
 	      // The requested contact was found, so add the Contact's XML representation to the response.
-	    	result = new JsonRepresentation(signalType.toJson());
+	    	result = new JsonRepresentation(deviceType.toJson());
 	      // Status code defaults to 200 if we don't set it.
 	      }
 	    // Return the representation.  The Status code tells the client if the representation is valid.
@@ -54,29 +54,33 @@ public class SignalTypeResource extends ServerResource
 	  }
 	  
 	  /**
-	   * Adds the passed Signal Type to our internal database of Signal Types.
-	   * @param representation The Json representation of the new Contact to add.
+	   * Adds the passed Device Type to our internal database of Device Type.
+	   * @param representation The Json representation of the new Device Type to add.
 	   * 
 	   * @return null.
 	   * 
 	   * @throws Exception If problems occur unpacking the representation.
 	   */
 	  @Put("json")
-	  public Representation putSignalType(Representation representation) throws Exception {
+	  public Representation putDeviceType(Representation representation) throws Exception {
 		   
-		// Get the Json representation of the SignalType.
+		// Get the Json representation of the Device Type.
 		JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
 		// Convert the Json representation to the Java representation.
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 		
-	    // Look for it in the Signal Type database.
+		System.out.println("Json:" + jsonText);
+		
+	    // Look for it in the Device Type Database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
-	    SignalTypeContainer signalTypeCon = confManager.getSignalTypeContainer();
+	    DeviceTypeContainer deviceTypeCon = confManager.getDeviceTypeContainer();
 	    
-	    signalTypeCon.fromJSON(jsonText);
-	    	    
+	    deviceTypeCon.fromJSON(jsonText);
+	    
+	    System.out.println("numElements:" + deviceTypeCon.size());
+	    
 	    getResponse().setStatus(Status.SUCCESS_OK);
 	    
 	    Representation result = new JsonRepresentation("");
@@ -88,15 +92,15 @@ public class SignalTypeResource extends ServerResource
 	   * @return null.
 	   */
 	  @Delete("json")
-	  public Representation deleteSignalType() {
-	    // Get the requested Contact ID from the URL.
+	  public Representation deleteDeviceType() {
+	    // Get the requested ID from the URL.
 	    int uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
 	    // Make sure it is no longer present in the Signal Unit database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
-	    SignalTypeContainer signalTypeCon = confManager.getSignalTypeContainer();
+	    DeviceTypeContainer deviceTypeCon = confManager.getDeviceTypeContainer();
 	    
-	    signalTypeCon.deleteSignalType(uniqueID);
+	    deviceTypeCon.deleteDeviceType(uniqueID);
 	    return null;
 	  }
 

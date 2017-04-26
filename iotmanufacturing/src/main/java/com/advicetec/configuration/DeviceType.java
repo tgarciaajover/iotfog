@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.codehaus.jackson.JsonGenerationException;
@@ -30,13 +32,13 @@ public class DeviceType extends ConfigurationObject
     private LocalDateTime create_date;
 
 	
-	@JsonProperty("signals")
-	protected Map<Integer, IOSignalDeviceType> signals;
+	@JsonProperty("io_signals")
+	protected List<IOSignalDeviceType> signals;
     
 	@JsonCreator
 	public DeviceType(@JsonProperty("id") Integer id) {
 		super(id);
-		signals = new HashMap<Integer, IOSignalDeviceType>();
+		signals = new ArrayList<IOSignalDeviceType>();
 	}
 	
 	public String getDescr() {
@@ -57,12 +59,18 @@ public class DeviceType extends ConfigurationObject
     
 	public void putIOSignal(IOSignalDeviceType signal)
 	{
-		this.signals.put(signal.getId(), signal);
+		this.signals.add(signal);
 	}
 	
 	public IOSignalDeviceType getIOSignal(Integer signalId)
 	{
-		return this.signals.get(signalId);
+		for (int i = 0; i < this.signals.size(); i++){
+			if (this.signals.get(i).getId() == signalId){
+				return this.signals.get(i);
+			}
+		}
+		
+		return null;
 	}
 	
 	public String toJson()

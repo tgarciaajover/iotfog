@@ -108,4 +108,9 @@ public abstract class Container
 	{
 		return references.get(field); 
 	}
+	
+	public synchronized int size()
+	{
+		return configuationObjects.size();
+	}
 }
