@@ -18,6 +18,7 @@ public class SignalTypeTest
 		SignalType signalType = new SignalType(new Integer(1));
 		signalType.setName("Digital");
 		signalType.setClassName("DigitalIO");
+		signalType.setCreate_date(LocalDateTime.now());
 		
 		String jsonString = signalType.toJson();
 		

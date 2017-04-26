@@ -6,28 +6,27 @@ import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
-import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.json.JSONObject;
 
 import com.advicetec.configuration.ConfigurationManager;
-import com.advicetec.configuration.SignalUnit;
-import com.advicetec.configuration.SignalUnitContainer;
+import com.advicetec.configuration.SignalType;
+import com.advicetec.configuration.SignalTypeContainer;
 
-public class SignalUnitResource extends ServerResource  
+public class SignalTypeResource extends ServerResource  
 {
 
 	  /**
-	   * Returns the Signal Unit instance requested by the URL. 
+	   * Returns the Signal Type instance requested by the URL. 
 	   * 
-	   * @return The JSON representation of the Signal Unit, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
+	   * @return The JSON representation of the Signal Type, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
 	   * unique ID is not present.
 	   * 
 	   * @throws Exception If problems occur making the representation. Shouldn't occur in 
 	   * practice but if it does, Restlet will set the Status code. 
 	   */
 	  @Get("json")
-	  public Representation getSignaUnit() throws Exception {
+	  public Representation getSignaType() throws Exception {
 
 		// Create an empty JSon representation.
 		Representation result;
@@ -37,17 +36,17 @@ public class SignalUnitResource extends ServerResource
 	    
 	    // Look for it in the Signal Unit database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
-	    SignalUnitContainer signalUnitCon = confManager.getSignalUnitContainer();
+	    SignalTypeContainer signalTypeCon = confManager.getSignalTypeContainer();
 	    
-	    SignalUnit signalUnit = (SignalUnit) signalUnitCon.getObject(uniqueID);
-	    if (signalUnit == null) {
+	    SignalType signalType = (SignalType) signalTypeCon.getObject(uniqueID);
+	    if (signalType == null) {
 	      // The requested contact was not found, so set the Status to indicate this.
 	      getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
 	      result = new JsonRepresentation("");
 	    } 
 	    else {
 	      // The requested contact was found, so add the Contact's XML representation to the response.
-	    	result = new JsonRepresentation(signalUnit.toJson());
+	    	result = new JsonRepresentation(signalType.toJson());
 	      // Status code defaults to 200 if we don't set it.
 	      }
 	    // Return the representation.  The Status code tells the client if the representation is valid.
@@ -55,7 +54,7 @@ public class SignalUnitResource extends ServerResource
 	  }
 	  
 	  /**
-	   * Adds the passed Contact to our internal database of Contacts.
+	   * Adds the passed Signal Type to our internal database of Signal Types.
 	   * @param representation The Json representation of the new Contact to add.
 	   * 
 	   * @return null.
@@ -63,20 +62,21 @@ public class SignalUnitResource extends ServerResource
 	   * @throws Exception If problems occur unpacking the representation.
 	   */
 	  @Put("json")
-	  public Representation putSignalUnit(Representation representation) throws Exception {
+	  public Representation putSignalType(Representation representation) throws Exception {
 		   
-		// Get the Json representation of the SignalUnit.
+		// Get the Json representation of the SignalType.
 		JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
 		// Convert the Json representation to the Java representation.
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 		
-	    // Look for it in the Signal Unit database.
+		System.out.println(jsonText);
+	    // Look for it in the Signal Type database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
-	    SignalUnitContainer signalUnitCon = confManager.getSignalUnitContainer();
+	    SignalTypeContainer signalTypeCon = confManager.getSignalTypeContainer();
 	    
-	    signalUnitCon.fromJSON(jsonText);
+	    signalTypeCon.fromJSON(jsonText);
 	    
 	    getResponse().setStatus(Status.SUCCESS_OK);
 	    
@@ -89,15 +89,15 @@ public class SignalUnitResource extends ServerResource
 	   * @return null.
 	   */
 	  @Delete("json")
-	  public Representation deleteSignalUnit() {
+	  public Representation deleteSignalType() {
 	    // Get the requested Contact ID from the URL.
 	    int uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
 	    // Make sure it is no longer present in the Signal Unit database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
-	    SignalUnitContainer signalUnitCon = confManager.getSignalUnitContainer();
+	    SignalTypeContainer signalTypeCon = confManager.getSignalTypeContainer();
 	    
-	    signalUnitCon.deleteSignalUnit(uniqueID);
+	    signalTypeCon.deleteSignalType(uniqueID);
 	    return null;
 	  }
 

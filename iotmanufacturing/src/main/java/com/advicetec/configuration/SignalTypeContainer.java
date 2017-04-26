@@ -12,7 +12,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class SignalTypeContainer extends Container 
 {
 
-	static String sqlSelect = "SELECT id, name, class_name FROM setup_signaltype";
+	static String sqlSelect = "SELECT id, name, class_name, create_date FROM setup_signaltype";
 
 	public SignalTypeContainer(String server, String user, String password) 
 	{	
@@ -32,10 +32,12 @@ public class SignalTypeContainer extends Container
 				Integer id     = rs.getInt    ("id");
 		        String name   = rs.getString ("name");
 		        String class_name   = rs.getString ("class_name");
+		        Timestamp timestamp = rs.getTimestamp("create_date");
 		        
 		        SignalType object = new SignalType(id);
 		        object.setName(name);
 		        object.setClassName(class_name);
+		        object.setCreate_date(timestamp.toLocalDateTime());
 		        super.configuationObjects.put(id, object);
 		      
 			}
@@ -49,6 +51,11 @@ public class SignalTypeContainer extends Container
 		
 		
 		super.disconnect();
+	}
+
+	public void deleteSignalType(int uniqueID)
+	{
+		super.configuationObjects.remove(uniqueID);
 	}
 	
 	public void fromJSON(String json){

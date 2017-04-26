@@ -1,6 +1,7 @@
 package com.advicetec.configuration;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
@@ -8,12 +9,20 @@ import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 public class SignalType extends ConfigurationObject
 {
 
 	@JsonProperty("name") private String name;
 	@JsonProperty("class_name") private String className;
+
+	@JsonProperty("create_date") 
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
+	private LocalDateTime create_date;
+	
 	
 	@JsonCreator
 	public SignalType(@JsonProperty("id") Integer id) {
@@ -38,6 +47,13 @@ public class SignalType extends ConfigurationObject
 		this.className = class_name;
 	}
 
+	public LocalDateTime getCreate_date() {
+		return create_date;
+	}
+	
+	public void setCreate_date(LocalDateTime create_date) {
+		this.create_date = create_date;
+	}
 
 	public String toJson()
 	{

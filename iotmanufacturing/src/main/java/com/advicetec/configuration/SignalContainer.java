@@ -57,7 +57,12 @@ public class SignalContainer extends Container
 		
 		super.disconnect();
 	}
-	
+
+	public void deleteSignal(int uniqueID)
+	{
+		super.configuationObjects.remove(uniqueID);
+	}
+
 	public void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();

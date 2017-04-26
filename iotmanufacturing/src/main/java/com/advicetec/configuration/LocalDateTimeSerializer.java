@@ -2,6 +2,7 @@ package com.advicetec.configuration;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonProcessingException;
@@ -12,7 +13,8 @@ public class LocalDateTimeSerializer extends JsonSerializer<LocalDateTime> {
 
 	    @Override
 	    public void serialize(LocalDateTime arg0, JsonGenerator arg1, SerializerProvider arg2) throws IOException, JsonProcessingException {
-	        arg1.writeString(arg0.toString());
+	    	DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MMM-dd H:m:s.n");
+	        arg1.writeString(arg0.format(format));
 	    }
 	
 }
