@@ -57,17 +57,44 @@ public class SignalContainer extends Container
 		
 		super.disconnect();
 	}
-	
+
+	public void deleteSignal(int uniqueID)
+	{
+		super.configuationObjects.remove(uniqueID);
+	}
+
 	public void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();
 		
 		//Convert object to JSON string and pretty print
-		Signal unitTemp;
+		Signal signalTemp;
 		try {
 		
-			unitTemp = mapper.readValue(json, Signal.class);
-			super.configuationObjects.put(unitTemp.getId(), unitTemp);
+			signalTemp = mapper.readValue(json, Signal.class);
+			
+			Integer signalTypeId = signalTemp.getType().getId();
+			Integer unitId = signalTemp.getUnit().getId();
+			
+			ConfigurationObject signalType = this.getReferencedObject("SignalType", signalTypeId);
+			ConfigurationObject signalUnit = (SignalUnit) this.getReferencedObject("Unit", unitId);
+	        
+	        if (signalType != null){
+	        	// Overwrites the signal type with the one in the container
+	        	signalTemp.setType((SignalType) signalType);
+	        } else {
+	        	// Creates the signal type in the container
+	        	this.addReferencedObject("SignalType", signalTemp.getType());
+	        }
+
+	        // Overwrites the signal unit.
+	        if (signalUnit != null){
+	        	signalTemp.setUnit((SignalUnit) signalUnit);
+	        } else {
+	        	this.addReferencedObject("Unit", signalTemp.getUnit());
+	        }
+	        
+			super.configuationObjects.put(signalTemp.getId(), signalTemp);
 		
 		} catch (JsonParseException e) {
 			// TODO Auto-generated catch block

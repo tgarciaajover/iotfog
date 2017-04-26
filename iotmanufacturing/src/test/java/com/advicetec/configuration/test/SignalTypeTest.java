@@ -18,14 +18,13 @@ public class SignalTypeTest
 		SignalType signalType = new SignalType(new Integer(1));
 		signalType.setName("Digital");
 		signalType.setClassName("DigitalIO");
+		signalType.setCreate_date(LocalDateTime.now());
 		
 		String jsonString = signalType.toJson();
 		
 		ConfigurationManager instance = ConfigurationManager.getInstance();
 		
-		SignalTypeContainer container = new SignalTypeContainer(instance.getProperty("server"),
-																instance.getProperty("user"),
-																instance.getProperty("password")); 
+		SignalTypeContainer container = instance.getSignalTypeContainer(); 
 		
 		container.fromJSON(jsonString);
 		SignalType signalType2 = (SignalType) container.getObject(1);

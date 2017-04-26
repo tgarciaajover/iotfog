@@ -3,9 +3,14 @@ package com.advicetec.iot.rest.server;
 import org.restlet.Application;
 import org.restlet.Component;
 import org.restlet.Restlet;
+import org.restlet.Server;
 import org.restlet.data.Protocol;
 import org.restlet.routing.Router;
+
 import com.advicetec.iot.rest.LanguageResource;
+import com.advicetec.iot.rest.SignalResource;
+import com.advicetec.iot.rest.SignalTypeResource;
+import com.advicetec.iot.rest.SignalUnitResource;
 
 /**
  * A simple HTTP server that provides access to a "Language Syntax Checker" via a REST interface.
@@ -14,11 +19,11 @@ import com.advicetec.iot.rest.LanguageResource;
  *   (2) it defines how URLs sent to this web application get dispatched to ServerResources that handle them.
  * @author Philip Johnson
  */
-public class LanguageServer extends Application {
+public class ConfigurationServer extends Application {
   
   /**
    * Starts a server running on the specified port.
-   * The context root will be "languageserver".
+   * The context root will be "configurationserver".
    * We create a separate runServer method, rather than putting this code into the main() method,
    * so that we can run tests on a separate port.  
    * 
@@ -29,11 +34,13 @@ public class LanguageServer extends Application {
   public static void runServer(int port) throws Exception {
     // Create a component.  
     Component component = new Component();
-    component.getServers().add(Protocol.HTTP, port);
+    Server s = new Server(Protocol.HTTP, port);
+    component.getServers().add(s);
+    s.getContext().getParameters().add("tracing", "true");
     // Create an application (this class).
-    Application application = new LanguageServer();
+    Application application = new ConfigurationServer();
     // Attach the application to the component with a defined contextRoot.
-    String contextRoot = "/languageserver";
+    String contextRoot = "/configurationserver";
     component.getDefaultHost().attach(contextRoot, application);
     component.start();
   }
@@ -44,7 +51,7 @@ public class LanguageServer extends Application {
    * @throws Exception If problems occur.
    */
   public static void main(String[] args) throws Exception {
-    runServer(8112);
+    runServer(8111);
   }   
   
   /**
@@ -57,6 +64,9 @@ public class LanguageServer extends Application {
       Router router = new Router(getContext());
       // Attach the resources to the router.
       router.attach("/checker/{Text}", LanguageResource.class);
+      router.attach("/SignalUnit/{uniqueID}", SignalUnitResource.class);
+      router.attach("/SignalType/{uniqueID}", SignalTypeResource.class);
+      router.attach("/Signal/{uniqueID}", SignalResource.class);
       // Return the root router
       return router;
   }

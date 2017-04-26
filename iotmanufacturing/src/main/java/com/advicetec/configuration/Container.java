@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.advicetec.core.Configurable;
+
 
 /**
  * This class stores all configuration objects into a database.
@@ -46,8 +48,13 @@ public abstract class Container
 	}
 
 	protected synchronized ConfigurationObject getReferencedObject(String field, Integer id)
-	{
+	{				
 		return references.get(field).getObject(id);
+	}
+	
+	protected synchronized void addReferencedObject(String field, ConfigurationObject object)
+	{
+		(references.get(field)).configuationObjects.put(object.getId(), object);
 	}
 	
 	protected void connect()
@@ -95,5 +102,10 @@ public abstract class Container
 	public synchronized ConfigurationObject getObject(Integer id)
 	{
 		return configuationObjects.get(id); 
+	}
+	
+	public synchronized Container getReferenceContainer(String field)
+	{
+		return references.get(field); 
 	}
 }

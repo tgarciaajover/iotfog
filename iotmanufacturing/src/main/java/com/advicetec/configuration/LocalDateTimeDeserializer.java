@@ -2,6 +2,7 @@ package com.advicetec.configuration;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;
@@ -13,7 +14,8 @@ public class LocalDateTimeDeserializer extends JsonDeserializer<LocalDateTime>
 {    
     @Override
     public LocalDateTime deserialize(JsonParser arg0, DeserializationContext arg1) throws IOException, JsonProcessingException {
-        return LocalDateTime.parse(arg0.getText());
+    	DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MMM-dd H:m:s.n");
+        return LocalDateTime.parse(arg0.getText(),format);
     }
 
 }
