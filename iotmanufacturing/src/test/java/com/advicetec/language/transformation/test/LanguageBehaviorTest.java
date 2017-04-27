@@ -12,14 +12,8 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.advicetec.core.Attribute;
-import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
-import com.advicetec.core.AttributeValue;
-import com.advicetec.core.MeasuringUnit;
 import com.advicetec.language.behavior.InterpreterSw;
-import com.advicetec.measuredentitity.MeasuredAttributeValue;
-import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class LanguageBehaviorTest 

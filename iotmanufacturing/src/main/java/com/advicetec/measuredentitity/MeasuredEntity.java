@@ -91,7 +91,7 @@ public abstract class MeasuredEntity
     	return this.type;
     }
     
-	public void getTimePerStatus(MeasuringStatus status, TimeInterval interval)
+	public void getTimePerStatus(MeasuringState status, TimeInterval interval)
     {
     	
     }

@@ -1,16 +1,22 @@
 package com.advicetec.measuredentitity;
 
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.ObjectMapper;
+
 import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.Storable;
 
-public class StateInterval implements Storable
+@JsonIgnoreProperties({"preparedInsertText","preparedDeleteText"})
+public final class StateInterval implements Storable
 {
 	private String key;
-	private MeasuringStatus status;
+	private MeasuringState state;
 	private ReasonCode reason;
 	private TimeInterval interval;
 	
@@ -23,24 +29,24 @@ public class StateInterval implements Storable
 			
 	
 	public StateInterval(
-			MeasuringStatus status, 
-			ReasonCode reason,
-			TimeInterval timeInterval,
-			String parent, 
-			MeasuredEntityType parentType 
+			@JsonProperty("state")MeasuringState state, 
+			@JsonProperty("reason")ReasonCode reason,
+			@JsonProperty("interval")TimeInterval timeInterval,
+			@JsonProperty("origin")String parent, 
+			@JsonProperty("originType")MeasuredEntityType parentType 
 			) {
 		super();
 		
 		this.key = timeInterval.toString();
-		this.status = status;
+		this.state = state;
 		this.reason = reason;
 		this.interval = timeInterval;
 		this.parent = parent;
 		this.parentType = parentType;
 	}
 
-	public MeasuringStatus getStatus() {
-		return status;
+	public MeasuringState getState() {
+		return state;
 	}
 
 	public ReasonCode getReason() {
@@ -79,7 +85,7 @@ public class StateInterval implements Storable
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
 			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
 			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
-			pstmt.setString(5, getStatus().getName() );      			// Measuring Status
+			pstmt.setString(5, getState().getName() );      			// Measuring Status
 			pstmt.setString(6, getReason().getId() );      			// Measuring Status
 			
 			pstmt.addBatch();
@@ -116,6 +122,26 @@ public class StateInterval implements Storable
 
 	void setKey(String newKey) {
 		this.key = newKey;
-	}	
+	}
 	
+	public String toJson(){
+		String json = null;
+		try {
+			json = new ObjectMapper().writeValueAsString(this);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return json;
+	}
+	
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		sb.append("key:").append(key).append(",");
+		sb.append("state:").append(state).append(",");
+		sb.append("reason:").append(reason).append(",");
+		sb.append("interval:").append(interval).append(",");
+		sb.append("origin:").append(parent).append(",");
+		sb.append("originType:").append(parentType);
+		return sb.toString();
+	}
 }

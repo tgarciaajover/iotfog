@@ -262,7 +262,7 @@ public final class MeasuredEntityFacade {
 		entity.getStateByInterval(timeInterval);
 	}
 	
-	public void registerInterval(MeasuringStatus status, ReasonCode reasonCode, TimeInterval interval)
+	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
     {
     	StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType());
     	stateInterval.setKey(entity.getId()+stateInterval.getKey());
