@@ -6,11 +6,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.Version;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.module.SimpleModule;
 import org.junit.Test;
 
 import com.advicetec.core.Attribute;
@@ -18,8 +16,6 @@ import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.MeasuringUnit;
-import com.advicetec.core.serialization.MeasuredAttributeValueDeserializer;
-import com.advicetec.core.serialization.MeasuredAttributeValueSerializer;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 

@@ -267,7 +267,7 @@ public final class MeasuredEntityFacade {
     	StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType());
     	stateInterval.setKey(entity.getId()+stateInterval.getKey());
     	// key in the map and the cache must be consistent
-    	intervalMap.put(interval.getStartDateTime(),stateInterval.getKey());
+    	intervalMap.put(interval.getStart(),stateInterval.getKey());
     	StateIntervalCache.getInstance().storeToCache(stateInterval);
     }
 	
@@ -281,11 +281,10 @@ public final class MeasuredEntityFacade {
 	public JSONArray statesByInterval(LocalDateTime from, LocalDateTime to){
 		return new JSONArray(getStatesByInterval(from, to));
 	}
+	
 	public JSONArray statesByInterval(TimeInterval interval){
-		return new JSONArray(getStatesByInterval(interval.getStartDateTime(), interval.getEndDateTime()));
+		return new JSONArray(getStatesByInterval(interval.getStart(), interval.getEnd()));
 	}
-	
-	
 		
 		
 	/**
@@ -360,5 +359,6 @@ public final class MeasuredEntityFacade {
 		}
 	}
 
+	
 }
 

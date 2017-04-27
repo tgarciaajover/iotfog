@@ -9,7 +9,6 @@ import com.advicetec.persistence.Storable;
 
 public class StateInterval implements Storable
 {
-  
 	private String key;
 	private MeasuringStatus status;
 	private ReasonCode reason;
@@ -23,8 +22,13 @@ public class StateInterval implements Storable
 	public static final String SQL_Delete = "DELETE FROM measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to)" + "VALUES(?,?,?,?)";
 			
 	
-	public StateInterval(MeasuringStatus status, ReasonCode reason,
-			TimeInterval timeInterval,String parent, MeasuredEntityType parentType ) {
+	public StateInterval(
+			MeasuringStatus status, 
+			ReasonCode reason,
+			TimeInterval timeInterval,
+			String parent, 
+			MeasuredEntityType parentType 
+			) {
 		super();
 		
 		this.key = timeInterval.toString();
@@ -73,8 +77,8 @@ public class StateInterval implements Storable
 		{
 			pstmt.setString(1, getParent());
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
-			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStartDateTime()) );   // timestamp
-			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEndDateTime()) );   // timestamp
+			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
+			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
 			pstmt.setString(5, getStatus().getName() );      			// Measuring Status
 			pstmt.setString(6, getReason().getId() );      			// Measuring Status
 			
@@ -93,8 +97,8 @@ public class StateInterval implements Storable
 		{
 			pstmt.setString(1, getParent());
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
-			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStartDateTime()) );   // timestamp
-			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEndDateTime()) );   // timestamp
+			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
+			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
 			
 			pstmt.addBatch();
 

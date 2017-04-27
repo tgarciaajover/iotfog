@@ -1,5 +1,7 @@
 package com.advicetec.measuredentitity;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 public enum MeasuringStatus 
 {
 
@@ -7,8 +9,9 @@ public enum MeasuringStatus
    SCHEDULEDOWN(1,"ScheduleDown"),
    UNSCHEDULEDOWN(2,"UnScheduleDown");
    
-   
+   @JsonProperty 
    private int code;
+   @JsonProperty 
    private String name;
    
    private MeasuringStatus(int value, String name) {
