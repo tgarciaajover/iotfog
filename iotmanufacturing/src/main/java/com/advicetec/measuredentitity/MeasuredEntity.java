@@ -54,9 +54,13 @@ public abstract class MeasuredEntity
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
 	private LocalDateTime createDate;
 
+	@JsonProperty("descr")
+	protected String descr;
+
 	@JsonProperty("behaviors")
-	protected Map<String, String> behaviors;
+	protected List<MeasuredEntityBehavior> behaviors;
     
+	
     @JsonIgnore
     protected LocalDateTime startDateTimeStatus;	// last time interval
       
@@ -70,7 +74,7 @@ public abstract class MeasuredEntity
 		this.id = id;
 		this.type = type;
 		createDate = LocalDateTime.now();
-		behaviors = new HashMap<String,String>();
+		behaviors = new ArrayList<MeasuredEntityBehavior>();
 		startDateTimeStatus = LocalDateTime.now();
 		//measures = new HashMap<String, MeasuredAttributeValue>();
 		//intervals = new HashMap<String, StateInterval>();
@@ -129,6 +133,14 @@ public abstract class MeasuredEntity
 	public void setCreateDate(LocalDateTime create_date) {
 		this.createDate = create_date;
 	}
+
+	public String getDescr() {
+		return descr;
+	}
+	
+	public void setDescr(String descr) {
+		this.descr = descr;
+	}	
 	
 	public String toJson()
 	{
@@ -152,14 +164,39 @@ public abstract class MeasuredEntity
 		return jsonInString;
 	}
 
-	public synchronized void putBehavior(String id, String behavior)
+	public synchronized void putBehavior(String name, String descr, String behavior_text)
 	{
-		this.behaviors.put(id, behavior);
+		boolean inserted = false; 
+		for (int i = 0; i < this.behaviors.size(); i++){
+			MeasuredEntityBehavior measuredEntityBehavior = this.behaviors.get(i);
+			if (measuredEntityBehavior.getName().compareTo(name) == 0){
+				MeasuredEntityBehavior measuredEntityBehavior2 = new MeasuredEntityBehavior(name);
+				measuredEntityBehavior2.setDescr(descr);
+				measuredEntityBehavior2.setBehaviorText(behavior_text);
+				this.behaviors.remove(i);
+				this.behaviors.add(measuredEntityBehavior2);
+				inserted = true;
+				break;
+			}
+		}
+		
+		if (inserted == false){
+			MeasuredEntityBehavior measuredEntityBehavior2 = new MeasuredEntityBehavior(name);
+			measuredEntityBehavior2.setDescr(descr);
+			measuredEntityBehavior2.setBehaviorText(behavior_text);
+			this.behaviors.add(measuredEntityBehavior2);
+		}
 	}
 	
-	public synchronized String getBehavior(String id)
+	public synchronized String getBehaviorText(String name)
 	{
-		return this.behaviors.get(id);
+		for (int i = 0; i < this.behaviors.size(); i++){
+			MeasuredEntityBehavior measuredEntityBehavior = this.behaviors.get(i);
+			if (measuredEntityBehavior.getName().compareTo(name) == 0){
+				return measuredEntityBehavior.getBehavior_text();
+			}
+		}
+		return null;
 	}
 	
 	public synchronized void removeBehaviors()

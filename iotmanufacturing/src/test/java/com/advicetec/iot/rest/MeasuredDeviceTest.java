@@ -29,8 +29,9 @@ public class MeasuredDeviceTest
 		Machine machine1 = new Machine("Machine1");
 		
 		machine1.setCreateDate(LocalDateTime.now());
-		machine1.putBehavior("ProductionCOT","akjsdalksdl");
-		machine1.putBehavior("ProductionCOT2","dfksdlfksj");
+		machine1.putBehavior("ProductionCOT","asdjasl","akjsdalksdl");
+		machine1.putBehavior("ProductionCOT2","sadasdas","dfksdlfksj");
+		machine1.setDescr("Termoformadora");
 		
 		String json = machine1.toJson();
 		
@@ -53,5 +54,8 @@ public class MeasuredDeviceTest
 		
 		assertEquals("Import from Json does not work,",measuredEntityFacade.getEntity().toJson(), machine1.toJson() );
 		
+		String behaviorText = measuredEntityFacade.getEntity().getBehaviorText("ProductionCOT");
+		
+		assertEquals("behavior texts are not equal,",behaviorText,"akjsdalksdl" );
 	}
 }

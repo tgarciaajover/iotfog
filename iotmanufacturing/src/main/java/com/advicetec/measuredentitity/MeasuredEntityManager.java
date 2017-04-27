@@ -85,8 +85,12 @@ public class MeasuredEntityManager extends Configurable {
 	 */
 	public MeasuredEntityFacade getFacadeOfEntityById(final String entityId){	
 		for (MeasuredEntityFacade facade : entities) {
-			if(facade.getEntity().getId().equals(entityId)){
-				return facade;
+			if (facade.getEntity() == null)
+				System.out.println("error - entity is null");
+			else{ 
+				if(facade.getEntity().getId().equals(entityId)){
+					return facade;
+				}
 			}
 		}
 		return null;

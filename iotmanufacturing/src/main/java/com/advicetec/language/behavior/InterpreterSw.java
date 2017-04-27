@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.antlr.v4.runtime.ANTLRFileStream;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.*;
@@ -66,7 +68,8 @@ public class InterpreterSw
     public void process(String program, String entityId, List<InterpretedSignal> parameters) throws Exception 
     {
 
-		BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(new ANTLRFileStream(program));
+    	CharStream  stream = (CharStream) new ANTLRInputStream(program);
+    	BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(stream);
 
         CommonTokenStream tokens = new CommonTokenStream(lexer);
 
