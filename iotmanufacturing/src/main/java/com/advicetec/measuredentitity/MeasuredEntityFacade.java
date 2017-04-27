@@ -284,9 +284,7 @@ public final class MeasuredEntityFacade {
 	public JSONArray statesByInterval(TimeInterval interval){
 		return new JSONArray(getStatesByInterval(interval.getStartDateTime(), interval.getEndDateTime()));
 	}
-	
-	public 
-	
+		
 	/**
 	 * Returns the list of intervals between two datetimes.
 	 * @param from Beginning time
@@ -344,16 +342,17 @@ public final class MeasuredEntityFacade {
 
 		// update behaviors.
 		getEntity().removeBehaviors();
-		for ( String key : measuredEntity.behaviors.keySet())
+		for ( int i=0; i < measuredEntity.behaviors.size(); i++)
 		{
-			getEntity().putBehavior( key, measuredEntity.behaviors.get(key));
+			getEntity().putBehavior(measuredEntity.behaviors.get(i).getName(), 
+									 measuredEntity.behaviors.get(i).getDescr(), 
+									  measuredEntity.behaviors.get(i).getBehavior_text() );
 		}
 		
 		if (measuredEntity instanceof Machine){
 			
 		}
 	}
-	
-	
+
 }
 
