@@ -134,13 +134,7 @@ public class AttributeTest {
 		System.out.println("Object1: "+mav.toString());
 		
 		ObjectMapper mapper = new ObjectMapper();
-		//mapper.registerSubtypes(MeasuredAttributeValue.class);
 		mapper.disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
-		//SimpleModule module = new SimpleModule("Simple Serializer", new Version(1, 0, 0,null));
-		//module.addDeserializer(MeasuredAttributeValue.class, new MeasuredAttributeValueDeserializer());
-		//module.addSerializer(MeasuredAttributeValue.class, new MeasuredAttributeValueSerializer());
-		
-		//mapper.registerModule(module);
 		
 		AttributeValue val2 = null;
 		MeasuredAttributeValue mav2 = null;
