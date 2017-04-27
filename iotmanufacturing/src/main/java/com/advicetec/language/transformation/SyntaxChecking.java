@@ -1,28 +1,25 @@
 package com.advicetec.language.transformation;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.antlr.v4.runtime.ANTLRFileStream;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.*;
 import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
 
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarLexer;
 import com.advicetec.language.ast.CollectionErrorListener;
-import com.advicetec.language.ast.RecognitionExceptionUtil;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 
 public class SyntaxChecking 
 {
-
-	private static final String EXTENSION = "properties";
 	
-	/**  Tag de XML given*/
+	/**  XML Tag given*/
 	private static final String PROGRAM = "program";
 	
 	public static Symbol.Type getType(int tokenType) {
@@ -50,7 +47,8 @@ public class SyntaxChecking
     public List<SyntaxError> process(String program) throws Exception 
     {
 
-		TransformationGrammarLexer lexer = new TransformationGrammarLexer(new ANTLRFileStream(program));
+    	CharStream  stream = (CharStream) new ANTLRInputStream(program);
+		TransformationGrammarLexer lexer = new TransformationGrammarLexer(stream);
 
         CommonTokenStream tokens = new CommonTokenStream(lexer);
 
@@ -99,8 +97,17 @@ public class SyntaxChecking
      * @return The text content
      */
     private String getElementTextContent(Document doc, String elementName) {
-      Element element = (Element) doc.getElementsByTagName(elementName).item(0);
-      return element.getTextContent();
+    	NodeList nodeList = (NodeList) doc.getElementsByTagName(elementName);
+    	if (nodeList != null){
+    		Element element = (Element) nodeList.item(0);
+    		if (element != null){
+    			return element.getTextContent();
+    		} else {
+    			return null;
+    		}
+    	} else {
+    		return null;
+    	}
     }
 
 }

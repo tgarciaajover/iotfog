@@ -6,8 +6,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.json.JSONArray;
 
+import com.advicetec.configuration.LocalDateTimeDeserializer;
+import com.advicetec.configuration.LocalDateTimeSerializer;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.MeasureAttributeValueCache;
@@ -22,14 +28,21 @@ import com.advicetec.persistence.StateIntervalCache;
  */
 public abstract class MeasuredEntity 
 {
-    protected String id;
+	@JsonProperty("signal_type")
+	protected String id;
+	
     protected MeasuredEntityType type; 
+
+	@JsonProperty("create_date") 
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
+	private LocalDateTime createDate;
+
+    
+    @JsonIgnore
     protected LocalDateTime startDateTimeStatus;	// last time interval
-    
-    //protected MeasureAttributeValueStore measures;  // TODO: Should be a cache with write.
-    // stores the states and their intervals.
-    //protected Map<String, StateInterval> intervals;		 // TODO: Should be a cache with write.
-    
+      
+    @JsonIgnore
     protected List<AttributeMeasuredEntity> attributes;
     
     
@@ -38,6 +51,7 @@ public abstract class MeasuredEntity
 		super();
 		this.id = id;
 		this.type = type;
+		createDate = LocalDateTime.now();
 		startDateTimeStatus = LocalDateTime.now();
 		//measures = new HashMap<String, MeasuredAttributeValue>();
 		//intervals = new HashMap<String, StateInterval>();
@@ -87,4 +101,13 @@ public abstract class MeasuredEntity
 		// TODO Auto-generated method stub
 		
 	}
+	
+	public LocalDateTime getCreateDate() {
+		return createDate;
+	}
+	
+	public void setCreateDate(LocalDateTime create_date) {
+		this.createDate = create_date;
+	}
+	
 }

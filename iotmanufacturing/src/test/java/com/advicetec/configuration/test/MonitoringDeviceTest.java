@@ -10,6 +10,7 @@ import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.DeviceType;
 import com.advicetec.configuration.DeviceTypeContainer;
 import com.advicetec.configuration.IOSignalDeviceType;
+import com.advicetec.configuration.InputOutputPort;
 import com.advicetec.configuration.MonitoringDevice;
 import com.advicetec.configuration.MonitoringDeviceContainer;
 import com.advicetec.configuration.Signal;
@@ -52,12 +53,20 @@ public class MonitoringDeviceTest
 		deviceType.putIOSignal(ioSignal);
 		deviceType.putIOSignal(ioSignal2);
 		
-		MonitoringDevice mDevice = new MonitoringDevice(5);
+		InputOutputPort inputPort = new InputOutputPort(5);
+		inputPort.setMeasuringEntity("2");
+		inputPort.setPortLabel("COM1");
+		inputPort.setSignalType(signal);
+		inputPort.setTransformationText("asdakjshda");
+
+		MonitoringDevice mDevice = new MonitoringDevice(6);
 		mDevice.setDescr("Monitoring_device_1");
 		mDevice.setIp_address("190.0.60.121");
 		mDevice.setMac_addres("10:10:10:10");
 		mDevice.setSerial("SERIE1");
 		mDevice.setType(deviceType);
+		mDevice.putInputOutputPort(inputPort);
+
 		
 		String jsonString = mDevice.toJson();
 		System.out.println(jsonString);
@@ -66,15 +75,14 @@ public class MonitoringDeviceTest
 		MonitoringDeviceContainer mDeviceContainer = instance.getMonitoringDeviceContainer(); 
 		
 		mDeviceContainer.fromJSON(jsonString);
-		MonitoringDevice mDevice2 = (MonitoringDevice) mDeviceContainer.getObject(5);
+		MonitoringDevice mDevice2 = (MonitoringDevice) mDeviceContainer.getObject(6);
 		
 		assertEquals("Import from Json does not work,",mDevice.toJson(), mDevice2.toJson() );
 
-		/*
 		SignalUnitContainer sUnitContainer = instance.getSignalUnitContainer();
 		SignalUnit signalUnit2 =  (SignalUnit) sUnitContainer.getObject(1);
 		
 		assertEquals("Import from Json does not work,",signalUnit.toJson(), signalUnit2.toJson() );
-		*/
+
 	}
 }

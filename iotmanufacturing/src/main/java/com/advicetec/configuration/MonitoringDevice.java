@@ -1,6 +1,7 @@
 package com.advicetec.configuration;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 public class MonitoringDevice extends ConfigurationObject
 {
@@ -33,6 +36,12 @@ public class MonitoringDevice extends ConfigurationObject
 	
 	@JsonProperty("io_ports")
 	protected List<InputOutputPort> inputOutputPorts;
+
+	@JsonProperty("create_date") 
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
+    private LocalDateTime create_date;
+	
 	
 	private Map<String, Integer> portsByLabel; 
 	
@@ -66,6 +75,14 @@ public class MonitoringDevice extends ConfigurationObject
 	public void setSerial(String serial) {
 		this.serial = serial;
 	}
+
+	public LocalDateTime getCreate_date() {
+		return create_date;
+	}
+	
+	public void setCreate_date(LocalDateTime create_date) {
+		this.create_date = create_date;
+	}  
 	
 	public String getMac_addres() {
 		return mac_addres;
@@ -107,13 +124,7 @@ public class MonitoringDevice extends ConfigurationObject
 		Integer id = this.portsByLabel.get(portsByLabel);
 		return  getInputOutputPort(id).getTransformationText();
 	}
-	
-	@JsonIgnore
-	public String getBehavior(String portLabel){
-		Integer id = this.portsByLabel.get(portsByLabel);
-		return  getInputOutputPort(id).getBehaviorText();		
-	}
-	
+		
 	public void putInputOutputPort(InputOutputPort iop){
 		this.inputOutputPorts.add(iop);
 		this.portsByLabel.put(iop.getPortLabel(), iop.getId());

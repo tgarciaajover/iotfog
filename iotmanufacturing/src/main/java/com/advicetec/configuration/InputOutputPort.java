@@ -1,5 +1,13 @@
 package com.advicetec.configuration;
 
+import java.io.IOException;
+
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+
 /**
  * 
  * @author user
@@ -7,12 +15,24 @@ package com.advicetec.configuration;
  */
 public class InputOutputPort extends ConfigurationObject  {
 	
+	
+	@JsonProperty("signal_type")
 	private Signal signalType;
+	
+	@JsonProperty("transformation_text") 
 	private String transformationText;
-	private String behaviorText;
+	
+	@JsonProperty("port_label")
 	private String portLabel;
+
+	@JsonProperty("measured_entity")
 	private String measuringEntity; 
 	
+	@JsonCreator
+	public InputOutputPort(@JsonProperty("id") Integer id) {
+		super(id);
+	}	
+
 	public String getPortLabel() {
 		return portLabel;
 	}
@@ -21,9 +41,6 @@ public class InputOutputPort extends ConfigurationObject  {
 		this.portLabel = portLabel;
 	}
 
-	public InputOutputPort(Integer id) {
-		super(id);
-	}
 
 	public Signal getSignalType() {
 		return signalType;
@@ -41,14 +58,6 @@ public class InputOutputPort extends ConfigurationObject  {
 		this.transformationText = transformation_text;
 	}
 
-	public String getBehaviorText() {
-		return behaviorText;
-	}
-
-	public void setBehaviorText(String behaviorText) {
-		this.behaviorText = behaviorText;
-	}
-
 	public String getMeasuringEntity() {
 		return measuringEntity;
 	}
@@ -56,5 +65,27 @@ public class InputOutputPort extends ConfigurationObject  {
 	public void setMeasuringEntity(String measuringEntity) {
 		this.measuringEntity = measuringEntity;
 	}
+
+	public String toJson()
+	{
+		ObjectMapper mapper = new ObjectMapper();
+			
+		String jsonInString=null;
+		try {
+			
+			jsonInString = mapper.writeValueAsString(this);
+			
+			
+		} catch (JsonGenerationException e) {
+			// TODO: log the error
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return jsonInString;
+	}	
 	
 }

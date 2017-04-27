@@ -8,7 +8,9 @@ import org.restlet.data.Protocol;
 import org.restlet.routing.Router;
 
 import com.advicetec.iot.rest.DeviceTypeResource;
-import com.advicetec.iot.rest.LanguageResource;
+import com.advicetec.iot.rest.LanguageBehaviorResource;
+import com.advicetec.iot.rest.LanguageTransformationResource;
+import com.advicetec.iot.rest.MonitoringDeviceResource;
 import com.advicetec.iot.rest.SignalResource;
 import com.advicetec.iot.rest.SignalTypeResource;
 import com.advicetec.iot.rest.SignalUnitResource;
@@ -64,11 +66,14 @@ public class ConfigurationServer extends Application {
       // Create a router restlet.
       Router router = new Router(getContext());
       // Attach the resources to the router.
-      router.attach("/checker/{Text}", LanguageResource.class);
+      router.attach("/checker/transformation", LanguageTransformationResource.class);
+      router.attach("/checker/behavior", LanguageBehaviorResource.class);
       router.attach("/SignalUnit/{uniqueID}", SignalUnitResource.class);
       router.attach("/SignalType/{uniqueID}", SignalTypeResource.class);
       router.attach("/Signal/{uniqueID}", SignalResource.class);
       router.attach("/DeviceType/{uniqueID}", DeviceTypeResource.class);
+      router.attach("/MonitoringDevice/{uniqueID}", MonitoringDeviceResource.class);
+      
       // Return the root router
       return router;
   }

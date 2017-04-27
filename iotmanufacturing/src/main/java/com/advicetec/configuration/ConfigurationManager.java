@@ -44,6 +44,7 @@ public class ConfigurationManager extends Configurable
 		
 		monitoringDevices = new MonitoringDeviceContainer(server, user, password);
 		// Add References to monitoring devices.
+		monitoringDevices.addReference("Signal", signals);
 		monitoringDevices.addReference("DeviceType", deviceTypes);
 		
 	}
@@ -91,11 +92,7 @@ public class ConfigurationManager extends Configurable
 	public String getTransformation(String macAddress, String portLabel){
 		return this.monitoringDevices.getByMacAddress(macAddress).getTranformation(portLabel);
 	}
-	
-	public String getBehaviour(String macAddress, String portLabel){
-		return this.monitoringDevices.getByMacAddress(macAddress).getBehavior(portLabel);
-	}
-	
+		
 	public String getClassName(String macAddress, String portLabel){
 		return this.monitoringDevices.getByMacAddress(macAddress).getClassName(portLabel);
 	}
