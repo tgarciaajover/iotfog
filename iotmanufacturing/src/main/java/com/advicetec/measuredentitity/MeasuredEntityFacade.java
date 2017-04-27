@@ -339,6 +339,20 @@ public final class MeasuredEntityFacade {
 	public Document getXmlStatus() throws ParserConfigurationException, JAXBException{
 		 return status.toXml();
 	}
+
+	public synchronized void updateEntityConfiguration(MeasuredEntity measuredEntity) {
+
+		// update behaviors.
+		getEntity().removeBehaviors();
+		for ( String key : measuredEntity.behaviors.keySet())
+		{
+			getEntity().putBehavior( key, measuredEntity.behaviors.get(key));
+		}
+		
+		if (measuredEntity instanceof Machine){
+			
+		}
+	}
 	
 	
 }

@@ -10,6 +10,7 @@ import org.restlet.routing.Router;
 import com.advicetec.iot.rest.DeviceTypeResource;
 import com.advicetec.iot.rest.LanguageBehaviorResource;
 import com.advicetec.iot.rest.LanguageTransformationResource;
+import com.advicetec.iot.rest.MeasuredEntityResource;
 import com.advicetec.iot.rest.MonitoringDeviceResource;
 import com.advicetec.iot.rest.SignalResource;
 import com.advicetec.iot.rest.SignalTypeResource;
@@ -73,6 +74,8 @@ public class ConfigurationServer extends Application {
       router.attach("/Signal/{uniqueID}", SignalResource.class);
       router.attach("/DeviceType/{uniqueID}", DeviceTypeResource.class);
       router.attach("/MonitoringDevice/{uniqueID}", MonitoringDeviceResource.class);
+      router.attach("/MeasuredEntity/{uniqueID}", MeasuredEntityResource.class);
+      
       
       // Return the root router
       return router;
