@@ -95,7 +95,7 @@ public final class MeasuredEntityFacade {
 	 * @param attrValue
 	 */
 	public void setAttributeValue(AttributeValue attrValue){
-		store(new MeasuredAttributeValue(attrValue.getType(), attrValue.getValue(),
+		store(new MeasuredAttributeValue(attrValue.getAttr(), attrValue.getValue(),
 				attrValue.getGenerator(), attrValue.getGeneratorType(), LocalDateTime.now()));
 		status.setAttributeValue(attrValue);
 	}
@@ -141,7 +141,7 @@ public final class MeasuredEntityFacade {
 	public void store(MeasuredAttributeValue mav){
 		attValueCache.cacheStore(mav);
 		//map.put(mav.getTimeStamp(), mav.getKey());
-		String attName = mav.getType().getName();
+		String attName = mav.getAttr().getName();
 		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
 		if(internalMap == null){
 			attMap.put(attName,new TreeMap<LocalDateTime, String>());
@@ -285,7 +285,6 @@ public final class MeasuredEntityFacade {
 		return new JSONArray(getStatesByInterval(interval.getStartDateTime(), interval.getEndDateTime()));
 	}
 	
-	public 
 	
 	/**
 	 * Returns the list of intervals between two datetimes.

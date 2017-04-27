@@ -278,7 +278,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		Symbol symbol = currentScope.resolve(attributeId);
 		Object valObj = value.getValue();
 				
-		switch (value.getType().getType()){
+		switch (value.getAttr().getType()){
 		case INT:
 			if (symbol.getType() != Symbol.Type.tINT){
 				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type int" );
@@ -1339,7 +1339,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		Object maxValue = null;
 		for (int i = 0; i < values.size(); i++) {
 			AttributeValue value = values.get(i);
-			AttributeType type = value.getType().getType();
+			AttributeType type = value.getAttr().getType();
 			
 			switch (type)
 			{

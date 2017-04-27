@@ -20,7 +20,9 @@ public class MeasuredAttributeValueDeserializer extends JsonDeserializer<Measure
 	public MeasuredAttributeValue deserialize(JsonParser parser,
 			DeserializationContext context) throws IOException,
 			JsonProcessingException {
+		System.out.println("parser: "+parser.toString());
 		JsonNode node = parser.getCodec().readTree(parser);
+		//TODO
 		for (JsonNode jsonNode : node) {
 			System.out.println(jsonNode.toString());
 		}

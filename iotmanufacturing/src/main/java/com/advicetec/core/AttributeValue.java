@@ -8,26 +8,32 @@ import org.codehaus.jackson.annotate.JsonSubTypes;
 import org.codehaus.jackson.annotate.JsonSubTypes.Type;
 import org.codehaus.jackson.annotate.JsonTypeInfo.Id;
 import org.codehaus.jackson.annotate.JsonTypeInfo;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 
-import org.codehaus.jackson.map.ObjectMapper;
+
 
 /**
  * This class models the attribute values from People.
  * @author user
  *
  */
-@JsonTypeInfo(use=Id.CLASS,include=JsonTypeInfo.As.PROPERTY,property="sub")
-@JsonSubTypes({@Type(value=MeasuredAttributeValue.class)})
-public class AttributeValue 
+@JsonTypeInfo(
+		use=JsonTypeInfo.Id.NAME,
+		include=JsonTypeInfo.As.PROPERTY,
+	property="sub")
+@JsonSubTypes({
+	@Type(value=MeasuredAttributeValue.class,name="MeasuredAttributeValue")
+})
+public class AttributeValue
 {
 
 	
 	protected String key;
 	
-	protected Attribute type;
+	protected Attribute attr;
 	
 	protected Object value;
 
@@ -50,13 +56,13 @@ public class AttributeValue
 	 */
 	@JsonCreator
 	public AttributeValue(@JsonProperty("key")String key, 
-			@JsonProperty("type")Attribute type, 
+			@JsonProperty("attr")Attribute attr, 
 			@JsonProperty("value")Object value, 
 			@JsonProperty("generator")String parent, 
 			@JsonProperty("generatorType")MeasuredEntityType parentType) {
 		super();
 		this.key =  key;
-		this.type = type;
+		this.attr = attr;
 		this.value = value;
 		this.generator = parent;
 		this.generatorType = parentType;
@@ -67,9 +73,9 @@ public class AttributeValue
 		return key;
 	}
 
-	public Attribute getType()
+	public Attribute getAttr()
 	{
-		return type;
+		return attr;
 	}
 
 
@@ -90,7 +96,7 @@ public class AttributeValue
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append("key: ").append(key).append(",");
-		sb.append("type: ").append(type.toString()).append(",");
+		sb.append("attr: ").append(attr.toString()).append(",");
 		sb.append("value: ").append(value.toString()).append(",");
 		sb.append("generator: ").append(generator).append(",");
 		sb.append("generator type: ").append(generatorType.toString());

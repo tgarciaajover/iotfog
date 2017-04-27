@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.Version;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.module.SimpleModule;
@@ -133,17 +134,24 @@ public class AttributeTest {
 		System.out.println("Object1: "+mav.toString());
 		
 		ObjectMapper mapper = new ObjectMapper();
-		SimpleModule module = new SimpleModule("Simple Serializer", new Version(1, 0, 0,null));
-		module.addDeserializer(MeasuredAttributeValue.class, new MeasuredAttributeValueDeserializer());
-		module.addSerializer(MeasuredAttributeValue.class, new MeasuredAttributeValueSerializer());
+		//mapper.registerSubtypes(MeasuredAttributeValue.class);
+		mapper.disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
+		//SimpleModule module = new SimpleModule("Simple Serializer", new Version(1, 0, 0,null));
+		//module.addDeserializer(MeasuredAttributeValue.class, new MeasuredAttributeValueDeserializer());
+		//module.addSerializer(MeasuredAttributeValue.class, new MeasuredAttributeValueSerializer());
 		
-		mapper.registerModule(module);
+		//mapper.registerModule(module);
 		
+		AttributeValue val2 = null;
 		MeasuredAttributeValue mav2 = null;
-		
 		try {
-			mav2 = mapper.readValue(val.toJson(), MeasuredAttributeValue.class);
-			System.out.println("Object2: "+mav2.toString().trim());
+			val2= mapper.readValue(mav.toJson(), MeasuredAttributeValue.class);
+			System.out.println(val2.toString());
+			if(val2 instanceof MeasuredAttributeValue){
+				mav2 = (MeasuredAttributeValue) val2;
+				System.out.println(mav2.toString());
+			}
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
