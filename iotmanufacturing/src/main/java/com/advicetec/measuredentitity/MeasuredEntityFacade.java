@@ -197,6 +197,10 @@ public final class MeasuredEntityFacade {
 		return getFromCache(keyArray);
 	}
 
+	public JSONArray getByIntervalByAttributeNameJSON(
+			String attrName, LocalDateTime from, LocalDateTime to){
+		return new JSONArray(getByIntervalByAttributeName(attrName, from, to));
+	}
 	
 	/**
 	 * Returns a list with the last N attribute values for a given
@@ -250,6 +254,14 @@ public final class MeasuredEntityFacade {
 		return status.getStatus();
 	}
 
+	/**
+	 * Returns the measured Entity status. 
+	 * @return json array
+	 */
+	public JSONArray getStatusJSON(){
+		return new JSONArray(getStatus());
+	}
+	
 	public void importAttributeValues(Map<String, ASTNode> valueMap) {
 		status.importAttributeValues(valueMap,entity.getId(),entity.getType());
 	}
@@ -359,6 +371,5 @@ public final class MeasuredEntityFacade {
 		}
 	}
 
-	
 }
 
