@@ -5,11 +5,11 @@ import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
 import com.advicetec.language.BehaviorGrammarBaseListener;
 import com.advicetec.language.BehaviorGrammarParser;
-import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
@@ -61,10 +61,15 @@ public class RefPhase extends BehaviorGrammarBaseListener
 		currentScope = scopes.get(ctx);		
 	}
 	
+	public void enterCount_over_time(BehaviorGrammarParser.Count_over_timeContext ctx) 
+	{ 
+		System.out.println("start count over time");
+	}
+	
 	public void exitAtrib_dec(BehaviorGrammarParser.Atrib_decContext ctx)
 	{ 
 
-		System.out.println("in exit atrib dec : ");
+		// System.out.println("in exit atrib dec : ");
 		
 		// It verifies the unit of measure given as parameter.
 		if (ctx.id2 != null){

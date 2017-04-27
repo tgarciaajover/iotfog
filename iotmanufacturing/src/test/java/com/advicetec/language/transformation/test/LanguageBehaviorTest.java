@@ -1,5 +1,11 @@
 package com.advicetec.language.transformation.test;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +20,7 @@ import com.advicetec.core.MeasuringUnit;
 import com.advicetec.language.behavior.InterpreterSw;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class LanguageBehaviorTest 
 {
@@ -24,28 +31,63 @@ public class LanguageBehaviorTest
 	{
 		
 		String program = "test/behaviortest." + EXTENSION;
+		
+		FileInputStream in;
+		try {
+			in = new FileInputStream(program);
 
-		System.out.println("Interpreting file " + program);
+			program = getFileContent( in );
+			
+			System.out.println("Interpreting file " + program);
+			
+			List<InterpretedSignal> list = new ArrayList<InterpretedSignal>();
+			LocalDateTime current = LocalDateTime.of(2017, 3, 9, 19, 46, 45);
+			InterpretedSignal timeSignal = new InterpretedSignal(AttributeType.DATETIME, current );
+			list.add(timeSignal);
+			
+			Integer value = 1;
+			InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.INT, value );
+			list.add(valueSignal);
+			
+			String entityId = "None";
+			
+			InterpreterSw interpreter = new InterpreterSw();
+			interpreter.process(program, entityId, list);
 		
-		List<AttributeValue> list = new ArrayList<AttributeValue>();
 		
-		MeasuringUnit cyc = new MeasuringUnit("CYC", "CYCLE"); 
-		Attribute attr = new Attribute("Cycles", AttributeType.INT, cyc,false,AttributeOrigin.TRANSFORMATION);
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 		
-		Integer intValue = 1;
-		String measuredEntity = "1010";
-		LocalDateTime current = LocalDateTime.of(2017, 3, 9, 19, 46, 45);
-		MeasuredAttributeValue value = new MeasuredAttributeValue(attr,intValue, measuredEntity, MeasuredEntityType.MACHINE, current); 
+	}
+	
+	public String getFileContent( FileInputStream fis ) {
+	    StringBuilder sb = new StringBuilder();
+	    Reader r;
+		try {
+			r = new InputStreamReader(fis, "UTF-8");
+
+		    int ch;
+				ch = r.read();
+		    while(ch >= 0) {
+		        sb.append(ch);
+		        ch = r.read();
+		    }
+
+		    return sb.toString();
 		
-		list.add(value);
-		
-		InterpreterSw interpreter = new InterpreterSw();
-		try 
-		{
-			interpreter.process(program, measuredEntity, list);
-		} catch (Exception e) {
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		return null;
+
 	}
 }

@@ -72,8 +72,8 @@ public class SyntaxChecking
 
         walker.walk(def, tree);
         
-        System.out.println("Defphase finished");
-
+        System.out.println("Defphase finished - numErrors:" + collector.getErrors().size() );
+        
         // create next phase and feed symbol table info from def to ref phase
 
         RefPhase ref = new RefPhase(parser, def.getGlobalScope(), def.getScopes());

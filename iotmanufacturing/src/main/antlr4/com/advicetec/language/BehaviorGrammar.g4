@@ -82,9 +82,9 @@ display  	: DISPLAY PR_OPN expression PR_CLS SEMICOLON
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
 	;
 
-count_over_time : COUNT_OVER_TIME PR_OPN ATTRIBUTE ID COMMA TIMEUNIT COMMA range=INT PR_CLS SEMICOLON
+count_over_time : COUNT_OVER_TIME PR_OPN ID COMMA TIMEUNIT COMMA range=INT PR_CLS 
 	;
-max_over_time : MAX_OVER_TIME PR_OPN ATTRIBUTE ID COMMA TIMEUNIT COMMA range=INT PR_CLS SEMICOLON
+max_over_time : MAX_OVER_TIME PR_OPN ID COMMA TIMEUNIT COMMA range=INT PR_CLS
 	;
 
 timer		: TIMER PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
@@ -111,6 +111,8 @@ log 		: LOG expression SEMICOLON
  ;
 
 expression : ID  PR_OPN expressionList?  PR_CLS  					# Call // func call like f(), f(x), f(x1,x2)
+            | ID ASG count_over_time								# Call_CountOverTime 
+            | ID ASG max_over_time									# Call_MaxOverTime 
 			| expression EXPO expression  							# Expon
 			| MINUS expression                     					# unaryMinusExpr
  			| NOT expression                        				# notExpr

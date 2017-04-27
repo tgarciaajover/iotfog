@@ -45,7 +45,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 	public void enterProgram(TransformationGrammarParser.ProgramContext ctx)
 	{
-		System.out.println("Enter program");
+		// System.out.println("Enter program");
 		globals = new GlobalScope();
 		currentScope = globals;
 	}
@@ -80,7 +80,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 		
 	public void enterDotted_name(TransformationGrammarParser.Dotted_nameContext ctx)
 	{ 
-		System.out.println("enterDotted_name");
+		// System.out.println("enterDotted_name");
 		List<TerminalNode> ids = ctx.ID();
 		String id;
 				
@@ -157,7 +157,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 	public void enterBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
 
-		System.out.println("Entering block" + currentScope);
+		// System.out.println("Entering block" + currentScope);
 		
 		// push new scope by making new one that points to enclosing scope
 		LocalScope local = new LocalScope(currentScope);
@@ -171,7 +171,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 	
 	public void exitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
-		System.out.println("exitBlock" + currentScope);
+		// System.out.println("exitBlock" + currentScope);
 
 		// pop scope
 		currentScope = currentScope.getEnclosingScope();
@@ -247,9 +247,9 @@ public class DefPhase extends TransformationGrammarBaseListener
 		// Define the symbol in the current scope
 		currentScope.define(var);
 
-		System.out.println("Define var: " + var.getName() + 
-								" scopeName:" + currentScope.getScopeName() + 
-									"tokenType:" + typeTokenType + " type:" + type.name());
+		// System.out.println("Define var: " + var.getName() + 
+		//						" scopeName:" + currentScope.getScopeName() + 
+		//							"tokenType:" + typeTokenType + " type:" + type.name());
 	}
 
 	public GlobalScope getGlobalScope()

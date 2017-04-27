@@ -52,7 +52,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	
 	public void enterProgram(BehaviorGrammarParser.ProgramContext ctx)
 	{
-		System.out.println("Enter program");
+		// System.out.println("Enter program");
 		globals = new GlobalScope();
 		currentScope = globals;
 	}		
@@ -87,7 +87,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 
 	public void enterDotted_name(BehaviorGrammarParser.Dotted_nameContext ctx)
 	{ 
-		System.out.println("enterDotted_name");
+		// System.out.println("enterDotted_name");
 		List<TerminalNode> ids = ctx.ID();
 		String id;
 				
@@ -129,7 +129,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		// Defines the function in the current scope.
 		currentScope.define(function);
 		
-		System.out.println("Function Name: " + name + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
+		// System.out.println("Function Name: " + name + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 		
 		// Push: set function's parent to current
 		saveScope(ctx, function); 
@@ -145,12 +145,12 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	
 	public void exitFunction_dec(BehaviorGrammarParser.Function_decContext ctx) 
 	{ 
-		System.out.println(currentScope);
+		// System.out.println(currentScope);
 		
 		// pop scope
 		currentScope = currentScope.getEnclosingScope();
 		
-		System.out.println("exitFunction_dec" + currentScope);
+		// System.out.println("exitFunction_dec" + currentScope);
 	}
 
 	public void enterTimer(TransformationGrammarParser.TimerContext ctx) 
@@ -203,13 +203,6 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	
 	public void enterBlock(BehaviorGrammarParser.BlockContext ctx) 
 	{ 
-		if (currentScope instanceof FunctionSymbol){   
-			System.out.println( "enterBlock" + currentScope + (((FunctionSymbol)currentScope).getMembers()).size() );
-		} 
-		else
-		{
-			System.out.println("enterBlock" + currentScope);
-		}
 		
 		// push new scope by making new one that points to enclosing scope
 		LocalScope local = new LocalScope(currentScope);
@@ -224,7 +217,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	
 	public void exitBlock(BehaviorGrammarParser.BlockContext ctx) 
 	{ 
-		System.out.println("exitBlock" + currentScope);
+		// System.out.println("exitBlock" + currentScope);
 		
 		// pop scope
 		currentScope = currentScope.getEnclosingScope();
@@ -259,7 +252,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	public void exitVect_attrib_dec(BehaviorGrammarParser.Vect_attrib_decContext ctx) 
 	{ 
 
-		System.out.println("exit in enterVect attrib dec");
+		// System.out.println("exit in enterVect attrib dec");
 		
 		if ((ctx.numElements.getStopIndex() >= 0) || (ctx.numElements.getStartIndex() >= 0) )
 		{
@@ -270,7 +263,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	
 	public void exitVect_var_dec(BehaviorGrammarParser.Vect_var_decContext ctx) 
 	{ 
-		System.out.println("enter in exitVect var dec- stop:" + ctx.numElements.getStopIndex() + "Start: " + ctx.numElements.getStartIndex());
+		// System.out.println("enter in exitVect var dec- stop:" + ctx.numElements.getStopIndex() + "Start: " + ctx.numElements.getStartIndex());
 		
 		if ((ctx.numElements.getStopIndex() >= 0) || (ctx.numElements.getStartIndex() >= 0) )
 		{
@@ -296,7 +289,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 			globals.define(atr);
 		}
 
-		System.out.println("Define attribute array: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
+		// System.out.println("Define attribute array: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	
 	}
 
@@ -310,7 +303,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		// Define the symbol in the current scope
 		currentScope.define(atr);
 
-		System.out.println("Define var array: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
+		// System.out.println("Define var array: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	
 	}
 
@@ -332,7 +325,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 			globals.define(atr);
 		}
 		
-		System.out.println("Define attribute: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
+		// System.out.println("Define attribute: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 	
 	public void defineUnit(String unitId, String descr )
@@ -343,7 +336,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		// Define the symbol in the current scope
 		currentScope.define(unt);
 		
-		System.out.println("Define unit: " + unt.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
+		// System.out.println("Define unit: " + unt.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 	
 	public void defineVar(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken)
@@ -357,7 +350,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		// Define the symbol in the current scope
 		currentScope.define(var);
 		
-		System.out.println("Define var: " + var.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
+		// System.out.println("Define var: " + var.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 
 	public GlobalScope getGlobalScope(){
