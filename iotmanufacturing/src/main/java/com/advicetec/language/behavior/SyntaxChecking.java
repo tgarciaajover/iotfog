@@ -2,22 +2,25 @@ package com.advicetec.language.behavior;
 
 import java.util.List;
 
-import org.antlr.v4.runtime.ANTLRFileStream;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import com.advicetec.language.BehaviorGrammarLexer;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.ast.CollectionErrorListener;
-import com.advicetec.language.ast.RecognitionExceptionUtil;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 
 public class SyntaxChecking 
 {
+	/**  XML Tag given*/
+	private static final String PROGRAM = "program";
 
-	private static final String EXTENSION = "properties";
 	
     public static Symbol.Type getType(int tokenType) {
 
@@ -38,12 +41,18 @@ public class SyntaxChecking
         return Symbol.Type.tINVALID;
 
     }
+
+	public String getProgram(Document doc)
+	{
+		return  getElementTextContent(doc, PROGRAM);		
+	}
     
     public List<SyntaxError> process(String program) throws Exception 
     {
 
-		BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(new ANTLRFileStream(program));
-
+    	CharStream  stream = (CharStream) new ANTLRInputStream(program);
+    	BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(stream);
+    	
         CommonTokenStream tokens = new CommonTokenStream(lexer);
 
         BehaviorGrammarParser parser = new BehaviorGrammarParser(tokens);
@@ -79,9 +88,28 @@ public class SyntaxChecking
         
         System.out.println("num errors:" + listErrors.size());
         
-        return listErrors;
-        
+        return listErrors;    
 
     }    
+
+    /**
+     * Helper method that returns the text content of an interior element of this XML document. 
+     * @param doc The XML document. 
+     * @param elementName The element name whose text content is to be retrieved.
+     * @return The text content
+     */
+    private String getElementTextContent(Document doc, String elementName) {
+    	NodeList nodeList = (NodeList) doc.getElementsByTagName(elementName);
+    	if (nodeList != null){
+    		Element element = (Element) nodeList.item(0);
+    		if (element != null){
+    			return element.getTextContent();
+    		} else {
+    			return null;
+    		}
+    	} else {
+    		return null;
+    	}
+    }
 
 }

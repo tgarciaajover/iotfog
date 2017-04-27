@@ -20,7 +20,6 @@ public abstract class ProductionEntity extends MeasuredEntity
 	public ProductionEntity(String id, MeasuredEntityType type) 
 	{
 		super(id, type);
-		this.type = type;
 		this.expected = new HashMap<String, AttributeValue>();
 	}
 	

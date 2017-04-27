@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.antlr.v4.runtime.ANTLRFileStream;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.*;
@@ -60,7 +62,8 @@ public class InterpreterSw
     public void process(String program, String entityId, List<InterpretedSignal> parameters) throws Exception 
     {
 
-		TransformationGrammarLexer lexer = new TransformationGrammarLexer(new ANTLRFileStream(program));
+    	CharStream  stream = (CharStream) new ANTLRInputStream(program);
+		TransformationGrammarLexer lexer = new TransformationGrammarLexer(stream);
 
         CommonTokenStream tokens = new CommonTokenStream(lexer);
 

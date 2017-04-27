@@ -14,7 +14,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class MonitoringDeviceContainer extends Container
 {
 
-	static String sqlSelect1 = "SELECT id, type_id, descr, ip_address, mac_address, serial FROM setup_monitoringdevice";
+	static String sqlSelect1 = "SELECT id, device_type_id, descr, ip_address, mac_address, serial, create_date FROM setup_monitoringdevice";
 	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id, behavior_text, port_label, measured_entity_id FROM setup_inputoutputport";
 
 	private Map<String, Integer> indexByMac;
@@ -38,10 +38,11 @@ public class MonitoringDeviceContainer extends Container
 			{
 				Integer id     			= rs1.getInt("id");
 		        String descr   			= rs1.getString("descr");
-		        Integer deviceTypeId    = rs1.getInt("type_id");
+		        Integer deviceTypeId    = rs1.getInt("device_type_id");
 		        String ipAddress   		= rs1.getString("ip_address");
 		        String macAddress 		= rs1.getString("mac_address");
 		        String serial	 		= rs1.getString("serial");
+		        Timestamp timestamp 	= rs1.getTimestamp("create_date");
 		        		        
 		        DeviceType deviceType = (DeviceType) this.getReferencedObject("DeviceType", deviceTypeId);
 		        
@@ -51,6 +52,7 @@ public class MonitoringDeviceContainer extends Container
 		        object.setMac_addres(macAddress);
 		        object.setSerial(serial);
 		        object.setType(deviceType);
+		        object.setCreate_date(timestamp.toLocalDateTime());
 		        
 		        super.configuationObjects.put(id, object);
 		        indexByMac.put(macAddress,id);
@@ -76,7 +78,6 @@ public class MonitoringDeviceContainer extends Container
 		        InputOutputPort port = new InputOutputPort(id);
 		        port.setSignalType(signal);
 		        port.setTransformationText(transformation);
-		        port.setBehaviorText(behaviorText);
 		        port.setPortLabel(portLabel);
 		        port.setMeasuringEntity(measuredEntityId);
 		        
@@ -119,15 +120,31 @@ public class MonitoringDeviceContainer extends Container
 		try {
 		
 			mDeviceTemp = mapper.readValue(json, MonitoringDevice.class);
-			DeviceType deviceType = mDeviceTemp.getType();
-			Integer deviceTypeId = deviceType.getId();
-			DeviceType deviceTypeTmp = (DeviceType) this.getReferencedObject("DeviceType", deviceTypeId);
 			
-			if (deviceTypeTmp != null){
-				mDeviceTemp.setType(deviceType);
+			DeviceTypeContainer deviceTypeContainer = (DeviceTypeContainer) this.getReferenceContainer("DeviceType");			
+			DeviceType deviceTypeTmp = (DeviceType) deviceTypeContainer.getObject(mDeviceTemp.getType().getId());
+			
+			if (deviceTypeTmp != null) {
+				mDeviceTemp.setType(deviceTypeTmp);
 			} else {
-				this.addReferencedObject("DeviceType", deviceType);
+				deviceTypeContainer.fromJSON(mDeviceTemp.getType().toJson());
 			}
+			
+			SignalContainer signalContainer = (SignalContainer) this.getReferenceContainer("Signal");
+			for (int i=0; i < mDeviceTemp.inputOutputPorts.size(); i++){
+				InputOutputPort inputOutputPort = mDeviceTemp.inputOutputPorts.get(i);
+				Signal signal = (Signal) signalContainer.getObject(inputOutputPort.getSignalType().getId());
+				
+				if (signal == null){
+					System.out.println("estoy aqui signal null");
+					signalContainer.fromJSON(inputOutputPort.getSignalType().toJson());
+				} else { 
+					System.out.println("estoy aqui signal not null");
+					inputOutputPort.setSignalType(signal);
+				}
+			}
+			
+			super.configuationObjects.put(mDeviceTemp.getId(), mDeviceTemp);
 					
 		} catch (JsonParseException e) {
 			// TODO Auto-generated catch block

@@ -11,7 +11,6 @@ import com.advicetec.configuration.DeviceType;
 import com.advicetec.configuration.DeviceTypeContainer;
 import com.advicetec.configuration.IOSignalDeviceType;
 import com.advicetec.configuration.Signal;
-import com.advicetec.configuration.SignalContainer;
 import com.advicetec.configuration.SignalType;
 import com.advicetec.configuration.SignalUnit;
 import com.advicetec.configuration.SignalUnitContainer;

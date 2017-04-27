@@ -73,25 +73,26 @@ public class SignalContainer extends Container
 		
 			signalTemp = mapper.readValue(json, Signal.class);
 			
-			Integer signalTypeId = signalTemp.getType().getId();
-			Integer unitId = signalTemp.getUnit().getId();
-			
-			ConfigurationObject signalType = this.getReferencedObject("SignalType", signalTypeId);
-			ConfigurationObject signalUnit = (SignalUnit) this.getReferencedObject("Unit", unitId);
+			SignalTypeContainer signalTypeContainer = (SignalTypeContainer) this.getReferenceContainer("SignalType");
+						
+			ConfigurationObject signalType = signalTypeContainer.getObject(signalTemp.getType().getId());
 	        
 	        if (signalType != null){
 	        	// Overwrites the signal type with the one in the container
 	        	signalTemp.setType((SignalType) signalType);
 	        } else {
 	        	// Creates the signal type in the container
-	        	this.addReferencedObject("SignalType", signalTemp.getType());
+	        	signalTypeContainer.fromJSON(signalTemp.getType().toJson());
 	        }
 
+			SignalUnitContainer signalUnitContainer = (SignalUnitContainer) this.getReferenceContainer("Unit");
+			ConfigurationObject signalUnit = signalUnitContainer.getObject(signalTemp.getUnit().getId());
+			
 	        // Overwrites the signal unit.
 	        if (signalUnit != null){
 	        	signalTemp.setUnit((SignalUnit) signalUnit);
 	        } else {
-	        	this.addReferencedObject("Unit", signalTemp.getUnit());
+	        	signalUnitContainer.fromJSON(signalTemp.getUnit().toJson()); 
 	        }
 	        
 			super.configuationObjects.put(signalTemp.getId(), signalTemp);

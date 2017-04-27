@@ -1,9 +1,15 @@
 package com.advicetec.measuredentitity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+
 import com.advicetec.core.Configurable;
+import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 
 /**
@@ -33,7 +39,7 @@ public class MeasuredEntityManager extends Configurable {
 				Integer.parseInt(initCapacity), Integer.parseInt(maxSize));
 
 		for (int i = 0; i < machines.length; i++) {
-			Machine m = new Machine(machines[i], MeasuredEntityType.MACHINE);
+			Machine m = new Machine(machines[i]);
 			MeasuredEntityFacade f = new MeasuredEntityFacade(m);
 			entities.add(f);
 		}
@@ -79,10 +85,41 @@ public class MeasuredEntityManager extends Configurable {
 	 */
 	public MeasuredEntityFacade getFacadeOfEntityById(final String entityId){	
 		for (MeasuredEntityFacade facade : entities) {
-			if(facade.getEntity().getId().equals(entityId)){
-				return facade;
+			if (facade.getEntity() == null)
+				System.out.println("error - entity is null");
+			else{ 
+				if(facade.getEntity().getId().equals(entityId)){
+					return facade;
+				}
 			}
 		}
 		return null;
 	}
+
+	public MeasuredEntity fromJSON(String json) {
+
+		ObjectMapper mapper = new ObjectMapper();
+		
+		//Convert object to JSON string and pretty print
+		MeasuredEntity measuredEntity;
+		try {
+		
+			measuredEntity = mapper.readValue(json, MeasuredEntity.class);
+			return measuredEntity;
+		
+		} catch (JsonParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return null;
+	}	
+
+	
 }

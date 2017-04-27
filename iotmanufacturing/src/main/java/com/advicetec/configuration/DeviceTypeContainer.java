@@ -87,10 +87,18 @@ public class DeviceTypeContainer extends Container
 		
 			deviceTypeTemp = mapper.readValue(json, DeviceType.class);
 			SignalContainer signalContainer = (SignalContainer) this.getReferenceContainer("Signal");
+			
 			for (int i=0; i < deviceTypeTemp.signals.size(); i++){
 				IOSignalDeviceType ioDeviceType = deviceTypeTemp.signals.get(i);
-				Signal signal = ioDeviceType.getSignal();
-				signalContainer.fromJSON(signal.toJson());
+				Signal signal = (Signal) signalContainer.getObject(ioDeviceType.getSignal().getId());
+				
+				if (signal == null){
+					System.out.println("estoy aqui signal null");
+					signalContainer.fromJSON(ioDeviceType.getSignal().toJson());
+				} else { 
+					System.out.println("estoy aqui signal not null");
+					ioDeviceType.setSignal(signal);
+				}
 			}
 			
 			super.configuationObjects.put(deviceTypeTemp.getId(), deviceTypeTemp);
