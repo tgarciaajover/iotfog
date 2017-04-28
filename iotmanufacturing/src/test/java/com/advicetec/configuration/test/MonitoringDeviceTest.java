@@ -54,7 +54,7 @@ public class MonitoringDeviceTest
 		deviceType.putIOSignal(ioSignal2);
 		
 		InputOutputPort inputPort = new InputOutputPort(5);
-		inputPort.setMeasuringEntity("2");
+		inputPort.setMeasuringEntity(2);
 		inputPort.setPortLabel("COM1");
 		inputPort.setSignalType(signal);
 		inputPort.setTransformationText("asdakjshda");

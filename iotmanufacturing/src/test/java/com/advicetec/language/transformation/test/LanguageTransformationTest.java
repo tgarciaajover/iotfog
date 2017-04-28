@@ -47,7 +47,7 @@ public class LanguageTransformationTest
 		InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.INT, value );
 		list.add(valueSignal);
 		
-		String entityId = "None";
+		Integer entityId = 1;
 		
 		InterpreterSw interpreter = new InterpreterSw();
 		try 

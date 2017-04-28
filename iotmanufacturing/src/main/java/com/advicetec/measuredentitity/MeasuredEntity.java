@@ -19,6 +19,7 @@ import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.json.JSONArray;
 
+import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.configuration.LocalDateTimeDeserializer;
 import com.advicetec.configuration.LocalDateTimeSerializer;
 import com.advicetec.core.Attribute;
@@ -41,10 +42,8 @@ import com.advicetec.persistence.StateIntervalCache;
 	@JsonSubTypes({
 	    @Type(value = Machine.class, name = "M"),
 	    @Type(value = ProductionJob.class, name = "J") })
-public abstract class MeasuredEntity 
+public abstract class MeasuredEntity extends ConfigurationObject 
 {
-	@JsonProperty("id")
-	protected String id;
 	
 	@JsonProperty("code")
 	protected String code;
@@ -71,10 +70,9 @@ public abstract class MeasuredEntity
     protected List<AttributeMeasuredEntity> attributes;
     
     
-    public MeasuredEntity(String id, MeasuredEntityType type) 
+    public MeasuredEntity(@JsonProperty("id") Integer id, MeasuredEntityType type) 
     {
-		super();
-		this.id = id;
+		super(id);
 		this.type = type;
 		createDate = LocalDateTime.now();
 		behaviors = new ArrayList<MeasuredEntityBehavior>();
@@ -84,10 +82,6 @@ public abstract class MeasuredEntity
 		attributes = new ArrayList<AttributeMeasuredEntity>();
 	}
 
-    public String getId()
-    {
-    	return id;
-    }
     
     public String getCode() {
 		return code;
@@ -129,7 +123,7 @@ public abstract class MeasuredEntity
     }
     
     public boolean equals(MeasuredEntity other){
-    	return this.id.equals(other.getId());
+    	return getId() == other.getId();
     }
 
 	public void getStateByInterval(TimeInterval timeInterval) {
@@ -175,13 +169,13 @@ public abstract class MeasuredEntity
 		return jsonInString;
 	}
 
-	public synchronized void putBehavior(String name, String descr, String behavior_text)
+	public synchronized void putBehavior(Integer id,String name, String descr, String behavior_text)
 	{
 		boolean inserted = false; 
 		for (int i = 0; i < this.behaviors.size(); i++){
 			MeasuredEntityBehavior measuredEntityBehavior = this.behaviors.get(i);
 			if (measuredEntityBehavior.getName().compareTo(name) == 0){
-				MeasuredEntityBehavior measuredEntityBehavior2 = new MeasuredEntityBehavior(name);
+				MeasuredEntityBehavior measuredEntityBehavior2 = new MeasuredEntityBehavior(id, name);
 				measuredEntityBehavior2.setDescr(descr);
 				measuredEntityBehavior2.setBehaviorText(behavior_text);
 				this.behaviors.remove(i);
@@ -192,7 +186,7 @@ public abstract class MeasuredEntity
 		}
 		
 		if (inserted == false){
-			MeasuredEntityBehavior measuredEntityBehavior2 = new MeasuredEntityBehavior(name);
+			MeasuredEntityBehavior measuredEntityBehavior2 = new MeasuredEntityBehavior(id, name);
 			measuredEntityBehavior2.setDescr(descr);
 			measuredEntityBehavior2.setBehaviorText(behavior_text);
 			this.behaviors.add(measuredEntityBehavior2);
@@ -213,6 +207,24 @@ public abstract class MeasuredEntity
 	public synchronized void removeBehaviors()
 	{
 		this.behaviors.clear();
+	}
+
+	
+	public synchronized void updateEntityConfiguration(MeasuredEntity measuredEntity) {
+
+		// update behaviors.
+		removeBehaviors();
+		for ( int i=0; i < measuredEntity.behaviors.size(); i++)
+		{
+			putBehavior(measuredEntity.behaviors.get(i).getId(),
+					     measuredEntity.behaviors.get(i).getName(), 
+						   measuredEntity.behaviors.get(i).getDescr(), 
+							measuredEntity.behaviors.get(i).getBehavior_text() );			
+		}
+		
+		if (measuredEntity instanceof Machine){
+			
+		}
 	}
 	
 }

@@ -43,7 +43,7 @@ public class LanguageBehaviorTest
 			InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.INT, value );
 			list.add(valueSignal);
 			
-			String entityId = "None";
+			Integer entityId = 1;
 			
 			InterpreterSw interpreter = new InterpreterSw();
 			interpreter.process(program, entityId, list);

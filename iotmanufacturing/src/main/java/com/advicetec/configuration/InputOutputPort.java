@@ -26,7 +26,7 @@ public class InputOutputPort extends ConfigurationObject  {
 	private String portLabel;
 
 	@JsonProperty("measured_entity")
-	private String measuringEntity; 
+	private Integer measuringEntity; 
 	
 	@JsonCreator
 	public InputOutputPort(@JsonProperty("id") Integer id) {
@@ -58,11 +58,11 @@ public class InputOutputPort extends ConfigurationObject  {
 		this.transformationText = transformation_text;
 	}
 
-	public String getMeasuringEntity() {
+	public Integer getMeasuringEntity() {
 		return measuringEntity;
 	}
 
-	public void setMeasuringEntity(String measuringEntity) {
+	public void setMeasuringEntity(Integer measuringEntity) {
 		this.measuringEntity = measuringEntity;
 	}
 

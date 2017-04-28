@@ -42,7 +42,7 @@ public class AttributeValue
 	 * Describes the origin measured entity, job, machine, etc.
 	 */
 	
-	protected String generator;
+	protected Integer generator;
 	
 	protected MeasuredEntityType generatorType;
 
@@ -58,7 +58,7 @@ public class AttributeValue
 	public AttributeValue(@JsonProperty("key")String key, 
 			@JsonProperty("attr")Attribute attr, 
 			@JsonProperty("value")Object value, 
-			@JsonProperty("generator")String parent, 
+			@JsonProperty("generator")Integer parent, 
 			@JsonProperty("generatorType")MeasuredEntityType parentType) {
 		super();
 		this.key =  key;
@@ -79,7 +79,7 @@ public class AttributeValue
 	}
 
 
-	public String getGenerator() {
+	public Integer getGenerator() {
 		return generator;
 	}
 

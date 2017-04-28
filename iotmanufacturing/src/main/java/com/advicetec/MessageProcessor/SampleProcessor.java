@@ -35,7 +35,7 @@ public class SampleProcessor implements Processor
 	{
 		
 		// Finds the measuring Entity involved. The string value is always not null
-		String measuringEntity = sample.getmEntity();
+		Integer measuringEntity = sample.getmEntity();
 		String program = sample.getMeaningTransformation();
 		
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();

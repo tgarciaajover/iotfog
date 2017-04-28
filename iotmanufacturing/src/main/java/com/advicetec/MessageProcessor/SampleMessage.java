@@ -12,7 +12,7 @@ public class SampleMessage extends MeasuringMessage
 	List<InterpretedSignal> values;
 	private String meaningTransformation;
 	
-	public SampleMessage(MonitoringDevice device, InputOutputPort port, String entityId, List<InterpretedSignal> values, String meaningTransformation) 
+	public SampleMessage(MonitoringDevice device, InputOutputPort port, Integer entityId, List<InterpretedSignal> values, String meaningTransformation) 
 	{
 		super(UnifiedMessageType.SAMPLE, device, port, entityId);
 		this.values = values;

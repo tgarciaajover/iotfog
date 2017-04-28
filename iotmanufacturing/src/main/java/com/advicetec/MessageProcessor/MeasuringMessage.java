@@ -8,10 +8,10 @@ public abstract class MeasuringMessage extends UnifiedMessage {
 
 	MonitoringDevice mDevice;
 	InputOutputPort port;
-	String mEntity;
+	Integer mEntity;
 	
 	
-	public MeasuringMessage(UnifiedMessageType type,MonitoringDevice device, InputOutputPort port, String entityId) {
+	public MeasuringMessage(UnifiedMessageType type,MonitoringDevice device, InputOutputPort port, Integer entityId) {
 		super(type);
 		mDevice = mDevice;
 		port = port;
@@ -30,10 +30,10 @@ public abstract class MeasuringMessage extends UnifiedMessage {
 	public void setPort(InputOutputPort port) {
 		this.port = port;
 	}
-	public String getmEntity() {
+	public Integer getmEntity() {
 		return mEntity;
 	}
-	public void setmEntity(String mEntity) {
+	public void setmEntity(Integer mEntity) {
 		this.mEntity = mEntity;
 	}
 

@@ -6,6 +6,7 @@ import java.sql.Statement;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.advicetec.core.Configurable;
 
@@ -98,6 +99,9 @@ public abstract class Container
         }	
 	}
 	
+	public synchronized Set<Integer> getKeys(){
+		return configuationObjects.keySet(); 
+	}
 	
 	public synchronized ConfigurationObject getObject(Integer id)
 	{

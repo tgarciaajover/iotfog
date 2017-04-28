@@ -14,6 +14,7 @@ import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.SignalUnit;
 import com.advicetec.configuration.SignalUnitContainer;
 import com.advicetec.measuredentitity.MeasuredEntity;
+import com.advicetec.measuredentitity.MeasuredEntityContainer;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 
@@ -36,7 +37,7 @@ public class MeasuredEntityResource extends ServerResource
 		Representation result;
 
 		// Get the contact's uniqueID from the URL.
-	    String uniqueID = (String)this.getRequestAttributes().get("uniqueID");
+	    Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 	    
 	    // Look for it in the Measured Entity database.
 	    MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
@@ -79,20 +80,14 @@ public class MeasuredEntityResource extends ServerResource
 		
 	    // Look for it in the Signal Unit database.
 	    MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
-	    MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
+	    MeasuredEntityContainer container = measuredEntityManager.getMeasuredEntityContainer();
 	    
-	    MeasuredEntity measuredEntity = measuredEntityManager.fromJSON(jsonText);
+	    MeasuredEntity measuredEntity = container.fromJSON(jsonText);
 	    
-	    if (measuredEntityFacade == null) {
-	    	// New measured Entity
+	    if (measuredEntityManager.getFacadeOfEntityById(measuredEntity.getId()) == null){
 	    	measuredEntityManager.addNewEntity(measuredEntity);
-	    	
-	    } else { 
-	    	//Update a measured Entity
-	    	measuredEntityFacade.updateEntityConfiguration(measuredEntity);
-
 	    }
-	    
+	    	    
 	    getResponse().setStatus(Status.SUCCESS_OK);
 	    
 	    Representation result = new JsonRepresentation("");

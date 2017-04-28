@@ -104,7 +104,7 @@ public class AttributeTest {
 		MeasuringUnit unit = new MeasuringUnit("s", "Seconds");
 		Attribute att = new Attribute("AttrName", AttributeType.DOUBLE,unit,
 				true,AttributeOrigin.BEHAVIOR);
-		AttributeValue val= new AttributeValue("123", att, 10.0, "P00", MeasuredEntityType.MACHINE);
+		AttributeValue val= new AttributeValue("123", att, 10.0, 2, MeasuredEntityType.MACHINE);
 		
 		System.out.println(val.toJson());
 		AttributeValue val2 = null;
@@ -122,7 +122,7 @@ public class AttributeTest {
 		MeasuringUnit unit = new MeasuringUnit("s", "Seconds");
 		Attribute att = new Attribute("AttrName", AttributeType.DOUBLE,unit,
 				true,AttributeOrigin.BEHAVIOR);
-		AttributeValue val= new AttributeValue("123", att, 10.0, "P00", MeasuredEntityType.MACHINE);
+		AttributeValue val= new AttributeValue("123", att, 10.0, 2, MeasuredEntityType.MACHINE);
 		MeasuredAttributeValue mav = new MeasuredAttributeValue(att,val.getValue(),
 				val.getGenerator() , val.getGeneratorType(), LocalDateTime.now());
 		

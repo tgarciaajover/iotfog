@@ -352,24 +352,5 @@ public final class MeasuredEntityFacade {
 		 return status.toXml();
 	}
 
-	public synchronized void updateEntityConfiguration(MeasuredEntity measuredEntity) {
-
-		// update behaviors.
-		getEntity().removeBehaviors();
-		for ( int i=0; i < measuredEntity.behaviors.size(); i++)
-		{
-			getEntity().putBehavior(measuredEntity.behaviors.get(i).getName(), 
-									 measuredEntity.behaviors.get(i).getDescr(), 
-									  measuredEntity.behaviors.get(i).getBehavior_text() );
-			getEntity().putBehavior(measuredEntity.behaviors.get(i).getName(), 
-									 measuredEntity.behaviors.get(i).getDescr(), 
-									  measuredEntity.behaviors.get(i).getBehavior_text() );
-		}
-		
-		if (measuredEntity instanceof Machine){
-			
-		}
-	}
-
 }
 

@@ -36,7 +36,7 @@ public class InputOutputPortTest
 		signal.setCreate_date(LocalDateTime.now());
 		
 		InputOutputPort inputPort = new InputOutputPort(3);
-		inputPort.setMeasuringEntity("2");
+		inputPort.setMeasuringEntity(2);
 		inputPort.setPortLabel("COM1");
 		inputPort.setSignalType(signal);
 		inputPort.setTransformationText("asdakjshda");

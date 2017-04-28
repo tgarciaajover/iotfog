@@ -21,7 +21,7 @@ public final class StateInterval implements Storable
 	private TimeInterval interval;
 	
 	// information about the parent.
-	private String parent;
+	private Integer parent;
 	private MeasuredEntityType parentType;
 	
 	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code)" + "VALUES(?,?,?,?,?,?)";
@@ -32,7 +32,7 @@ public final class StateInterval implements Storable
 			@JsonProperty("state")MeasuringState state, 
 			@JsonProperty("reason")ReasonCode reason,
 			@JsonProperty("interval")TimeInterval timeInterval,
-			@JsonProperty("origin")String parent, 
+			@JsonProperty("origin")Integer parent, 
 			@JsonProperty("originType")MeasuredEntityType parentType 
 			) {
 		super();
@@ -61,7 +61,7 @@ public final class StateInterval implements Storable
 		return this.key;
 	}
 
-	public String getParent() {
+	public Integer getParent() {
 		return parent;
 	}
 
@@ -81,7 +81,7 @@ public final class StateInterval implements Storable
 	{
 		try 
 		{
-			pstmt.setString(1, getParent());
+			pstmt.setInt(1, getParent());
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
 			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
 			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
@@ -101,7 +101,7 @@ public final class StateInterval implements Storable
 
 		try 
 		{
-			pstmt.setString(1, getParent());
+			pstmt.setInt(1, getParent());
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
 			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
 			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp

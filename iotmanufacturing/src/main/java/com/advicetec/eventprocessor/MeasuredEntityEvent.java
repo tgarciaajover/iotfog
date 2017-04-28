@@ -13,12 +13,12 @@ public class MeasuredEntityEvent extends Event
 	private String behaviorTransformation;
 	
 	// Entity involved for this event.
-	private String entity;
+	private Integer entity;
 	
 	// List of attributes given to the event.
 	private List<InterpretedSignal> parameters; 
 	
-	public MeasuredEntityEvent(String behavior, String entity, List<InterpretedSignal> parameters) 
+	public MeasuredEntityEvent(String behavior, Integer entity, List<InterpretedSignal> parameters) 
 	{
 		super(EventType.MEASURING_ENTITY_EVENT);
 		this.behaviorTransformation = behavior;
@@ -30,7 +30,7 @@ public class MeasuredEntityEvent extends Event
 		return behaviorTransformation;
 	}
 
-	public String getEntity() {
+	public Integer getEntity() {
 		return entity;
 	}
 

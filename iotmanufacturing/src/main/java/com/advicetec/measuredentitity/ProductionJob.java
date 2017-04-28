@@ -9,14 +9,14 @@ import com.advicetec.core.AttributeValue;
 public class ProductionJob 
 {
 
-	private String id;
+	private Integer id;
 	private MeasuredEntityType type;
 	private ProductionEntity planned;
 	private ProductionEntity executed;
 	private Map<String, AttributeValue> expected;
 	private Map<String, MeasuredAttributeValue> measures;
 
-	public ProductionJob(String id, ProductionEntity planned, ProductionEntity executed) {
+	public ProductionJob(Integer id, ProductionEntity planned, ProductionEntity executed) {
 		super();
 		this.id = id;
 		type = MeasuredEntityType.JOB;
@@ -34,7 +34,7 @@ public class ProductionJob
 		this.measures = new HashMap<String, MeasuredAttributeValue>();
 	}
 	
-	public String getId() {
+	public Integer getId() {
 		return id;
 	}
 

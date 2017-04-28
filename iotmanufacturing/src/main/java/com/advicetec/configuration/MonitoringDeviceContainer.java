@@ -69,7 +69,7 @@ public class MonitoringDeviceContainer extends Container
 		        Integer deviceId    	= rs2.getInt("device_id");
 		        Integer signalTypeId	= rs2.getInt("signal_type_id");
 		        String portLabel		= rs2.getString("port_label");
-		        String measuredEntityId = rs2.getString("measured_entity_id");
+		        Integer measuredEntityId = rs2.getInt("measured_entity_id");
 		        
 		        System.out.println("id:" + id);
 		        System.out.println("portLabel:" + portLabel);

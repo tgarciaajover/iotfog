@@ -65,7 +65,7 @@ public class InterpreterSw
      * @param parameters
      * @throws Exception
      */
-    public void process(String program, String entityId, List<InterpretedSignal> parameters) throws Exception 
+    public void process(String program, Integer entityId, List<InterpretedSignal> parameters) throws Exception 
     {
 
     	CharStream  stream = (CharStream) new ANTLRInputStream(program);

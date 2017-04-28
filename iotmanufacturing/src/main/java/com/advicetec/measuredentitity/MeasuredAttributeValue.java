@@ -39,7 +39,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	public MeasuredAttributeValue(
 			@JsonProperty("attr")Attribute type, 
 			@JsonProperty("value")Object value, 
-			@JsonProperty("generator")String parent, 
+			@JsonProperty("generator")Integer parent, 
 			@JsonProperty("generatorType")MeasuredEntityType parentType, 
 			@JsonProperty("timeStamp") LocalDateTime timeStamp) 
 	{
@@ -65,7 +65,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	public void dbInsert(PreparedStatement pstmt) {
 		try 
 		{
-			pstmt.setString(1, getGenerator());							// Set the parent
+			pstmt.setInt(1, getGenerator());							// Set the parent
 			pstmt.setTimestamp(2, Timestamp.valueOf(getTimeStamp()));   // timestamp
 			pstmt.setInt(3, getGeneratorType().getValue());          		// owner_type
 			pstmt.setString(4, getAttr().getName());      			// Attribute Name
@@ -113,7 +113,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 
 		try 
 		{
-			pstmt.setString(1, getGenerator());   // id_owner
+			pstmt.setInt(1, getGenerator());   // id_owner
 			pstmt.setTimestamp(2, Timestamp.valueOf(getTimeStamp()) );    // timestamp
 			pstmt.setInt(3, getGeneratorType().getValue());          // owner_type
 			pstmt.setString(4, getAttr().getName());      // Attribute Name

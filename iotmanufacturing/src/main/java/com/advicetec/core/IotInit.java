@@ -85,7 +85,7 @@ public class IotInit extends Configurable
 		
 	}
 
-	public void getMeasuredEntityStatus(String entityID){
+	public void getMeasuredEntityStatus(Integer entityID){
 		MeasuredEntityFacade facade = entityManager.getFacadeOfEntityById(entityID);
 		facade.getStatus();
 	}

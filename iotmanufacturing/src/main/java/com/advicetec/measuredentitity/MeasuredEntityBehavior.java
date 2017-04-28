@@ -11,11 +11,16 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.configuration.LocalDateTimeDeserializer;
 import com.advicetec.configuration.LocalDateTimeSerializer;
 
-public class MeasuredEntityBehavior 
+public class MeasuredEntityBehavior extends  ConfigurationObject
 {
+	
+	@JsonProperty("id")
+	Integer id; 
+	
 	@JsonProperty("name")
 	String name;
 	
@@ -31,8 +36,8 @@ public class MeasuredEntityBehavior
 	private LocalDateTime createDate;
 		
 	@JsonCreator
-	public MeasuredEntityBehavior(@JsonProperty("name") String name) {
-		super();
+	public MeasuredEntityBehavior(@JsonProperty("id") Integer id, @JsonProperty("name") String name) {
+		super(id);
 		this.name = name;
 	}
 

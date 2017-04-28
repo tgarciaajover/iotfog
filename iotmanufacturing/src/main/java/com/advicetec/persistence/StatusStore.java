@@ -143,7 +143,7 @@ public class StatusStore {
 	 * @param parent Identificator from the MeasuredEntity
 	 * @param parentType Type of the Measured Entity.
 	 */
-	public void importAttributeValues(Map<String, ASTNode> valueMap, String parent, MeasuredEntityType parentType) {
+	public void importAttributeValues(Map<String, ASTNode> valueMap, Integer parent, MeasuredEntityType parentType) {
 
 		for (Attribute att : attributes.values()) {
 			if(valueMap.containsKey(att.getName())){
@@ -204,7 +204,7 @@ public class StatusStore {
 	 * @param parent Id of the measured entity
 	 * @param parentType Type of measured entity.
 	 */
-	public void setAttributeValue(Attribute att, Object value,String parent, MeasuredEntityType parentType) {
+	public void setAttributeValue(Attribute att, Object value,Integer parent, MeasuredEntityType parentType) {
 		setAttributeValue(new AttributeValue(att.getName(), att, value, parent, parentType));
 	}
 

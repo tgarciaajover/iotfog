@@ -28,7 +28,7 @@ public class MeasuredEntityEventProcessor implements Processor
 	public List<DelayEvent> process() 
 	{
 		
-		String measuringEntity = this.event.getEntity();
+		Integer measuringEntity = this.event.getEntity();
 		String behaviorName = this.event.getBehaviorTransformation();
 		
 

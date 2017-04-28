@@ -21,7 +21,7 @@ public class TestREST {
 	@Test
 	public void JsonAttributeValue(){
 		Attribute att = new Attribute("AttrName", AttributeType.DOUBLE);
-		AttributeValue val= new AttributeValue("123", att, 10.0, "P00", MeasuredEntityType.MACHINE);
+		AttributeValue val= new AttributeValue("123", att, 10.0, 1, MeasuredEntityType.MACHINE);
 		
 		JSONObject jsonObject = new JSONObject(val);
 		System.out.println(jsonObject.toString());
@@ -38,7 +38,7 @@ public class TestREST {
 	@Test
 	public void mapperTest(){
 		Attribute att = new Attribute("AttrName", AttributeType.DOUBLE);
-		AttributeValue val= new AttributeValue("123", att, 10.0, "P00", MeasuredEntityType.MACHINE);
+		AttributeValue val= new AttributeValue("123", att, 10.0, 1, MeasuredEntityType.MACHINE);
 		
 		ObjectMapper mapper = new ObjectMapper();
 		String jStr = new JSONObject(val).toString();

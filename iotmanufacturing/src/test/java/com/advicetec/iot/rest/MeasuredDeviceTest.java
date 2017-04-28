@@ -26,11 +26,11 @@ public class MeasuredDeviceTest
 	public void Test_Measured_Device() 
 	{
 
-		Machine machine1 = new Machine("Machine1");
+		Machine machine1 = new Machine(1);
 		
 		machine1.setCreateDate(LocalDateTime.now());
-		machine1.putBehavior("ProductionCOT","asdjasl","akjsdalksdl");
-		machine1.putBehavior("ProductionCOT2","sadasdas","dfksdlfksj");
+		machine1.putBehavior(1, "ProductionCOT","asdjasl","akjsdalksdl");
+		machine1.putBehavior(1, "ProductionCOT2","sadasdas","dfksdlfksj");
 		machine1.setDescr("Termoformadora");
 		
 		String json = machine1.toJson();
@@ -40,14 +40,12 @@ public class MeasuredDeviceTest
 
 		MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
 		
-		MeasuredEntity measuredEntity = measuredEntityManager.fromJSON(json);
+		MeasuredEntity measuredEntity = measuredEntityManager.getMeasuredEntityContainer().fromJSON(json);
 		
 		MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(measuredEntity.getId());
 		
 		if (measuredEntityFacade == null){
 			measuredEntityManager.addNewEntity(measuredEntity);
-		} else {
-			measuredEntityFacade.updateEntityConfiguration(measuredEntity);;
 		}
 		
 		measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(measuredEntity.getId());

@@ -62,7 +62,7 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 			values = object.translate(mqttMessage.getPayload());
 			// TODO: call the measuredEntititiesFacade by mac address.
 			
-			 String measuringEntityId = confManager.getMeasuredEntity(deviceID, portLabel);
+			 Integer measuringEntityId = confManager.getMeasuredEntity(deviceID, portLabel);
 			 if (measuringEntityId != null){
 				 return new SampleMessage(device, device.getInputOutputPort(portLabel), measuringEntityId, values, transformation);
 			 } else {

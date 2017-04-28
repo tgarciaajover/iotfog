@@ -17,7 +17,7 @@ public abstract class ProductionEntity extends MeasuredEntity
 	
 	protected Map<String, AttributeValue> expected;
 	
-	public ProductionEntity(String id, MeasuredEntityType type) 
+	public ProductionEntity(Integer id, MeasuredEntityType type) 
 	{
 		super(id, type);
 		this.expected = new HashMap<String, AttributeValue>();

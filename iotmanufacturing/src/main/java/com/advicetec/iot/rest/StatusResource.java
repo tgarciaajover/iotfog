@@ -35,7 +35,7 @@ public class StatusResource extends ServerResource {
 		Representation result;
 		
 		// Get the contact's uniqueID from the URL.
-		String uniqueID = (String)this.getRequestAttributes().get("uniqueID");
+		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 		// Look for it in the Entity Manager database.
 
 		MeasuredEntityFacade facade = MeasuredEntityManager.getInstance().getFacadeOfEntityById(uniqueID);
