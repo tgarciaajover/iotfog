@@ -43,8 +43,11 @@ import com.advicetec.persistence.StateIntervalCache;
 	    @Type(value = ProductionJob.class, name = "J") })
 public abstract class MeasuredEntity 
 {
-	@JsonProperty("code")
+	@JsonProperty("id")
 	protected String id;
+	
+	@JsonProperty("code")
+	protected String code;
 	
 	@JsonIgnore
 	protected MeasuredEntityType type; 
@@ -86,7 +89,15 @@ public abstract class MeasuredEntity
     	return id;
     }
     
-    public MeasuredEntityType getType()
+    public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public MeasuredEntityType getType()
     {
     	return this.type;
     }

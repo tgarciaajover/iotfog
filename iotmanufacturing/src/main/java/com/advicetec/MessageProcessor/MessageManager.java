@@ -30,8 +30,9 @@ public class MessageManager extends Manager
 		this.delayedQueue = new DelayQueue();
 	}	
 	
-	public void run() {
-		
+	public void run() 
+	{
+		System.out.println("Start Message Manager run");
 		int number = Integer.valueOf(getProperty("NumProcessHandlers"));
 		List<Thread> listThread =  new ArrayList<Thread>();
 		
@@ -44,7 +45,7 @@ public class MessageManager extends Manager
 		
 		Thread delayConsumer = new Thread(new DelayQueueConsumer("ProcessConsumer", this.delayedQueue));
 		delayConsumer.start();
-
+		/*
 		try {
 			delayConsumer.join();
 			for (Thread t : listThread){
@@ -54,7 +55,9 @@ public class MessageManager extends Manager
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		*/
 		
+		System.out.println("Ending Message Manager run ");
 	}	
 
 }

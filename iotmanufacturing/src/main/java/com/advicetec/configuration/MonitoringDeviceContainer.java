@@ -15,7 +15,7 @@ public class MonitoringDeviceContainer extends Container
 {
 
 	static String sqlSelect1 = "SELECT id, device_type_id, descr, ip_address, mac_address, serial, create_date FROM setup_monitoringdevice";
-	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id, behavior_text, port_label, measured_entity_id FROM setup_inputoutputport";
+	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id, port_label, measured_entity_id FROM setup_inputoutputport";
 
 	private Map<String, Integer> indexByMac;
 
@@ -62,16 +62,18 @@ public class MonitoringDeviceContainer extends Container
 			rs1.close();
 			
 			ResultSet rs2 = super.pst.executeQuery(sqlSelect2);
-			while (rs1.next())
+			while (rs2.next())
 			{
 				Integer id     			= rs2.getInt("id"); 
 		        String transformation	= rs2.getString("transformation_text");
 		        Integer deviceId    	= rs2.getInt("device_id");
 		        Integer signalTypeId	= rs2.getInt("signal_type_id");
-		        String behaviorText		= rs2.getString("behavior_text");
 		        String portLabel		= rs2.getString("port_label");
 		        String measuredEntityId = rs2.getString("measured_entity_id");
-		        		        
+		        
+		        System.out.println("id:" + id);
+		        System.out.println("portLabel:" + portLabel);
+		        
 		        MonitoringDevice device= (MonitoringDevice) this.getObject(deviceId);
 		        Signal signal = (Signal)  this.getReferencedObject("Signal", signalTypeId);
 		        

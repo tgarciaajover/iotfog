@@ -90,7 +90,13 @@ public class ConfigurationManager extends Configurable
 	}
 	
 	public String getTransformation(String macAddress, String portLabel){
-		return this.monitoringDevices.getByMacAddress(macAddress).getTranformation(portLabel);
+		System.out.println("In getTransformation macAddress:" + macAddress + "portLabel:" + portLabel );
+		if (this.monitoringDevices.getByMacAddress(macAddress) == null){
+			System.out.println("Monitoring Device not Found");
+			return null;
+		} else { 
+			return	this.monitoringDevices.getByMacAddress(macAddress).getTranformation(portLabel);
+		}
 	}
 		
 	public String getClassName(String macAddress, String portLabel){
@@ -98,6 +104,20 @@ public class ConfigurationManager extends Configurable
 	}
 	
 	public String getMeasuredEntity(String macAddress, String portLabel){
-		return this.monitoringDevices.getByMacAddress(macAddress).getInputOutputPort(portLabel).getMeasuringEntity();
+		System.out.println("start getMeasuredEntity params:" + macAddress + "|" + portLabel);
+		MonitoringDevice mDevice = this.monitoringDevices.getByMacAddress(macAddress); 
+		if ( mDevice == null){
+			System.out.println("Monitoring Device not found");
+			return null;
+		}
+		else { 		
+			if (mDevice.getInputOutputPort(portLabel) == null){
+				System.out.println("Port not found in monitoring device");
+				return null;
+			} 
+			else {
+				return mDevice.getInputOutputPort(portLabel).getMeasuringEntity();
+			}
+		}
 	}
 }

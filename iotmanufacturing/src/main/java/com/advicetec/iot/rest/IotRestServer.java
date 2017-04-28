@@ -40,15 +40,7 @@ public class IotRestServer extends Application {
     component.start();
   }
 
-  /**
-   * This main method starts up a web application that will listen on port 8111.
-   * @param args Ignored.
-   * @throws Exception If problems occur.
-   */
-  public static void main(String[] args) throws Exception {
-    runServer(8111);
-  }   
-  
+    
   /**
    * Specify the dispatching restlet that maps URIs to their associated resources for processing.
    * @return A Router restlet that implements dispatching.

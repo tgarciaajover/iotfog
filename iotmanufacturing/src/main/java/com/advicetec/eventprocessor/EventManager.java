@@ -38,6 +38,7 @@ public class EventManager extends Manager
 
 	public void run() 
 	{
+		System.out.println("Starting Event Manager run");
 		
 		int number = Integer.valueOf(getProperty("NumProcessHandlers")); 
 		List<Thread> listThread =  new ArrayList<Thread>();
@@ -51,7 +52,7 @@ public class EventManager extends Manager
 
 		Thread delayConsumer = new Thread(new DelayQueueConsumer("EventConsumer", this.delayedQueue));
 		delayConsumer.start();
-
+		/*
 		try {
 			delayConsumer.join();
 			for (Thread t : listThread){
@@ -61,7 +62,9 @@ public class EventManager extends Manager
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	
+		*/
+		
+		System.out.println("Ending Event Manager run");
 	}	
 
 }

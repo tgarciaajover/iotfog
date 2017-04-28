@@ -115,14 +115,21 @@ public class MonitoringDevice extends ConfigurationObject
 	
 	@JsonIgnore
 	public InputOutputPort getInputOutputPort(String portLabel){
-		Integer id = this.portsByLabel.get(portsByLabel);
+		Integer id = this.portsByLabel.get(portLabel);
 		return  getInputOutputPort(id);
 	}
 	
 	@JsonIgnore
 	public String getTranformation(String portLabel){
-		Integer id = this.portsByLabel.get(portsByLabel);
-		return  getInputOutputPort(id).getTransformationText();
+		Integer id = this.portsByLabel.get(portLabel);
+		System.out.println("Port requested:" + portLabel + "Port id:" + id);
+		if (getInputOutputPort(id) == null){
+			System.out.println("Error Label Port not found");
+			return null;
+		} else {
+			return  getInputOutputPort(id).getTransformationText();
+		}
+		
 	}
 		
 	public void putInputOutputPort(InputOutputPort iop){
@@ -132,8 +139,14 @@ public class MonitoringDevice extends ConfigurationObject
 	
 	@JsonIgnore
 	public String getClassName(String portLabel){
-		Integer id = this.portsByLabel.get(portsByLabel);
-		return  getInputOutputPort(id).getSignalType().getType().getClassName();
+		Integer id = this.portsByLabel.get(portLabel);
+
+		if (getInputOutputPort(id) == null){
+			System.out.println("Error Label Port not found");
+			return null;
+		} else {
+			return getInputOutputPort(id).getSignalType().getType().getClassName();
+		}
 	}
 
 	public String toJson()

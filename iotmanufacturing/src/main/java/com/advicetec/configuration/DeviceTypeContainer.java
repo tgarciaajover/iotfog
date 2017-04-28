@@ -46,7 +46,7 @@ public class DeviceTypeContainer extends Container
 			rs1.close();
 
 			ResultSet rs2 = super.pst.executeQuery(sqlSelect2);
-			while (rs1.next())
+			while (rs2.next())
 			{
 				Integer id     			= rs2.getInt("id"); 
 		        String io   			= rs2.getString("i_o");

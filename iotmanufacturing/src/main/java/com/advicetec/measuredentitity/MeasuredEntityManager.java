@@ -18,9 +18,10 @@ import com.advicetec.persistence.MeasureAttributeValueCache;
  * @author user
  *
  */
-public class MeasuredEntityManager extends Configurable {
+public class MeasuredEntityManager extends Configurable, Container {
 	
 	private static MeasuredEntityManager instance=null;
+
 	
 	private List<MeasuredEntityFacade> entities;
 	

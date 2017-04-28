@@ -33,7 +33,7 @@ public class AdapterHandler implements Runnable
 			while (true)
 			{
 				Queueable queueable = (Queueable) fromQueue.pop();
-				
+				System.out.println("a queueable object was found");
 				if (queueable.getType() == QueueType.MQTT_DEV_MESSAGE)
 				{
 					
@@ -46,7 +46,8 @@ public class AdapterHandler implements Runnable
 						
 						if (um != null){
 							//TODO: to define the priority for the message.
-							toQueue.enqueue(7, um);
+							Queueable obj = new Queueable(QueueType.UNIFIED_MESSAGE, um);
+							toQueue.enqueue(6, obj);
 						} 
 						
 					} catch (ClassNotFoundException | NoSuchMethodException

@@ -7,9 +7,12 @@ import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.AdapterManager;
 import com.advicetec.persistence.StatusStore;
+import com.advicetec.utils.MqttSubscriber;
 import com.google.inject.spi.Message;
+import com.advicetec.iot.rest.IotRestServer;
 
-public class IotInit {
+public class IotInit extends Configurable 
+{
 	
 	private static IotInit instance = null;
 	
@@ -20,13 +23,26 @@ public class IotInit {
 	private MeasuredEntityManager entityManager;
 	private Thread managerThread; 
 	
-	private IotInit() {
+	private IotInit()  {
+		
+		super("IotInit");
+		
 		configManager = ConfigurationManager.getInstance();
 		eventManager = EventManager.getInstance();
 		messageManager = MessageManager.getInstance();
 		adapterManager = AdapterManager.getInstance();
 		entityManager = MeasuredEntityManager.getInstance();
-		managerThread = new Thread(); 	
+		
+		try {
+			
+			// Init the configuration  
+			configManager.loadConfiguration();
+			
+		
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public static IotInit getInstance(){
@@ -41,8 +57,32 @@ public class IotInit {
 		// caches initiation
 		//		StatusStore.getInstance();
 		
-		AdapterManager adapterManager = AdapterManager.getInstance();
-		Thread managerThread = new Thread(); 
+		IotInit iotInit = IotInit.getInstance();
+		iotInit.adapterManager.run();
+		System.out.println("after running adapter Manager");
+		iotInit.messageManager.run();
+		System.out.println("after running message Manager");
+		iotInit.eventManager.run();
+		System.out.println("after running event Manager");
+
+		// Init the Rest server 
+		String rest_port = iotInit.properties.getProperty("rest_port");
+		try {
+			IotRestServer.runServer(Integer.valueOf(rest_port));
+			
+			MqttSubscriber mqttSubscriber = new MqttSubscriber();
+			mqttSubscriber.run();
+			
+			
+		} catch (NumberFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
 	}
 
 	public void getMeasuredEntityStatus(String entityID){

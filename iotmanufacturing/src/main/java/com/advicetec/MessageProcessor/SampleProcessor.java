@@ -41,51 +41,56 @@ public class SampleProcessor implements Processor
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade entityFacade = entityManager.getFacadeOfEntityById(measuringEntity);
 		
-		ArrayList<DelayEvent> ret = new ArrayList<DelayEvent>();  
-		SyntaxChecking sintaxChecking = new SyntaxChecking();
-		try 
-		{
-			// First, we verify the transformation.
-			List<SyntaxError> errorList = sintaxChecking.process(program);
-			
-			// If no errors, then process.
-			if (errorList.size() == 0){ 
-				// Then, we read parameters from message and pass them to the interpreter as global variables.
-				List<InterpretedSignal> list = sample.getValues();
-				InterpreterSw interpreter = new InterpreterSw();
-				interpreter.process(program,measuringEntity,list);
-				// stores the status of attributes
-				entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap());
-				entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());
+		ArrayList<DelayEvent> ret = new ArrayList<DelayEvent>();
+		
+		if (entityFacade == null){
+			System.out.println("Error the measured Entity was not found - id:" + measuringEntity);
+		} else {
+		  
+			SyntaxChecking sintaxChecking = new SyntaxChecking();
+			try 
+			{
+				// First, we verify the transformation.
+				List<SyntaxError> errorList = sintaxChecking.process(program);
 				
-				Map<String, Symbol> symbols =  interpreter.getGlobalScope().getSymbolMap();
-				
-				for (String symbolId : symbols.keySet())
-				{
-					Symbol symbol = symbols.get(symbolId);
+				// If no errors, then process.
+				if (errorList.size() == 0){ 
+					// Then, we read parameters from message and pass them to the interpreter as global variables.
+					List<InterpretedSignal> list = sample.getValues();
+					InterpreterSw interpreter = new InterpreterSw();
+					interpreter.process(program,measuringEntity,list);
+					// stores the status of attributes
+					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap());
+					entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());
 					
-					if (symbol instanceof TimerSymbol)
+					Map<String, Symbol> symbols =  interpreter.getGlobalScope().getSymbolMap();
+					
+					for (String symbolId : symbols.keySet())
 					{
-						long duetime = ((TimerSymbol) symbol).getMilliseconds();
-						String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
+						Symbol symbol = symbols.get(symbolId);
 						
-						// We don't send parameters to the event. 
-						MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, new ArrayList<InterpretedSignal>());
-						DelayEvent dEvent = new DelayEvent(event,duetime);
-						ret.add(dEvent);
+						if (symbol instanceof TimerSymbol)
+						{
+							long duetime = ((TimerSymbol) symbol).getMilliseconds();
+							String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
+							
+							// We don't send parameters to the event. 
+							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, new ArrayList<InterpretedSignal>());
+							DelayEvent dEvent = new DelayEvent(event,duetime);
+							ret.add(dEvent);
+						}
 					}
+					
 				}
-				
-			}
-			else {
-				// TODO: put in the log all the traced errors.
-			}
-						
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}		
-
+				else {
+					// TODO: put in the log all the traced errors.
+				}
+							
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}		
+		}
 		return ret;
 	}
 	

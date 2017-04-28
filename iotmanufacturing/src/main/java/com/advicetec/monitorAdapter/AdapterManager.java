@@ -26,21 +26,25 @@ public class AdapterManager extends Manager implements Runnable
 		messManager = MessageManager.getInstance();
 	}
 
-	public void run() {
-		
+	public void run() 
+	{
+		System.out.println("Starting Adapter Manager run");
 		int number = Integer.valueOf(getProperty("NumAdapterHandlers")); 
 		for (int i = 0; i < number; i++) 
 		{
 			Thread t = new Thread(new AdapterHandler(instance.getQueue(),messManager.getQueue()));
 			t.start();
+			/*
 			try {
 				t.join();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+			*/
 		}
+		
+		System.out.println("Ending Adapter Manager run");
 	}
 	
 }

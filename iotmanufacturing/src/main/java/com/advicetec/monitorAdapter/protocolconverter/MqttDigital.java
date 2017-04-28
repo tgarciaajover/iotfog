@@ -28,7 +28,12 @@ public class MqttDigital implements Translator
 		// The mqtt message for a digital input payload has the following form:
 		// topic | datetime | value
 		
+		System.out.println("content:" + content +"split token:"+ SystemConstants.MSG_SEP);
 		String [] tokens = content.split(SystemConstants.MSG_SEP);
+		
+		for (int i = 0; i < tokens.length; i++) {
+			System.out.println("token" + i + " value:" + tokens[i]);
+		}
 		
 		String dateTimeStr = tokens[1]; 
 		DateTimeFormatter format = new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern(SystemConstants.DATETIME_FORMAT).toFormatter();
@@ -40,14 +45,16 @@ public class MqttDigital implements Translator
 		InterpretedSignal valueSignal;
 		// TODO: replace constant values by constant defined in a property file.
 		if ((value.floatValue() >= 0.0) && (value.floatValue() <= 0.5)){
-			int finalValue = 0;
-			valueSignal = new InterpretedSignal(AttributeType.INT, new Integer(finalValue));
+			System.out.println("value arrive which is false");
+			boolean finalValue = false;
+			valueSignal = new InterpretedSignal(AttributeType.BOOLEAN, new Boolean(finalValue));
 		} else {
-			int finalValue = 1;
-			valueSignal = new InterpretedSignal(AttributeType.INT, new Integer(finalValue));
+			System.out.println("value arrive which is true");
+			boolean finalValue = true;
+			valueSignal = new InterpretedSignal(AttributeType.BOOLEAN, new Boolean(finalValue));
 		}
 		
-		listReturn.add(currentdatetime);
+		// listReturn.add(currentdatetime);
 		listReturn.add(valueSignal);
 		
 		return listReturn;

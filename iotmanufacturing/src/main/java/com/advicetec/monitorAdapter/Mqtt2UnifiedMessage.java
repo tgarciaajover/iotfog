@@ -33,9 +33,14 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 	{
 		// facility/group/device/port
 		String topic = mqttMessage.getTopicName();
-		String[] fields = topic.split(SystemConstants.MSG_SEP);
-		String deviceID = fields[2];
-		String portLabel = fields[3];
+		String[] fields = topic.split(SystemConstants.TOPIC_SEP);
+		
+		for (int i = 0; i < fields.length; i++) {
+			System.out.println("field: "+ i + "value:" + fields[i]);
+		}
+				
+		String deviceID = fields[1];  // Device Id - example Mac Address: 10:10:10:10:10:10 
+		String portLabel = fields[2]; // PortLabel - Example P01 
 
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
 		
@@ -43,15 +48,17 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 		String transformation = confManager.getTransformation(deviceID, portLabel);
 		String className = confManager.getClassName(deviceID, portLabel);
 		
-		String packageStr = this.getClass().getPackage().getName();
+		System.out.println("className param:" + className);
+		String packageStr = this.getClass().getPackage().getName() + ".protocolconverter";
 		String classToLoad = packageStr + "." + className;
-		
-		Class<?> c = Class.forName(classToLoad);
-		Constructor<?> cons = c.getConstructor(String.class);
-		Translator object = (Translator) cons.newInstance();
-		
+
 		List<InterpretedSignal> values;
+
 		try {
+			
+			Class c = Class.forName(classToLoad);
+			Translator object = (Translator) c.newInstance();
+		
 			values = object.translate(mqttMessage.getPayload());
 			// TODO: call the measuredEntititiesFacade by mac address.
 			
@@ -63,13 +70,15 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 				 System.out.println("No Measuring Entity Registered for the device:" + deviceID + " port:" + portLabel);
 				 return null;
 			 }
-				 
-			
 
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block
+			System.out.println("Error in mqtt message" + e.getMessage());
 			e.printStackTrace();
+		}  catch (ClassNotFoundException e){
+			System.out.println("Error Class not found" + e.getMessage());
 		}
+
 		
 		return null;
 	}
