@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
 import com.advicetec.eventprocessor.MeasuredEntityEvent;
 import com.advicetec.language.ast.GlobalScope;
@@ -60,7 +61,7 @@ public class SampleProcessor implements Processor
 					InterpreterSw interpreter = new InterpreterSw();
 					interpreter.process(program,measuringEntity,list);
 					// stores the status of attributes
-					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap());
+					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap(), AttributeOrigin.TRANSFORMATION);
 					entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());
 					
 					Map<String, Symbol> symbols =  interpreter.getGlobalScope().getSymbolMap();
@@ -88,6 +89,7 @@ public class SampleProcessor implements Processor
 							
 			} catch (Exception e1) {
 				// TODO Auto-generated catch block
+				System.out.println("Error:" + e1.getMessage());
 				e1.printStackTrace();
 			}		
 		}

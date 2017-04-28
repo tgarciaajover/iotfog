@@ -43,11 +43,11 @@ public class MeasuringUnit
 	}
 	
 	public boolean equals (Object o){
-		if(o instanceof MeasuringUnit){
+		if (!(o instanceof MeasuringUnit)) {
 			return false;
-		}else{
+		} else {
 			MeasuringUnit other = (MeasuringUnit)o;
-		return ( other.getDescription().equalsIgnoreCase(this.getDescription()) && 
+			return ( other.getDescription().equalsIgnoreCase(this.getDescription()) && 
 				other.getSymbol().equalsIgnoreCase(this.getSymbol()));
 		}
 	}

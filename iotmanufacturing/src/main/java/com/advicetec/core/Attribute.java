@@ -122,4 +122,9 @@ public class Attribute
 		sb.append("origin: ").append(origin.toString());
 		return sb.toString();
 	}
+
+	public void update(Attribute attribute) {
+		this.trend = attribute.getTrend();
+	}
+
 }

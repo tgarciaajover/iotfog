@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.advicetec.MessageProcessor.DelayEvent;
+import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
@@ -54,7 +55,7 @@ public class MeasuredEntityEventProcessor implements Processor
 					interpreter.process(program, measuringEntity, listParams);
 
 					// Store the new attributes and their values.  
-					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap());
+					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap(), AttributeOrigin.BEHAVIOR);
 					entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());
 
 

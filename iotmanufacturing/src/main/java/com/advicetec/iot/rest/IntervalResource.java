@@ -56,16 +56,16 @@ public class IntervalResource extends ServerResource
 			DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MMM-dd H:m:s.n");
 			LocalDateTime dttmFrom = LocalDateTime.parse(o.get("DttmFrom"),format); 
 			LocalDateTime dttmTo = LocalDateTime.parse(o.get("DttmTo"),format);		
-			JSONArray jsonArray = facade.statesByInterval(dttmFrom, dttmTo);
+			String jsonTextRet = facade.statesByInterval(dttmFrom, dttmTo);
 	
-			if (jsonArray.length() == 0) {
+			if (jsonTextRet.length() == 0) {
 				// The requested contact was not found, so set the Status to indicate this.
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
 				result = new JsonRepresentation("");
 			} 
 			else {
 				// The requested contact was found, so add the Contact's XML representation to the response.
-				result = new JsonRepresentation(jsonArray);
+				result = new JsonRepresentation(jsonTextRet);
 				// Status code defaults to 200 if we don't set it.
 			}
 			// Return the representation.  The Status code tells the client if the representation is valid.

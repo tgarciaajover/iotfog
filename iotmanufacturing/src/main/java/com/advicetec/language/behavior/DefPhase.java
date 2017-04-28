@@ -236,7 +236,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 
 	public void exitUnit_dec(BehaviorGrammarParser.Unit_decContext ctx) 
 	{ 
-		defineUnit(ctx.ID().getText(), ctx.STRING().getText());	
+		defineUnit( ctx.getParent(), ctx.id1, ctx.ID().getText(),ctx.STRING().getText());	
 	}
 
 	public void exitAtrib_dec(BehaviorGrammarParser.Atrib_decContext ctx) 
@@ -328,14 +328,18 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		// System.out.println("Define attribute: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 	
-	public void defineUnit(String unitId, String descr )
+	public void defineUnit(ParserRuleContext ctx, Token nameToken, String unitId, String descr )
 	{
 		
 		UnitMeasureSymbol unt = new UnitMeasureSymbol(unitId, descr);
-		
+
 		// Define the symbol in the current scope
-		currentScope.define(unt);
-		
+		if (globals.resolve(unitId) != null){
+			this.error(nameToken, ctx, "Unit of Measure has been defined before: " + unitId);
+		} else {
+			globals.define(unt);
+		}
+
 		// System.out.println("Define unit: " + unt.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 	

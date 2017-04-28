@@ -1,21 +1,28 @@
 package com.advicetec.measuredentitity;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 
 import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.Symbol;
@@ -23,6 +30,7 @@ import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
 import com.advicetec.persistence.StatusStore;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 
 /**
@@ -49,9 +57,14 @@ public final class MeasuredEntityFacade {
 	private TreeMap<LocalDateTime,String> intervalMap;
 	private StateIntervalCache stateCache;
 
-	public MeasuredEntityFacade(MeasuredEntity entity) {
+	public MeasuredEntityFacade(MeasuredEntity entity) 
+	{
 		this.entity = entity;
 		status = new StatusStore();
+		attMap = new HashMap<String,SortedMap<LocalDateTime,String>>();
+		intervalMap = new TreeMap<LocalDateTime,String>();
+		attValueCache= MeasureAttributeValueCache.getInstance();
+		stateCache = StateIntervalCache.getInstance();	
 	}
 
 	public MeasuredEntity getEntity() {
@@ -116,14 +129,6 @@ public final class MeasuredEntityFacade {
 		
 	}
 
-	
-	public MeasuredEntityFacade(){
-		attValueCache = MeasureAttributeValueCache.getInstance();
-		attMap = new HashMap<String, SortedMap<LocalDateTime,String>>();
-		status = new StatusStore();
-		intervalMap = new TreeMap<LocalDateTime, String>();
-	}
-
 	/**
 	 * Returns the amount of attributes stored in the cache.
 	 * @return 
@@ -142,6 +147,9 @@ public final class MeasuredEntityFacade {
 		attValueCache.cacheStore(mav);
 		//map.put(mav.getTimeStamp(), mav.getKey());
 		String attName = mav.getAttr().getName();
+		
+		// The key for a measuredAttributeValue is the name of the attribute plus the timestamp
+		// The key for an attributeValue is the name of the attribute. 
 		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
 		if(internalMap == null){
 			attMap.put(attName,new TreeMap<LocalDateTime, String>());
@@ -177,7 +185,74 @@ public final class MeasuredEntityFacade {
 		return attValueCache.getFromCache(internalMap.get(internalMap.lastKey()));
 	}
 
+	
+	/**
+	 * 
+	 * @param valueMap 
+	 * @param parent Identificator from the MeasuredEntity
+	 * @param parentType Type of the Measured Entity.
+	 */
+	public void importAttributeValues(Map<String, ASTNode> valueMap, Integer parent, MeasuredEntityType parentType) {
 
+		System.out.println("entering importAttributeValues");
+		for (Attribute att : status.getStatus()) {
+			if(valueMap.containsKey(att.getName())){
+				ASTNode node = valueMap.get(att.getName());
+				switch(att.getType()){
+				case BOOLEAN:
+					setAttributeValue(att, node.asBoolean(), parent, parentType);
+					break;
+
+				case INT:
+					setAttributeValue(att, node.asInterger(), parent, parentType);
+					break;
+
+				case DOUBLE:
+					setAttributeValue(att, node.asDouble(), parent, parentType);
+					break;
+
+				case STRING:
+					setAttributeValue(att, node.asString(), parent, parentType);
+					break;
+
+				case DATETIME:
+					setAttributeValue(att, node.asDateTime(), parent, parentType);
+					break;
+
+				case DATE:
+					setAttributeValue(att, node.asDate(), parent, parentType);
+					break;
+
+				case TIME:
+					setAttributeValue(att, node.asTime(), parent, parentType);
+					break;
+
+				default:
+					break;
+				}
+			} else {
+				System.out.println("attr name:" + att.getName());
+			}
+		}
+		
+		System.out.println("leaving importAttributeValues");
+	}
+	
+
+	/**
+	 * Adds to the STATUS a new Attribute Value.
+	 * @param att The Attribute
+	 * @param value The Value
+	 * @param parent Id of the measured entity
+	 * @param parentType Type of measured entity.
+	 */
+	public void setAttributeValue(Attribute att, Object value,Integer parent, MeasuredEntityType parentType) {
+		
+		System.out.println("inserting attribute value");
+		setAttributeValue(new AttributeValue(att.getName(), att, value, parent, parentType));
+		
+	}	
+	
 	/**
 	 * Returns a list of attribute values for a given interval.
 	 * 
@@ -190,16 +265,59 @@ public final class MeasuredEntityFacade {
 			String attrName, LocalDateTime from, LocalDateTime to){
 
 		if(!attMap.containsKey(attrName)){
+			System.out.println("attribute is not in facade");
 			return null;
 		}
 		SortedMap<LocalDateTime,String> internalMap = attMap.get(attrName);
-		String[] keyArray = (String[]) internalMap.subMap(from, to).values().toArray();
+		
+		// System.out.println("elements in attributevalues:" + internalMap.size());
+		//for (Entry<LocalDateTime,String> e : internalMap.entrySet()){
+		//	System.out.println(e.getKey().toString() + e.getValue());
+		//}
+		
+		SortedMap<LocalDateTime,String> subMap = internalMap.subMap(from, to);
+
+		// System.out.println("elements in attributevalues:" + internalMap.size());
+		//for (Entry<LocalDateTime,String> e : subMap.entrySet()){
+		//	System.out.println(e.getKey().toString() + e.getValue());
+		//}
+		
+		Collection<String> keys = subMap.values();
+
+		//for (String key : keys){
+		//	System.out.println(key);
+		// }		
+
+		String[] keyArray = keys.toArray( new String[keys.size()]);
+		
+		// System.out.println("getByIntervalByAttributeName - size: " + keyArray.length);
+		
 		return getFromCache(keyArray);
 	}
 
-	public JSONArray getByIntervalByAttributeNameJSON(
+	public String getByIntervalByAttributeNameJSON(
 			String attrName, LocalDateTime from, LocalDateTime to){
-		return new JSONArray(getByIntervalByAttributeName(attrName, from, to));
+				
+		ArrayList<AttributeValue> ret = getByIntervalByAttributeName(attrName, from, to);
+
+		ObjectMapper mapper = new ObjectMapper();
+		String jsonText=null;
+		
+		try {
+			jsonText = mapper. writeValueAsString(ret);
+		
+		} catch (JsonGenerationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return jsonText;
 	}
 	
 	/**
@@ -246,8 +364,8 @@ public final class MeasuredEntityFacade {
 		return maValues;
 	}
 
-	public void importSymbols(Map<String, Symbol> symbolMap) {
-		status.importSymbols(symbolMap);
+	public void importSymbols(Map<String, Symbol> symbolMap, AttributeOrigin origin) throws Exception {
+		status.importSymbols(symbolMap, origin);
 	}
 	
 	public Collection<Attribute> getStatus(){
@@ -263,7 +381,8 @@ public final class MeasuredEntityFacade {
 	}
 	
 	public void importAttributeValues(Map<String, ASTNode> valueMap) {
-		status.importAttributeValues(valueMap,entity.getId(),entity.getType());
+		importAttributeValues(valueMap,entity.getId(),entity.getType());
+		
 	}
 	
 	public Collection<AttributeValue> getAttributeValues(){
@@ -290,12 +409,55 @@ public final class MeasuredEntityFacade {
 	 * @param to
 	 * @return
 	 */
-	public JSONArray statesByInterval(LocalDateTime from, LocalDateTime to){
-		return new JSONArray(getStatesByInterval(from, to));
+	public String statesByInterval(LocalDateTime from, LocalDateTime to){
+		
+		ArrayList<StateInterval> intervals = getStatesByInterval(from, to);
+
+		ObjectMapper mapper = new ObjectMapper();
+		String jsonText=null;
+		
+		try {
+			
+			jsonText = mapper. writeValueAsString(intervals);
+		
+		} catch (JsonGenerationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return jsonText;
+
 	}
 	
-	public JSONArray statesByInterval(TimeInterval interval){
-		return new JSONArray(getStatesByInterval(interval.getStart(), interval.getEnd()));
+	public String statesByInterval(TimeInterval interval){
+		ArrayList<StateInterval> intervals = getStatesByInterval(interval.getStart(), interval.getEnd());
+
+		ObjectMapper mapper = new ObjectMapper();
+		String jsonText=null;
+
+		try {
+			
+			jsonText = mapper. writeValueAsString(intervals);
+		
+		} catch (JsonGenerationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return jsonText;
+
 	}
 		
 		

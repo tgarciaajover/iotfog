@@ -72,7 +72,7 @@ public class AttributeValue
 	public String getKey() {
 		return key;
 	}
-
+	
 	public Attribute getAttr()
 	{
 		return attr;

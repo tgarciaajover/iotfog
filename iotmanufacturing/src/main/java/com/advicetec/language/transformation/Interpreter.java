@@ -197,85 +197,81 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	    currentSpace.put(id, new ASTNode(new Object()));         // store
 		return ASTNode.VOID;	
 	}
-	
+
 	public ASTNode visitAtrib_dec(TransformationGrammarParser.Atrib_decContext ctx) 
 	{ 
 		String id = ctx.id1.getText();
 		System.out.println("visitAtrib_dec:" + id);
+        getGlobalSpace().put(id, new ASTNode(new Object()));         // store
 		
+        AttributeSymbol toAssign = (AttributeSymbol) currentScope.resolve(id);
 		// the declaration includes an assignment
 		if (ctx.ASG() != null)
+			return AssignAttribute(toAssign, ctx);
+		else
+			return ASTNode.VOID;	
+	}	
+	
+
+	public ASTNode AssignAttribute(AttributeSymbol toAssign, TransformationGrammarParser.Atrib_decContext ctx)
+	{
+		
+		// It verifies whether the expression correspond to another attribute. In such 
+		// case, it checks whether or not both attributes manage the same units.
+		
+		String id2 = ctx.expression().getText();
+		Symbol s = currentScope.resolve(id2);
+		if (s instanceof AttributeSymbol )
 		{
-			AttributeSymbol sysAttr = (AttributeSymbol) currentScope.resolve(id);
+			AttributeSymbol s1 = (AttributeSymbol) s;
 			
-			// It verifies if the expression correspond to another attribute. In such 
-			// case check whether or not they manages the same units.
-			String id2 = ctx.expression().getText();
-			Symbol s = currentScope.resolve(id2);
-			if (s instanceof AttributeSymbol )
+			System.out.println("s1 unit:" + s1.getUnitOfMeasure() + "sysattr : " + toAssign.getUnitOfMeasure());
+			
+			if (s1.getUnitOfMeasure() == toAssign.getUnitOfMeasure() )
 			{
-				AttributeSymbol s1 = (AttributeSymbol) s;
-				
-				// System.out.println("s1 unit:" + s1.getUnitOfMeasure() + "sysattr : " + sysAttr.getUnitOfMeasure());
-				
-				if (s1.getUnitOfMeasure() != sysAttr.getUnitOfMeasure() )
-				{
-			        ASTNode value = this.visit(ctx.expression());
 
-			        Symbol symbol = currentScope.resolve(id) ;
-			        MemorySpace space = null;
-			        
-			        if ((symbol instanceof VariableSymbol) || (symbol instanceof AttributeSymbol)) 
-			        {
-				        space = getSpaceWithSymbol(id);
-				        if ( space==null ){ 
-				        	space = currentSpace; // create in current space
-				        }
-			        } else {
-			        	throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + symbol.getName());
-			        }
-			        
-			        VerifyAssign(symbol, value);
-			        space.put(id, value);         // store
-			        			        
-			        return value;						
-				}
-				else 
-				{
-					// TODO: implement conversion rates.
-					throw new RuntimeException("cannot assign attribute with different units of measure:" );
-				}
-			}
-			else
-			{
-				System.out.println("before attribute assign"); 
-				ASTNode value = this.visit(ctx.expression());
+		        ASTNode value = this.visit(ctx.expression());
 
-		        Symbol symbol = currentScope.resolve(id) ;
 		        MemorySpace space = null;
 		        
-		        if ((symbol instanceof VariableSymbol) || (symbol instanceof AttributeSymbol)) 
-		        {
-			        space = getSpaceWithSymbol(id);
-			        if ( space==null ){ 
-			        	space = currentSpace; // create in current space
-			        }
-		        } else {
-		        	throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + symbol.getName());
-		        }
+			    space = getSpaceWithSymbol(toAssign.getName());
+			    if ( space==null ){ 
+			    	space = getGlobalSpace(); // create in current space
+			    }
 		        
-		        VerifyAssign(symbol, value);
-		        space.put(id, value);         // store
-				
-				return value;					
+		        VerifyAssign(toAssign, value);
+		        space.put(toAssign.getName(), value);         // store
+		        			        
+		        return value;						
+
+			
+			}
+			else 
+			{
+				// TODO: implement conversion rates.
+				throw new RuntimeException("cannot assign attribute with different units of measure:" );
 			}
 		}
 		else
 		{
-	        currentSpace.put(id, new ASTNode(new Object()));         // store
-			return ASTNode.VOID;	
+		    ASTNode value = this.visit(ctx.expression());
+		    
+	        MemorySpace space = null;
+	        
+	        space = getSpaceWithSymbol(toAssign.getName());
+	        if ( space==null ){ 
+	        	space = getGlobalSpace(); // create in current space
+	        }
+	        
+	        VerifyAssign(toAssign, value);
+	        space.put(toAssign.getName(), value);         // store
+
+		    return value;					
 		}
+		
 	}
+
+	
 	
 	@Override 
 	public ASTNode visitAssign(TransformationGrammarParser.AssignContext ctx) 

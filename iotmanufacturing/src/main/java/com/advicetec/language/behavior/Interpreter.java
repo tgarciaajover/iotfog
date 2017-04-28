@@ -326,7 +326,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	{ 
 		String id = ctx.id1.getText();
 		System.out.println("visitAtrib_dec:" + id);
-        currentSpace.put(id, new ASTNode(new Object()));         // store
+        getGlobalSpace().put(id, new ASTNode(new Object()));         // store
 		
         AttributeSymbol toAssign = (AttributeSymbol) currentScope.resolve(id);
 		// the declaration includes an assignment
@@ -351,43 +351,43 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		    	case tINT:
 		    		Integer [] inarray = new Integer[numElements];
 		    		Arrays.fill(inarray, 0);
-		    		currentSpace.put(id, new ASTNode(inarray));
+		    		getGlobalSpace().put(id, new ASTNode(inarray));
 		    		break;
 		    	
 		    	case tFLOAT:
 		    		Double [] dbarray = new Double[numElements];
 		    		Arrays.fill(dbarray, 0.0);
-		    		currentSpace.put(id, new ASTNode(dbarray));
+		    		getGlobalSpace().put(id, new ASTNode(dbarray));
 		    		break;
 		    	
 		    	case tSTRING:
 		    		String [] starray = new String[numElements];
 		    		Arrays.fill(starray, "");
-		    		currentSpace.put(id, new ASTNode(starray));
+		    		getGlobalSpace().put(id, new ASTNode(starray));
 		    		break;
 		    	
 		    	case tBOOL:
 		    		Boolean [] boarray = new Boolean[numElements];
 		    		Arrays.fill(boarray, false);
-		    		currentSpace.put(id, new ASTNode(boarray));
+		    		getGlobalSpace().put(id, new ASTNode(boarray));
 		    		break;
 		    	
 		    	case tDATETIME:
 		    		LocalDateTime [] dtarray = new LocalDateTime[numElements];
 		    		Arrays.fill(dtarray, LocalDateTime.MIN);
-		    		currentSpace.put(id, new ASTNode(dtarray));
+		    		getGlobalSpace().put(id, new ASTNode(dtarray));
 		    		break;
 		    	
 		    	case tDATE:
 		    		LocalDate [] darray = new LocalDate[numElements];
 		    		Arrays.fill(darray, LocalDate.MIN);
-		    		currentSpace.put(id, new ASTNode(darray));
+		    		getGlobalSpace().put(id, new ASTNode(darray));
 		    		break;
 		    	
 		    	case tTIME:
 		    		LocalTime [] tarray = new LocalTime[numElements];
 		    		Arrays.fill(tarray, LocalDate.MIN);
-		    		currentSpace.put(id, new ASTNode(new LocalTime[numElements]));
+		    		getGlobalSpace().put(id, new ASTNode(new LocalTime[numElements]));
 		    		break;
 		    	
 		    	default:
@@ -441,7 +441,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 			
 			System.out.println("s1 unit:" + s1.getUnitOfMeasure() + "sysattr : " + toAssign.getUnitOfMeasure());
 			
-			if (s1.getUnitOfMeasure() != toAssign.getUnitOfMeasure() )
+			if (s1.getUnitOfMeasure() == toAssign.getUnitOfMeasure() )
 			{
 
 		        ASTNode value = this.visit(ctx.expression());
@@ -450,7 +450,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		        
 			    space = getSpaceWithSymbol(toAssign.getName());
 			    if ( space==null ){ 
-			    	space = currentSpace; // create in current space
+			    	space = getGlobalSpace(); // create in current space
 			    }
 		        
 		        VerifyAssign(toAssign, value);
@@ -474,7 +474,7 @@ public class Interpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	        
 	        space = getSpaceWithSymbol(toAssign.getName());
 	        if ( space==null ){ 
-	        	space = currentSpace; // create in current space
+	        	space = getGlobalSpace(); // create in current space
 	        }
 	        
 	        VerifyAssign(toAssign, value);

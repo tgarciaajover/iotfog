@@ -16,6 +16,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.MeasuringUnit;
@@ -50,17 +51,32 @@ public class StatusStore {
 	 * @param attribute Attribute Value.
 	 * @return The previous value for that Attribute of null if there is not previous.
 	 */
-	public void setAttribute( Attribute attribute)throws Exception{
+	public void setAttribute( Attribute attribute) throws Exception{
 
 		// if the attribute already exists in the list, then verify units and type
 		if(attributes.containsKey(attribute.getName())){
 			Attribute old = attributes.get(attribute.getName());
-			if( !attribute.getType().equals(old.getType()) || !attribute.getUnit().equals(old.getUnit())){
+						
+			
+			if( !attribute.getType().equals(old.getType())){
 				throw new Exception("Error -- attribute has different unit or type");
+			} else if ((attribute.getUnit() == null) && (old.getUnit() != null)){ 
+				throw new Exception("Error -- attribute has different unit or type");
+			} else if (
+					(attribute.getUnit() != null) && 
+					 (old.getUnit() != null)){
+				     boolean equal = (attribute.getUnit()).equals(old.getUnit());
+					 if (equal==false){
+						 throw new Exception("Error -- attribute has different unit or type");
+					 }
+				
+			}  else {
+				old.update(attribute);
 			}
+		} else { 
+			// insert the value
+			attributes.put(attribute.getName(), attribute);
 		}
-		// updates the value
-		attributes.put(attribute.getName(), attribute);
 	}
 
 
@@ -84,9 +100,11 @@ public class StatusStore {
 	 * @param measuringEntity
 	 * @param map 
 	 * @param attrMap
+	 * @throws Exception 
 	 */
-	public void importSymbols( Map<String, Symbol> symbols ) {
+	public void importSymbols( Map<String, Symbol> symbols, AttributeOrigin origin ) throws Exception {
 
+		System.out.println("entering importSymbol");
 		for (Map.Entry<String, Symbol> entry : symbols.entrySet()) {
 			if(entry.getValue() instanceof AttributeSymbol){
 				AttributeSymbol attSymbol = (AttributeSymbol) entry.getValue(); 
@@ -94,12 +112,17 @@ public class StatusStore {
 
 				String attrUnitName = attSymbol.getUnitOfMeasure();
 
+				System.out.println("Attribute Name:" + attrName + "Measure Unit:" + attrUnitName);
+				
 				// MeasuringUnit
 				MeasuringUnit measurinUnit = null;
-				if(symbols.containsKey(attrUnitName) && 
-						(symbols.get(attrUnitName) instanceof UnitMeasureSymbol)){
-					UnitMeasureSymbol unitMeasureSymbol = (UnitMeasureSymbol) symbols.get(attrUnitName); 
-					measurinUnit = new MeasuringUnit(unitMeasureSymbol.getName(), unitMeasureSymbol.getDescription());
+				if(symbols.containsKey(attrUnitName)){
+					if ((symbols.get(attrUnitName) instanceof UnitMeasureSymbol)){
+						UnitMeasureSymbol unitMeasureSymbol = (UnitMeasureSymbol) symbols.get(attrUnitName); 
+						measurinUnit = new MeasuringUnit(unitMeasureSymbol.getName(), unitMeasureSymbol.getDescription());
+					} 
+			    } else {
+			    	System.out.println("Unit not found in the symbol table");
 				}
 
 				// AttributeType
@@ -132,57 +155,14 @@ public class StatusStore {
 
 				// finally creates the attribute.
 				Attribute newAttr = new Attribute(attrName, attributeType, measurinUnit);
-				attributes.put(attrName, newAttr);
+				newAttr.setOrigin(origin);
+				setAttribute(newAttr);
 			}
 		}
+		
+		System.out.println("leaving importSymbol");
 	}
 
-	/**
-	 * 
-	 * @param valueMap 
-	 * @param parent Identificator from the MeasuredEntity
-	 * @param parentType Type of the Measured Entity.
-	 */
-	public void importAttributeValues(Map<String, ASTNode> valueMap, Integer parent, MeasuredEntityType parentType) {
-
-		for (Attribute att : attributes.values()) {
-			if(valueMap.containsKey(att.getName())){
-				ASTNode node = valueMap.get(att.getName());
-				switch(att.getType()){
-				case BOOLEAN:
-					setAttributeValue(att, node.asBoolean(), parent, parentType);
-					break;
-
-				case INT:
-					setAttributeValue(att, node.asInterger(), parent, parentType);
-					break;
-
-				case DOUBLE:
-					setAttributeValue(att, node.asDouble(), parent, parentType);
-					break;
-
-				case STRING:
-					setAttributeValue(att, node.asString(), parent, parentType);
-					break;
-
-				case DATETIME:
-					setAttributeValue(att, node.asDateTime(), parent, parentType);
-					break;
-
-				case DATE:
-					setAttributeValue(att, node.asDate(), parent, parentType);
-					break;
-
-				case TIME:
-					setAttributeValue(att, node.asTime(), parent, parentType);
-					break;
-
-				default:
-					break;
-				}
-			}
-		}
-	}
 
 
 	/**
@@ -197,16 +177,7 @@ public class StatusStore {
 		values.put(attributeValue.getKey(), attributeValue);
 	}
 
-	/**
-	 * Adds to the STATUS a new Attribute Value.
-	 * @param att The Attribute
-	 * @param value The Value
-	 * @param parent Id of the measured entity
-	 * @param parentType Type of measured entity.
-	 */
-	public void setAttributeValue(Attribute att, Object value,Integer parent, MeasuredEntityType parentType) {
-		setAttributeValue(new AttributeValue(att.getName(), att, value, parent, parentType));
-	}
+
 
 	public Collection<AttributeValue> getAttributeValues(){
 		return values.values();

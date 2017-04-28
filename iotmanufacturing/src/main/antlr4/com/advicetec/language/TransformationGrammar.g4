@@ -47,7 +47,7 @@ var_dec		: VARIABLE type ID (ASG expression)? SEMICOLON
 atrib_dec 	: ATTRIBUTE type id1=ID  (ASG expression)? (UNIT id2=ID)? (TREND)? SEMICOLON
 	;
 
-unit_dec	: UNIT ID STRING SEMICOLON
+unit_dec	: UNIT id1=ID STRING SEMICOLON
 	; 
 
 assign 		: ID ASG expression SEMICOLON
