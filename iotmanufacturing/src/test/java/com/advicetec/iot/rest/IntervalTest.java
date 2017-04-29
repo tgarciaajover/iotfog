@@ -8,10 +8,10 @@ import java.time.LocalDateTime;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
+import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.measuredentitity.MeasuringState;
-import com.advicetec.measuredentitity.ReasonCode;
 import com.advicetec.measuredentitity.StateInterval;
 
 public class IntervalTest {
@@ -37,7 +37,7 @@ public class IntervalTest {
 
 	@Test
 	public void jsonReasonCode(){
-		ReasonCode reason = new ReasonCode("001", "Reason 001");
+		ReasonCode reason = new ReasonCode(1, "Reason 001");
 		String json = reason.toJson();
 		System.out.println(json);
 		System.out.println(reason.toString());
@@ -78,7 +78,7 @@ public class IntervalTest {
 		TimeInterval int1 = new TimeInterval(s, e);
 		
 		MeasuringState state = MeasuringState.OPERATING;
-		ReasonCode reason = new ReasonCode("001", "Reason 001");
+		ReasonCode reason = new ReasonCode(1, "Reason 001");
 		
 		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE);
 		

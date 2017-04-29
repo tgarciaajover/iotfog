@@ -9,8 +9,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import com.advicetec.configuration.LocalDateTimeDeserializer;
-import com.advicetec.configuration.LocalDateTimeSerializer;
+import com.advicetec.core.serialization.LocalDateTimeDeserializer;
+import com.advicetec.core.serialization.LocalDateTimeSerializer;
 
 public final class TimeInterval 
 {

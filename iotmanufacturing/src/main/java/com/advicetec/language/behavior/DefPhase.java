@@ -167,7 +167,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 			unitTimer = TimeUnit.HOURS;
 		}
 		
-		int tunit = Integer.valueOf(ctx.INT().getText());
+		int tunit = Integer.valueOf(ctx.time.getText());
 		String behaviorName = ctx.pack.getText();
 		
 		TimerSymbol tSymbol = new TimerSymbol(behaviorName,unitTimer,tunit, false);
@@ -191,7 +191,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 			unitTimer = TimeUnit.HOURS;
 		}
 		
-		int tunit = Integer.valueOf(ctx.INT().getText());
+		int tunit = Integer.valueOf(ctx.time.getText());
 		String behaviorName = ctx.pack.getText();
 		
 		TimerSymbol tSymbol = new TimerSymbol(behaviorName,unitTimer,tunit, true);

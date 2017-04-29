@@ -20,10 +20,10 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.json.JSONArray;
 
 import com.advicetec.configuration.ConfigurationObject;
-import com.advicetec.configuration.LocalDateTimeDeserializer;
-import com.advicetec.configuration.LocalDateTimeSerializer;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.TimeInterval;
+import com.advicetec.core.serialization.LocalDateTimeDeserializer;
+import com.advicetec.core.serialization.LocalDateTimeSerializer;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
 

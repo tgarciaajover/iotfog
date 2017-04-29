@@ -44,7 +44,7 @@ sentence : block									# ref_block
 var_dec		: VARIABLE type ID (ASG expression)? SEMICOLON
 	;
 
-atrib_dec 	: ATTRIBUTE type id1=ID  (ASG expression)? (UNIT id2=ID)? (TREND)? SEMICOLON
+atrib_dec 	: ATTRIBUTE (TREND)? type id1=ID  (ASG expression)? (UNIT id2=ID)? SEMICOLON
 	;
 
 unit_dec	: UNIT id1=ID STRING SEMICOLON
@@ -59,10 +59,10 @@ display  	: DISPLAY PR_OPN expression PR_CLS SEMICOLON
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
 	;
 
-timer		: TIMER PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
+timer		: TIMER PR_OPN TIMEUNIT COMMA time=(INT | INT1 | DIGIT | INT4 ) COMMA pack=ID PR_CLS SEMICOLON
 	;
 
-repeat		: REPEAT PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
+repeat		: REPEAT PR_OPN TIMEUNIT COMMA time=(INT | INT1 | DIGIT | INT4 ) COMMA pack=ID PR_CLS SEMICOLON
 	;
 	
 block :  BR_OPN (sentence)* BR_CLS  // Possibly Empty Block of Sentences.
@@ -85,6 +85,7 @@ expression : expression EXPO expression  							# Expon
 			| MINUS expression                     					# unaryMinusExpr
  			| NOT expression                        				# notExpr
 			| token													# ref_split 
+			| status												# ref_status
 		    | expression op=( MULT | DIVI | MOD ) expression  		# Mult
 			| expression op=(PLUS | MINUS) expression  				# AddSub
  			| expression op=(LTEQ | GTEQ | LT | GT) expression		# relationalExpr
@@ -96,7 +97,10 @@ expression : expression EXPO expression  							# Expon
 
 token 		: TOKEN PR_OPN ex1=expression ',' ex2=expression ',' ex3=expression PR_CLS
 	;
-						
+
+status		: STATUS DOT ID
+	;
+	
 atom :		ID								# Var
 			| TEXT_DATE						# Date
 			| TEXT_TIME						# Time
@@ -159,6 +163,7 @@ UNIT 		: 'unit';
 DISPLAY 	: 'display';
 SAVE		: 'save';
 TOKEN 		: 'token';
+STATUS 		: 'STATUS';
 TREND		: 'trend';
 ROUND 		: 'round'; 
 IMPORT 		: 'import'; 
@@ -166,8 +171,8 @@ AS 			: 'as';
 TIMER		: 'timer';
 REPEAT		: 'repeat';
 
-OR 		: 	'||';
-AND 	: 	'&&';
+OR 		: 	'OR';
+AND 	: 	'AND';
 EQ 		: 	'==';
 NEQ 	: 	'!=';
 GT 		: 	'>';
