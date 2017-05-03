@@ -43,7 +43,9 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 			@JsonProperty("generatorType")MeasuredEntityType parentType, 
 			@JsonProperty("timeStamp") LocalDateTime timeStamp) 
 	{
-		super(type.getName() + ":" + timeStamp.toString(), type, value, parent, parentType );
+		// key = generator + attrName + timeStamp
+		super(Integer.toString(parent)+ ":" + type.getName()+":"+ timeStamp.toString(), 
+				type, value, parent, parentType );
 		this.timeStamp = timeStamp;
 	}
 

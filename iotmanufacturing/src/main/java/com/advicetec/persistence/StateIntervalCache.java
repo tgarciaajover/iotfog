@@ -7,12 +7,17 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-import com.advicetec.core.AttributeValue;
-import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.StateInterval;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+
+/**
+ * Represents a cache for storing State Interval Objects.<br>
+ * 
+ * @author user
+ *
+ */
 public class StateIntervalCache {
 	
 	private final static String DB_URL = "jdbc:postgresql://localhost:5432/iotajover";
@@ -27,8 +32,7 @@ public class StateIntervalCache {
 	private static Cache<String, StateInterval> cache;
 	PreparedStatement preparedStatement;
 
-	private StateIntervalCache(){
-	}
+	private StateIntervalCache(){ /* do nothing */	}
 	
 	
 	public static void setCache(int initialCapacity, int maxSize){
@@ -51,6 +55,7 @@ public class StateIntervalCache {
 		return cache; 
 	}
 
+	
 	/**
 	 * Stores an state interval and its measuring entity name. 
 	 * @param interval
@@ -60,6 +65,7 @@ public class StateIntervalCache {
 		cache.put(interval.getKey(), interval);
 	}
 
+	
 	/**
 	 * Given a key, it returns an element from the cache if it is there.
 	 * If the value is not in the cache, this method returns NULL.
@@ -70,8 +76,9 @@ public class StateIntervalCache {
 		return cache.getIfPresent(key);
 	}
 
+	
 	/**
-	 * Stores the interval into the database.
+	 * Stores a single State Interval into the database.
 	 * @param interval
 	 */
 	public void commit(StateInterval interval){
@@ -113,6 +120,10 @@ public class StateIntervalCache {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param keys
+	 */
 	public void bulkCommit(List<String> keys){
 		try {
 			Class.forName(DB_DRIVER);
@@ -126,9 +137,10 @@ public class StateIntervalCache {
 			}
 			pst.executeBatch();
 			conn.commit();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
+			// here the 
+			
+		} catch (ClassNotFoundException | SQLException e) {
+			System.err.println("Error: "+ e.getMessage());
 			e.printStackTrace();
 		}
 		finally{

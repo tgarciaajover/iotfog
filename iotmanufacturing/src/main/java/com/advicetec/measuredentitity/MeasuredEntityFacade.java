@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -18,7 +17,6 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.w3c.dom.Document;
 
 import com.advicetec.core.Attribute;
@@ -30,7 +28,6 @@ import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
 import com.advicetec.persistence.StatusStore;
-import com.fasterxml.jackson.core.JsonGenerator;
 
 
 /**
@@ -53,7 +50,9 @@ public final class MeasuredEntityFacade {
 	private Map<String,SortedMap<LocalDateTime,String>> attMap;
 	private MeasureAttributeValueCache attValueCache;
 	
-	// This map stores endTime, startTime,
+	/** 
+	 * This map stores intervals for states: endTime, startTime.
+	 */
 	private TreeMap<LocalDateTime,String> intervalMap;
 	private StateIntervalCache stateCache;
 
@@ -77,19 +76,6 @@ public final class MeasuredEntityFacade {
 
 	public MeasuredEntityType getType(){
 		return entity.getType();
-	}
-
-	/**
-	 * Returns TRUE if the attrib
-	 * @param attr
-	 * @return
-	 */
-	public boolean existsAttribute(AttributeMeasuredEntity attr){
-		return entity.getAttributeList().contains(attr);
-	}
-
-	public boolean registerMeasureEntityAttibute(AttributeMeasuredEntity newAttribute){
-		return entity.registerMeasureEntityAttibute(newAttribute);
 	}
 	
 	/**
@@ -123,17 +109,15 @@ public final class MeasuredEntityFacade {
 	public void registerAttributeValue(Attribute attribute, Object value, LocalDateTime timeStamp) throws Exception{
 		MeasuredAttributeValue measure = entity.getMeasureAttributeValue(attribute, value, timeStamp);
 		MeasureAttributeValueCache.getInstance().cacheStore(measure);
-		
 		// update status
 		status.setAttribute(attribute);
-		
 	}
 
 	/**
 	 * Returns the amount of attributes stored in the cache.
 	 * @return 
 	 */
-	public int size(){
+	public int getNumberOfAttributes(){
 		return attMap.size();
 	}
 
@@ -145,7 +129,7 @@ public final class MeasuredEntityFacade {
 	 */
 	public void store(MeasuredAttributeValue mav){
 		attValueCache.cacheStore(mav);
-		//map.put(mav.getTimeStamp(), mav.getKey());
+
 		String attName = mav.getAttr().getName();
 		
 		// The key for a measuredAttributeValue is the name of the attribute plus the timestamp
@@ -307,13 +291,10 @@ public final class MeasuredEntityFacade {
 			jsonText = mapper. writeValueAsString(ret);
 		
 		} catch (JsonGenerationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -421,13 +402,10 @@ public final class MeasuredEntityFacade {
 			jsonText = mapper. writeValueAsString(intervals);
 		
 		} catch (JsonGenerationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -446,13 +424,10 @@ public final class MeasuredEntityFacade {
 			jsonText = mapper. writeValueAsString(intervals);
 		
 		} catch (JsonGenerationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -477,7 +452,7 @@ public final class MeasuredEntityFacade {
 	}
 
 	/**
-	 * Commands to the cache to store their attribute values into the database 
+	 * Commands to store all attribute values from cache into the database 
 	 * and clean the cache.
 	 */
 	public void storeAllAttributeValues(){
@@ -497,7 +472,7 @@ public final class MeasuredEntityFacade {
 	}
 	
 	/**
-	 * Commands to the cache to store all intervals into the database 
+	 * Commands to store all State intervals from the cache into the database 
 	 * and clean the cache.
 	 */
 	public void storeAllStateIntervals(){

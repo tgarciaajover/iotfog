@@ -128,7 +128,7 @@ public class MeasureAttributeValueCache {
 					pst.addBatch();
 				}
 			}
-			pst.executeBatch();
+			int[] count =pst.executeBatch();
 			conn.commit();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
