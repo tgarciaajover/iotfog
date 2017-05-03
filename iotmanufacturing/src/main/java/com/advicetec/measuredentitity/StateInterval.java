@@ -9,6 +9,7 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.Storable;
 
@@ -86,7 +87,7 @@ public final class StateInterval implements Storable
 			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
 			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
 			pstmt.setString(5, getState().getName() );      			// Measuring Status
-			pstmt.setString(6, getReason().getId() );      			// Measuring Status
+			pstmt.setInt(6, getReason().getId() );      			// Measuring Status
 			
 			pstmt.addBatch();
 

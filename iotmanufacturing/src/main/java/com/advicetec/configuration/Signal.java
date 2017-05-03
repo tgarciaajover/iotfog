@@ -11,6 +11,9 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import com.advicetec.core.serialization.LocalDateTimeDeserializer;
+import com.advicetec.core.serialization.LocalDateTimeSerializer;
+
 public class Signal extends ConfigurationObject
 {
 

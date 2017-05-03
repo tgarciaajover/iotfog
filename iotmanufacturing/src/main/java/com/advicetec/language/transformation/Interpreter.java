@@ -14,6 +14,7 @@ import java.util.Stack;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.Token;
 
+import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseVisitor;
@@ -271,6 +272,56 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 	}
 
+	public ASTNode visitStatus(TransformationGrammarParser.StatusContext ctx) 
+	{ 
+		String attributeId = ctx.ID().getText(); 
+		AttributeValue value = (AttributeValue) facade.getNewestByAttributeName(attributeId);
+		Symbol symbol = currentScope.resolve(attributeId);
+		Object valObj = value.getValue();
+				
+		switch (value.getAttr().getType()){
+		case INT:
+			if (symbol.getType() != Symbol.Type.tINT){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type int" );
+			}
+			break;
+		case DATETIME:
+			if (symbol.getType() != Symbol.Type.tDATETIME){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type datetime" );
+			}
+			break;
+		case DOUBLE:
+			if (symbol.getType() != Symbol.Type.tFLOAT){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type float" );
+			}
+			break;
+		case STRING:
+			if (symbol.getType() != Symbol.Type.tSTRING){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type string" );
+			}
+			break;
+		case BOOLEAN:
+			if (symbol.getType() != Symbol.Type.tBOOL){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type boolean" );
+			}
+			break;
+		case DATE:
+			if (symbol.getType() != Symbol.Type.tDATE){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type date" );
+			}
+			break;
+		case TIME:
+			if (symbol.getType() != Symbol.Type.tTIME){
+				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type time" );
+			}
+			break;
+		case VOID:
+			throw new RuntimeException("the attribute given: " + attributeId + " is registered in the status as type void" );
+		}
+		
+		return new ASTNode(valObj); 
+				
+	}
 	
 	
 	@Override 

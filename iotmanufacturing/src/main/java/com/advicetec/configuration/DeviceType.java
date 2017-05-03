@@ -20,6 +20,9 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 
+import com.advicetec.core.serialization.LocalDateTimeDeserializer;
+import com.advicetec.core.serialization.LocalDateTimeSerializer;
+
 public class DeviceType extends ConfigurationObject
 {
 	

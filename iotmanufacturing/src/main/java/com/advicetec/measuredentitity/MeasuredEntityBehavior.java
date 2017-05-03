@@ -12,8 +12,8 @@ import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.advicetec.configuration.ConfigurationObject;
-import com.advicetec.configuration.LocalDateTimeDeserializer;
-import com.advicetec.configuration.LocalDateTimeSerializer;
+import com.advicetec.core.serialization.LocalDateTimeDeserializer;
+import com.advicetec.core.serialization.LocalDateTimeSerializer;
 
 public class MeasuredEntityBehavior extends  ConfigurationObject
 {

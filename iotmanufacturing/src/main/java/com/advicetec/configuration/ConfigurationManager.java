@@ -11,6 +11,7 @@ public class ConfigurationManager extends Configurable
 	private SignalContainer signals;
 	private DeviceTypeContainer deviceTypes;
 	private MonitoringDeviceContainer monitoringDevices;
+	private ReasonCodeContainer reasonCodes;
 
     public static ConfigurationManager getInstance()
     {
@@ -47,6 +48,7 @@ public class ConfigurationManager extends Configurable
 		monitoringDevices.addReference("Signal", signals);
 		monitoringDevices.addReference("DeviceType", deviceTypes);
 		
+		reasonCodes = new ReasonCodeContainer(server, user, password);
 	}
 
 	
@@ -57,6 +59,7 @@ public class ConfigurationManager extends Configurable
 		this.signals.loadContainer();
 		this.deviceTypes.loadContainer();
 		this.monitoringDevices.loadContainer();
+		this.reasonCodes.loadContainer();
 	}
 	
 	public SignalUnitContainer getSignalUnitContainer()
@@ -82,6 +85,11 @@ public class ConfigurationManager extends Configurable
 	public MonitoringDeviceContainer getMonitoringDeviceContainer()
 	{
 		return this.monitoringDevices;
+	}
+	
+	public ReasonCodeContainer getReasonCodeContainer()
+	{
+		return this.reasonCodes;
 	}
 	
 	public MonitoringDevice getMonitoringDevice(String macAddress)

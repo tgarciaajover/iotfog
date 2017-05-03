@@ -64,7 +64,7 @@ assign_vec 	: ID '[' numElement=INT ']' ASG expression SEMICOLON
 var_dec 	: VARIABLE type ID (ASG expression)? SEMICOLON
 	;
 
-atrib_dec 	: ATTRIBUTE type id1=ID  (ASG expression)? (UNIT id2=ID)?  (TREND)? SEMICOLON
+atrib_dec 	: ATTRIBUTE (TREND)? type id1=ID  (ASG expression)? (UNIT id2=ID)?  SEMICOLON
 	;
 
 unit_dec	: UNIT id1=ID STRING SEMICOLON
@@ -82,15 +82,15 @@ display  	: DISPLAY PR_OPN expression PR_CLS SEMICOLON
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
 	;
 
-count_over_time : COUNT_OVER_TIME PR_OPN ID COMMA TIMEUNIT COMMA range=INT PR_CLS 
+count_over_time : COUNT_OVER_TIME PR_OPN ID COMMA TIMEUNIT COMMA range=(INT | INT1 | DIGIT | INT4 ) PR_CLS 
 	;
-max_over_time : MAX_OVER_TIME PR_OPN ID COMMA TIMEUNIT COMMA range=INT PR_CLS
-	;
-
-timer		: TIMER PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
+max_over_time : MAX_OVER_TIME PR_OPN ID COMMA TIMEUNIT COMMA range=(INT | INT1 | DIGIT | INT4 ) PR_CLS
 	;
 
-repeat		: REPEAT PR_OPN TIMEUNIT COMMA INT COMMA pack=ID PR_CLS SEMICOLON
+timer		: TIMER PR_OPN TIMEUNIT COMMA time=(INT | INT1 | DIGIT | INT4 ) COMMA pack=ID PR_CLS SEMICOLON
+	;
+
+repeat		: REPEAT PR_OPN TIMEUNIT COMMA time=(INT | INT1 | DIGIT | INT4 ) COMMA pack=ID PR_CLS SEMICOLON
 	;
 
 
@@ -213,8 +213,8 @@ REPEAT		: 'repeat';
 
 STRING : '"' .*?  '"';
 
-OR 		: 	'||';
-AND 	: 	'&&';
+OR 		: 	'OR';
+AND 	: 	'AND';
 EQ 		: 	'==';
 NEQ 	: 	'!=';
 GT 		: 	'>';

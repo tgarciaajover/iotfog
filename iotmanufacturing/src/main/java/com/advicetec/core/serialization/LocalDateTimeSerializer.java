@@ -1,4 +1,4 @@
-package com.advicetec.configuration;
+package com.advicetec.core.serialization;
 
 import java.io.IOException;
 import java.time.LocalDateTime;

@@ -19,6 +19,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.w3c.dom.Document;
 
+import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.TimeInterval;
