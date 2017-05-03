@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
@@ -19,6 +22,7 @@ import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 public class MeasuredEntityEventProcessor implements Processor
 {
 
+	static Logger logger = LogManager.getLogger(InterpreterSw.class.getName());
 	MeasuredEntityEvent event;
 	
 	public MeasuredEntityEventProcessor(MeasuredEntityEvent event) {
@@ -32,7 +36,8 @@ public class MeasuredEntityEventProcessor implements Processor
 		Integer measuringEntity = this.event.getEntity();
 		String behaviorName = this.event.getBehaviorTransformation();
 		
-
+        logger.debug("process - behavior:" + behaviorName);
+		
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade entityFacade = entityManager.getFacadeOfEntityById(measuringEntity);
 
@@ -42,6 +47,8 @@ public class MeasuredEntityEventProcessor implements Processor
 		
 			String program = entityFacade.getEntity().getBehaviorText(behaviorName);
 
+			logger.debug("program:" + program);
+			
 			SyntaxChecking sintaxChecking = new SyntaxChecking();
 			try 
 			{

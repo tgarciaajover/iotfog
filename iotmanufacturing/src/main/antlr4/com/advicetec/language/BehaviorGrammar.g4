@@ -4,7 +4,7 @@ program : (import_name)* main
 	;
 
 main : PROGRAM ID PR_OPN programparameters? PR_CLS block 
-		   (function_dec)*
+		   (function_dec)* EOF
 	;  
 
 import_name
@@ -194,7 +194,7 @@ MONTH : JAN | FEB | MAR | APR | MAY | JUN | JUL | AUG | SEP | OCT | NOV | DEC;
 
 TIMEUNIT : SECOND | MINUTE | HOUR;
 
-PROGRAM : 	'program';
+PROGRAM 	: 'program';
 ATTRIBUTE 	: 'attr';
 VARIABLE 	: 'var';
 UNIT 		: 'unit';

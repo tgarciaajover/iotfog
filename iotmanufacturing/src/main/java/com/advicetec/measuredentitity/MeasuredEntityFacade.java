@@ -14,6 +14,8 @@ import java.util.TreeMap;
 import javax.xml.bind.JAXBException;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -27,6 +29,7 @@ import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.transformation.Interpreter;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
@@ -44,16 +47,18 @@ import com.fasterxml.jackson.core.JsonGenerator;
  */
 public final class MeasuredEntityFacade {
 
+
+	static Logger logger = LogManager.getLogger(MeasuredEntityFacade.class.getName());
 	private MeasuredEntity entity;
 	// Keeps an in-memory entity status
 	private StatusStore status;
-	
+
 	/**
 	 * Map with key DATETIME and value String Primary Key for the cache/database.
 	 */
 	private Map<String,SortedMap<LocalDateTime,String>> attMap;
 	private MeasureAttributeValueCache attValueCache;
-	
+
 	// This map stores endTime, startTime,
 	private TreeMap<LocalDateTime,String> intervalMap;
 	private StateIntervalCache stateCache;
@@ -92,7 +97,7 @@ public final class MeasuredEntityFacade {
 	public boolean registerMeasureEntityAttibute(AttributeMeasuredEntity newAttribute){
 		return entity.registerMeasureEntityAttibute(newAttribute);
 	}
-	
+
 	/**
 	 * Sets an Attribute.
 	 * @param attribute
@@ -124,10 +129,10 @@ public final class MeasuredEntityFacade {
 	public void registerAttributeValue(Attribute attribute, Object value, LocalDateTime timeStamp) throws Exception{
 		MeasuredAttributeValue measure = entity.getMeasureAttributeValue(attribute, value, timeStamp);
 		MeasureAttributeValueCache.getInstance().cacheStore(measure);
-		
+
 		// update status
 		status.setAttribute(attribute);
-		
+
 	}
 
 	/**
@@ -138,7 +143,7 @@ public final class MeasuredEntityFacade {
 		return attMap.size();
 	}
 
-	
+
 	/**
 	 * Stores a Measured Attributed Value into the cache.<br>
 	 * 
@@ -148,7 +153,7 @@ public final class MeasuredEntityFacade {
 		attValueCache.cacheStore(mav);
 		//map.put(mav.getTimeStamp(), mav.getKey());
 		String attName = mav.getAttr().getName();
-		
+
 		// The key for a measuredAttributeValue is the name of the attribute plus the timestamp
 		// The key for an attributeValue is the name of the attribute. 
 		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
@@ -159,7 +164,7 @@ public final class MeasuredEntityFacade {
 		internalMap.put(mav.getTimeStamp(), mav.getKey());
 	}
 
-	
+
 	/**
 	 * Returns the oldest Measured Attribute Value for a given Attribute name.
 	 * @param attName
@@ -186,7 +191,7 @@ public final class MeasuredEntityFacade {
 		return attValueCache.getFromCache(internalMap.get(internalMap.lastKey()));
 	}
 
-	
+
 	/**
 	 * 
 	 * @param valueMap 
@@ -195,50 +200,58 @@ public final class MeasuredEntityFacade {
 	 */
 	public void importAttributeValues(Map<String, ASTNode> valueMap, Integer parent, MeasuredEntityType parentType) {
 
-		System.out.println("entering importAttributeValues");
+		logger.debug("entering importAttributeValues"); 
 		for (Attribute att : status.getStatus()) {
+
+			logger.debug("importAttributeValue:" + att.getName());
+
 			if(valueMap.containsKey(att.getName())){
 				ASTNode node = valueMap.get(att.getName());
-				switch(att.getType()){
-				case BOOLEAN:
-					setAttributeValue(att, node.asBoolean(), parent, parentType);
-					break;
 
-				case INT:
-					setAttributeValue(att, node.asInterger(), parent, parentType);
-					break;
+				if (node.isVOID()){
+					logger.warn("The attribute:" + att.getName() +" is declared but it is not initialized !!!");
+				} else { 
+					switch(att.getType()){
+					case BOOLEAN:
+						setAttributeValue(att, node.asBoolean(), parent, parentType);
+						break;
 
-				case DOUBLE:
-					setAttributeValue(att, node.asDouble(), parent, parentType);
-					break;
+					case INT:
+						setAttributeValue(att, node.asInterger(), parent, parentType);
+						break;
 
-				case STRING:
-					setAttributeValue(att, node.asString(), parent, parentType);
-					break;
+					case DOUBLE:
+						setAttributeValue(att, node.asDouble(), parent, parentType);
+						break;
 
-				case DATETIME:
-					setAttributeValue(att, node.asDateTime(), parent, parentType);
-					break;
+					case STRING:
+						setAttributeValue(att, node.asString(), parent, parentType);
+						break;
 
-				case DATE:
-					setAttributeValue(att, node.asDate(), parent, parentType);
-					break;
+					case DATETIME:
+						setAttributeValue(att, node.asDateTime(), parent, parentType);
+						break;
 
-				case TIME:
-					setAttributeValue(att, node.asTime(), parent, parentType);
-					break;
+					case DATE:
+						setAttributeValue(att, node.asDate(), parent, parentType);
+						break;
 
-				default:
-					break;
+					case TIME:
+						setAttributeValue(att, node.asTime(), parent, parentType);
+						break;
+
+					default:
+						break;
+					}
 				}
 			} else {
 				System.out.println("attr name:" + att.getName());
 			}
 		}
-		
+
 		System.out.println("leaving importAttributeValues");
 	}
-	
+
 
 	/**
 	 * Adds to the STATUS a new Attribute Value.
@@ -248,12 +261,12 @@ public final class MeasuredEntityFacade {
 	 * @param parentType Type of measured entity.
 	 */
 	public void setAttributeValue(Attribute att, Object value,Integer parent, MeasuredEntityType parentType) {
-		
+
 		System.out.println("inserting attribute value");
 		setAttributeValue(new AttributeValue(att.getName(), att, value, parent, parentType));
-		
+
 	}	
-	
+
 	/**
 	 * Returns a list of attribute values for a given interval.
 	 * 
@@ -270,19 +283,19 @@ public final class MeasuredEntityFacade {
 			return null;
 		}
 		SortedMap<LocalDateTime,String> internalMap = attMap.get(attrName);
-		
+
 		// System.out.println("elements in attributevalues:" + internalMap.size());
 		//for (Entry<LocalDateTime,String> e : internalMap.entrySet()){
 		//	System.out.println(e.getKey().toString() + e.getValue());
 		//}
-		
+
 		SortedMap<LocalDateTime,String> subMap = internalMap.subMap(from, to);
 
 		// System.out.println("elements in attributevalues:" + internalMap.size());
 		//for (Entry<LocalDateTime,String> e : subMap.entrySet()){
 		//	System.out.println(e.getKey().toString() + e.getValue());
 		//}
-		
+
 		Collection<String> keys = subMap.values();
 
 		//for (String key : keys){
@@ -290,23 +303,23 @@ public final class MeasuredEntityFacade {
 		// }		
 
 		String[] keyArray = keys.toArray( new String[keys.size()]);
-		
+
 		// System.out.println("getByIntervalByAttributeName - size: " + keyArray.length);
-		
+
 		return getFromCache(keyArray);
 	}
 
 	public String getByIntervalByAttributeNameJSON(
 			String attrName, LocalDateTime from, LocalDateTime to){
-				
+
 		ArrayList<AttributeValue> ret = getByIntervalByAttributeName(attrName, from, to);
 
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonText=null;
-		
+
 		try {
 			jsonText = mapper. writeValueAsString(ret);
-		
+
 		} catch (JsonGenerationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -317,10 +330,10 @@ public final class MeasuredEntityFacade {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return jsonText;
 	}
-	
+
 	/**
 	 * Returns a list with the last N attribute values for a given
 	 * attribute name.
@@ -333,11 +346,11 @@ public final class MeasuredEntityFacade {
 	 */
 	public List<AttributeValue> getLastNbyAttributeName(String attrName, int n){
 		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
-		
+
 		if(!attMap.containsKey(attrName)){
 			return null;
 		}
-		
+
 		SortedMap<LocalDateTime,String> internalMap = attMap.get(attrName);
 		String[] keyArray = (String[]) internalMap.values().toArray();
 		if(n>= internalMap.size()){
@@ -368,7 +381,7 @@ public final class MeasuredEntityFacade {
 	public void importSymbols(Map<String, Symbol> symbolMap, AttributeOrigin origin) throws Exception {
 		status.importSymbols(symbolMap, origin);
 	}
-	
+
 	public Collection<Attribute> getStatus(){
 		return status.getStatus();
 	}
@@ -380,30 +393,30 @@ public final class MeasuredEntityFacade {
 	public JSONArray getStatusJSON(){
 		return new JSONArray(getStatus());
 	}
-	
+
 	public void importAttributeValues(Map<String, ASTNode> valueMap) {
 		importAttributeValues(valueMap,entity.getId(),entity.getType());
-		
+
 	}
-	
+
 	public Collection<AttributeValue> getAttributeValues(){
 		return status.getAttributeValues();
 	}
-	
+
 	public void getJsonStatesByInterval(TimeInterval timeInterval){
 		entity.getStateByInterval(timeInterval);
 	}
-	
+
 	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
-    {
-    	StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType());
-    	stateInterval.setKey(entity.getId()+stateInterval.getKey());
-    	// key in the map and the cache must be consistent
-    	intervalMap.put(interval.getStart(),stateInterval.getKey());
-    	StateIntervalCache.getInstance().storeToCache(stateInterval);
-    }
-	
-	
+	{
+		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType());
+		stateInterval.setKey(entity.getId()+stateInterval.getKey());
+		// key in the map and the cache must be consistent
+		intervalMap.put(interval.getStart(),stateInterval.getKey());
+		StateIntervalCache.getInstance().storeToCache(stateInterval);
+	}
+
+
 	/**
 	 * Returns a
 	 * @param from
@@ -411,16 +424,16 @@ public final class MeasuredEntityFacade {
 	 * @return
 	 */
 	public String statesByInterval(LocalDateTime from, LocalDateTime to){
-		
+
 		ArrayList<StateInterval> intervals = getStatesByInterval(from, to);
 
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonText=null;
-		
+
 		try {
-			
+
 			jsonText = mapper. writeValueAsString(intervals);
-		
+
 		} catch (JsonGenerationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -431,11 +444,11 @@ public final class MeasuredEntityFacade {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return jsonText;
 
 	}
-	
+
 	public String statesByInterval(TimeInterval interval){
 		ArrayList<StateInterval> intervals = getStatesByInterval(interval.getStart(), interval.getEnd());
 
@@ -443,9 +456,9 @@ public final class MeasuredEntityFacade {
 		String jsonText=null;
 
 		try {
-			
+
 			jsonText = mapper. writeValueAsString(intervals);
-		
+
 		} catch (JsonGenerationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -456,12 +469,12 @@ public final class MeasuredEntityFacade {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return jsonText;
 
 	}
-		
-		
+
+
 	/**
 	 * Returns the list of intervals between two datetimes.
 	 * @param from Beginning time
@@ -496,7 +509,7 @@ public final class MeasuredEntityFacade {
 		}
 		return attKeys;
 	}
-	
+
 	/**
 	 * Commands to the cache to store all intervals into the database 
 	 * and clean the cache.
@@ -504,7 +517,7 @@ public final class MeasuredEntityFacade {
 	public void storeAllStateIntervals(){
 		stateCache.bulkCommit(new ArrayList<String>(intervalMap.values()));
 	}
-	
+
 	/**
 	 * Returns the Entity Status into a XML document.
 	 * @return
@@ -512,7 +525,7 @@ public final class MeasuredEntityFacade {
 	 * @throws JAXBException
 	 */
 	public Document getXmlStatus() throws ParserConfigurationException, JAXBException{
-		 return status.toXml();
+		return status.toXml();
 	}
 
 }

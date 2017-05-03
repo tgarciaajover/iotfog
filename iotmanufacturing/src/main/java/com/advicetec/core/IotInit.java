@@ -1,6 +1,11 @@
 package com.advicetec.core;
 
+
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+
 import com.advicetec.MessageProcessor.MessageManager;
+import com.advicetec.MessageProcessor.SampleProcessor;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -14,6 +19,8 @@ import com.advicetec.iot.rest.IotRestServer;
 public class IotInit extends Configurable 
 {
 	
+	static Logger logger = LogManager.getLogger(IotInit.class.getName());
+	
 	private static IotInit instance = null;
 	
 	private ConfigurationManager configManager;
@@ -26,6 +33,9 @@ public class IotInit extends Configurable
 	private IotInit()  {
 		
 		super("IotInit");
+		
+		// Property configurator
+		
 		
 		configManager = ConfigurationManager.getInstance();
 		eventManager = EventManager.getInstance();

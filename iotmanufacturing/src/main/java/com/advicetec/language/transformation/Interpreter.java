@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -13,9 +14,11 @@ import java.util.Stack;
 
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.Token;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.advicetec.core.AttributeValue;
-import com.advicetec.language.BehaviorGrammarParser;
+import com.advicetec.core.IotInit;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseVisitor;
 import com.advicetec.language.ast.ASTNode;
@@ -23,6 +26,7 @@ import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.FunctionSpace;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
+import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.ReturnValue;
 import com.advicetec.language.ast.Scope;
@@ -36,6 +40,8 @@ import com.advicetec.measuredentitity.MeasuredEntityFacade;
 public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 {
  	
+	static Logger logger = LogManager.getLogger(Interpreter.class.getName());
+	
 	public InterpreterListener listener = // default response to messages
 	        new InterpreterListener() {
 	            public void info(String msg) { System.out.println(msg); }
@@ -62,7 +68,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	// used to compare floating point numbers
     public static final double SMALL_VALUE = 0.00000000001;
 
-	Interpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, MeasuredEntityFacade facade)
+	public Interpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, MeasuredEntityFacade facade)
 	{
 		// Variable for symbol definition.
 		this.globalScope = _globalScope;
@@ -74,17 +80,20 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		// For memory evaluation
 		stack = new Stack<TransformationSpace>(); // call stack
 		
-		// System.out.println("Interpreter main");
+		logger.debug("Interpreter Constructor");
 	}
 	
+	@Override
 	public ASTNode visitProgram(TransformationGrammarParser.ProgramContext ctx) 
 	{ 
+		logger.debug("visitProgram:" );
 		return this.visit(ctx.main()); 
+		
 	}
 	
 	public ASTNode visitMain(TransformationGrammarParser.MainContext ctx) 
 	{ 
-		System.out.println("visitMain");
+		logger.debug("visitMain:" );
 		
 		currentScope = globalScope; 
 		currentSpace = globals;
@@ -195,22 +204,27 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		// System.out.println("visit Unit dec");
 		
 		String id = ctx.ID().getText();
-	    currentSpace.put(id, new ASTNode(new Object()));         // store
+		getGlobalSpace().put(id, new ASTNode(new Object()));         // store
 		return ASTNode.VOID;	
 	}
 
 	public ASTNode visitAtrib_dec(TransformationGrammarParser.Atrib_decContext ctx) 
 	{ 
 		String id = ctx.id1.getText();
-		System.out.println("visitAtrib_dec:" + id);
-        getGlobalSpace().put(id, new ASTNode(new Object()));         // store
 		
+		logger.debug("visitAtrib_dec:" + id );
+		
+        getGlobalSpace().put(id, new ASTNode(new Object()));         // store with an initial value		
         AttributeSymbol toAssign = (AttributeSymbol) currentScope.resolve(id);
 		// the declaration includes an assignment
-		if (ctx.ASG() != null)
+		if (ctx.ASG() != null){
 			return AssignAttribute(toAssign, ctx);
-		else
-			return ASTNode.VOID;	
+		}
+		else {
+			ASTNode node = initializeAttribute(toAssign);
+			getGlobalSpace().put(id, node);
+			return node;
+		}
 	}	
 	
 
@@ -220,7 +234,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		// It verifies whether the expression correspond to another attribute. In such 
 		// case, it checks whether or not both attributes manage the same units.
 		
+		
 		String id2 = ctx.expression().getText();
+		
+		logger.debug("AssignAttribute:" + id2 );
+		
 		Symbol s = currentScope.resolve(id2);
 		if (s instanceof AttributeSymbol )
 		{
@@ -228,7 +246,8 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			
 			System.out.println("s1 unit:" + s1.getUnitOfMeasure() + "sysattr : " + toAssign.getUnitOfMeasure());
 			
-			if (s1.getUnitOfMeasure() == toAssign.getUnitOfMeasure() )
+			if (((s1.getUnitOfMeasure() == null) && (toAssign.getUnitOfMeasure() == null))
+					 || (s1.getUnitOfMeasure().equals(toAssign.getUnitOfMeasure())) )
 			{
 
 		        ASTNode value = this.visit(ctx.expression());
@@ -237,7 +256,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		        
 			    space = getSpaceWithSymbol(toAssign.getName());
 			    if ( space==null ){ 
-			    	space = getGlobalSpace(); // create in current space
+			    	space = getGlobalSpace(); // create in global space
 			    }
 		        
 		        VerifyAssign(toAssign, value);
@@ -249,8 +268,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			}
 			else 
 			{
+				String error = "cannot assign to attribute:" + toAssign.getName() + 
+						 " which is in unit:" + toAssign.getUnitOfMeasure() + 
+						  " from attribute:" + s1.getName() + " in unit of measure: " + s1.getUnitOfMeasure();
+				
+				logger.error(error);
 				// TODO: implement conversion rates.
-				throw new RuntimeException("cannot assign attribute with different units of measure:" );
+				throw new RuntimeException( error );
 			}
 		}
 		else
@@ -277,52 +301,117 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		String attributeId = ctx.ID().getText(); 
 		AttributeValue value = (AttributeValue) facade.getNewestByAttributeName(attributeId);
 		Symbol symbol = currentScope.resolve(attributeId);
-		Object valObj = value.getValue();
+		Object valObj = null;
+		if (value == null)
+		{
+			return initializeAttribute(symbol);
+		} else {
+			valObj = value.getValue();
+		}
 				
 		switch (value.getAttr().getType()){
 		case INT:
 			if (symbol.getType() != Symbol.Type.tINT){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type int" );
+				String error =  "the attribute given: " + attributeId + " is not registered in the status as type int";
+				logger.error(error);
+				throw new RuntimeException( error );
 			}
 			break;
 		case DATETIME:
 			if (symbol.getType() != Symbol.Type.tDATETIME){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type datetime" );
+				String error = "the attribute given: " + attributeId + " is not registered in the status as type datetime";
+				logger.error(error);
+				throw new RuntimeException( error );
 			}
 			break;
 		case DOUBLE:
 			if (symbol.getType() != Symbol.Type.tFLOAT){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type float" );
+				String error = "the attribute given: " + attributeId + " is not registered in the status as type float"; 
+				logger.error(error);
+				throw new RuntimeException( error );
 			}
 			break;
 		case STRING:
 			if (symbol.getType() != Symbol.Type.tSTRING){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type string" );
+				String error = "the attribute given: " + attributeId + " is not registered in the status as type string";
+				logger.error(error);
+				throw new RuntimeException( error );
 			}
 			break;
 		case BOOLEAN:
 			if (symbol.getType() != Symbol.Type.tBOOL){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type boolean" );
+				String error = "the attribute given: " + attributeId + " is not registered in the status as type boolean";
+				logger.error(error);
+				throw new RuntimeException( error );
 			}
 			break;
 		case DATE:
 			if (symbol.getType() != Symbol.Type.tDATE){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type date" );
+				String error = "the attribute given: " + attributeId + " is not registered in the status as type date";
+				logger.error(error);
+				throw new RuntimeException( error );
 			}
 			break;
 		case TIME:
 			if (symbol.getType() != Symbol.Type.tTIME){
-				throw new RuntimeException("the attribute given: " + attributeId + " is not registered in the status as type time" );
+				String error = "the attribute given: " + attributeId + " is not registered in the status as type time";
+				logger.error(error);
+				throw new RuntimeException( error );
 			}
 			break;
 		case VOID:
-			throw new RuntimeException("the attribute given: " + attributeId + " is registered in the status as type void" );
+			String error = "the attribute given: " + attributeId + " is registered in the status as type void";
+			logger.error(error);			
+			throw new RuntimeException( error );
 		}
 		
 		return new ASTNode(valObj); 
 				
 	}
 	
+
+	public ASTNode initializeAttribute(Symbol symbol)
+	{
+		
+		logger.debug("initializeAttribute");
+		
+		if (symbol == null){
+			String error = "the Symbol given to be initialized is null";
+			logger.error(error);			
+			throw new RuntimeException( error );
+		}
+		
+		switch (symbol.getType())
+		{
+		
+		case tINT:
+			return new ASTNode(new Integer(0));
+			
+		case tDATETIME:
+			return new ASTNode(LocalDateTime.MIN); 
+			
+		case tFLOAT:
+			return new ASTNode(new Double(0.0));
+			
+		case tSTRING:
+			return new ASTNode(new String(""));
+			
+		case tBOOL:
+			return new ASTNode(new Boolean(false));
+			
+		case tDATE:
+			return new ASTNode(LocalDate.MIN);
+			
+		case tTIME:
+			return new ASTNode(LocalTime.MIN);
+		
+		default:
+			String error = "The attribute: " + symbol.getName() + " has a type not supported";
+			logger.error(error);
+			throw new RuntimeException(error);
+		}
+
+	}
 	
 	@Override 
 	public ASTNode visitAssign(TransformationGrammarParser.AssignContext ctx) 
@@ -330,20 +419,26 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		String id = ctx.ID().getText();
 		
-		System.out.println("visitAssign" + id);
+		logger.debug("Visit Assign:" + id );
 		
         ASTNode value = this.visit(ctx.expression());
         Symbol symbol = currentScope.resolve(id) ;
         MemorySpace space = null;
         
-        if ((symbol instanceof VariableSymbol) || (symbol instanceof AttributeSymbol)) 
+        if (symbol instanceof VariableSymbol) 
         {
 	        space = getSpaceWithSymbol(id);
 	        if ( space==null ){ 
 	        	space = currentSpace; // create in current space
 	        }
-        } else {
-        	throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + symbol.getName());
+        } else if (symbol instanceof AttributeSymbol) {
+	        space = getSpaceWithSymbol(id);
+	        if ( space==null ){ 
+	        	space = getGlobalSpace(); // create in global space
+	        }
+		} else {
+			logger.debug("It is being assigned to a non variable or attribute - symbol:" + symbol.getName() );
+			throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + symbol.getName());
         }
         
         VerifyAssign(symbol, value);
@@ -746,12 +841,15 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitAndExpr(TransformationGrammarParser.AndExprContext ctx) 
 	{ 
-		// System.out.println("visitAndExpr");
+		logger.debug("visitAndExpr");
 		
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
     	if (left.isBoolean() && right.isBoolean()){
-    		return new ASTNode(left.asBoolean() && right.asBoolean());
+    		
+    		Boolean ret = left.asBoolean() && right.asBoolean();
+    		logger.debug("visitAndExpr ret value:" + ret.toString());
+    		return new ASTNode(ret);
     	} else {
     		throw new RuntimeException("operators are not of boolean type");
     	}
@@ -803,12 +901,36 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	{ 
 		String name = ctx.ID().getText();
 		Symbol symbol =  currentScope.resolve(name);
+
+				
+		logger.debug("Symbol name:" + name );
 		
 		if (symbol instanceof TimerSymbol){
 			TimerSymbol timer = (TimerSymbol) symbol;
 			GlobalScope global = getGlobalScope();
+
+			Symbol impSymbol = currentScope.getParentScope().resolve(name);
+			if (impSymbol instanceof ImportSymbol)
+			{
+				ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
+				for (String n : names){
+					((TimerSymbol) timer).addId(n);
+				}
+				
+			} else {
+				String error = "no such Import Symbol: " + name;
+				logger.error(error);
+				throw new RuntimeException(error);
+			}
+			
+			logger.debug("number of dotted names in the import:" + timer.getCompleteName().size());
+			
 			global.define(timer);
+			
+			logger.debug("Symbol name:" + name + " defined as timer in the global scope");
 		} else {
+			
+			logger.error("Symbol name:" + name + " is not a Timer symbol");
 			throw new RuntimeException("The symbol is not a Timer symbol");
 		}
 		
@@ -823,6 +945,23 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		if (symbol instanceof TimerSymbol){
 			TimerSymbol timer = (TimerSymbol) symbol;
 			GlobalScope global = getGlobalScope();
+
+			Symbol impSymbol = currentScope.getParentScope().resolve(name);
+			if (impSymbol instanceof ImportSymbol)
+			{
+				ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
+				for (String n : names){
+					((TimerSymbol) timer).addId(n);
+				}
+				
+			} else {
+				String error = "no such Import Symbol: " + name;
+				logger.error(error);
+				throw new RuntimeException(error);
+			}
+			
+			logger.debug("number of dotted names in the import:" + timer.getCompleteName().size());
+			
 			global.define(timer);
 		} else {
 			throw new RuntimeException("The symbol is not a Timer symbol");

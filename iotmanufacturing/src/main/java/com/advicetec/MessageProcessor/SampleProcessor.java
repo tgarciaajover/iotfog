@@ -4,12 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
 import com.advicetec.eventprocessor.MeasuredEntityEvent;
+import com.advicetec.language.ast.ArraySymbol;
+import com.advicetec.language.ast.AttributeSymbol;
+import com.advicetec.language.ast.BehaviorSymbol;
+import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
+import com.advicetec.language.ast.ImportSymbol;
+import com.advicetec.language.ast.ScopedSymbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
+import com.advicetec.language.ast.TransformationSymbol;
+import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.transformation.InterpreterSw;
 import com.advicetec.language.transformation.SyntaxChecking;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -22,8 +33,10 @@ import com.advicetec.language.ast.Symbol;
 public class SampleProcessor implements Processor 
 {
 
+	static final Logger LOGGER = LogManager.getLogger(SampleProcessor.class.getName()); 
 	private SampleMessage sample;
 	private InterpreterSw interpreter;
+	
 	
 	public SampleProcessor(SampleMessage sample) {
 		super();
@@ -45,7 +58,7 @@ public class SampleProcessor implements Processor
 		ArrayList<DelayEvent> ret = new ArrayList<DelayEvent>();
 		
 		if (entityFacade == null){
-			System.out.println("Error the measured Entity was not found - id:" + measuringEntity);
+			LOGGER.error("the measured Entity was not found - id:"+ measuringEntity );
 		} else {
 		  
 			SyntaxChecking sintaxChecking = new SyntaxChecking();
@@ -66,15 +79,42 @@ public class SampleProcessor implements Processor
 					
 					Map<String, Symbol> symbols =  interpreter.getGlobalScope().getSymbolMap();
 					
+					LOGGER.debug("Number of Symbols returned:" + String.valueOf(symbols.size()));
+					
 					for (String symbolId : symbols.keySet())
 					{
+						
 						Symbol symbol = symbols.get(symbolId);
+						
+						if (symbol instanceof  ArraySymbol){
+							LOGGER.debug("Symbol:" + symbolId + "ArraySymbol");
+						} else if (symbol instanceof  AttributeSymbol){
+							LOGGER.debug("Symbol:" + symbolId + "AttributeSymbol");
+						} else if (symbol instanceof  BehaviorSymbol){
+							LOGGER.debug("Symbol:" + symbolId + "BehaviorSymbol");
+						} else if (symbol instanceof  FunctionSymbol){
+							LOGGER.debug("Symbol:" + symbolId + "FunctionSymbol");
+						} else if (symbol instanceof  ImportSymbol){
+							LOGGER.debug("Symbol:" + symbolId + "ImportSymbol");
+						} else if (symbol instanceof  ScopedSymbol){
+							LOGGER.debug("Symbol:" + symbolId + "ScopedSymbol");
+						} else if (symbol instanceof  TimerSymbol){
+							LOGGER.debug("Symbol:" + symbolId + "TimerSymbol");
+						} else if (symbol instanceof  UnitMeasureSymbol){
+							LOGGER.debug("Symbol:" + symbolId + "UnitMeasureSymbol");
+						} else if (symbol instanceof  TransformationSymbol){
+							LOGGER.debug("Symbol:" + symbolId + "TransformationSymbol");
+						} else {
+							LOGGER.debug("Symbol:" + symbolId + "Invalid symbol");
+						}
 						
 						if (symbol instanceof TimerSymbol)
 						{
+								
 							long duetime = ((TimerSymbol) symbol).getMilliseconds();
 							String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
 							
+							LOGGER.debug("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
 							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, new ArrayList<InterpretedSignal>());
 							DelayEvent dEvent = new DelayEvent(event,duetime);
@@ -105,8 +145,12 @@ public class SampleProcessor implements Processor
 	
 	public String getBehavior(List<String> names)
 	{
-		// TODO: create the method.
-		return null;
+		StringBuilder behaviorName = new StringBuilder();
+		for (String name : names){
+			behaviorName.append(name); 
+		}
+		
+		return behaviorName.toString();
 	}
 	
 	

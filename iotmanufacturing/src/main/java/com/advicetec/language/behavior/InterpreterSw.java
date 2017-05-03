@@ -1,5 +1,6 @@
 package com.advicetec.language.behavior;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +11,8 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarLexer;
@@ -24,6 +27,7 @@ import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.language.transformation.Interpreter;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
@@ -31,6 +35,7 @@ import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 public class InterpreterSw 
 {
 
+	static Logger logger = LogManager.getLogger(InterpreterSw.class.getName());
 	private DefPhase defPhase;
 	private Interpreter interpreter; 
 	
@@ -79,8 +84,10 @@ public class InterpreterSw
 
         ParseTree tree = parser.program();
 
-	    String mainProgramStr = (parser.getTokenNames())[TransformationGrammarLexer.PROGRAM];
+	    String mainProgramStr = (parser.getTokenNames())[BehaviorGrammarLexer.PROGRAM];
 
+	    logger.debug("mainProgramStr:" + mainProgramStr);
+	    
 	    // Token names come with a ' at the begin and end. We remove them. 
 	    mainProgramStr = mainProgramStr.replace("'","");
 
@@ -156,7 +163,11 @@ public class InterpreterSw
         interpreter = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
         interpreter.visit(tree);
         
-        System.out.println("Interpreter phase finished globals" + interpreter.globals.toString());
+        
+        Collection<ASTNode> glob = interpreter.getGlobalSpace().getSymbolMap().values();
+        for (ASTNode node :glob){
+        	logger.debug(node.toString());
+        }
     }    
 
     public GlobalScope getGlobalScope(){

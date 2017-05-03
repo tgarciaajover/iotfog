@@ -3,7 +3,7 @@ grammar TransformationGrammar;
 program : (import_name)* main
 	; 
 
-main : PROGRAM ID PR_OPN programparameters? PR_CLS block
+main : PROGRAM ID PR_OPN programparameters? PR_CLS block EOF
 	;  
 
 import_name

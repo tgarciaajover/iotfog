@@ -1,5 +1,6 @@
 package com.advicetec.language.transformation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -54,9 +55,9 @@ public class SyntaxChecking
 
         TransformationGrammarParser parser = new TransformationGrammarParser(tokens);
         parser.setBuildParseTree(true);
-        parser.removeErrorListeners();
-        CollectionErrorListener collector = new CollectionErrorListener();
-        parser.addErrorListener(collector);
+        //parser.removeErrorListeners();
+        //CollectionErrorListener collector = new CollectionErrorListener();
+        //parser.addErrorListener(collector);
 
         ParseTree tree = parser.program();
 
@@ -77,14 +78,14 @@ public class SyntaxChecking
 
         walker.walk(ref, tree);
         
-        List<SyntaxError> listErrors = collector.getErrors();
+        List<SyntaxError> listErrors = new ArrayList<SyntaxError>(); // collector.getErrors();
         
         // Add the custom errors created during the Ref phase. 
         for (SyntaxError e : ref.getErrors())  { 
         	listErrors.add(e);
         }
         
-        System.out.println("num errors:" + listErrors.size());
+        // System.out.println("num errors:" + listErrors.size());
         
         return listErrors;
        
