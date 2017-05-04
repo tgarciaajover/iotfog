@@ -104,7 +104,7 @@ public final class MeasuredEntityFacade {
 	 * @throws Exception If the new type of the attribute does not match the 
 	 * previous type.
 	 */
-	public void setAttribute(Attribute attribute) throws Exception{
+	public synchronized void setAttribute(Attribute attribute) throws Exception{
 		// returns the previous value
 		status.setAttribute(attribute);
 	}
@@ -113,27 +113,12 @@ public final class MeasuredEntityFacade {
 	 * Sets or updates the attribute value into the status and store.
 	 * @param attrValue
 	 */
-	public void setAttributeValue(AttributeValue attrValue){
+	public synchronized void setAttributeValue(AttributeValue attrValue){
 		store(new MeasuredAttributeValue(attrValue.getAttr(), attrValue.getValue(),
 				attrValue.getGenerator(), attrValue.getGeneratorType(), LocalDateTime.now()));
 		status.setAttributeValue(attrValue);
 	}
 
-	/**
-	 * Stores a new value for the attribute.
-	 * @param attribute
-	 * @param value
-	 * @param timeStamp
-	 * @throws Exception
-	 */
-	public void registerAttributeValue(Attribute attribute, Object value, LocalDateTime timeStamp) throws Exception{
-		MeasuredAttributeValue measure = entity.getMeasureAttributeValue(attribute, value, timeStamp);
-		MeasureAttributeValueCache.getInstance().cacheStore(measure);
-
-		// update status
-		status.setAttribute(attribute);
-
-	}
 
 	/**
 	 * Returns the amount of attributes stored in the cache.
@@ -248,8 +233,6 @@ public final class MeasuredEntityFacade {
 				System.out.println("attr name:" + att.getName());
 			}
 		}
-
-		System.out.println("leaving importAttributeValues");
 	}
 
 
@@ -262,7 +245,7 @@ public final class MeasuredEntityFacade {
 	 */
 	public void setAttributeValue(Attribute att, Object value,Integer parent, MeasuredEntityType parentType) {
 
-		System.out.println("inserting attribute value");
+		logger.debug("inserting attribute value -attr:" + att.getName() + " value:" + value.toString() );
 		setAttributeValue(new AttributeValue(att.getName(), att, value, parent, parentType));
 
 	}	
@@ -385,21 +368,21 @@ public final class MeasuredEntityFacade {
 	public Collection<Attribute> getStatus(){
 		return status.getStatus();
 	}
-
+	
 	/**
 	 * Returns the measured Entity status. 
 	 * @return json array
 	 */
 	public JSONArray getStatusJSON(){
-		return new JSONArray(getStatus());
+		return new JSONArray(getStatusValues());
 	}
-
+	
 	public void importAttributeValues(Map<String, ASTNode> valueMap) {
 		importAttributeValues(valueMap,entity.getId(),entity.getType());
 
 	}
 
-	public Collection<AttributeValue> getAttributeValues(){
+	public Collection<AttributeValue> getStatusValues(){
 		return status.getAttributeValues();
 	}
 

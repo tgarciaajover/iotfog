@@ -30,7 +30,7 @@ import com.advicetec.language.ast.BehaviorSymbol;
 import org.antlr.v4.runtime.Token;
 import org.codehaus.plexus.compiler.CompilerException;
 
-public class DefPhase extends BehaviorGrammarBaseListener 
+public class BehaviorDefPhase extends BehaviorGrammarBaseListener 
 {
 
 	private BehaviorGrammarParser parser = null;
@@ -43,7 +43,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	// Define an array for storing syntax errors.
 	private ArrayList<SyntaxError> compilationErrors;
 
-	DefPhase(BehaviorGrammarParser parser)
+	BehaviorDefPhase(BehaviorGrammarParser parser)
 	{
 		this.scopes = new ParseTreeProperty<Scope>();
 		this.parser = parser;
@@ -70,7 +70,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		String name = ctx.PROGRAM().getText();
 
 		// Transformation program does not have a return value.
-		Symbol.Type type = SyntaxChecking.getType(BehaviorGrammarParser.K_VOID);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(BehaviorGrammarParser.K_VOID);
 
 		// push new scope by making new one that points to enclosing scope
 		BehaviorSymbol program = new BehaviorSymbol(name, type, ctx.block(), currentScope);
@@ -121,7 +121,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		String name = ctx.ID().getText();
 		int typeTokenType = ctx.type().start.getType();
 		
-		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
 		
 		// push new scope by making new one that points to enclosing scope
 		FunctionSymbol function = new FunctionSymbol(name, type, ctx.block(), currentScope);
@@ -275,7 +275,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	public void defineAttributeArray(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, int numElem, Token unit)
 	{
 		int typeTokenType = typeCtx.start.getType();
-		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
 		
 		ArrayAttributeSymbol atr = new ArrayAttributeSymbol(nameToken.getText(), type, numElem);
 
@@ -296,7 +296,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	public void defineVarArray(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, int numElem)
 	{
 		int typeTokenType = typeCtx.start.getType();
-		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
 		
 		ArraySymbol atr = new ArraySymbol(nameToken.getText(), type, numElem);
 
@@ -311,7 +311,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	{
 		int typeTokenType = typeCtx.start.getType();
 		
-		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
 		
 		AttributeSymbol atr = new AttributeSymbol(nameToken.getText(), type, trend);
 		
@@ -347,7 +347,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	{
 		int typeTokenType = typeCtx.start.getType();
 		
-		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
 		
 		VariableSymbol var = new VariableSymbol(nameToken.getText(), type);
 		

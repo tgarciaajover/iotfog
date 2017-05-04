@@ -614,7 +614,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
             	} else if (left.isDouble() && right.isDouble()){
             		return new ASTNode((Double)(left.asDouble() * right.asDouble()));
             	} else {
-            		throw new RuntimeException("operators are not numbers");
+            		throw new RuntimeException("operators are not numbers - left:" + left.getObjectClassName() + " right:" + right.getObjectClassName() );
             	}
             case TransformationGrammarParser.DIVI:
             	if (left.isInteger() && right.isInteger()){
@@ -626,7 +626,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
             	} else if (left.isDouble() && right.isDouble()){
             		return new ASTNode((Double)(left.asDouble() / right.asDouble()));
             	} else {
-            		throw new RuntimeException("operators are not numbers");
+            		throw new RuntimeException("operators are not numbers - left:" + left.getObjectClassName() + " right:" + right.getObjectClassName());
             	}
             	
             case TransformationGrammarParser.MOD:
@@ -639,7 +639,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
             	} else if (left.isDouble() && right.isDouble()){
             		return new ASTNode((Double)(left.asDouble() % right.asDouble()));
             	} else {
-            		throw new RuntimeException("operators are not numbers");
+            		throw new RuntimeException("operators are not numbers - left:" + left.getObjectClassName() + " right:" + right.getObjectClassName());
             	}
             default:
                 throw new RuntimeException("unknown operator: " + TransformationGrammarParser.tokenNames[ctx.op.getType()]);

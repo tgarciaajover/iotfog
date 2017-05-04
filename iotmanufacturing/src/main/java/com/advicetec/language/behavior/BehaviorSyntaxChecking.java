@@ -16,7 +16,7 @@ import com.advicetec.language.ast.CollectionErrorListener;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 
-public class SyntaxChecking 
+public class BehaviorSyntaxChecking 
 {
 	/**  XML Tag given*/
 	private static final String PROGRAM = "program";
@@ -68,7 +68,7 @@ public class SyntaxChecking
 
         ParseTreeWalker walker = new ParseTreeWalker();
 
-        DefPhase def = new DefPhase(parser);
+        BehaviorDefPhase def = new BehaviorDefPhase(parser);
 
         walker.walk(def, tree);
         
@@ -76,7 +76,7 @@ public class SyntaxChecking
         
         // create next phase and feed symbol table info from def to ref phase
 
-        RefPhase ref = new RefPhase(parser, def.getGlobalScope(), def.getScopes());
+        BehaviorRefPhase ref = new BehaviorRefPhase(parser, def.getGlobalScope(), def.getScopes());
         walker.walk(ref, tree);
         
         List<SyntaxError> listErrors = collector.getErrors();

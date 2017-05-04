@@ -17,7 +17,6 @@ import org.apache.logging.log4j.Logger;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarLexer;
 import com.advicetec.language.BehaviorGrammarParser;
-import com.advicetec.language.TransformationGrammarLexer;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
@@ -27,17 +26,16 @@ import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
-import com.advicetec.language.transformation.Interpreter;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
-public class InterpreterSw 
+public class BehaviorInterpreterSw 
 {
 
-	static Logger logger = LogManager.getLogger(InterpreterSw.class.getName());
-	private DefPhase defPhase;
-	private Interpreter interpreter; 
+	static Logger logger = LogManager.getLogger(BehaviorInterpreterSw.class.getName());
+	private BehaviorDefPhase defPhase;
+	private BehaviorInterpreter interpreter; 
 	
     public static Symbol.Type getType(int tokenType) {
 
@@ -93,7 +91,7 @@ public class InterpreterSw
 
         ParseTreeWalker walker = new ParseTreeWalker();
 
-        defPhase = new DefPhase(parser);
+        defPhase = new BehaviorDefPhase(parser);
 
         walker.walk(defPhase, tree);
        
@@ -160,14 +158,15 @@ public class InterpreterSw
         MeasuredEntityManager manager = MeasuredEntityManager.getInstance();
         MeasuredEntityFacade facade = manager.getFacadeOfEntityById(entityId);
         
-        interpreter = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
+        interpreter = new BehaviorInterpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
         interpreter.visit(tree);
         
         
-        Collection<ASTNode> glob = interpreter.getGlobalSpace().getSymbolMap().values();
-        for (ASTNode node :glob){
-        	logger.debug(node.toString());
+        Map<String, ASTNode> glob = interpreter.getGlobalSpace().getSymbolMap();
+        for (String node : glob.keySet()){
+        	logger.debug("Symbol:" + node + " value:" + glob.get(node));
         }
+
     }    
 
     public GlobalScope getGlobalScope(){

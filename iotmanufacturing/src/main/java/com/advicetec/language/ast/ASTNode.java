@@ -14,6 +14,11 @@ public class ASTNode
     public ASTNode(Object value) {
         this.value = value;
     }
+    
+   public String getObjectClassName()
+   {
+	   return value.getClass().getName();
+   }
 
     public boolean isVOID(){
     	return this.value == VOID;

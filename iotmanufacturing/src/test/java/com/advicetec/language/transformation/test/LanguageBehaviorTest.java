@@ -13,7 +13,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.advicetec.core.AttributeType;
-import com.advicetec.language.behavior.InterpreterSw;
+import com.advicetec.language.behavior.BehaviorInterpreterSw;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class LanguageBehaviorTest 
@@ -45,7 +45,7 @@ public class LanguageBehaviorTest
 			
 			Integer entityId = 1;
 			
-			InterpreterSw interpreter = new InterpreterSw();
+			BehaviorInterpreterSw interpreter = new BehaviorInterpreterSw();
 			interpreter.process(program, entityId, list);
 		
 		

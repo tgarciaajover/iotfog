@@ -15,7 +15,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.advicetec.language.ast.SyntaxError;
-import com.advicetec.language.behavior.SyntaxChecking;
+import com.advicetec.language.behavior.BehaviorSyntaxChecking;
 
 public class LanguageBehaviorResource extends ServerResource 
 {
@@ -36,7 +36,7 @@ public class LanguageBehaviorResource extends ServerResource
 		  DomRepresentation result = new DomRepresentation();
 		  // Get the contact's uniqueID from the URL.
 
-		  SyntaxChecking sintaxChecking = new SyntaxChecking();
+		  BehaviorSyntaxChecking sintaxChecking = new BehaviorSyntaxChecking();
 		  		  
 		  // Convert the XML representation to the Java representation.
 		  String program = sintaxChecking.getProgram(input.getDocument());
