@@ -133,18 +133,10 @@ public class MqttSubscriber extends Configurable implements MqttCallback  {
 				"  Message:\t" + new String(message.getPayload()) +
 				"  QoS:\t" + message.getQos());
 		MqttPublish mqttPublish = new MqttPublish(topic, message);
-		System.out.println("message created");
 		try {
-			if (adapterManager == null)
-				System.out.println("pailas es null");
 			
-			if (adapterManager.getQueue() == null)
-				System.out.println("pailas queue es null");
-			
-			System.out.println("antes de ingresar a la cola"  );
 			Queueable obj = new Queueable(QueueType.MQTT_DEV_MESSAGE, mqttPublish);
 			adapterManager.getQueue().enqueue(6, obj);
-			System.out.println("message enqueue" + mqttPublish.getTopicName() );
 			
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block

@@ -1,9 +1,9 @@
 grammar TransformationGrammar;
 
-program : (import_name)* main
+program : (import_name)* main EOF
 	; 
 
-main : PROGRAM ID PR_OPN programparameters? PR_CLS block EOF
+main : PROGRAM ID PR_OPN programparameters? PR_CLS block
 	;  
 
 import_name

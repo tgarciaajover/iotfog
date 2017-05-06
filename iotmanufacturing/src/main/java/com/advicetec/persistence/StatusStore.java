@@ -10,11 +10,14 @@ import javax.xml.bind.Marshaller;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import com.advicetec.configuration.DeviceTypeContainer;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
@@ -35,6 +38,9 @@ import com.advicetec.measuredentitity.MeasuredEntityType;
  */
 public class StatusStore {
 
+	
+	static Logger logger = LogManager.getLogger(StatusStore.class.getName());
+	
 	private HashMap<String, AttributeValue> values;
 	private HashMap<String, Attribute> attributes; 
 
@@ -54,26 +60,33 @@ public class StatusStore {
 	public void setAttribute( Attribute attribute) throws Exception{
 
 		// if the attribute already exists in the list, then verify units and type
-		if(attributes.containsKey(attribute.getName())){
+		if(attributes.containsKey(attribute.getName()))
+		{
 			Attribute old = attributes.get(attribute.getName());
-						
-			
+							
 			if( !attribute.getType().equals(old.getType())){
-				throw new Exception("Error -- attribute has different unit or type");
-			} else if ((attribute.getUnit() == null) && (old.getUnit() != null)){ 
-				throw new Exception("Error -- attribute has different unit or type");
+				String error = "Error -- attribute has different unit or type";
+				logger.error(error);
+				throw new Exception(error);
+			} else if ((attribute.getUnit() == null) && (old.getUnit() != null)){
+				String error = "Error -- attribute has different unit or type";
+				logger.error(error);
+				throw new Exception(error);
 			} else if (
 					(attribute.getUnit() != null) && 
 					 (old.getUnit() != null)){
 				     boolean equal = (attribute.getUnit()).equals(old.getUnit());
 					 if (equal==false){
-						 throw new Exception("Error -- attribute has different unit or type");
+						String error = "Error -- attribute has different unit or type";
+						logger.error(error);
+						throw new Exception(error);
 					 }
 				
 			}  else {
 				old.update(attribute);
 			}
-		} else { 
+		} 
+		else { 
 			// insert the value
 			attributes.put(attribute.getName(), attribute);
 		}
@@ -95,6 +108,10 @@ public class StatusStore {
 		}
 	}
 
+	
+	public Attribute getAttribute(String name){
+		return  attributes.get(name);
+	}
 	/**
 	 * Imports a symbol table from the interpreter to the Attribute List.
 	 * @param measuringEntity
@@ -104,15 +121,17 @@ public class StatusStore {
 	 */
 	public void importSymbols( Map<String, Symbol> symbols, AttributeOrigin origin ) throws Exception {
 
-		System.out.println("entering importSymbol");
-		for (Map.Entry<String, Symbol> entry : symbols.entrySet()) {
+		logger.debug("Importing # symbols:" + symbols.size());
+		
+		for (Map.Entry<String, Symbol> entry : symbols.entrySet()) 
+		{
+			logger.debug("importing symbol:" + entry.getKey());
+			
 			if(entry.getValue() instanceof AttributeSymbol){
 				AttributeSymbol attSymbol = (AttributeSymbol) entry.getValue(); 
 				String attrName = attSymbol.getName();
 
 				String attrUnitName = attSymbol.getUnitOfMeasure();
-
-				System.out.println("Attribute Name:" + attrName + "Measure Unit:" + attrUnitName);
 				
 				// MeasuringUnit
 				MeasuringUnit measurinUnit = null;
@@ -121,9 +140,7 @@ public class StatusStore {
 						UnitMeasureSymbol unitMeasureSymbol = (UnitMeasureSymbol) symbols.get(attrUnitName); 
 						measurinUnit = new MeasuringUnit(unitMeasureSymbol.getName(), unitMeasureSymbol.getDescription());
 					} 
-			    } else {
-			    	System.out.println("Unit not found in the symbol table");
-				}
+			    } 
 
 				// AttributeType
 				AttributeType attributeType = null;
@@ -158,9 +175,7 @@ public class StatusStore {
 				newAttr.setOrigin(origin);
 				setAttribute(newAttr);
 			}
-		}
-		
-		System.out.println("leaving importSymbol");
+		}		
 	}
 
 
@@ -206,8 +221,8 @@ public class StatusStore {
 		
 		return doc;
 	}
+
+	public int getAttributeSize() {
+		return attributes.size();
+	}
 }
-
-
-
-

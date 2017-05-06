@@ -114,5 +114,10 @@ public class AttributeValue
 		}
 		return json;
 	}
+	
+	public int compareTo(AttributeValue a)
+	{
+		return this.toString().compareTo(a.toString());
+	}
 
 }

@@ -26,10 +26,12 @@ public class SignalUnitContainer extends Container
 	
 	public void loadContainer() throws SQLException
 	{
-		super.connect();
-		super.configuationObjects.clear();
 
 		try {
+
+			super.connect();
+			super.configuationObjects.clear();
+
 			ResultSet rs = super.pst.executeQuery(sqlSelect);
 			while (rs.next())
 			{
@@ -45,14 +47,20 @@ public class SignalUnitContainer extends Container
 			
 			rs.close();
 			
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-			throw e;						
-		}
+			super.disconnect();
+			
+		} catch (ClassNotFoundException e){
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
+        	e.printStackTrace();
+        	throw new SQLException(error);
+        } catch (SQLException e) {
+        	String error = "Container:" + this.getClass().getName() +  "Error connecting to the database - error:" + e.getMessage();
+        	logger.error(error);
+        	e.printStackTrace();        	
+        	throw new SQLException(error);
+        }
 		
-		
-		super.disconnect();
 	}
 	
 	public void deleteSignalUnit(int uniqueID)

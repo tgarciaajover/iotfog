@@ -36,7 +36,6 @@ public class Queue<T>
 		count = 0;
 		tail =0;
 		head = 0;
-		System.out.println("in queue constructor");
 	}
 
 	public void push(T obj) throws InterruptedException{

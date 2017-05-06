@@ -117,7 +117,10 @@ public class Attribute
 		StringBuilder sb = new StringBuilder();
 		sb.append("name: ").append(name).append(",");
 		sb.append("type: ").append(type.toString()).append(",");
-		sb.append("unit: ").append(unit.toString()).append(",");
+		
+		if (unit != null)
+			sb.append("unit: ").append(unit.toString()).append(",");
+		
 		sb.append("trend: ").append(trend).append(",");
 		sb.append("origin: ").append(origin.toString());
 		return sb.toString();

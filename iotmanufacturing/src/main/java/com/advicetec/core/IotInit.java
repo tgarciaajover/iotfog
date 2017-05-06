@@ -1,6 +1,8 @@
 package com.advicetec.core;
 
 
+import java.sql.SQLException;
+
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
@@ -30,30 +32,26 @@ public class IotInit extends Configurable
 	private MeasuredEntityManager entityManager;
 	private Thread managerThread; 
 	
-	private IotInit()  {
+	private IotInit() throws SQLException  {
 		
 		super("IotInit");
 		
 		// Property configurator
 		
-		try {
 		
-			configManager = ConfigurationManager.getInstance();
-			eventManager = EventManager.getInstance();
-			messageManager = MessageManager.getInstance();
-			adapterManager = AdapterManager.getInstance();
-			entityManager = MeasuredEntityManager.getInstance();
-					
-			// Init the configuration  
-			configManager.loadConfiguration();
-			
+		configManager = ConfigurationManager.getInstance();
+		eventManager = EventManager.getInstance();
+		messageManager = MessageManager.getInstance();
+		adapterManager = AdapterManager.getInstance();
+		entityManager = MeasuredEntityManager.getInstance();
+
+		// Init the configuration  
+		configManager.loadConfiguration();
+
 		
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-		}
 	}
 	
-	public static IotInit getInstance(){
+	public static IotInit getInstance() throws SQLException{
 		if (instance == null){
 			instance = new IotInit();
 		}
@@ -65,17 +63,19 @@ public class IotInit extends Configurable
 		// caches initiation
 		//		StatusStore.getInstance();
 		
-		IotInit iotInit = IotInit.getInstance();
-		iotInit.adapterManager.run();
-		System.out.println("after running adapter Manager");
-		iotInit.messageManager.run();
-		System.out.println("after running message Manager");
-		iotInit.eventManager.run();
-		System.out.println("after running event Manager");
-
-		// Init the Rest server 
-		String rest_port = iotInit.properties.getProperty("rest_port");
 		try {
+
+			IotInit iotInit = IotInit.getInstance();
+			iotInit.adapterManager.run();
+			System.out.println("after running adapter Manager");
+			iotInit.messageManager.run();
+			System.out.println("after running message Manager");
+			iotInit.eventManager.run();
+			System.out.println("after running event Manager");
+
+			// Init the Rest server 
+			String rest_port = iotInit.properties.getProperty("rest_port");
+			
 			IotRestServer.runServer(Integer.valueOf(rest_port));
 			
 			MqttSubscriber mqttSubscriber = new MqttSubscriber();
@@ -83,10 +83,10 @@ public class IotInit extends Configurable
 			
 			
 		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 

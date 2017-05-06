@@ -159,10 +159,7 @@ public class InterpreterSw
 
         logger.debug("before creating a new instance of interpreter");
         interpreter = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
-        
-        logger.debug("brings the root of the tree");
-        // tree = parser.program();
-        
+                
         if (tree instanceof TransformationGrammarParser.ProgramContext){
         	logger.debug("ok it is the correct programa context");
         }

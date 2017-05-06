@@ -49,12 +49,9 @@ public class PriorityQueue<T>
 			if ((priority >= MAX_PRIORITIES) || (priority < 0)) {
 		        throw new ArrayIndexOutOfBoundsException("Prioities should be between 0 and " + MAX_PRIORITIES);
 		    }
-			System.out.println("aqui vamos" + priority);
 			queuePriorities[priority].push(obj);
-			System.out.println("aqui vamos 1");
 			count++;
 			notEmpty.signal();
-			System.out.println("aqui vamos 2");
 		} finally {
 			lock.unlock();
 		}

@@ -31,12 +31,12 @@ public class MeasuredEntityContainer extends Container {
 
 	public void loadContainer() throws SQLException
 	{
-		super.connect();
-		super.configuationObjects.clear();
 
 		try 
 		{
 			
+			super.connect();
+			super.configuationObjects.clear();
 			
 			ResultSet rs1 = super.pst.executeQuery(sqlSelect1);
 			while (rs1.next())
@@ -73,20 +73,28 @@ public class MeasuredEntityContainer extends Container {
 			
 			rs1.close();
 
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-			throw e;						
-		}
+			// loop through the measured entities and load their behaviors
+			
+			for( Integer id : this.configuationObjects.keySet()){
+				MeasuredEntity measuredEntity = (MeasuredEntity) this.configuationObjects.get(id);
+				loadBehaviors(measuredEntity);
+			}
+			
+			super.disconnect();
+			
+			
+		} catch (ClassNotFoundException e){
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
+        	e.printStackTrace();
+        	throw new SQLException(error);
+        } catch (SQLException e) {
+        	String error = "Container:" + this.getClass().getName() +  "Error connecting to the database - error:" + e.getMessage();
+        	logger.error(error);
+        	e.printStackTrace();        	
+        	throw new SQLException(error);
+        }
 		
-		// loop through the measured entities and load their behaviors
-		
-		for( Integer id : this.configuationObjects.keySet()){
-			MeasuredEntity measuredEntity = (MeasuredEntity) this.configuationObjects.get(id);
-			loadBehaviors(measuredEntity);
-		}
-		
-		super.disconnect();
 	}
 	
 	public void loadBehaviors(MeasuredEntity entity)

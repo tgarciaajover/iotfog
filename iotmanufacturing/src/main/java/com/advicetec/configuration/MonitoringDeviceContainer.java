@@ -32,11 +32,12 @@ public class MonitoringDeviceContainer extends Container
 	
 	public void loadContainer() throws SQLException
 	{
-		super.connect();
-		super.configuationObjects.clear();
 
 		try 
 		{
+			super.connect();
+			super.configuationObjects.clear();
+
 			ResultSet rs1 = super.pst.executeQuery(sqlSelect1);
 			while (rs1.next())
 			{
@@ -92,14 +93,20 @@ public class MonitoringDeviceContainer extends Container
 			
 			rs2.close();
 			
+			super.disconnect();
 			
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-			throw e;
-		}
+		} catch (ClassNotFoundException e){
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
+        	e.printStackTrace();
+        	throw new SQLException(error);
+        } catch (SQLException e) {
+        	String error = "Container:" + this.getClass().getName() +  "Error connecting to the database - error:" + e.getMessage();
+        	logger.error(error);
+        	e.printStackTrace();        	
+        	throw new SQLException(error);
+        }
 		
-		super.disconnect();
 	}
 
 	public synchronized void deleteMonitoringDevice(int uniqueID)

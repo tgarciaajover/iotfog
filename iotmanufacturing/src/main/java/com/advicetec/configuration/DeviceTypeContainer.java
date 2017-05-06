@@ -1,6 +1,7 @@
 package com.advicetec.configuration;
 
 import java.io.IOException;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -14,7 +15,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class DeviceTypeContainer extends Container 
 {
 
-	static Logger logger = LogManager.getLogger(Container.class.getName());
+	static Logger logger = LogManager.getLogger(DeviceTypeContainer.class.getName());
 	
 	static String sqlSelect1 = "SELECT id, descr, create_date FROM setup_devicetype";
 	static String sqlSelect2 = "SELECT id, i_o, device_id, signal_id  FROM setup_iosignalsdevicetype";
@@ -27,13 +28,12 @@ public class DeviceTypeContainer extends Container
 	
 	public void loadContainer() throws SQLException
 	{
-		super.connect();
-		super.configuationObjects.clear();
 
 		try 
 		{
-			
-			
+			super.connect();
+			super.configuationObjects.clear();
+						
 			ResultSet rs1 = super.pst.executeQuery(sqlSelect1);
 			while (rs1.next())
 			{
@@ -67,15 +67,23 @@ public class DeviceTypeContainer extends Container
 		        device.putIOSignal(object);
 		        		      
 			}
+
 			rs2.close();
-			
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-			throw e; 
-		}
+
+			super.disconnect();
+
+		} catch (ClassNotFoundException e){
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
+        	e.printStackTrace();
+        	throw new SQLException(error);
+        } catch (SQLException e) {
+        	String error = "Container:" + this.getClass().getName() +  "Error connecting to the database - error:" + e.getMessage();
+        	logger.error(error);
+        	e.printStackTrace();        	
+        	throw new SQLException(error);
+        }
 		
-		super.disconnect();
 	}
 
 	public synchronized void deleteDeviceType(int uniqueID)
