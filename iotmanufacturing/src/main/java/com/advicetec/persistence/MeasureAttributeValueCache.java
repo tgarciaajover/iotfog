@@ -72,59 +72,60 @@ public class MeasureAttributeValueCache extends Configurable {
 	            .maximumSize(maxSize)
 	        	.writer(new WriteBehindCacheWriter.Builder<String, AttributeValue>()
 	                .bufferTime(WRITE_TIME, TimeUnit.SECONDS)
-	                // .coalesce(BinaryOperator.maxBy(AttributeValue::compareTo))
+	                .coalesce(BinaryOperator.maxBy(AttributeValue::compareTo))
 	                .writeAction(entries -> {
 
-	                	
-	        			try {
-							Class.forName(DB_DRIVER);
-		        			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-		        			conn.setAutoCommit(false);
-		        			pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
-
-		                	entries.forEach((k,v)-> {
-		                		((MeasuredAttributeValue)v).dbInsert(pst);
-									try {
-										pst.addBatch();
-									} catch (SQLException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-			                	});
-
-		                	pst.executeBatch();
-		        			conn.commit();
-
-	        			} catch (ClassNotFoundException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-
-	        			finally{
-	        				if(pst!=null)
-	        				{
-	        					try
-	        					{
-	        						pst.close();
-	        					} catch (SQLException e) {
-	        						e.printStackTrace();
-	        					}
-	        				}
-
-	        				if(conn!=null) 
-	        				{
-	        					try
-	        					{
-	        						conn.close();
-	        					} catch (SQLException e) {
-	        						e.printStackTrace();
-	        					}
-	        				}
-	        			}
-
+	                	if (entries.size() > 0) {
+		                	System.out.println("Entre en writeaction:" + entries.size());
+		        			try {
+								Class.forName(DB_DRIVER);
+			        			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			        			conn.setAutoCommit(false);
+			        			pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
+	
+			                	entries.forEach((k,v)-> {
+			                		((MeasuredAttributeValue)v).dbInsert(pst);
+										try {
+											pst.addBatch();
+										} catch (SQLException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
+										}
+				                	});
+	
+			                	int ret[] = pst.executeBatch();
+			                	System.out.println("Number of commands executed:" + ret.length);
+			        			conn.commit();
+		        			} catch (ClassNotFoundException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							} catch (SQLException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+		        		
+		        			finally{
+		        				if(pst!=null)
+		        				{
+		        					try
+		        					{
+		        						pst.close();
+		        					} catch (SQLException e) {
+		        						e.printStackTrace();
+		        					}
+		        				}
+	
+		        				if(conn!=null) 
+		        				{
+		        					try
+		        					{
+		        						conn.close();
+		        					} catch (SQLException e) {
+		        						e.printStackTrace();
+		        					}
+		        				}
+		        			}
+	                	}
 	                }).build())
 	            .build();
 	}
@@ -142,6 +143,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	}
 
 	public void cacheStore(AttributeValue mav){
+		System.out.println("guardando el attribute value:" + mav.toString());
 		cache.put(mav.getKey(), mav);
 	}
 
@@ -212,7 +214,7 @@ public class MeasureAttributeValueCache extends Configurable {
 					pst.addBatch();
 				}
 			}
-			int[] count =pst.executeBatch();
+			pst.executeBatch();
 			conn.commit();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
