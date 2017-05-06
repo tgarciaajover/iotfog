@@ -1,10 +1,14 @@
 package com.advicetec.measuredentitity;
 
 import java.io.IOException;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -16,6 +20,7 @@ import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
@@ -31,7 +36,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	LocalDateTime timeStamp;
 
 	@JsonIgnore
-	public final static String SQL_Insert = "INSERT INTO MeasuredAttributeValue(id_owner, timestamp, owner_type, attribute_name, value_decimal, value_datetime, value_string, value_int) " + "VALUES(?,?,?,?,?,?,?,?)";
+	public final static String SQL_Insert = "INSERT INTO MeasuredAttributeValue(id_owner, timestamp, owner_type, attribute_name, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time) " + "VALUES(?,?,?,?,?,?,?,?,?,?,?)";
 	@JsonIgnore
 	public final static String SQL_Delete = "DELETE INTO MeasuredAttributeValue(id_owner, timestamp, owner_type, attribute_name) " + "VALUES(?,?,?,?)";
 
@@ -43,9 +48,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 			@JsonProperty("generatorType")MeasuredEntityType parentType, 
 			@JsonProperty("timeStamp") LocalDateTime timeStamp) 
 	{
-		// key = generator + attrName + timeStamp
-		super(Integer.toString(parent)+ ":" + type.getName()+":"+ timeStamp.toString(), 
-				type, value, parent, parentType );
+		super(type.getName() + ":" + timeStamp.toString(), type, value, parent, parentType );
 		this.timeStamp = timeStamp;
 	}
 
@@ -72,35 +75,78 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 			pstmt.setTimestamp(2, Timestamp.valueOf(getTimeStamp()));   // timestamp
 			pstmt.setInt(3, getGeneratorType().getValue());          		// owner_type
 			pstmt.setString(4, getAttr().getName());      			// Attribute Name
-			switch ( getAttr().getType().getValue() )
+			switch ( getAttr().getType() )
 			{
-			case 0:  // Double
+			case DOUBLE :  // Double
 				pstmt.setDouble(5, (Double) getValue());		 // value_Decimal
-				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
-				pstmt.setString(7, null);
-				pstmt.setNull(8, java.sql.Types.INTEGER);
-
+				pstmt.setNull(6, java.sql.Types.TIMESTAMP);      // value_datetime
+				pstmt.setString(7, null);                        // value_string
+				pstmt.setNull(8, java.sql.Types.INTEGER);        // value_int
+				pstmt.setNull(9, java.sql.Types.BOOLEAN);        // value_boolean
+				pstmt.setNull(10, java.sql.Types.DATE);          // value_date
+				pstmt.setNull(11, java.sql.Types.TIME);          // value_time
+				
 				break;				
-			case 1:  // Datetime
+			case DATETIME:  // Datetime
 				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
 				pstmt.setTimestamp(6, Timestamp.valueOf( (LocalDateTime) getValue()));		 // value_Decimal				
 				pstmt.setString(7, null);
 				pstmt.setNull(8, java.sql.Types.INTEGER);
+				pstmt.setNull(9, java.sql.Types.BOOLEAN);        // value_boolean
+				pstmt.setNull(10, java.sql.Types.DATE);          // value_date
+				pstmt.setNull(11, java.sql.Types.TIME);          // value_time
 				break;
 
-			case 2:  // String
+			case STRING:  // String
 				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
 				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
 				pstmt.setString(7, (String) getValue());	     // value_string
 				pstmt.setNull(8, java.sql.Types.INTEGER);
+				pstmt.setNull(9, java.sql.Types.BOOLEAN);        // value_boolean
+				pstmt.setNull(10, java.sql.Types.DATE);          // value_date
+				pstmt.setNull(11, java.sql.Types.TIME);          // value_time
 				break;
 
-			case 3:  // Integer
+			case BOOLEAN:  // Boolean
+				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
+				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
+				pstmt.setString(7, null);	     				 // value_string
+				pstmt.setNull(8, java.sql.Types.INTEGER);
+				pstmt.setBoolean(9, (Boolean) getValue());       // value_boolean
+				pstmt.setNull(10, java.sql.Types.DATE);          // value_date
+				pstmt.setNull(11, java.sql.Types.TIME);          // value_time
+				break;
+				
+			case INT:  // Integer
 				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
 				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
 				pstmt.setString(7, null);
 				pstmt.setInt(8, (Integer) getValue());	     // value_string
+				pstmt.setNull(9, java.sql.Types.BOOLEAN);        // value_boolean
+				pstmt.setNull(10, java.sql.Types.DATE);          // value_date
+				pstmt.setNull(11, java.sql.Types.TIME);          // value_time
 				break;
+
+			case DATE:  // Date
+				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
+				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
+				pstmt.setString(7, null);
+				pstmt.setNull(8, java.sql.Types.INTEGER);	     // value_string
+				pstmt.setNull(9, java.sql.Types.BOOLEAN);        // value_boolean
+				pstmt.setDate(10, Date.valueOf((LocalDate) getValue()));         // value_date
+				pstmt.setNull(11, java.sql.Types.TIME);          // value_time
+				break;
+
+			case TIME:  // Time
+				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
+				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
+				pstmt.setString(7, null);
+				pstmt.setInt(8, (Integer) getValue());	     // value_string
+				pstmt.setNull(9, java.sql.Types.BOOLEAN);        // value_boolean
+				pstmt.setNull(10, java.sql.Types.DATE);          // value_date
+				pstmt.setTime(11, Time.valueOf((LocalTime) getValue()));          // value_time
+				break;
+				
 			}
 
 			pstmt.addBatch();		
