@@ -19,7 +19,7 @@ import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.VariableSymbol;
 
-public class RefPhase extends BehaviorGrammarBaseListener 
+public class BehaviorRefPhase extends BehaviorGrammarBaseListener 
 {
 
 	BehaviorGrammarParser parser = null;
@@ -29,7 +29,7 @@ public class RefPhase extends BehaviorGrammarBaseListener
 	private ArrayList<SyntaxError> compilationErrors;
 	
 	
-	RefPhase(BehaviorGrammarParser parser, GlobalScope globals , ParseTreeProperty<Scope> scopes)
+	BehaviorRefPhase(BehaviorGrammarParser parser, GlobalScope globals , ParseTreeProperty<Scope> scopes)
 	{
 		this.scopes = scopes;
 		this.globals = globals;

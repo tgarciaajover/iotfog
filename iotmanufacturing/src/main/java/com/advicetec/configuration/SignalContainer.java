@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -12,14 +14,16 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class SignalContainer extends Container
 {
 
+	static Logger logger = LogManager.getLogger(SignalContainer.class.getName());
+	
 	static String sqlSelect = "SELECT id, descr, create_date, type_id, unit_id FROM setup_signal";
 
-	public SignalContainer(String server, String user, String password) 
+	public SignalContainer(String driver, String server, String user, String password) 
 	{	
-		super(server, user, password);	
+		super(driver, server, user, password);	
 	}
 	
-	public void loadContainer()
+	public void loadContainer() throws SQLException
 	{
 		super.connect();
 		super.configuationObjects.clear();
@@ -51,8 +55,9 @@ public class SignalContainer extends Container
 			rs.close();
 			
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
+			throw e;
 		}
 		
 		super.disconnect();
@@ -98,13 +103,13 @@ public class SignalContainer extends Container
 			super.configuationObjects.put(signalTemp.getId(), signalTemp);
 		
 		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 		

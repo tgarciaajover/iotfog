@@ -1,5 +1,6 @@
 package com.advicetec.language.behavior;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -10,11 +11,12 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarLexer;
 import com.advicetec.language.BehaviorGrammarParser;
-import com.advicetec.language.TransformationGrammarLexer;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
@@ -28,11 +30,12 @@ import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
-public class InterpreterSw 
+public class BehaviorInterpreterSw 
 {
 
-	private DefPhase defPhase;
-	private Interpreter interpreter; 
+	static Logger logger = LogManager.getLogger(BehaviorInterpreterSw.class.getName());
+	private BehaviorDefPhase defPhase;
+	private BehaviorInterpreter interpreter; 
 	
     public static Symbol.Type getType(int tokenType) {
 
@@ -79,14 +82,16 @@ public class InterpreterSw
 
         ParseTree tree = parser.program();
 
-	    String mainProgramStr = (parser.getTokenNames())[TransformationGrammarLexer.PROGRAM];
+	    String mainProgramStr = (parser.getTokenNames())[BehaviorGrammarLexer.PROGRAM];
 
+	    logger.debug("mainProgramStr:" + mainProgramStr);
+	    
 	    // Token names come with a ' at the begin and end. We remove them. 
 	    mainProgramStr = mainProgramStr.replace("'","");
 
         ParseTreeWalker walker = new ParseTreeWalker();
 
-        defPhase = new DefPhase(parser);
+        defPhase = new BehaviorDefPhase(parser);
 
         walker.walk(defPhase, tree);
        
@@ -153,10 +158,15 @@ public class InterpreterSw
         MeasuredEntityManager manager = MeasuredEntityManager.getInstance();
         MeasuredEntityFacade facade = manager.getFacadeOfEntityById(entityId);
         
-        interpreter = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
+        interpreter = new BehaviorInterpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
         interpreter.visit(tree);
         
-        System.out.println("Interpreter phase finished globals" + interpreter.globals.toString());
+        
+        Map<String, ASTNode> glob = interpreter.getGlobalSpace().getSymbolMap();
+        for (String node : glob.keySet()){
+        	logger.debug("Symbol:" + node + " value:" + glob.get(node));
+        }
+
     }    
 
     public GlobalScope getGlobalScope(){

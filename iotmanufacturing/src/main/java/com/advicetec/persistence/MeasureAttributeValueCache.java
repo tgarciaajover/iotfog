@@ -4,12 +4,16 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-
-import org.hamcrest.core.IsInstanceOf;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BinaryOperator;
 
 import com.advicetec.core.AttributeValue;
+import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -19,36 +23,116 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @author user
  *
  */
-public class MeasureAttributeValueCache {
+public class MeasureAttributeValueCache extends Configurable {
 	
-	private final static String DB_URL = "jdbc:postgresql://localhost:5432/iotajover";
-	private final static String DB_USER = "iotajover";
-	private final static String DB_PASS = "iotajover";
-	private final static String DB_DRIVER = "org.postgresql.Driver";
+	private static String DB_URL = null;
+	private static String DB_USER = null;
+	private static String DB_PASS = null;
+	private static String DB_DRIVER = null;
+	private static Integer INIT_CAPACITY = 0;
+	private static Integer MAX_SIZE = 0;
+	private static Integer WRITE_TIME = 0;
+	private static Integer DELETE_TIME = 0;
 	
 	private static MeasureAttributeValueCache instance = null;
-	Connection conn  = null; 
-	PreparedStatement pst = null;
+	private static Connection conn  = null; 
+	private static PreparedStatement pst = null;
+	
 
 	private static Cache<String, AttributeValue> cache;
 	PreparedStatement preparedStatement;
 
-	private MeasureAttributeValueCache(){
+	private MeasureAttributeValueCache()
+	{
+		super("MeasureAttributeValueCache");
+		
+		DB_DRIVER = properties.getProperty("driver");
+		DB_URL = properties.getProperty("server");
+		DB_USER = properties.getProperty("user");
+		DB_PASS = properties.getProperty("password");
+		INIT_CAPACITY = Integer.valueOf(properties.getProperty("init_capacity"));
+		MAX_SIZE = Integer.valueOf(properties.getProperty("max_size"));
+		WRITE_TIME = Integer.valueOf(properties.getProperty("write_time"));
+		DELETE_TIME = Integer.valueOf(properties.getProperty("delete_time"));
+
 	}
-	
-	
+		
 	public static void setCache(int initialCapacity, int maxSize){
-		cache = Caffeine.newBuilder()
-				.initialCapacity(initialCapacity)
-				.maximumSize(maxSize)
-				.recordStats()
-				.build();
+		
+		// Write behind implementation.
+		//cache = Caffeine.newBuilder()
+		//		.initialCapacity(initialCapacity)
+		//		.maximumSize(maxSize)
+		//		.recordStats()
+		//		.build();
+		
+	     cache = Caffeine.newBuilder()
+	            .expireAfterWrite(DELETE_TIME, TimeUnit.SECONDS)
+	            .initialCapacity(initialCapacity)
+	            .maximumSize(maxSize)
+	        	.writer(new WriteBehindCacheWriter.Builder<String, AttributeValue>()
+	                .bufferTime(WRITE_TIME, TimeUnit.SECONDS)
+	                // .coalesce(BinaryOperator.maxBy(AttributeValue::compareTo))
+	                .writeAction(entries -> {
+
+	                	
+	        			try {
+							Class.forName(DB_DRIVER);
+		        			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+		        			conn.setAutoCommit(false);
+		        			pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
+
+		                	entries.forEach((k,v)-> {
+		                		((MeasuredAttributeValue)v).dbInsert(pst);
+									try {
+										pst.addBatch();
+									} catch (SQLException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+			                	});
+
+		                	pst.executeBatch();
+		        			conn.commit();
+
+	        			} catch (ClassNotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
+	        			finally{
+	        				if(pst!=null)
+	        				{
+	        					try
+	        					{
+	        						pst.close();
+	        					} catch (SQLException e) {
+	        						e.printStackTrace();
+	        					}
+	        				}
+
+	        				if(conn!=null) 
+	        				{
+	        					try
+	        					{
+	        						conn.close();
+	        					} catch (SQLException e) {
+	        						e.printStackTrace();
+	        					}
+	        				}
+	        			}
+
+	                }).build())
+	            .build();
 	}
 
 	public static MeasureAttributeValueCache getInstance(){
 		if(instance == null){
 			instance = new MeasureAttributeValueCache();
-			setCache(1000,1000);// default values
+			setCache(INIT_CAPACITY,MAX_SIZE);// default values
 		}
 		return instance;
 	}

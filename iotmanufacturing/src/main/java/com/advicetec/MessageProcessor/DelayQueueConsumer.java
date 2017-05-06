@@ -3,6 +3,8 @@ package com.advicetec.MessageProcessor;
 import java.util.concurrent.BlockingQueue;
 
 import com.advicetec.eventprocessor.EventManager;
+import com.advicetec.mpmcqueue.QueueType;
+import com.advicetec.mpmcqueue.Queueable;
 
 public class DelayQueueConsumer implements Runnable 
 {
@@ -26,8 +28,9 @@ public class DelayQueueConsumer implements Runnable
 				// Take elements out from the DelayQueue object.
 				DelayEvent object = (DelayEvent) queue.take();
 				
-				// TODO: to define the priority.
-				this.eventManager.getQueue().enqueue(7, object.getEvent());
+				Queueable obj = new Queueable(QueueType.EVENT, object.getEvent());
+				// TODO : define the priority
+				this.eventManager.getQueue().enqueue(6,obj);
 				
 			} catch (InterruptedException e) {
 				e.printStackTrace();

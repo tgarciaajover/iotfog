@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -13,18 +15,21 @@ import com.advicetec.configuration.Container;
 import com.advicetec.configuration.DeviceType;
 import com.advicetec.configuration.IOSignalDeviceType;
 import com.advicetec.configuration.Signal;
+import com.advicetec.configuration.SignalUnitContainer;
 
 public class MeasuredEntityContainer extends Container {
 
+	static Logger logger = LogManager.getLogger(MeasuredEntityContainer.class.getName());
+	
 	static String sqlSelect1 = "SELECT id, code, descr, create_date, type FROM setup_measuredentity";
 	static String sqlSelect2 = "SELECT id, name, descr, behavior_text, create_date, last_updttm, measure_entity_id FROM setup_measuredentitybehavior WHERE measure_entity_id = ";
 	
 	
-	public MeasuredEntityContainer(String server, String user, String password) {
-		super(server, user, password);
+	public MeasuredEntityContainer(String driver, String server, String user, String password) {
+		super(driver, server, user, password);
 	}
 
-	public void loadContainer()
+	public void loadContainer() throws SQLException
 	{
 		super.connect();
 		super.configuationObjects.clear();
@@ -69,8 +74,9 @@ public class MeasuredEntityContainer extends Container {
 			rs1.close();
 
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
+			throw e;						
 		}
 		
 		// loop through the measured entities and load their behaviors
@@ -102,7 +108,7 @@ public class MeasuredEntityContainer extends Container {
 			rs2.close();
 
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 
@@ -131,13 +137,13 @@ public class MeasuredEntityContainer extends Container {
 		    }
 		
 		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 		

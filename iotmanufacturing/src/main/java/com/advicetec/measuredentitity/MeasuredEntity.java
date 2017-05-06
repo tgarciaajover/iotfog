@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -19,6 +21,7 @@ import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.json.JSONArray;
 
+import com.advicetec.MessageProcessor.SampleProcessor;
 import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.TimeInterval;
@@ -44,6 +47,8 @@ import com.advicetec.persistence.StateIntervalCache;
 	    @Type(value = ProductionJob.class, name = "J") })
 public abstract class MeasuredEntity extends ConfigurationObject 
 {
+	
+	static final Logger logger = LogManager.getLogger(MeasuredEntity.class.getName()); 
 	
 	@JsonProperty("code")
 	protected String code;
@@ -195,6 +200,8 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	
 	public synchronized String getBehaviorText(String name)
 	{
+		logger.debug("behavior:" + name);
+		
 		for (int i = 0; i < this.behaviors.size(); i++){
 			MeasuredEntityBehavior measuredEntityBehavior = this.behaviors.get(i);
 			if (measuredEntityBehavior.getName().compareTo(name) == 0){

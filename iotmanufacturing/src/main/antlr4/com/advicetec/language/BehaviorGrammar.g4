@@ -1,10 +1,10 @@
 grammar BehaviorGrammar;
 
-program : (import_name)* main
+program : (import_name)* main EOF
 	;
 
 main : PROGRAM ID PR_OPN programparameters? PR_CLS block 
-		   (function_dec)*
+		   (function_dec)* 
 	;  
 
 import_name
@@ -111,8 +111,8 @@ log 		: LOG expression SEMICOLON
  ;
 
 expression : ID  PR_OPN expressionList?  PR_CLS  					# Call // func call like f(), f(x), f(x1,x2)
-            | ID ASG count_over_time								# Call_CountOverTime 
-            | ID ASG max_over_time									# Call_MaxOverTime 
+            | count_over_time									    # Call_CountOverTime 
+            | max_over_time									        # Call_MaxOverTime 
 			| expression EXPO expression  							# Expon
 			| MINUS expression                     					# unaryMinusExpr
  			| NOT expression                        				# notExpr
@@ -194,7 +194,7 @@ MONTH : JAN | FEB | MAR | APR | MAY | JUN | JUL | AUG | SEP | OCT | NOV | DEC;
 
 TIMEUNIT : SECOND | MINUTE | HOUR;
 
-PROGRAM : 	'program';
+PROGRAM 	: 'program';
 ATTRIBUTE 	: 'attr';
 VARIABLE 	: 'var';
 UNIT 		: 'unit';

@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -12,15 +14,18 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class DeviceTypeContainer extends Container 
 {
 
+	static Logger logger = LogManager.getLogger(Container.class.getName());
+	
 	static String sqlSelect1 = "SELECT id, descr, create_date FROM setup_devicetype";
 	static String sqlSelect2 = "SELECT id, i_o, device_id, signal_id  FROM setup_iosignalsdevicetype";
+	
 
-	public DeviceTypeContainer(String server, String user, String password) 
+	public DeviceTypeContainer(String driver, String server, String user, String password) 
 	{	
-		super(server, user, password);	
+		super(driver, server, user, password);	
 	}
 	
-	public void loadContainer()
+	public void loadContainer() throws SQLException
 	{
 		super.connect();
 		super.configuationObjects.clear();
@@ -65,8 +70,9 @@ public class DeviceTypeContainer extends Container
 			rs2.close();
 			
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
+			throw e; 
 		}
 		
 		super.disconnect();
@@ -93,10 +99,8 @@ public class DeviceTypeContainer extends Container
 				Signal signal = (Signal) signalContainer.getObject(ioDeviceType.getSignal().getId());
 				
 				if (signal == null){
-					System.out.println("estoy aqui signal null");
 					signalContainer.fromJSON(ioDeviceType.getSignal().toJson());
 				} else { 
-					System.out.println("estoy aqui signal not null");
 					ioDeviceType.setSignal(signal);
 				}
 			}
@@ -104,13 +108,13 @@ public class DeviceTypeContainer extends Container
 			super.configuationObjects.put(deviceTypeTemp.getId(), deviceTypeTemp);
 		
 		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 	

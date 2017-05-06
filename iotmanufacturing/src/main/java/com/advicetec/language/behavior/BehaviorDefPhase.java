@@ -28,11 +28,15 @@ import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.language.ast.BehaviorSymbol;
 
 import org.antlr.v4.runtime.Token;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.plexus.compiler.CompilerException;
 
-public class DefPhase extends BehaviorGrammarBaseListener 
+public class BehaviorDefPhase extends BehaviorGrammarBaseListener 
 {
 
+	static Logger logger = LogManager.getLogger(BehaviorDefPhase.class.getName());
+	
 	private BehaviorGrammarParser parser = null;
 	private ParseTreeProperty<Scope> scopes;
 	private GlobalScope globals;
@@ -43,7 +47,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	// Define an array for storing syntax errors.
 	private ArrayList<SyntaxError> compilationErrors;
 
-	DefPhase(BehaviorGrammarParser parser)
+	BehaviorDefPhase(BehaviorGrammarParser parser)
 	{
 		this.scopes = new ParseTreeProperty<Scope>();
 		this.parser = parser;
@@ -70,7 +74,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		String name = ctx.PROGRAM().getText();
 
 		// Transformation program does not have a return value.
-		Symbol.Type type = SyntaxChecking.getType(BehaviorGrammarParser.K_VOID);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(BehaviorGrammarParser.K_VOID);
 
 		// push new scope by making new one that points to enclosing scope
 		BehaviorSymbol program = new BehaviorSymbol(name, type, ctx.block(), currentScope);
@@ -121,7 +125,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		String name = ctx.ID().getText();
 		int typeTokenType = ctx.type().start.getType();
 		
-		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
 		
 		// push new scope by making new one that points to enclosing scope
 		FunctionSymbol function = new FunctionSymbol(name, type, ctx.block(), currentScope);
@@ -275,7 +279,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	public void defineAttributeArray(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, int numElem, Token unit)
 	{
 		int typeTokenType = typeCtx.start.getType();
-		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
 		
 		ArrayAttributeSymbol atr = new ArrayAttributeSymbol(nameToken.getText(), type, numElem);
 
@@ -296,7 +300,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	public void defineVarArray(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, int numElem)
 	{
 		int typeTokenType = typeCtx.start.getType();
-		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
 		
 		ArraySymbol atr = new ArraySymbol(nameToken.getText(), type, numElem);
 
@@ -311,7 +315,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	{
 		int typeTokenType = typeCtx.start.getType();
 		
-		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
 		
 		AttributeSymbol atr = new AttributeSymbol(nameToken.getText(), type, trend);
 		
@@ -320,7 +324,9 @@ public class DefPhase extends BehaviorGrammarBaseListener
 		
 		if (globals.resolve(nameToken.getText()) != null){
 			// Define the symbol in the global scope
-			this.error(nameToken, typeCtx, "Attribute has been defined before: " + nameToken.getText());
+			String error = "Attribute has been defined before: " + nameToken.getText();
+			logger.debug(error);
+			this.error(nameToken, typeCtx, error);
 		} else {
 			globals.define(atr);
 		}
@@ -335,7 +341,9 @@ public class DefPhase extends BehaviorGrammarBaseListener
 
 		// Define the symbol in the current scope
 		if (globals.resolve(unitId) != null){
-			this.error(nameToken, ctx, "Unit of Measure has been defined before: " + unitId);
+			String error = "Unit of Measure has been defined before: " + unitId;
+			logger.debug(error);
+			this.error(nameToken, ctx, error);
 		} else {
 			globals.define(unt);
 		}
@@ -347,7 +355,7 @@ public class DefPhase extends BehaviorGrammarBaseListener
 	{
 		int typeTokenType = typeCtx.start.getType();
 		
-		Symbol.Type type = SyntaxChecking.getType(typeTokenType);
+		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
 		
 		VariableSymbol var = new VariableSymbol(nameToken.getText(), type);
 		

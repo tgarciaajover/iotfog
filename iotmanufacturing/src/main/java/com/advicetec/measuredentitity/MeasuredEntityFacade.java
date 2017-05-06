@@ -13,6 +13,8 @@ import java.util.TreeMap;
 import javax.xml.bind.JAXBException;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -25,6 +27,7 @@ import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.transformation.Interpreter;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
@@ -41,16 +44,18 @@ import com.advicetec.persistence.StatusStore;
  */
 public final class MeasuredEntityFacade {
 
+
+	static Logger logger = LogManager.getLogger(MeasuredEntityFacade.class.getName());
 	private MeasuredEntity entity;
 	// Keeps an in-memory entity status
 	private StatusStore status;
-	
+
 	/**
 	 * Map with key DATETIME and value String Primary Key for the cache/database.
 	 */
 	private Map<String,SortedMap<LocalDateTime,String>> attMap;
 	private MeasureAttributeValueCache attValueCache;
-	
+
 	/** 
 	 * This map stores intervals for states: endTime, startTime.
 	 */
@@ -78,14 +83,14 @@ public final class MeasuredEntityFacade {
 	public MeasuredEntityType getType(){
 		return entity.getType();
 	}
-	
+
 	/**
 	 * Sets an Attribute.
 	 * @param attribute
 	 * @throws Exception If the new type of the attribute does not match the 
 	 * previous type.
 	 */
-	public void setAttribute(Attribute attribute) throws Exception{
+	public synchronized void setAttribute(Attribute attribute) throws Exception{
 		// returns the previous value
 		status.setAttribute(attribute);
 	}
@@ -94,7 +99,7 @@ public final class MeasuredEntityFacade {
 	 * Sets or updates the attribute value into the status and store.
 	 * @param attrValue
 	 */
-	public void setAttributeValue(AttributeValue attrValue){
+	public synchronized void setAttributeValue(AttributeValue attrValue){
 		store(new MeasuredAttributeValue(attrValue.getAttr(), attrValue.getValue(),
 				attrValue.getGenerator(), attrValue.getGeneratorType(), LocalDateTime.now()));
 		status.setAttributeValue(attrValue);
@@ -132,7 +137,7 @@ public final class MeasuredEntityFacade {
 		attValueCache.cacheStore(mav);
 
 		String attName = mav.getAttr().getName();
-		
+
 		// The key for a measuredAttributeValue is the name of the attribute plus the timestamp
 		// The key for an attributeValue is the name of the attribute. 
 		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
@@ -232,8 +237,8 @@ public final class MeasuredEntityFacade {
 	 * @param parentType Type of measured entity.
 	 */
 	public void setAttributeValue(Attribute att, Object value,Integer parent, MeasuredEntityType parentType) {
-		
-		System.out.println("inserting attribute value");
+
+		logger.debug("inserting attribute value -attr:" + att.getName() + " value:" + value.toString() );
 		setAttributeValue(new AttributeValue(att.getName(), att, value, parent, parentType));
 		
 	}	
@@ -286,19 +291,23 @@ public final class MeasuredEntityFacade {
 		ArrayList<AttributeValue> ret = getByIntervalByAttributeName(attrName, from, to);
 
 		ObjectMapper mapper = new ObjectMapper();
+
 		String jsonText=null;
-		
+
 		try {
 			jsonText = mapper. writeValueAsString(ret);
-		
+
 		} catch (JsonGenerationException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return jsonText;
 	}
 	

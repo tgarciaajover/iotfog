@@ -14,7 +14,16 @@ public class ASTNode
     public ASTNode(Object value) {
         this.value = value;
     }
+    
+   public String getObjectClassName()
+   {
+	   return value.getClass().getName();
+   }
 
+    public boolean isVOID(){
+    	return this.value == VOID;
+    }
+    
     public Boolean asBoolean() {
         return (Boolean)value;
     }
@@ -158,6 +167,9 @@ public class ASTNode
 
     @Override
     public String toString() {
-        return String.valueOf(value);
+    	if (isBoolean())
+    		return asBoolean().toString();
+    	else
+    		return String.valueOf(value);
     }
 }

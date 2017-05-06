@@ -1,5 +1,6 @@
 package com.advicetec.language.transformation;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -9,6 +10,8 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarLexer;
@@ -27,6 +30,7 @@ import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 public class InterpreterSw 
 {	
 	
+	static Logger logger = LogManager.getLogger(InterpreterSw.class.getName());
 	private DefPhase defPhase;
 	private Interpreter interpreter;
 	
@@ -64,7 +68,7 @@ public class InterpreterSw
 
     	CharStream  stream = (CharStream) new ANTLRInputStream(program);
 		TransformationGrammarLexer lexer = new TransformationGrammarLexer(stream);
-
+		
         CommonTokenStream tokens = new CommonTokenStream(lexer);
 
         TransformationGrammarParser parser = new TransformationGrammarParser(tokens);
@@ -84,7 +88,7 @@ public class InterpreterSw
 
         walker.walk(defPhase, tree);
         
-        System.out.println("Defphase finished globals: " + defPhase.getGlobalScope().toString());
+        logger.debug("Defphase finished globals: " + defPhase.getGlobalScope().toString());
         
         // create next phase and feed symbol table info from def to ref phase
         MemorySpace globals = new MemorySpace("globals");  
@@ -94,18 +98,22 @@ public class InterpreterSw
         Symbol symbol = defPhase.getGlobalScope().resolve(mainProgramStr);
                 
         if ( symbol == null ) {
-            throw new RuntimeException("no program defined " + programStr);
+        	logger.error("no program defined " + programStr);
+        	throw new RuntimeException("no program defined " + programStr);
         }
 
         if ( symbol instanceof VariableSymbol ) {
+        	logger.error(programStr + " is not a function");
         	throw new RuntimeException(programStr + " is not a function");
         }
 
         if ( symbol instanceof AttributeSymbol ) {
+        	logger.error(programStr + " is not a function");
         	throw new RuntimeException(programStr + " is not a function");
         }
 
         if ( symbol instanceof UnitMeasureSymbol ) {
+        	logger.error(programStr + " is not a function");
         	throw new RuntimeException(programStr + " is not a function");
         }
 
@@ -120,16 +128,19 @@ public class InterpreterSw
         		 (((TransformationSymbol)ts).getMembers() !=null) && 
         		 (((TransformationSymbol)ts).getMembers().size() !=0) )
         	{
+        		logger.error("program " + ts.getName() + " parameters required but not given");
         		throw new RuntimeException("program " + ts.getName() + " parameters required but not given");
         	}
         }
         
         if (argCount > 0)
         {
-        	if ( ((TransformationSymbol)ts).getMembers()==null ){
+        	if (((TransformationSymbol)ts).getMembers()==null ){
+        		logger.error("program " + ts.getName() + " parameters not required and provided");
         		throw new RuntimeException("program " + ts.getName() + " parameters not required and provided");
         	}
         	else if (((TransformationSymbol)ts).getMembers().size()!=argCount){
+        		logger.error("program " + ts.getName() + " wrong number of parameters" + "tranfor defin num:" + ((TransformationSymbol)ts).getMembers().size() + "number:" + argCount);
         		throw new RuntimeException("program " + ts.getName() + " wrong number of parameters" + "tranfor defin num:" + ((TransformationSymbol)ts).getMembers().size() + "number:" + argCount);
         	}
         }
@@ -146,10 +157,21 @@ public class InterpreterSw
         MeasuredEntityManager manager = MeasuredEntityManager.getInstance();
         MeasuredEntityFacade facade = manager.getFacadeOfEntityById(entityId);
 
+        logger.debug("before creating a new instance of interpreter");
         interpreter = new Interpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
+        
+        logger.debug("brings the root of the tree");
+        // tree = parser.program();
+        
+        if (tree instanceof TransformationGrammarParser.ProgramContext){
+        	logger.debug("ok it is the correct programa context");
+        }
         interpreter.visit(tree);
 
-        System.out.println("Interpreter phase finished globals" + interpreter.globals.toString());
+        Map<String, ASTNode> glob = interpreter.getGlobalSpace().getSymbolMap();
+        for (String node : glob.keySet()){
+        	logger.debug("Symbol:" + node + " value:" + glob.get(node));
+        }
     } 
     
     public GlobalScope getGlobalScope(){

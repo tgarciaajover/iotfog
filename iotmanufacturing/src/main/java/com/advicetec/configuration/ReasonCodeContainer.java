@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -12,14 +14,16 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class ReasonCodeContainer extends Container 
 {
 
+	static Logger logger = LogManager.getLogger(ReasonCodeContainer.class.getName());
+	
 	static String sqlSelect = "SELECT id, descr, classification, down, create_date, group_cd FROM setup_idlereason";
 
-	public ReasonCodeContainer(String server, String user, String password) 
+	public ReasonCodeContainer(String driver, String server, String user, String password) 
 	{	
-		super(server, user, password);	
+		super(driver, server, user, password);	
 	}
 	
-	public void loadContainer()
+	public void loadContainer() throws SQLException
 	{
 		super.connect();
 		super.configuationObjects.clear();
@@ -54,8 +58,9 @@ public class ReasonCodeContainer extends Container
 			rs.close();
 			
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
+			throw e;
 		}
 		
 		
@@ -79,13 +84,13 @@ public class ReasonCodeContainer extends Container
 			super.configuationObjects.put(reasonCode.getId(), reasonCode);
 		
 		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 	}

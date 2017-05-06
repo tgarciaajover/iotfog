@@ -1,8 +1,12 @@
 package com.advicetec.eventprocessor;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.core.AttributeOrigin;
@@ -10,8 +14,8 @@ import com.advicetec.core.Processor;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
-import com.advicetec.language.behavior.InterpreterSw;
-import com.advicetec.language.behavior.SyntaxChecking;
+import com.advicetec.language.behavior.BehaviorInterpreterSw;
+import com.advicetec.language.behavior.BehaviorSyntaxChecking;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
@@ -19,6 +23,7 @@ import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 public class MeasuredEntityEventProcessor implements Processor
 {
 
+	static Logger logger = LogManager.getLogger(MeasuredEntityEventProcessor.class.getName());
 	MeasuredEntityEvent event;
 	
 	public MeasuredEntityEventProcessor(MeasuredEntityEvent event) {
@@ -26,13 +31,14 @@ public class MeasuredEntityEventProcessor implements Processor
 		this.event = event;
 	}
 
-	public List<DelayEvent> process() 
+	public List<DelayEvent> process() throws SQLException 
 	{
 		
 		Integer measuringEntity = this.event.getEntity();
 		String behaviorName = this.event.getBehaviorTransformation();
 		
-
+        logger.debug("process - behavior:" + behaviorName);
+		
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade entityFacade = entityManager.getFacadeOfEntityById(measuringEntity);
 
@@ -42,7 +48,9 @@ public class MeasuredEntityEventProcessor implements Processor
 		
 			String program = entityFacade.getEntity().getBehaviorText(behaviorName);
 
-			SyntaxChecking sintaxChecking = new SyntaxChecking();
+			logger.debug("program:" + program);
+			
+			BehaviorSyntaxChecking sintaxChecking = new BehaviorSyntaxChecking();
 			try 
 			{
 				// First, we verify the behavior.
@@ -50,7 +58,7 @@ public class MeasuredEntityEventProcessor implements Processor
 				// If no errors, then process.
 				if (errorList.size() == 0){ 
 					List<InterpretedSignal> listParams = this.event.getParameters();
-					InterpreterSw interpreter = new InterpreterSw();
+					BehaviorInterpreterSw interpreter = new BehaviorInterpreterSw();
 
 					interpreter.process(program, measuringEntity, listParams);
 
@@ -76,6 +84,8 @@ public class MeasuredEntityEventProcessor implements Processor
 							ret.add(dEvent);
 						}
 					}
+					
+					entityFacade.getStatus();
 				}
 				else {
 					// TODO: put in the log all the traced errors.
