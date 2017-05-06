@@ -8,7 +8,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.advicetec.core.Configurable;
+import com.advicetec.language.behavior.BehaviorDefPhase;
 
 
 /**
@@ -18,8 +22,11 @@ import com.advicetec.core.Configurable;
  */
 public abstract class Container 
 {
-		
+	
+	static Logger logger = LogManager.getLogger(Container.class.getName());
+	
 	// Database connection parameters
+	private String driver;
 	private String server;
 	private String user;
 	private String password;
@@ -30,8 +37,9 @@ public abstract class Container
     protected Map <Integer,ConfigurationObject> configuationObjects;
     private Map<String, Container> references;
     
-	public Container(String server, String user, String password) {
+	public Container(String driverStr,  String server, String user, String password) {
 		super();
+		this.driver = driverStr;
 		this.server = server;
 		this.user = user;
 		this.password = password;
@@ -63,15 +71,19 @@ public abstract class Container
 
         try
         {
-			Class.forName("org.postgresql.Driver");
+        	Class.forName(this.driver);
 			conn = DriverManager.getConnection(this.server, this.user, this.password);
 			
 			conn.setAutoCommit(false);
 									
 			pst = conn.createStatement();
 						
-        } catch(Exception e){
+        } catch(ClassNotFoundException e){
+        	logger.error("Could not find the driver class - Error" + e.getMessage());
         	e.printStackTrace();
+        } catch(SQLException e){
+        	logger.error("Error connecting to the database - error:" + e.getMessage());
+        	e.printStackTrace();        	
         }
 
 	}
@@ -84,6 +96,7 @@ public abstract class Container
             {
                 pst.close();
             } catch (SQLException e) {
+            	logger.error("Prepare statement is already close - error:" + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -94,6 +107,7 @@ public abstract class Container
             {
                 conn.close();
             } catch (SQLException e) {
+            	logger.error("Database Connection is already close - error:" + e.getMessage());
                 e.printStackTrace();
             }
         }	

@@ -28,11 +28,15 @@ import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.language.ast.BehaviorSymbol;
 
 import org.antlr.v4.runtime.Token;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.plexus.compiler.CompilerException;
 
 public class BehaviorDefPhase extends BehaviorGrammarBaseListener 
 {
 
+	static Logger logger = LogManager.getLogger(BehaviorDefPhase.class.getName());
+	
 	private BehaviorGrammarParser parser = null;
 	private ParseTreeProperty<Scope> scopes;
 	private GlobalScope globals;
@@ -320,7 +324,9 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		
 		if (globals.resolve(nameToken.getText()) != null){
 			// Define the symbol in the global scope
-			this.error(nameToken, typeCtx, "Attribute has been defined before: " + nameToken.getText());
+			String error = "Attribute has been defined before: " + nameToken.getText();
+			logger.debug(error);
+			this.error(nameToken, typeCtx, error);
 		} else {
 			globals.define(atr);
 		}
@@ -335,7 +341,9 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 
 		// Define the symbol in the current scope
 		if (globals.resolve(unitId) != null){
-			this.error(nameToken, ctx, "Unit of Measure has been defined before: " + unitId);
+			String error = "Unit of Measure has been defined before: " + unitId;
+			logger.debug(error);
+			this.error(nameToken, ctx, error);
 		} else {
 			globals.define(unt);
 		}
