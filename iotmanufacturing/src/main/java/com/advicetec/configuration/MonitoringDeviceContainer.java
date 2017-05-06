@@ -7,6 +7,8 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -14,19 +16,21 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class MonitoringDeviceContainer extends Container
 {
 
+	static Logger logger = LogManager.getLogger(MonitoringDeviceContainer.class.getName());
+	
 	static String sqlSelect1 = "SELECT id, device_type_id, descr, ip_address, mac_address, serial, create_date FROM setup_monitoringdevice";
 	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id, port_label, measured_entity_id FROM setup_inputoutputport";
 
 	private Map<String, Integer> indexByMac;
 
 	
-	public MonitoringDeviceContainer(String server, String user, String password) 
+	public MonitoringDeviceContainer(String driver, String server, String user, String password) 
 	{	
-		super(server, user, password);
+		super(driver, server, user, password);
 		indexByMac = new HashMap<String, Integer>();
 	}
 	
-	public void loadContainer()
+	public void loadContainer() throws SQLException
 	{
 		super.connect();
 		super.configuationObjects.clear();
@@ -90,8 +94,9 @@ public class MonitoringDeviceContainer extends Container
 			
 			
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
+			throw e;
 		}
 		
 		super.disconnect();
@@ -138,10 +143,8 @@ public class MonitoringDeviceContainer extends Container
 				Signal signal = (Signal) signalContainer.getObject(inputOutputPort.getSignalType().getId());
 				
 				if (signal == null){
-					System.out.println("estoy aqui signal null");
 					signalContainer.fromJSON(inputOutputPort.getSignalType().toJson());
 				} else { 
-					System.out.println("estoy aqui signal not null");
 					inputOutputPort.setSignalType(signal);
 				}
 			}
@@ -149,13 +152,13 @@ public class MonitoringDeviceContainer extends Container
 			super.configuationObjects.put(mDeviceTemp.getId(), mDeviceTemp);
 					
 		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 	

@@ -1,5 +1,6 @@
 package com.advicetec.eventprocessor;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ public class MeasuredEntityEventProcessor implements Processor
 		this.event = event;
 	}
 
-	public List<DelayEvent> process() 
+	public List<DelayEvent> process() throws SQLException 
 	{
 		
 		Integer measuringEntity = this.event.getEntity();

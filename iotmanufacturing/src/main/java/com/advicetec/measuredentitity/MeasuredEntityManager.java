@@ -1,6 +1,7 @@
 package com.advicetec.measuredentitity;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class MeasuredEntityManager extends Configurable {
 	
 	private List<MeasuredEntityFacade> entities;
 	
-	private MeasuredEntityManager(){
+	private MeasuredEntityManager() throws SQLException{
 		super("MeasuredEntity");
 		entities = new ArrayList<MeasuredEntityFacade>();
 		
@@ -41,11 +42,12 @@ public class MeasuredEntityManager extends Configurable {
 		MeasureAttributeValueCache.setCache(
 				Integer.parseInt(initCapacity), Integer.parseInt(maxSize));
 
+		String driver = properties.getProperty("driver");
 		String server = properties.getProperty("server");
 		String user = properties.getProperty("user");
 		String password = properties.getProperty("password");
 
-		measuredEntities = new MeasuredEntityContainer(server, user, password);
+		measuredEntities = new MeasuredEntityContainer(driver, server, user, password);
 		measuredEntities.loadContainer();
 		
 		for (Integer i : measuredEntities.getKeys()) {
@@ -56,7 +58,7 @@ public class MeasuredEntityManager extends Configurable {
 		
 	}
 
-	public static MeasuredEntityManager getInstance(){
+	public static MeasuredEntityManager getInstance() throws SQLException{
 		if(instance == null){
 			instance = new MeasuredEntityManager();
 		}

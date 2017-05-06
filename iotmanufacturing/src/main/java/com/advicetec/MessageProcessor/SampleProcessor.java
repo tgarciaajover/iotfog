@@ -1,5 +1,6 @@
 package com.advicetec.MessageProcessor;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class SampleProcessor implements Processor
 
 
 	@Override
-	public List<DelayEvent> process() 
+	public List<DelayEvent> process() throws SQLException 
 	{
 		
 		// Finds the measuring Entity involved. The string value is always not null

@@ -36,22 +36,20 @@ public class IotInit extends Configurable
 		
 		// Property configurator
 		
-		
-		configManager = ConfigurationManager.getInstance();
-		eventManager = EventManager.getInstance();
-		messageManager = MessageManager.getInstance();
-		adapterManager = AdapterManager.getInstance();
-		entityManager = MeasuredEntityManager.getInstance();
-		
 		try {
-			
+		
+			configManager = ConfigurationManager.getInstance();
+			eventManager = EventManager.getInstance();
+			messageManager = MessageManager.getInstance();
+			adapterManager = AdapterManager.getInstance();
+			entityManager = MeasuredEntityManager.getInstance();
+					
 			// Init the configuration  
 			configManager.loadConfiguration();
 			
 		
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 	}
 	

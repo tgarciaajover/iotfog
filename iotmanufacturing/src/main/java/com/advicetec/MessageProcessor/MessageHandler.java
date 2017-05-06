@@ -1,5 +1,6 @@
 package com.advicetec.MessageProcessor;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
@@ -67,6 +68,8 @@ public class MessageHandler implements Runnable
 
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		} catch (SQLException e){
+			System.err.println("Container error, we cannot continue");
 		}
 
 	}

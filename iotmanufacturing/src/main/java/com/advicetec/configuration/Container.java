@@ -44,6 +44,8 @@ public abstract class Container
 		this.user = user;
 		this.password = password;
 		
+		logger.debug("driver:" + driver + " server:" + server + " user:" + user + " password:" + password);
+		
 		this.conn = null; 
 	    this.pst= null;
 
@@ -66,11 +68,16 @@ public abstract class Container
 		(references.get(field)).configuationObjects.put(object.getId(), object);
 	}
 	
-	protected void connect()
+	protected void connect() throws SQLException
 	{
 
         try
         {
+        	if (this.driver == null){
+        		String error = "No driver was specified - Error";
+        		logger.error(error);
+        		throw new SQLException(error);
+        	}
         	Class.forName(this.driver);
 			conn = DriverManager.getConnection(this.server, this.user, this.password);
 			
@@ -79,11 +86,15 @@ public abstract class Container
 			pst = conn.createStatement();
 						
         } catch(ClassNotFoundException e){
-        	logger.error("Could not find the driver class - Error" + e.getMessage());
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
         	e.printStackTrace();
+        	throw new SQLException(error);
         } catch(SQLException e){
-        	logger.error("Error connecting to the database - error:" + e.getMessage());
+        	String error = "Error connecting to the database - error:" + e.getMessage();
+        	logger.error(error);
         	e.printStackTrace();        	
+        	throw new SQLException(error);
         }
 
 	}

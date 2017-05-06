@@ -1,5 +1,7 @@
 package com.advicetec.configuration;
 
+import java.sql.SQLException;
+
 import com.advicetec.core.Configurable;
 
 public class ConfigurationManager extends Configurable
@@ -27,32 +29,33 @@ public class ConfigurationManager extends Configurable
 	{
 		super("ConfigurationManager");
 
+		String driver = properties.getProperty("driver");
 		String server = properties.getProperty("server");
 		String user = properties.getProperty("user");
 		String password = properties.getProperty("password");
 		
-		signalUnits = new SignalUnitContainer(server, user,password);
-		signalTypes = new SignalTypeContainer(server, user, password);
+		signalUnits = new SignalUnitContainer(driver, server, user,password);
+		signalTypes = new SignalTypeContainer(driver, server, user, password);
 		
-		signals = new SignalContainer(server, user, password);		
+		signals = new SignalContainer(driver, server, user, password);		
 		// Add references to the signal container.
 		signals.addReference("SignalType", signalTypes);
 		signals.addReference("Unit", signalUnits);
 
-		deviceTypes = new DeviceTypeContainer(server, user, password);
+		deviceTypes = new DeviceTypeContainer(driver,server, user, password);
 		// Add references to device type container.
 		deviceTypes.addReference("Signal", signals);
 		
-		monitoringDevices = new MonitoringDeviceContainer(server, user, password);
+		monitoringDevices = new MonitoringDeviceContainer(driver, server, user, password);
 		// Add References to monitoring devices.
 		monitoringDevices.addReference("Signal", signals);
 		monitoringDevices.addReference("DeviceType", deviceTypes);
 		
-		reasonCodes = new ReasonCodeContainer(server, user, password);
+		reasonCodes = new ReasonCodeContainer(driver, server, user, password);
 	}
 
 	
-	public synchronized void loadConfiguration()
+	public synchronized void loadConfiguration() throws SQLException
 	{
 		this.signalUnits.loadContainer();
 		this.signalTypes.loadContainer();
