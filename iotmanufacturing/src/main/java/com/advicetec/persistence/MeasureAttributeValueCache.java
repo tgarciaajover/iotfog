@@ -85,13 +85,8 @@ public class MeasureAttributeValueCache extends Configurable {
 	
 			                	entries.forEach((k,v)-> {
 			                		((MeasuredAttributeValue)v).dbInsert(pst);
-										try {
-											pst.addBatch();
-										} catch (SQLException e) {
-											// TODO Auto-generated catch block
-											e.printStackTrace();
-										}
-				                	});
+
+			                	});
 	
 			                	int ret[] = pst.executeBatch();
 			                	System.out.println("Number of commands executed:" + ret.length);

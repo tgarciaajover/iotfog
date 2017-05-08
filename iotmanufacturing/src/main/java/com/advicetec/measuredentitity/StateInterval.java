@@ -10,6 +10,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.advicetec.configuration.ReasonCode;
+import com.advicetec.core.AttributeValue;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.Storable;
 
@@ -144,5 +145,10 @@ public final class StateInterval implements Storable
 		sb.append("origin:").append(parent).append(",");
 		sb.append("originType:").append(parentType);
 		return sb.toString();
+	}
+	
+	public int compareTo(StateInterval a)
+	{
+		return this.toString().compareTo(a.toString());
 	}
 }

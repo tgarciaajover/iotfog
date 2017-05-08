@@ -36,9 +36,9 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	LocalDateTime timeStamp;
 
 	@JsonIgnore
-	public final static String SQL_Insert = "INSERT INTO MeasuredAttributeValue(id_owner, timestamp, owner_type, attribute_name, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time) " + "VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+	public final static String SQL_Insert = "INSERT INTO measuredattributevalue(id_owner, timestamp, owner_type, attribute_name, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time) " + " VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 	@JsonIgnore
-	public final static String SQL_Delete = "DELETE INTO MeasuredAttributeValue(id_owner, timestamp, owner_type, attribute_name) " + "VALUES(?,?,?,?)";
+	public final static String SQL_Delete = "DELETE INTO measuredattributevalue(id_owner, timestamp, owner_type, attribute_name) " + " VALUES (?,?,?,?)";
 
 	@JsonCreator
 	public MeasuredAttributeValue(
@@ -88,7 +88,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 				
 				break;				
 			case DATETIME:  // Datetime
-				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
+				pstmt.setNull(5, java.sql.Types.DOUBLE);		 // value_Decimal
 				pstmt.setTimestamp(6, Timestamp.valueOf( (LocalDateTime) getValue()));		 // value_Decimal				
 				pstmt.setString(7, null);
 				pstmt.setNull(8, java.sql.Types.INTEGER);
@@ -98,7 +98,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 				break;
 
 			case STRING:  // String
-				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
+				pstmt.setNull(5, java.sql.Types.DOUBLE);		 // value_Decimal
 				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
 				pstmt.setString(7, (String) getValue());	     // value_string
 				pstmt.setNull(8, java.sql.Types.INTEGER);
@@ -108,7 +108,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 				break;
 
 			case BOOLEAN:  // Boolean
-				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
+				pstmt.setNull(5, java.sql.Types.DOUBLE);		 // value_Decimal
 				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
 				pstmt.setString(7, null);	     				 // value_string
 				pstmt.setNull(8, java.sql.Types.INTEGER);
@@ -118,17 +118,17 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 				break;
 				
 			case INT:  // Integer
-				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
+				pstmt.setNull(5, java.sql.Types.DOUBLE);		 // value_Decimal
 				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
-				pstmt.setString(7, null);
-				pstmt.setInt(8, (Integer) getValue());	     // value_string
+				pstmt.setString(7, null);						// value_string
+				pstmt.setInt(8, (Integer) getValue());	     
 				pstmt.setNull(9, java.sql.Types.BOOLEAN);        // value_boolean
 				pstmt.setNull(10, java.sql.Types.DATE);          // value_date
 				pstmt.setNull(11, java.sql.Types.TIME);          // value_time
 				break;
 
 			case DATE:  // Date
-				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
+				pstmt.setNull(5, java.sql.Types.DOUBLE);		 // value_Decimal
 				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
 				pstmt.setString(7, null);
 				pstmt.setNull(8, java.sql.Types.INTEGER);	     // value_string
@@ -138,10 +138,10 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 				break;
 
 			case TIME:  // Time
-				pstmt.setDouble(5, java.sql.Types.DOUBLE);		 // value_Decimal
+				pstmt.setNull(5, java.sql.Types.DOUBLE);		 // value_Decimal
 				pstmt.setNull(6, java.sql.Types.TIMESTAMP);
 				pstmt.setString(7, null);
-				pstmt.setInt(8, (Integer) getValue());	     // value_string
+				pstmt.setNull(8, java.sql.Types.INTEGER);	     // value_string
 				pstmt.setNull(9, java.sql.Types.BOOLEAN);        // value_boolean
 				pstmt.setNull(10, java.sql.Types.DATE);          // value_date
 				pstmt.setTime(11, Time.valueOf((LocalTime) getValue()));          // value_time
