@@ -36,6 +36,8 @@ public class MeasuredEntityEventProcessor implements Processor
 		
 		Integer measuringEntity = this.event.getEntity();
 		String behaviorName = this.event.getBehaviorTransformation();
+		long milliseconds = this.event.getMilliseconds();
+		boolean repeat = this.event.isRepeated();
 		
         logger.debug("process - behavior:" + behaviorName);
 		
@@ -83,6 +85,11 @@ public class MeasuredEntityEventProcessor implements Processor
 							DelayEvent dEvent = new DelayEvent(event,duetime);
 							ret.add(dEvent);
 						}
+					}
+					
+					if (repeat){
+						DelayEvent dEvent = new DelayEvent(this.event,milliseconds);
+						ret.add(dEvent);
 					}
 					
 					entityFacade.getStatus();

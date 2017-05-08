@@ -163,5 +163,129 @@ public class LedSignDisplay implements Output {
 		
 		return s;
 	}
+
+	public int getSignalWidth() {
+		return signalWidth;
+	}
+
+	public void setSignalWidth(int signalWidth) {
+		this.signalWidth = signalWidth;
+	}
+
+	public int getSignalHeight() {
+		return signalHeight;
+	}
+
+	public void setSignalHeight(int signalHeight) {
+		this.signalHeight = signalHeight;
+	}
+
+	public int getDstPort() {
+		return dstPort;
+	}
+
+	public void setDstPort(int dstPort) {
+		this.dstPort = dstPort;
+	}
+
+	public Inet4Address getNetAddress() {
+		return netAddress;
+	}
+
+	public void setNetAddress(Inet4Address netAddress) {
+		this.netAddress = netAddress;
+	}
+
+	public char[] getInMode() {
+		return inMode;
+	}
+
+	public void setInMode(char[] inMode) {
+		this.inMode = inMode;
+	}
+
+	public char[] getOutMode() {
+		return outMode;
+	}
+
+	public void setOutMode(char[] outMode) {
+		this.outMode = outMode;
+	}
+
+	public char[] getSpeed() {
+		return speed;
+	}
+
+	public void setSpeed(char[] speed) {
+		this.speed = speed;
+	}
+
+	public char[] getPause() {
+		return pause;
+	}
+
+	public void setPause(char[] pause) {
+		this.pause = pause;
+	}
+
+	public char[] getLineSpacing() {
+		return lineSpacing;
+	}
+
+	public void setLineSpacing(char[] lineSpacing) {
+		this.lineSpacing = lineSpacing;
+	}
+
+	public char[] getLetterSize() {
+		return letterSize;
+	}
+
+	public void setLetterSize(char[] letterSize) {
+		this.letterSize = letterSize;
+	}
+
+	public char[] getFlash() {
+		return flash;
+	}
+
+	public void setFlash(char[] flash) {
+		this.flash = flash;
+	}
+
+	public char[] getTextColor() {
+		return textColor;
+	}
+
+	public void setTextColor(char[] textColor) {
+		this.textColor = textColor;
+	}
+
+	public char[] getBackColor() {
+		return backColor;
+	}
+
+	public void setBackColor(char[] backColor) {
+		this.backColor = backColor;
+	}
+
+	public char[] getVerticalAlign() {
+		return verticalAlign;
+	}
+
+	public void setVerticalAlign(char[] verticalAlign) {
+		this.verticalAlign = verticalAlign;
+	}
+
+	public char[] getHorizontalAlign() {
+		return horizontalAlign;
+	}
+
+	public void setHorizontalAlign(char[] horizontalAlign) {
+		this.horizontalAlign = horizontalAlign;
+	}
+
+	public String getDescription() {
+		return description;
+	}
 	
 }

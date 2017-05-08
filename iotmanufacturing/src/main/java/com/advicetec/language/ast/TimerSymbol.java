@@ -49,4 +49,8 @@ public class TimerSymbol extends Symbol
 		
 		return valReturn;
 	}
+	
+	public boolean getRepeated(){
+		return this.repeated;
+	}
 }

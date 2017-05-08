@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -113,11 +114,17 @@ public class SampleProcessor implements Processor
 						{
 								
 							long duetime = ((TimerSymbol) symbol).getMilliseconds();
+							boolean repeated = ((TimerSymbol) symbol).getRepeated();
+							
 							String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
+							
 							
 							LOGGER.debug("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
 							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, new ArrayList<InterpretedSignal>());
+							event.setRepeated(repeated);
+							event.setMilliseconds(duetime);
+							
 							DelayEvent dEvent = new DelayEvent(event,duetime);
 							ret.add(dEvent);
 						}

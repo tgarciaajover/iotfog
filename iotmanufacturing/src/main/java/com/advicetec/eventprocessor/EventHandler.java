@@ -38,9 +38,8 @@ public class EventHandler implements Runnable
 				Queueable obj = (Queueable) queue.pop();
 				Event evnt = (Event) obj.getContent();
 				
-				switch (evnt.getEvntType())
+				if  (evnt.getEvntType() == EventType.MEASURING_ENTITY_EVENT)
 				{				
-					case MEASURING_ENTITY_EVENT:
 					    MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
 					    MeasuredEntityEventProcessor processor = new MeasuredEntityEventProcessor(measuEntyEvt);
 					    logger.debug("processing measuring entity event");
@@ -51,9 +50,16 @@ public class EventHandler implements Runnable
 						}							
 					    
 					    break;
-					
-					case META_MODEL_EVENT:
-						// MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
+				} else if (evnt.getEvntType() == EventType.DISPLAY_EVENT) {
+						DisplayEvent displayEvt = (DisplayEvent) evnt;
+						DisplayEventProcessor processor = new DisplayEventProcessor(displayEvt);
+						logger.debug("processing display event");
+						List<DelayEvent> eventsToCreate = processor.process();
+						for ( int i=0; i < eventsToCreate.size(); i++){
+							DelayEvent event = eventsToCreate.get(i);
+							this.toQueue.put(event);
+						}							
+						
 						break;
 				}
 			}

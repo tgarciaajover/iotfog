@@ -8,7 +8,8 @@ public enum EventType
 	   META_MODEL_EVENT(2,"Meta Model Event"),
 	   PRODUCTION_ORDER(3,"Production Order"),
 	   WEB_APPLICATION_QUERY_EVENT(4,"Web Application Query Event"),
-	   INVALID(5,"Invalid Event");
+	   DISPLAY_EVENT(5,"Display Event"),
+	   INVALID(6,"Invalid Event");
 	  
 	   private int code;
 	   private String name;
