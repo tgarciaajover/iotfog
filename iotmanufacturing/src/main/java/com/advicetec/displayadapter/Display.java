@@ -3,6 +3,7 @@ package com.advicetec.displayadapter;
 public class Display{
 
 	public static final char[] START  = {0x01};
+	public static final char[] ADDRESS = {0x02};
 
 	public static final char[] HEAD = {'Q','Z','0','0','S','A','X'};
 	public static final char[] EOF = {0x4};
@@ -124,7 +125,7 @@ public class Display{
 		static final char[] DEFAULT = {0x1b,'0','b'};
 	}
 
-	public static class Color{
+	public static class TextColor{
 		private final static char com = 0x1C;
 
 		public final static char[] BLACK = {com,'0'};

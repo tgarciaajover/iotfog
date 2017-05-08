@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
@@ -12,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.displayadapter.Display;
 import com.advicetec.displayadapter.Display.Background;
-import com.advicetec.displayadapter.Display.Color;
+import com.advicetec.displayadapter.Display.TextColor;
 import com.advicetec.displayadapter.Display.Flash;
 import com.advicetec.displayadapter.Display.FontSize;
 import com.advicetec.displayadapter.Display.HorizontalAlign;
@@ -30,7 +31,7 @@ public class LedSignDisplay implements Output {
 	private int signalWidth;
 	private int signalHeight;
 	private int dstPort;
-	private Inet4Address netAddress;
+	private InetAddress netAddress;
 	private String description;
 	
 	private char[] inMode;
@@ -64,7 +65,7 @@ public class LedSignDisplay implements Output {
 		this.lineSpacing = LineSpacing.LS1;
 		this.letterSize = FontSize.EN_7X6;
 		this.flash = Flash.OFF;
-		this.textColor = Color.RED;
+		this.textColor = TextColor.RED;
 		this.backColor = Background.BLACK;
 		this.verticalAlign = VerticalAlign.CENTER;
 		this.horizontalAlign = HorizontalAlign.CENTER;
@@ -188,11 +189,11 @@ public class LedSignDisplay implements Output {
 		this.dstPort = dstPort;
 	}
 
-	public Inet4Address getNetAddress() {
+	public InetAddress getNetAddress() {
 		return netAddress;
 	}
 
-	public void setNetAddress(Inet4Address netAddress) {
+	public void setNetAddress(InetAddress netAddress) {
 		this.netAddress = netAddress;
 	}
 
@@ -267,6 +268,27 @@ public class LedSignDisplay implements Output {
 	public void setBackColor(char[] backColor) {
 		this.backColor = backColor;
 	}
+	
+	public void setBackColor(String backColor) {
+		switch(backColor){
+		case "K":
+			this.backColor = Background.BLACK;
+			break;
+		case "R":
+			this.backColor = Background.RED;
+			break;
+		case "G":
+			this.backColor = Background.GREEN;
+			break;
+		case "Y":
+			this.backColor = Background.AMBER;
+			break;
+		default:
+			logger.error("Invalid color "+ backColor + " for backgroud.");	
+			break;
+		}
+		
+	}
 
 	public char[] getVerticalAlign() {
 		return verticalAlign;
@@ -287,5 +309,203 @@ public class LedSignDisplay implements Output {
 	public String getDescription() {
 		return description;
 	}
+
+	public void setInMode(String inMode) {
+		switch (inMode) {
+		case "JO":
+			this.inMode = Display.PatternControl.I_JUMP_OUT;
+			break;
+		case "ML":
+			this.inMode = Display.PatternControl.I_MOVE_LEFT;
+			break;
+		case "MR":
+			this.inMode = Display.PatternControl.I_MOVE_RIGHT;
+			break;
+		case "SL":
+			this.inMode = Display.PatternControl.I_SCROLL_LEFT;
+			break;
+		case "SR":
+			this.inMode = Display.PatternControl.I_SCROLL_RIGHT;
+			break;
+		default:
+			logger.error("Invalid In mode "+ inMode + ".");
+			break;
+		}
+	}
+
+	public void setOutMode(String outMode2) {
+		switch (outMode2) {
+		case "JO":
+			this.outMode = Display.PatternControl.O_JUMP_OUT;
+			break;
+		case "ML":
+			this.outMode = Display.PatternControl.O_MOVE_LEFT;
+			break;
+		case "MR":
+			this.outMode = Display.PatternControl.O_MOVE_RIGHT;
+			break;
+		case "SL":
+			this.outMode = Display.PatternControl.O_SCROLL_LEFT;
+			break;
+		case "SR":
+			this.outMode = Display.PatternControl.O_SCROLL_RIGHT;
+			break;
+		default:
+			logger.error("Invalid OUT mode "+ outMode2 + ".");
+			break;
+		}
+		
+	}
+
+	public void setLetterSize(String letterSize) {
+		switch (letterSize) {
+		case "0":
+			this.letterSize = FontSize.EN_5X5;
+			break;
+		case "1":
+			this.letterSize = FontSize.EN_7X6;
+			break;
+		case "2":
+			this.letterSize = FontSize.EN_14X8;
+			break;
+		case "3":
+			this.letterSize = FontSize.EN_15X9;
+			break;
+		case "4":
+			this.letterSize = FontSize.EN_16X9;
+			break;
+		default:
+			logger.error("Invalid font size "+ letterSize + ".");
+			break;
+		}
+	}
+
+	public void setLineSpacing(Integer lineSpacing2) {
+		switch (lineSpacing2) {
+		case 0:
+			lineSpacing = LineSpacing.LS0;
+			break;
+		case 1:
+			lineSpacing = LineSpacing.LS1;
+			break;
+		case 2:
+			lineSpacing = LineSpacing.LS2;
+			break;
+		case 3:
+			lineSpacing = LineSpacing.LS3;
+			break;
+		case 4:
+			lineSpacing = LineSpacing.LS4;
+			break;
+		case 5:
+			lineSpacing = LineSpacing.LS5;
+			break;
+		case 6:
+			lineSpacing = LineSpacing.LS6;
+			break;
+		case 7:
+			lineSpacing = LineSpacing.LS7;
+			break;
+		case 8:
+			lineSpacing = LineSpacing.LS8;
+			break;
+		case 9:
+			lineSpacing = LineSpacing.LS9;
+			break;
+		default:
+			logger.error("Invalid linespacing "+ lineSpacing2 + ".");
+			break;
+		}
+		
+	}
+
+	public void setSpeed(String speed2) {
+	
+		switch (speed2) {
+		case "0":
+			speed = Speed.VERY_FAST;
+			break;
+		case "1":
+			speed = Speed.FAST;
+			break;
+		case "2":
+			speed = Speed.MED_FAST;
+			break;
+		case "3":
+			speed = Speed.MEDIUM;
+			break;
+		case "4":
+			speed = Speed.MED_SLOW;
+			break;
+		case "5":
+			speed = Speed.SLOW;
+			break;
+		case "6":
+			speed = Speed.VERY_SLOW;
+			break;
+		default:
+			logger.error("Invalid speed "+ speed2 + ".");
+			break;
+		}
+	}
+
+	public void setTextColor(String color) {
+		switch(color){
+		case "K":
+			this.textColor = TextColor.BLACK;
+			break;
+		case "R":
+			this.textColor = TextColor.RED;
+			break;
+		case "G":
+			this.textColor = TextColor.GREEN;
+			break;
+		case "Y":
+			this.textColor = TextColor.AMBER;
+			break;
+		default:
+			logger.error("Invalid text color "+ color + ".");	
+			break;
+		}
+		
+	}
+
+	public void setVerticalAlign(String vertical) {
+		
+		switch (vertical) {
+		case "0":
+			verticalAlign = VerticalAlign.CENTER;
+			break;
+		case "1":
+			verticalAlign = VerticalAlign.TOP;
+			break;
+		case "2":
+			verticalAlign = VerticalAlign.BOTTOM;
+			break;
+		default:
+			logger.error("Invalid vertical align "+ vertical + ".");
+			break;
+		}
+	}
+
+	public void setHorizontalAlign(String horizontal) {
+		switch (horizontal) {
+		case "0":
+			horizontalAlign = HorizontalAlign.CENTER;
+			break;
+		case "1":
+			horizontalAlign = HorizontalAlign.LEFT;
+			break;
+		case "2":
+			horizontalAlign = HorizontalAlign.RIGHT;
+			break;
+		default:
+			logger.error("Invalid horizontal align "+ horizontal + ".");
+			break;
+		}
+		
+	}
+	
+	
 	
 }

@@ -3,25 +3,14 @@ package com.advicetec.eventprocessor;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.DisplayDevice;
-import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
 import com.advicetec.displayadapter.LedSignDisplay;
-import com.advicetec.language.ast.Symbol;
-import com.advicetec.language.ast.SyntaxError;
-import com.advicetec.language.ast.TimerSymbol;
-import com.advicetec.language.behavior.BehaviorInterpreterSw;
-import com.advicetec.language.behavior.BehaviorSyntaxChecking;
-import com.advicetec.measuredentitity.MeasuredEntityFacade;
-import com.advicetec.measuredentitity.MeasuredEntityManager;
-import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class DisplayEventProcessor implements Processor
 {
@@ -63,7 +52,7 @@ public class DisplayEventProcessor implements Processor
 			led.setSpeed(displayDevice.getDisplayType().getSpeed());
 			led.setTextColor(displayDevice.getDisplayType().getTextColor());
 			led.setVerticalAlign(displayDevice.getDisplayType().getVerticalAlignment());
-			
+			led.setHorizontalAlign(displayDevice.getDisplayType().getHorizontalAlignment());
 			led.publishMessage(text);
 
 
