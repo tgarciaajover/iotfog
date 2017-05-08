@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -20,7 +19,6 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.w3c.dom.Document;
 
 import com.advicetec.configuration.ReasonCode;
@@ -29,12 +27,10 @@ import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.Symbol;
-import com.advicetec.language.transformation.Interpreter;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
 import com.advicetec.persistence.StatusStore;
-import com.fasterxml.jackson.core.JsonGenerator;
 
 
 /**
@@ -428,13 +424,10 @@ public final class MeasuredEntityFacade {
 			jsonText = mapper. writeValueAsString(intervals);
 
 		} catch (JsonGenerationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -453,13 +446,10 @@ public final class MeasuredEntityFacade {
 			jsonText = mapper. writeValueAsString(intervals);
 
 		} catch (JsonGenerationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
