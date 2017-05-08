@@ -1,10 +1,14 @@
 package com.advicetec.configuration;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
+import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
@@ -164,4 +168,25 @@ public class DisplayType extends ConfigurationObject
 		this.createDate = createDate;
 	}
 
+	public String toJson()
+	{
+		ObjectMapper mapper = new ObjectMapper();
+			
+		String jsonInString=null;
+		try {
+			
+			jsonInString = mapper.writeValueAsString(this);
+			
+			
+		} catch (JsonGenerationException e) {
+			// TODO: log the error
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return jsonInString;
+	}
 }

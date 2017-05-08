@@ -14,6 +14,8 @@ public class ConfigurationManager extends Configurable
 	private DeviceTypeContainer deviceTypes;
 	private MonitoringDeviceContainer monitoringDevices;
 	private ReasonCodeContainer reasonCodes;
+	private DisplayTypeContainer displayTypes;
+	private DisplayDeviceContainer displayDevices;
 
     public static ConfigurationManager getInstance()
     {
@@ -52,6 +54,13 @@ public class ConfigurationManager extends Configurable
 		monitoringDevices.addReference("DeviceType", deviceTypes);
 		
 		reasonCodes = new ReasonCodeContainer(driver, server, user, password);
+		
+		// Add Display Types 
+		displayTypes = new DisplayTypeContainer(driver, server, user, password);
+		
+		// Add Display Devices
+		displayDevices = new DisplayDeviceContainer(driver, server, user, password);
+		displayDevices.addReference("DisplayType", displayDevices);
 	}
 
 	
@@ -63,6 +72,8 @@ public class ConfigurationManager extends Configurable
 		this.deviceTypes.loadContainer();
 		this.monitoringDevices.loadContainer();
 		this.reasonCodes.loadContainer();
+		this.displayTypes.loadContainer();
+		this.displayDevices.loadContainer();
 	}
 	
 	public SignalUnitContainer getSignalUnitContainer()
@@ -95,10 +106,21 @@ public class ConfigurationManager extends Configurable
 		return this.reasonCodes;
 	}
 	
+	public DisplayTypeContainer getDisplayTypeContainer()
+	{
+		return this.displayTypes;
+	}
+	
+	public DisplayDeviceContainer getDisplayDeviceContainer()
+	{
+		return this.displayDevices;
+	}
+	
 	public MonitoringDevice getMonitoringDevice(String macAddress)
 	{
 		return this.monitoringDevices.getByMacAddress(macAddress);
 	}
+	
 	
 	public String getTransformation(String macAddress, String portLabel){
 		System.out.println("In getTransformation macAddress:" + macAddress + "portLabel:" + portLabel );

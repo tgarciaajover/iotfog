@@ -91,7 +91,7 @@ public class DisplayDeviceContainer extends Container
 		
 	}
 
-	public synchronized void deleteDisplayType(int uniqueID)
+	public synchronized void deleteDisplayDevice(int uniqueID)
 	{
 		super.configuationObjects.remove(uniqueID);
 	}
