@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -12,6 +13,7 @@ import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseListener;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.AttributeSymbol;
+import com.advicetec.language.ast.DisplaySymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.LocalScope;
@@ -152,6 +154,21 @@ public class DefPhase extends TransformationGrammarBaseListener
 		// Define the symbol in the current scope
 		currentScope.define(tSymbol);
 		
+	}
+	
+	public void enterDisplay(@NotNull TransformationGrammarParser.DisplayContext ctx) 
+	{ 
+		String name = ctx.deviceId.getText(); 
+		Symbol s = currentScope.resolve(name);
+		
+		if (s == null){
+			DisplaySymbol displaySymbol = new DisplaySymbol(name);
+
+			// Define the symbol in the current scope
+			currentScope.define(displaySymbol);
+			
+		} 
+			
 	}
 	
 	public void enterBlock(TransformationGrammarParser.BlockContext ctx) 

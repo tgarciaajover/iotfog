@@ -53,7 +53,7 @@ unit_dec	: UNIT id1=ID STRING SEMICOLON
 assign 		: ID ASG expression SEMICOLON
 	; 
 
-display  	: DISPLAY PR_OPN expression PR_CLS SEMICOLON
+display  	: DISPLAY PR_OPN deviceId=ID ',' expression PR_CLS SEMICOLON
 	;
 
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
