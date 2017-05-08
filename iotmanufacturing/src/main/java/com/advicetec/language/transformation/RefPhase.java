@@ -6,9 +6,13 @@ import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import com.advicetec.configuration.ConfigurationManager;
+import com.advicetec.configuration.DisplayDevice;
+import com.advicetec.configuration.DisplayDeviceContainer;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseListener;
 import com.advicetec.language.ast.AttributeSymbol;
@@ -19,6 +23,8 @@ import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
+import com.advicetec.measuredentitity.MeasuredEntityManager;
 
 public class RefPhase extends TransformationGrammarBaseListener 
 {
@@ -148,6 +154,20 @@ public class RefPhase extends TransformationGrammarBaseListener
 		} else {
 			this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
 		}
+	}
+	
+	public void enterDisplay(TransformationGrammarParser.DisplayContext ctx) 
+	{
+        ConfigurationManager manager = ConfigurationManager.getInstance();
+        DisplayDeviceContainer displayDeviceCon = manager.getDisplayDeviceContainer();
+		
+        String name = ctx.deviceId.getText(); 
+        
+        DisplayDevice displayDevice = displayDeviceCon.getDisplayDevice(name);
+        
+        if (displayDevice == null){
+        	this.error(ctx.deviceId, ctx, "no such DisplayDevice: " + name);
+        }
 	}
 	
 	public void enterBlock(TransformationGrammarParser.BlockContext ctx)

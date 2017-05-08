@@ -8,8 +8,12 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
+import com.advicetec.configuration.ConfigurationManager;
+import com.advicetec.configuration.DisplayDevice;
+import com.advicetec.configuration.DisplayDeviceContainer;
 import com.advicetec.language.BehaviorGrammarBaseListener;
 import com.advicetec.language.BehaviorGrammarParser;
+import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
@@ -129,6 +133,21 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 			this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
 		}
 	}
+	
+	public void enterDisplay(BehaviorGrammarParser.DisplayContext ctx) 
+	{
+        ConfigurationManager manager = ConfigurationManager.getInstance();
+        DisplayDeviceContainer displayDeviceCon = manager.getDisplayDeviceContainer();
+		
+        String name = ctx.deviceId.getText(); 
+        
+        DisplayDevice displayDevice = displayDeviceCon.getDisplayDevice(name);
+        
+        if (displayDevice == null){
+        	this.error(ctx.deviceId, ctx, "no such DisplayDevice: " + name);
+        }
+	}
+	
 	
 	public void exitFunction_dec(BehaviorGrammarParser.Function_decContext ctx) 
 	{

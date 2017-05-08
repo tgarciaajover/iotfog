@@ -6,15 +6,16 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import com.advicetec.language.BehaviorGrammarBaseListener;
 import com.advicetec.language.BehaviorGrammarParser;
-import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.ArrayAttributeSymbol;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
+import com.advicetec.language.ast.DisplaySymbol;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
@@ -157,7 +158,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		// System.out.println("exitFunction_dec" + currentScope);
 	}
 
-	public void enterTimer(TransformationGrammarParser.TimerContext ctx) 
+	public void enterTimer(BehaviorGrammarParser.TimerContext ctx) 
 	{ 
 		// by default seconds
 		TimeUnit unitTimer = TimeUnit.SECONDS;
@@ -181,7 +182,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		
 	}
 
-	public void enterRepeat(TransformationGrammarParser.RepeatContext ctx) 
+	public void enterRepeat(BehaviorGrammarParser.RepeatContext ctx) 
 	{ 
 		// by default seconds
 		TimeUnit unitTimer = TimeUnit.SECONDS;
@@ -204,6 +205,21 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		currentScope.define(tSymbol);
 		
 	}
+	
+	public void enterDisplay(@NotNull BehaviorGrammarParser.DisplayContext ctx) 
+	{ 
+		String name = ctx.deviceId.getText(); 
+		Symbol s = currentScope.resolve(name);
+		
+		if (s == null){
+			DisplaySymbol displaySymbol = new DisplaySymbol(name);
+
+			// Define the symbol in the current scope
+			currentScope.define(displaySymbol);
+			
+		} 
+			
+	}	
 	
 	public void enterBlock(BehaviorGrammarParser.BlockContext ctx) 
 	{ 

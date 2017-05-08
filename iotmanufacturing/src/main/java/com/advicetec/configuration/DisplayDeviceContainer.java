@@ -96,6 +96,18 @@ public class DisplayDeviceContainer extends Container
 		super.configuationObjects.remove(uniqueID);
 	}
 	
+	public synchronized DisplayDevice getDisplayDevice(String referenceCd){
+		
+		for (int displayDeviceId : this.configuationObjects.keySet()){
+			String gerReference = ((DisplayDevice) this.configuationObjects.get(displayDeviceId)).getReferenceCd();
+			if (gerReference.compareTo(referenceCd) == 0) {
+				return (DisplayDevice) this.configuationObjects.get(displayDeviceId);
+			}
+		}
+		
+		return null;
+	}
+	
 	public synchronized void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();
