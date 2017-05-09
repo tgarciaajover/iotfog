@@ -11,14 +11,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import java.util.StringTokenizer;
 
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.Token;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.IotInit;
+import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseVisitor;
 import com.advicetec.language.ast.ASTNode;
@@ -40,7 +43,7 @@ import com.advicetec.measuredentitity.MeasuredEntityFacade;
 public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 {
  	
-	static Logger logger = LogManager.getLogger(Interpreter.class.getName());
+	static Logger logger = LogManager.getLogger(Interpreter.class.getName()); 
 	
 	public InterpreterListener listener = // default response to messages
 	        new InterpreterListener() {
@@ -189,7 +192,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	        ASTNode value = this.visit(ctx.expression());
 	        Symbol s = currentScope.resolve(id);	        
 	        VerifyAssign(s, value);
-	        currentSpace.put(id, value);         // store
+	        currentSpace.put(id, castAssign(s, value));         // store
 	        return value;
 		}
 		else
@@ -260,10 +263,9 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			    }
 		        
 		        VerifyAssign(toAssign, value);
-		        space.put(toAssign.getName(), value);         // store
+		        space.put(toAssign.getName(), castAssign(toAssign, value));         // store
 		        			        
 		        return value;						
-
 			
 			}
 			else 
@@ -289,7 +291,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	        }
 	        
 	        VerifyAssign(toAssign, value);
-	        space.put(toAssign.getName(), value);         // store
+	        space.put(toAssign.getName(), castAssign(toAssign, value));         // store
 
 		    return value;					
 		}
@@ -494,8 +496,66 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			throw new RuntimeException("The value given is of type invalid");
 		}	
 	}
-	
-	
+
+	public ASTNode castAssign(Symbol symbol, ASTNode value)
+	{
+
+		switch (symbol.getType())
+		{
+		case tINT:
+		case tDATETIME:
+		case tBOOL:
+		case tDATE:
+		case tTIME:
+			return value;
+
+		case tSTRING:
+            if (value.isBoolean()) {
+            	return new ASTNode(String.valueOf(value.asBoolean()));
+            } else if (value.isDate()) {
+            	
+            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.DATE_FORMAT);
+            	String formatDate = value.asDate().format(formatter);
+            	return new ASTNode(formatDate);
+            	
+            } else if (value.isDateTime()) {
+            	
+            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.DATETIME_FORMAT);
+            	String formatDateTime = value.asDateTime().format(formatter);
+            	return new ASTNode(formatDateTime);
+            	
+            } else if (value.isTime()) {
+
+            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.TIME_FORMAT);
+            	String formatTime = value.asTime().format(formatter);
+            	return new ASTNode(formatTime);
+
+            } else if (value.isDouble()) {
+            	return new ASTNode(String.valueOf(value.asDouble()));
+            } else if (value.isInteger()) {
+            	return new ASTNode(String.valueOf(value.asInterger()));
+            } else if (value.isString()) {
+            	return value;
+            } else {
+            	throw new RuntimeException("The value given is of invalid type");
+            }
+			
+		case tFLOAT:
+			if (value.isDouble()) {
+				return value;
+			}
+			else if (value.isInteger()) {
+				return new ASTNode(new Double(value.asInterger()));
+			}
+		case tVOID:
+			throw new RuntimeException("The value given is of type void");
+
+		case tINVALID:
+		default:
+			throw new RuntimeException("The value given is of type invalid");
+		}	
+	}
+		
 	@Override 
 	public ASTNode visitVar(TransformationGrammarParser.VarContext ctx) 
 	{ 
@@ -781,7 +841,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	public ASTNode visitEqualityExpr(TransformationGrammarParser.EqualityExprContext ctx) 
 	{ 
 		
-		System.out.println("visitEqualityExpr");
+		logger.debug("visitEqualityExpr");
 		
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
@@ -872,6 +932,45 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	
 	public ASTNode visitToken(TransformationGrammarParser.TokenContext ctx) 
 	{ 
+				
+		TransformationGrammarParser.ExpressionContext stringEq1 =  ctx.ex1;
+		TransformationGrammarParser.ExpressionContext numToken = ctx.ex2;
+		
+		String input =  (this.visit(stringEq1)).asString();
+
+		logger.debug("visitToken:" + input );
+		
+		ASTNode numberToken = this.visit(numToken); 
+		if (numberToken.isInteger() == false) 
+		{
+			throw new RuntimeException("param number_from is not valid: " + numberToken.toString());
+		}
+				
+		Integer token = (numberToken).asInterger();
+
+		StringTokenizer defaultTokenizer = new StringTokenizer(input, SystemConstants.TOKEN_SEP);
+		int countTokens = defaultTokenizer.countTokens();
+		
+		if (countTokens >= token){
+			int i = 0;
+			while (defaultTokenizer.hasMoreTokens())
+			{
+			    if (i == token){
+			    	return new ASTNode( defaultTokenizer.nextToken() );
+			    }
+			    else { 
+			    	i++;
+			    }
+			}
+		} else {
+			throw new RuntimeException("The number of token requested:" + token + " is greater than the token count " + countTokens);
+		}
+		
+		return ASTNode.VOID;
+    }
+	
+	public ASTNode visitSubstring(TransformationGrammarParser.SubstringContext ctx) 
+	{ 
 		TransformationGrammarParser.ExpressionContext stringEq1 =  ctx.ex1;
 		TransformationGrammarParser.ExpressionContext numberFrom = ctx.ex2;
 		TransformationGrammarParser.ExpressionContext numberTo = ctx.ex3;
@@ -896,6 +995,22 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		return new ASTNode(ret);
 	}
+
+	
+	public ASTNode visitStartWith(TransformationGrammarParser.StartwithContext ctx) 
+	{ 
+				
+		TransformationGrammarParser.ExpressionContext stringParamCtx1 =  ctx.ex1;
+		TransformationGrammarParser.ExpressionContext StringParamCtx2 = ctx.ex2;
+		
+		String stringParam1 =  (this.visit(stringParamCtx1)).asString();
+		String stringParam2 =  (this.visit(StringParamCtx2)).asString();
+		
+		logger.debug("visitStartWith - Param1:"+ stringParam1 + " Param2:" + stringParam2 );
+						
+		return new ASTNode( new Boolean(stringParam1.startsWith(stringParam2)));
+		
+    } 	
 	
 	public ASTNode visitRepeat(TransformationGrammarParser.RepeatContext ctx) 
 	{ 

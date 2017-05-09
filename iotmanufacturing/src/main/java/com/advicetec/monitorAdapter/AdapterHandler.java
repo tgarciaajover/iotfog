@@ -2,9 +2,12 @@ package com.advicetec.monitorAdapter;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish;
 
 import com.advicetec.MessageProcessor.UnifiedMessage;
+import com.advicetec.monitorAdapter.protocolconverter.MqttSerialInput;
 import com.advicetec.mpmcqueue.PriorityQueue;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
@@ -17,6 +20,8 @@ import com.advicetec.mpmcqueue.Queueable;
 public class AdapterHandler implements Runnable 
 {
 
+	static Logger logger = LogManager.getLogger(AdapterHandler.class.getName());
+	
 	private PriorityQueue fromQueue;
 	private PriorityQueue toQueue;
 
@@ -33,7 +38,7 @@ public class AdapterHandler implements Runnable
 			while (true)
 			{
 				Queueable queueable = (Queueable) fromQueue.pop();
-				System.out.println("a queueable object was found");
+				logger.debug("a queueable object was found");
 				if (queueable.getType() == QueueType.MQTT_DEV_MESSAGE)
 				{
 					

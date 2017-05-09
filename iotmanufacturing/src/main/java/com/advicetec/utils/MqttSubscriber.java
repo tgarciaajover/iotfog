@@ -2,6 +2,8 @@ package com.advicetec.utils;
 
 import java.sql.Timestamp;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -13,6 +15,7 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
 
 import com.advicetec.core.Configurable;
+import com.advicetec.measuredentitity.MeasuredEntityContainer;
 import com.advicetec.monitorAdapter.AdapterManager;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
@@ -20,7 +23,10 @@ import com.advicetec.mpmcqueue.Queueable;
 /**
  * A sample application that demonstrates how to use the Paho MQTT v3.1 Client blocking API.
  */
-public class MqttSubscriber extends Configurable implements MqttCallback  {
+public class MqttSubscriber extends Configurable implements MqttCallback  
+{
+
+	static Logger logger = LogManager.getLogger(MqttSubscriber.class.getName());
 
 	private String brokerUrl;
 	private String userName;
@@ -128,7 +134,7 @@ public class MqttSubscriber extends Configurable implements MqttCallback  {
 		// Called when a message arrives from the server that matches any
 		// subscription made by the client		
 		String time = new Timestamp(System.currentTimeMillis()).toString();
-		System.out.println("Time:\t" +time +
+		logger.debug("Time:\t" +time +
 				"  Topic:\t" + topic + 
 				"  Message:\t" + new String(message.getPayload()) +
 				"  QoS:\t" + message.getQos());
