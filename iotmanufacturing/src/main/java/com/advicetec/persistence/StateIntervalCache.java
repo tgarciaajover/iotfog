@@ -341,6 +341,5 @@ public class StateIntervalCache extends Configurable {
 		return list;
 		
 		
->>>>>>> branch 'master' of https://bitbucket.org/advicetec/iotmanufacturing
 	}
 }
