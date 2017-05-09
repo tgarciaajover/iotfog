@@ -56,7 +56,7 @@ public class IntervalResource extends ServerResource
 			DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MMM-dd H:m:s.n");
 			LocalDateTime dttmFrom = LocalDateTime.parse(o.get("DttmFrom"),format); 
 			LocalDateTime dttmTo = LocalDateTime.parse(o.get("DttmTo"),format);		
-			String jsonTextRet = facade.statesByInterval(dttmFrom, dttmTo);
+			String jsonTextRet = facade.getJsonStatesByInterval(dttmFrom, dttmTo);
 	
 			if (jsonTextRet.length() == 0) {
 				// The requested contact was not found, so set the Status to indicate this.

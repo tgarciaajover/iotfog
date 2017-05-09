@@ -4,14 +4,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
-import com.advicetec.core.AttributeValue;
 import com.advicetec.core.Configurable;
-import com.advicetec.measuredentitity.MeasuredAttributeValue;
+import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.measuredentitity.StateInterval;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -245,5 +246,17 @@ public class StateIntervalCache extends Configurable {
 				}
 			}
 		}
+	}
+
+
+	public LocalDateTime getOldestTime() {
+		return LocalDateTime.now().minusSeconds(WRITE_TIME+DELETE_TIME);
+	}
+
+
+	public ArrayList<StateInterval> getFromDatabase(Integer id,
+			MeasuredEntityType type, LocalDateTime from, LocalDateTime oldest) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -52,7 +52,7 @@ public final class MeasuredEntityFacade {
 	private Map<String,SortedMap<LocalDateTime,String>> attMap;
 	private MeasureAttributeValueCache attValueCache;
 	// This map stores endTime, startTime,
-		private TreeMap<LocalDateTime,String> intervalMap;
+		private TreeMap<LocalDateTime,String> statesMap;
 	private StateIntervalCache stateCache;
 
 	
@@ -62,7 +62,7 @@ public final class MeasuredEntityFacade {
 		status = new StatusStore();
 		attValueCache= MeasureAttributeValueCache.getInstance();
 		attMap = new HashMap<String,SortedMap<LocalDateTime,String>>();
-		intervalMap = new TreeMap<LocalDateTime,String>();
+		statesMap = new TreeMap<LocalDateTime,String>();
 		stateCache = StateIntervalCache.getInstance();	
 	}
 
@@ -233,14 +233,20 @@ public final class MeasuredEntityFacade {
 			return getFromCache(keyArray);
 			
 		}else if(oldest.isAfter(to)){
+			
 			// get all values from database
-			return attValueCache.getFromDatabase(entity.getId(),attrName,from, oldest);
+			return attValueCache.getFromDatabase(entity.getId(),entity.getType(),
+					status.getAttribute(attrName),from, oldest);
 		}else{
-			SortedMap<LocalDateTime,String> subMap = internalMap.subMap(oldest, to);
+			SortedMap<LocalDateTime,String> subMap = 
+					internalMap.subMap(oldest, to);
+			
 			Collection<String> keys = subMap.values();
 			String[] keyArray = keys.toArray( new String[keys.size()]);
 			
-			ArrayList<AttributeValue> newList = attValueCache.getFromDatabase(entity.getId(),attrName,from, oldest);
+			ArrayList<AttributeValue> newList = attValueCache.
+					getFromDatabase(entity.getId(),entity.getType(),
+							status.getAttribute(attrName),from, oldest);
 			newList.addAll(getFromCache(keyArray));
 			
 			return newList;
@@ -250,7 +256,7 @@ public final class MeasuredEntityFacade {
 	
 	
 	/**
-	 * 
+	 * Deletes old values from attribute value map.
 	 * @param oldest
 	 */
 	public void deleteOldValues(LocalDateTime oldest){
@@ -259,6 +265,12 @@ public final class MeasuredEntityFacade {
 			internalMap = internalMap.tailMap(oldest);
 		}
 	}
+	
+	
+	public void deleteOldStates(LocalDateTime oldest){
+		statesMap = (TreeMap<LocalDateTime, String>) statesMap.tailMap(oldest, true);
+	}
+	
 	
 	
 	public String getByIntervalByAttributeNameJSON(
@@ -356,16 +368,13 @@ public final class MeasuredEntityFacade {
 		return status.getAttributeValues();
 	}
 
-	public void getJsonStatesByInterval(TimeInterval timeInterval){
-		entity.getStateByInterval(timeInterval);
-	}
-
+	
 	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
 		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType());
 		stateInterval.setKey(entity.getId()+stateInterval.getKey());
 		// key in the map and the cache must be consistent
-		intervalMap.put(interval.getStart(),stateInterval.getKey());
+		statesMap.put(interval.getStart(),stateInterval.getKey());
 		StateIntervalCache.getInstance().storeToCache(stateInterval);
 	}
 
@@ -376,7 +385,7 @@ public final class MeasuredEntityFacade {
 	 * @param to
 	 * @return
 	 */
-	public String statesByInterval(LocalDateTime from, LocalDateTime to){
+	public String getJsonStatesByInterval(LocalDateTime from, LocalDateTime to){
 
 		ArrayList<StateInterval> intervals = getStatesByInterval(from, to);
 
@@ -418,7 +427,6 @@ public final class MeasuredEntityFacade {
 		}
 
 		return jsonText;
-
 	}
 
 
@@ -429,10 +437,28 @@ public final class MeasuredEntityFacade {
 	 * @return List of intervals.
 	 */
 	public ArrayList<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
+		
 		ArrayList<StateInterval> list = new ArrayList<StateInterval>();
-		SortedMap<LocalDateTime, String> subMap = intervalMap.subMap(from, to);
-		for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
-			list.add(stateCache.getFromCache(entry.getValue()));
+		LocalDateTime oldest = stateCache.getOldestTime();
+		
+		// all values are in the cache
+		if(oldest.isBefore(from)){
+			SortedMap<LocalDateTime, String> subMap = statesMap.subMap(from, to);
+			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
+				list.add(stateCache.getFromCache(entry.getValue()));
+			}
+		}else if(oldest.isAfter(to)){
+			// all values are in the database 
+			list.addAll(stateCache.getFromDatabase(entity.getId(),entity.getType(),from,to));
+		}else{
+			
+		     // get from cache
+			SortedMap<LocalDateTime, String> subMap = statesMap.subMap(oldest, to);
+			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
+				list.add(stateCache.getFromCache(entry.getValue()));
+			}
+			// get from database
+			list.addAll(stateCache.getFromDatabase(entity.getId(),entity.getType(),from,oldest));
 		}
 		return list;
 	}
@@ -462,7 +488,7 @@ public final class MeasuredEntityFacade {
 	 * and clean the cache.
 	 */
 	public void storeAllStateIntervals(){
-		stateCache.bulkCommit(new ArrayList<String>(intervalMap.values()));
+		stateCache.bulkCommit(new ArrayList<String>(statesMap.values()));
 	}
 
 	/**
@@ -475,5 +501,7 @@ public final class MeasuredEntityFacade {
 		return status.toXml();
 	}
 
+	
+	
 }
 
