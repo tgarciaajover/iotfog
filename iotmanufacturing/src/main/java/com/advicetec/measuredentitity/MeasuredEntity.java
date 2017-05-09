@@ -3,10 +3,7 @@ package com.advicetec.measuredentitity;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonGenerationException;
@@ -19,16 +16,11 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.json.JSONArray;
-
-import com.advicetec.MessageProcessor.SampleProcessor;
 import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
-import com.advicetec.persistence.MeasureAttributeValueCache;
-import com.advicetec.persistence.StateIntervalCache;
 
 /**
  * Represents the resulting the measuring process.

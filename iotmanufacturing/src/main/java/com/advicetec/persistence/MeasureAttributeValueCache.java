@@ -4,12 +4,11 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BinaryOperator;
 
 import com.advicetec.core.AttributeValue;
@@ -52,7 +51,9 @@ public class MeasureAttributeValueCache extends Configurable {
 		DB_PASS = properties.getProperty("password");
 		INIT_CAPACITY = Integer.valueOf(properties.getProperty("init_capacity"));
 		MAX_SIZE = Integer.valueOf(properties.getProperty("max_size"));
+		// time to store at database
 		WRITE_TIME = Integer.valueOf(properties.getProperty("write_time"));
+		// time to delete from the cache
 		DELETE_TIME = Integer.valueOf(properties.getProperty("delete_time"));
 
 	}
@@ -76,7 +77,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	                .writeAction(entries -> {
 
 	                	if (entries.size() > 0) {
-		                	System.out.println("Entre en writeaction:" + entries.size());
+
 		        			try {
 								Class.forName(DB_DRIVER);
 			        			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
@@ -237,5 +238,46 @@ public class MeasureAttributeValueCache extends Configurable {
 				}
 			}
 		}
+	}
+
+	/**
+	 * 
+	 * @param entityId
+	 * @param attrName
+	 * @param from
+	 * @param to
+	 * @return
+	 */
+	public ArrayList<AttributeValue> getAttributeValuesByRange(Integer entityId,
+			String attrName, LocalDateTime from, LocalDateTime to) {
+		LocalDateTime oldest = LocalDateTime.now().minusSeconds(WRITE_TIME + DELETE_TIME);
+
+		// all values are in the cache
+		if(oldest.isBefore(from)){
+			
+		}
+		// get elements from cache
+		
+		// get elements from database
+		return null;
+	}
+
+	public LocalDateTime getOldestTime(){
+		return LocalDateTime.now().minusSeconds(WRITE_TIME + DELETE_TIME);
+	}
+
+	/**
+	 * 
+	 * @param entityId
+	 * @param attrName
+	 * @param from
+	 * @param oldest
+	 * @return
+	 */
+	public ArrayList<AttributeValue> getFromDatabase(Integer entityId,
+			String attrName, LocalDateTime from, LocalDateTime oldest) {
+		
+		// TODO
+		return null;
 	}
 }

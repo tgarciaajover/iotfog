@@ -45,27 +45,24 @@ public final class MeasuredEntityFacade {
 
 
 	static Logger logger = LogManager.getLogger(MeasuredEntityFacade.class.getName());
+	
 	private MeasuredEntity entity;
 	// Keeps an in-memory entity status
 	private StatusStore status;
-
-	/**
-	 * Map with key DATETIME and value String Primary Key for the cache/database.
-	 */
 	private Map<String,SortedMap<LocalDateTime,String>> attMap;
 	private MeasureAttributeValueCache attValueCache;
-
 	// This map stores endTime, startTime,
-	private TreeMap<LocalDateTime,String> intervalMap;
+		private TreeMap<LocalDateTime,String> intervalMap;
 	private StateIntervalCache stateCache;
 
+	
 	public MeasuredEntityFacade(MeasuredEntity entity) 
 	{
 		this.entity = entity;
 		status = new StatusStore();
+		attValueCache= MeasureAttributeValueCache.getInstance();
 		attMap = new HashMap<String,SortedMap<LocalDateTime,String>>();
 		intervalMap = new TreeMap<LocalDateTime,String>();
-		attValueCache= MeasureAttributeValueCache.getInstance();
 		stateCache = StateIntervalCache.getInstance();	
 	}
 
@@ -79,19 +76,6 @@ public final class MeasuredEntityFacade {
 
 	public MeasuredEntityType getType(){
 		return entity.getType();
-	}
-
-	/**
-	 * Returns TRUE if the attrib
-	 * @param attr
-	 * @return
-	 */
-	public boolean existsAttribute(AttributeMeasuredEntity attr){
-		return entity.getAttributeList().contains(attr);
-	}
-
-	public boolean registerMeasureEntityAttibute(AttributeMeasuredEntity newAttribute){
-		return entity.registerMeasureEntityAttibute(newAttribute);
 	}
 
 	/**
@@ -110,34 +94,18 @@ public final class MeasuredEntityFacade {
 	 * @param attrValue
 	 */
 	public synchronized void setAttributeValue(AttributeValue attrValue){
-		store(new MeasuredAttributeValue(attrValue.getAttr(), attrValue.getValue(),
-				attrValue.getGenerator(), attrValue.getGeneratorType(), LocalDateTime.now()));
-		status.setAttributeValue(attrValue);
-	}
-
-
-	/**
-	 * Returns the amount of attributes stored in the cache.
-	 * @return 
-	 */
-	public int size(){
-		return attMap.size();
-	}
-
-
-	/**
-	 * Stores a Measured Attributed Value into the cache.<br>
-	 * 
-	 * @param mav the value to be stored.
-	 */
-	public void store(MeasuredAttributeValue mav){
-		System.out.println("We re in store");
-		attValueCache.cacheStore(mav);
 		
-		String attName = mav.getAttr().getName();
+		MeasuredAttributeValue mav = new MeasuredAttributeValue(attrValue.getAttr(), attrValue.getValue(),
+				attrValue.getGenerator(), attrValue.getGeneratorType(), LocalDateTime.now());
+		// stores this attributeValue into cache
+		attValueCache.cacheStore(mav);
+		// stores this value into status
+		status.setAttributeValue(attrValue);
+		
 
 		// The key for a measuredAttributeValue is the name of the attribute plus the timestamp
 		// The key for an attributeValue is the name of the attribute. 
+		String attName = mav.getAttr().getName();
 		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
 		if(internalMap == null){
 			attMap.put(attName,new TreeMap<LocalDateTime, String>());
@@ -146,31 +114,13 @@ public final class MeasuredEntityFacade {
 		internalMap.put(mav.getTimeStamp(), mav.getKey());
 	}
 
-
-	/**
-	 * Returns the oldest Measured Attribute Value for a given Attribute name.
-	 * @param attName
-	 * @return
-	 */
-	public AttributeValue getOldestByAttributeName(String attName){
-		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
-		if(internalMap == null){
-			return null;
-		}
-		return attValueCache.getFromCache(internalMap.get(internalMap.firstKey()));
-	}
-
 	/**
 	 * Returns the newest Measured Attribute Value for a given Attribute name.
 	 * @param attName
 	 * @return
 	 */
 	public AttributeValue getNewestByAttributeName(String attName){
-		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
-		if(internalMap == null){
-			return null;
-		}
-		return attValueCache.getFromCache(internalMap.get(internalMap.lastKey()));
+		return status.getAttributeValueByName(attName);
 	}
 
 
@@ -266,38 +216,51 @@ public final class MeasuredEntityFacade {
 	 */
 	public ArrayList<AttributeValue> getByIntervalByAttributeName(
 			String attrName, LocalDateTime from, LocalDateTime to){
-
+		
+		LocalDateTime oldest = attValueCache.getOldestTime();
+		
 		if(!attMap.containsKey(attrName)){
 			System.out.println("attribute is not in facade");
 			return null;
 		}
 		SortedMap<LocalDateTime,String> internalMap = attMap.get(attrName);
-
-		// System.out.println("elements in attributevalues:" + internalMap.size());
-		//for (Entry<LocalDateTime,String> e : internalMap.entrySet()){
-		//	System.out.println(e.getKey().toString() + e.getValue());
-		//}
-
-		SortedMap<LocalDateTime,String> subMap = internalMap.subMap(from, to);
-
-		// System.out.println("elements in attributevalues:" + internalMap.size());
-		//for (Entry<LocalDateTime,String> e : subMap.entrySet()){
-		//	System.out.println(e.getKey().toString() + e.getValue());
-		//}
-
-		Collection<String> keys = subMap.values();
-
-		//for (String key : keys){
-		//	System.out.println(key);
-		// }		
-
-		String[] keyArray = keys.toArray( new String[keys.size()]);
-
-		// System.out.println("getByIntervalByAttributeName - size: " + keyArray.length);
-
-		return getFromCache(keyArray);
+		
+		// all values are in the cache
+		if(oldest.isBefore(from)){
+			SortedMap<LocalDateTime,String> subMap = internalMap.subMap(from, to);
+			Collection<String> keys = subMap.values();
+			String[] keyArray = keys.toArray( new String[keys.size()]);
+			return getFromCache(keyArray);
+			
+		}else if(oldest.isAfter(to)){
+			// get all values from database
+			return attValueCache.getFromDatabase(entity.getId(),attrName,from, oldest);
+		}else{
+			SortedMap<LocalDateTime,String> subMap = internalMap.subMap(oldest, to);
+			Collection<String> keys = subMap.values();
+			String[] keyArray = keys.toArray( new String[keys.size()]);
+			
+			ArrayList<AttributeValue> newList = attValueCache.getFromDatabase(entity.getId(),attrName,from, oldest);
+			newList.addAll(getFromCache(keyArray));
+			
+			return newList;
+		}
 	}
 
+	
+	
+	/**
+	 * 
+	 * @param oldest
+	 */
+	public void deleteOldValues(LocalDateTime oldest){
+		for(SortedMap<LocalDateTime, String> internalMap : attMap.values()){
+			// replace the map with the last entries. 
+			internalMap = internalMap.tailMap(oldest);
+		}
+	}
+	
+	
 	public String getByIntervalByAttributeNameJSON(
 			String attrName, LocalDateTime from, LocalDateTime to){
 
@@ -382,6 +345,7 @@ public final class MeasuredEntityFacade {
 	public JSONArray getStatusJSON(){
 		return new JSONArray(getStatusValues());
 	}
+	
 	
 	public void importAttributeValues(Map<String, ASTNode> valueMap) {
 		importAttributeValues(valueMap,entity.getId(),entity.getType());

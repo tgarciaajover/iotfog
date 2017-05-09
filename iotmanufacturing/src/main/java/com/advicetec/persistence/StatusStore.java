@@ -27,6 +27,7 @@ import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
+import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 
 /**
@@ -193,7 +194,10 @@ public class StatusStore {
 	}
 
 
-
+	/**
+	 * Returns all attribute values stored into the status.
+	 * @return
+	 */
 	public Collection<AttributeValue> getAttributeValues(){
 		return values.values();
 	}
@@ -224,5 +228,15 @@ public class StatusStore {
 
 	public int getAttributeSize() {
 		return attributes.size();
+	}
+
+	/**
+	 * Returns the Attribute Value associated to this name.
+	 * @param attrName AttributeValue name.
+	 * @return The correspondent attribute value or NULL if this element 
+	 * does not exist in the status.
+	 */
+	public AttributeValue getAttributeValueByName(String attrName){
+		return values.get(attrName);
 	}
 }
