@@ -3,7 +3,9 @@ package com.advicetec.persistence;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +13,14 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
+import com.advicetec.configuration.DeviceType;
+import com.advicetec.configuration.IOSignalDeviceType;
+import com.advicetec.configuration.Signal;
+import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
+import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 /**
@@ -36,7 +43,8 @@ public class MeasureAttributeValueCache extends Configurable {
 	private static MeasureAttributeValueCache instance = null;
 	private static Connection conn  = null; 
 	private static PreparedStatement pst = null;
-	
+
+	final private static String sqlMeasureAttributeValueRangeSelect = "select timestamp, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time from measuredattributevalue where id_owner = ? and attribute_name = ? and timestamp >= ? and timestamp <= ?";  
 
 	private static Cache<String, AttributeValue> cache;
 	PreparedStatement preparedStatement;
@@ -274,10 +282,63 @@ public class MeasureAttributeValueCache extends Configurable {
 	 * @param oldest
 	 * @return
 	 */
-	public ArrayList<AttributeValue> getFromDatabase(Integer entityId,
-			String attrName, LocalDateTime from, LocalDateTime oldest) {
+	public ArrayList<AttributeValue> getFromDatabase(Integer entityId, MeasuredEntityType mType,
+			Attribute attribute, LocalDateTime from, LocalDateTime to) {
 		
-		// TODO
-		return null;
+		
+		ArrayList<AttributeValue> list = new ArrayList<AttributeValue>();
+		
+		try {
+			Class.forName(DB_DRIVER);
+			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			conn.setAutoCommit(false);
+			pst = conn.prepareStatement(this.sqlMeasureAttributeValueRangeSelect);
+			pst.setInt(1, entityId);
+			pst.setString(2, attribute.getName());
+			pst.setTimestamp(3, Timestamp.valueOf(from));
+			pst.setTimestamp(4, Timestamp.valueOf(to));
+			ResultSet rs =  pst.executeQuery();
+
+			while (rs.next())
+			{
+
+				LocalDateTime dtime = rs.getTimestamp("timestamp").toLocalDateTime();
+				MeasuredAttributeValue mav = new MeasuredAttributeValue(attribute,new Object(), entityId, mType, dtime); 
+				mav.setValueFromDatabase(rs);
+				list.add(mav);
+						      
+			}
+			
+
+			// Bring the attribute 
+			
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		finally{
+			if(pst!=null)
+			{
+				try
+				{
+					pst.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+
+			if(conn!=null) 
+			{
+				try
+				{
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return list;
 	}
 }

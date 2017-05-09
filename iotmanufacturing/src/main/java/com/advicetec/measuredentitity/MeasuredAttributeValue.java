@@ -3,6 +3,7 @@ package com.advicetec.measuredentitity;
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -157,6 +158,45 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 		}   							// id_owner
 	}
 
+	public void setValueFromDatabase(ResultSet rs)
+	{
+		try{
+			switch ( getAttr().getType() )
+			{
+			case DOUBLE :  // Double
+				setValue(new Double( rs.getDouble("value_decimal"))); 
+				break;				
+			case DATETIME:  // Datetime
+				setValue(rs.getTimestamp("value_datetime").toLocalDateTime());
+				break;
+
+			case STRING:  // String
+				setValue(rs.getString("value_string"));
+				break;
+
+			case BOOLEAN:  // Boolean
+				setValue(new Boolean(rs.getBoolean("value_boolean")));
+				break;
+
+			case INT:  // Integer
+				setValue(new Integer(rs.getInt("value_int")));
+				break;
+
+			case DATE:  // Date
+				setValue(rs.getDate("value_date").toLocalDate());
+				break;
+
+			case TIME:  // Time
+				setValue(rs.getTime("value_time").toLocalTime());
+				break;
+
+			}		
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}   							// id_owner
+
+	}
 
 	public void dbDelete(PreparedStatement pstmt) {
 
@@ -178,6 +218,10 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 
 	}
 
+	public void setValue(Object value){
+		this.value = value;
+	}
+	
 	public String toString(){
 		StringBuilder sb = new StringBuilder(super.toString());
 		sb.append(", timestamp: ").append(timeStamp.toString());
