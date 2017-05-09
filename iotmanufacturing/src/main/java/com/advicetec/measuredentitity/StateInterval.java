@@ -88,7 +88,7 @@ public final class StateInterval implements Storable
 			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
 			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
 			pstmt.setString(5, getState().getName() );      			// Measuring Status
-			pstmt.setInt(6, getReason().getId() );      			// Measuring Status
+			pstmt.setString(6, getReason().getId().toString() );      			// Measuring Status
 			
 			pstmt.addBatch();
 

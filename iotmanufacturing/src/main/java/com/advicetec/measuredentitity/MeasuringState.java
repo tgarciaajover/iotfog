@@ -30,8 +30,19 @@ public enum MeasuringState
 	  return this.name;
    }
    
-   public MeasuringState getByValue(int value){
+   static public MeasuringState getByValue(int value){
 	   return values()[value];
+   }
+   
+   static public MeasuringState getByName(String name){
+	   if (name.compareTo("Operating") == 0){
+		   return OPERATING;
+	   } else if ( name.compareTo("ScheduleDown") == 0 ) {
+		   return SCHEDULEDOWN;
+	   } else {
+		   return UNSCHEDULEDOWN;
+	   }
+		   
    }
 
    public String toJson(){
