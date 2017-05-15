@@ -11,7 +11,7 @@ public class DisplayAdapterTest {
 
 	@Test
 	public void constantsTest(){
-		char[] val = Display.Flash.OFF;
+		String val = Display.Flash.OFF;
 		System.out.println(String.valueOf(val));
 	}
 	
@@ -50,10 +50,11 @@ public class DisplayAdapterTest {
 		byte[] bytes1 = DatatypeConverter.parseHexBinary("55a70700000000000101010003010000");
 		System.out.println("response"+display.publishBytes(bytes1));
 		*/
-		String _01 = "01";
+		String group = "01";
+		String subGroup = "01";
 		String seq = "01" + "00";
 		
-		byte[] bytes2 = display.generatePacketPayLoad(_01, _01, seq, TestCommand.AUTO_TEST,"");
+		byte[] bytes2 = display.generatePacketPayLoad(group, subGroup, seq, TestCommand.AUTO_TEST,"");
 		System.out.println("test:"+DatatypeConverter.printHexBinary(bytes2));
 		
 		//System.out.println("response"+display.publishBytes(bytes2));

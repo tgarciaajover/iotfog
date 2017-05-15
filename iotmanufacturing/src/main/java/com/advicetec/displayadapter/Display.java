@@ -4,169 +4,169 @@ import javax.xml.bind.DatatypeConverter;
 
 public class Display{
 
-	public static final char[] START  = {0x01};
-	public static final char[] ADDRESS = {0x02};
+	public static final String START  = "01";
+	public static final String ADDRESS = "02";
 
 	public static final String DATA_PREFIX_OUT = "55" + "a7";
-	public static final char[] DATA_PREFIX_IN = {0x55,0xa8};
-	public static final char[] DST_ADDR = {0x01,0x01};
+	public static final String DATA_PREFIX_IN = "55" + "a8";
+	public static final String DST_ADDR = "01" + "01";
 	
-	public static final char[] HEAD = {'Q','Z','0','0','S','A','X'};
-	public static final char[] EOF = {0x4};
-	public static final char[] NEW_FRAME = {0x0c};
-	public static final char[] LINE_FEED = {0x0d};
-	public static final char[] Halfspace = {0x82};
+	public static final String HEAD = "51" + "5A" + "30" + "30" + "53" + "41" + "58";
+	public static final String EOF = "04";
+	public static final String NEW_FRAME = "0c";
+	public static final String LINE_FEED = "0d";
+	public static final String Halfspace = "82";
 
 
 	public static class Flash{
-		private final static char com = 0x07;
-		public final static char[] ON = {com,'1'};
-		public final static char[] OFF = {com,'0'};
+		private final static String com = "07";
+		public final static String ON = com + "1";
+		public final static String OFF = com + "0";
 	}
 
 	public static class LineSpacing{
-		private final static char com = 0x08;
+		private final static String com = "08";
 
-		public final static char[] LS0 = {com,'0'};
-		public final static char[] LS1 = {com,'1'};
-		public final static char[] LS2 = {com,'2'};
-		public final static char[] LS3 = {com,'3'};
-		public final static char[] LS4 = {com,'4'};
-		public final static char[] LS5 = {com,'5'};
-		public final static char[] LS6 = {com,'6'};
-		public final static char[] LS7 = {com,'7'};
-		public final static char[] LS8 = {com,'8'};
-		public final static char[] LS9 = {com,'9'};
+		public final static String LS0 = com + "30";
+		public final static String LS1 = com + "31";
+		public final static String LS2 = com + "32";
+		public final static String LS3 = com + "33";
+		public final static String LS4 = com + "34";
+		public final static String LS5 = com + "35";
+		public final static String LS6 = com + "36";
+		public final static String LS7 = com + "37";
+		public final static String LS8 = com + "38";
+		public final static String LS9 = com + "39";
 	}
 
 	public static class PatternControl {
-		private final static char com = 0x0A;
-		private final static char I = 'I';
-		private final static char O = 'O';
+		private final static String com = "0A";
+		private final static String I = "49";
+		private final static String O = "4F";
 
-		public final static char[] I_RANDOM = {com,I,0x2F};
-		public final static char[] O_RANDOM = {com,O,0x2F};
-		public final static char[] I_JUMP_OUT = {com,I,0x30};
-		public final static char[] O_JUMP_OUT = {com,O,0x30};
-		public final static char[] I_MOVE_LEFT = {com,I,0x31};
-		public final static char[] O_MOVE_LEFT = {com,O,0x31};
-		public final static char[] I_MOVE_RIGHT = {com,I,0x32};
-		public final static char[] O_MOVE_RIGHT = {com,O,0x32};
-		public final static char[] I_SCROLL_LEFT = {com,I,0x33};
-		public final static char[] O_SCROLL_LEFT = {com,O,0x33};
-		public final static char[] I_SCROLL_RIGHT = {com,I,0x34};
-		public final static char[] O_SCROLL_RIGHT = {com,O,0x34};
-		public final static char[] I_MOVE_UP = {com,I,0x35};
-		public final static char[] O_MOVE_UP = {com,O,0x35};
-		public final static char[] I_MOVE_DOWN = {com,I,0x36};
-		public final static char[] O_MOVE_DOWM = {com,O,0x36};
-		public final static char[] I_SCROLL_LR = {com,I,0x37};
-		public final static char[] O_SCROLL_LR = {com,O,0x37};
-		public final static char[] I_SCROLL_UP = {com,I,0x38};
-		public final static char[] O_SCROLL_UP = {com,O,0x38};
-		public final static char[] I_SCROLL_DOWN = {com,I,0x39};
-		public final static char[] O_SCROLL_DOWN = {com,O,0x39};
-		public final static char[] I_FOLD_LR = {com,I,0x3A};
-		public final static char[] O_FOLD_LR = {com,O,0x3A};
-		public final static char[] I_FOLD_UD = {com,I,0x3B};
-		public final static char[] O_FOLD_UD = {com,O,0x3B};
-		public final static char[] I_SCROLL_UD = {com,I,0x3C};
-		public final static char[] O_SCROLL_UD = {com,O,0x3C};
-		public final static char[] I_SUTTLE_LR = {com,I,0x3D};
-		public final static char[] O_SUTTLE_LR = {com,O,0x3D};
-		public final static char[] I_SUTTLE_UD = {com,I,0x3E};
-		public final static char[] O_SUTTLE_UD = {com,O,0x3E};
-		public final static char[] I_PEEL_OFF_L = {com,I,0x3F};
-		public final static char[] O_PEEL_OFF_L = {com,O,0x3F};
-		public final static char[] I_PEEL_OFF_R = {com,I,0x40};
-		public final static char[] O_PEEL_OFF_R = {com,O,0x40};
+		public final static String I_RANDOM = com + I + "2F";
+		public final static String O_RANDOM = com + O + "2F";
+		public final static String I_JUMP_OUT = com + I + "30";
+		public final static String O_JUMP_OUT = com + O + "30";
+		public final static String I_MOVE_LEFT = com + I + "31";
+		public final static String O_MOVE_LEFT = com + O + "31";
+		public final static String I_MOVE_RIGHT = com + I + "32";
+		public final static String O_MOVE_RIGHT =  com + O + "32";
+		public final static String I_SCROLL_LEFT = com + I + "33";
+		public final static String O_SCROLL_LEFT = com + O + "33";
+		public final static String I_SCROLL_RIGHT = com + I + "34";
+		public final static String O_SCROLL_RIGHT = com + O + "34";
+		public final static String I_MOVE_UP = com + I + "35";
+		public final static String O_MOVE_UP = com + O + "35";
+		public final static String I_MOVE_DOWN = com + I + "36";
+		public final static String O_MOVE_DOWM = com + O + "36";
+		public final static String I_SCROLL_LR = com + I + "37";
+		public final static String O_SCROLL_LR = com + O + "37";
+		public final static String I_SCROLL_UP = com + I + "38";
+		public final static String O_SCROLL_UP = com + O + "38";
+		public final static String I_SCROLL_DOWN = com + I + "39";
+		public final static String O_SCROLL_DOWN = com + O + "39";
+		public final static String I_FOLD_LR = com + I + "3A";
+		public final static String O_FOLD_LR = com + O + "3A";
+		public final static String I_FOLD_UD = com + I + "3B";
+		public final static String O_FOLD_UD = com + O + "3B";
+		public final static String I_SCROLL_UD = com + I + "3C";
+		public final static String O_SCROLL_UD = com + O + "3C";
+		public final static String I_SUTTLE_LR = com + I + "3D";
+		public final static String O_SUTTLE_LR = com + O + "3D";
+		public final static String I_SUTTLE_UD = com + I + "3E";
+		public final static String O_SUTTLE_UD = com + O + "3E";
+		public final static String I_PEEL_OFF_L = com + I + "3F";
+		public final static String O_PEEL_OFF_L = com + O + "3F";
+		public final static String I_PEEL_OFF_R = com + I + "40";
+		public final static String O_PEEL_OFF_R = com + O + "40";
 
-		public final static char[] I_RAINDROPS = {com,I,0x43};
-		public final static char[] O_RAINDROPS = {com,O,0x43};
-		public final static char[] I_RANDOM_MOSAIC = {com,I,0x44};
-		public final static char[] O_RANDOM_MOSAIC = {com,O,0x44};
-		public final static char[] I_TWINKLE_STARS = {com,I,0x45};
-		public final static char[] O_TWINKLE_STARS = {com,O,0x45};
-		public final static char[] I_HIP_HOP = {com,I,0x46};
-		public final static char[] O_HIP_HOP = {com,O,0x46};
-		public final static char[] I_RADAR = {com,I,0x47};
-		public final static char[] O_RADAR = {com,O,0x47};
+		public final static String I_RAINDROPS = com + I + "43";
+		public final static String O_RAINDROPS = com + O + "43";
+		public final static String I_RANDOM_MOSAIC = com + I + "44";
+		public final static String O_RANDOM_MOSAIC = com + O + "44";
+		public final static String I_TWINKLE_STARS = com + I + "45";
+		public final static String O_TWINKLE_STARS = com + O + "45";
+		public final static String I_HIP_HOP = com + I + "46";
+		public final static String O_HIP_HOP = com + O + "46";
+		public final static String I_RADAR = com + I + "47";
+		public final static String O_RADAR = com + O + "47";
 	}
 
 	public static class Pause{
-		private final static char com = 0x0E;
+		private final static String com = "0E";
 
-		public final static char[] SEC_00 = {com,'0'};
-		public final static char[] MIL_SEC_00 = {com,'1'};
-		public final static char[] SEC_0000 = {com,'2'};
-		public final static char[] MILSEC_0000 = {com,'3'};
+		public final static String SEC_00 = com + "30";
+		public final static String MIL_SEC_00 = com + "31";
+		public final static String SEC_0000 = com + "32";
+		public final static String MILSEC_0000 = com + "33";
 	}
 
 	public static class Speed{
-		private final static char com = 0x0F;
+		private final static String com = "0F";
 
-		public final static char[] VERY_FAST = {com,'0'};
-		public final static char[] FAST = {com,'1'};
-		public final static char[] MED_FAST = {com,'2'};
-		public final static char[] MEDIUM = {com,'3'};
-		public final static char[] VERY_SLOW = {com,'6'};
-		public final static char[] SLOW = {com,'5'};
-		public final static char[] MED_SLOW = {com,'4'};
+		public final static String VERY_FAST = com + "30";
+		public final static String FAST = com + "31";
+		public final static String MED_FAST = com + "32";
+		public final static String MEDIUM = com + "33";
+		public final static String MED_SLOW = com + "34";
+		public final static String SLOW = com + "35";
+		public final static String VERY_SLOW = com + "36";
 	}
 
 	public static class FontSize{
-		private final static char com = 0x1A;
+		private final static String com = "1A";
 
-		public final static char[] EN_5X5 = {com,'0'};
-		public final static char[] EN_7X6 = {com,'1'};
-		public final static char[] EN_14X8 = {com,'2'};
-		public final static char[] EN_15X9 = {com,'3'};
-		public final static char[] EN_16X9 = {com,'4'};
-		public final static char[] EN_24X16 = {com,'6'};
-		public final static char[] EN_32X18 = {com,'8'};
+		public final static String EN_5X5 = com + "30";
+		public final static String EN_7X6 = com + "31";
+		public final static String EN_14X8 = com + "32";
+		public final static String EN_15X9 = com + "33";
+		public final static String EN_16X9 = com + "34";
+		public final static String EN_24X16 = com + "36";
+		public final static String EN_32X18 = com + "38";
 	}
 
 	public static class DisposalMode{
-		static final char[] CONSTRAINT = {0x1b,'0','a'};
-		static final char[] DEFAULT = {0x1b,'0','b'};
+		static final String CONSTRAINT = "1b" + "30" + "61";
+		static final String DEFAULT = "1b" + "30" + "62";
 	}
 
 	public static class TextColor{
-		private final static char com = 0x1C;
+		private final static String com = "1C";
 
-		public final static char[] BLACK = {com,'0'};
-		public final static char[] RED = {com,'1'};
-		public final static char[] GREEN = {com,'2'};
-		public final static char[] AMBER = {com,'3'};
-		public final static char[] MIX_PAL1 = {com,'4'};
-		public final static char[] MIX_PAL2 = {com,'5'};
-		public final static char[] MIX_PAL3 = {com,'6'};
-		public final static char[] MIX_PAL4 = {com,'7'};
+		public final static String BLACK = com + "30";
+		public final static String RED = com + "31";
+		public final static String GREEN = com + "32";
+		public final static String AMBER = com + "33";
+		public final static String MIX_PAL1 = com + "34";
+		public final static String MIX_PAL2 = com + "35";
+		public final static String MIX_PAL3 = com + "36";
+		public final static String MIX_PAL4 = com + "37";
 	}
 
 	public static class Background{
-		private final static char com = 0x1D;
+		private final static String com = "1D";
 
-		public final static char[] BLACK = {com,'0'};
-		public final static char[] RED = {com,'1'};
-		public final static char[] GREEN = {com,'2'};
-		public final static char[] AMBER = {com,'3'};
+		public final static String BLACK = com + "30";
+		public final static String RED = com + "31";
+		public final static String GREEN = com + "32";
+		public final static String AMBER = com + "33";
 	}
 
 	public static class HorizontalAlign{
-		private final static char com = 0x1E;
+		private final static String com = "1E";
 
-		public final static char[] CENTER = {com,'0'};
-		public final static char[] LEFT = {com,'1'};
-		public final static char[] RIGHT = {com,'2'};
+		public final static String CENTER = com + "30";
+		public final static String LEFT = com + "31";
+		public final static String RIGHT = com + "32";
 	}
 
 	public static class VerticalAlign{
-		private final static char com = 0x1F;
+		private final static String com = "1F";
 
-		public final static char[] CENTER = {com,'0'};
-		public final static char[] TOP = {com,'1'};
-		public final static char[] BOTTOM = {com,'2'};
+		public final static String CENTER = com + "30";
+		public final static String TOP = com + "1";
+		public final static String BOTTOM = com + "2";
 	}
 
 	public static class TestCommand{
