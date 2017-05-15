@@ -12,17 +12,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import java.util.StringTokenizer;
 
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.Token;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarBaseVisitor;
 import com.advicetec.language.BehaviorGrammarParser;
-import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.ArrayAttributeSymbol;
 import com.advicetec.language.ast.ArraySymbol;
@@ -636,14 +637,44 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		{
 		case tINT:
 		case tDATETIME:
-		case tSTRING:
 		case tBOOL:
 		case tDATE:
 		case tTIME:
 			return value;
 
+		case tSTRING:
+            if (value.isBoolean()) {
+            	return new ASTNode(String.valueOf(value.asBoolean()));
+            } else if (value.isDate()) {
+            	
+            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.DATE_FORMAT);
+            	String formatDate = value.asDate().format(formatter);
+            	return new ASTNode(formatDate);
+            	
+            } else if (value.isDateTime()) {
+            	
+            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.DATETIME_FORMAT);
+            	String formatDateTime = value.asDateTime().format(formatter);
+            	return new ASTNode(formatDateTime);
+            	
+            } else if (value.isTime()) {
+
+            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.TIME_FORMAT);
+            	String formatTime = value.asTime().format(formatter);
+            	return new ASTNode(formatTime);
+            	
+            } else if (value.isDouble()) {
+            	return new ASTNode(String.valueOf(value.asDouble()));
+            } else if (value.isInteger()) {
+            	return new ASTNode(String.valueOf(value.asInterger()));
+            } else if (value.isString()) {
+            	return value;
+            } else {
+            	throw new RuntimeException("The value given is of invalid type");
+            }
+			
 		case tFLOAT:
-			if (value.isDouble()){
+			if (value.isDouble()) {
 				return value;
 			}
 			else if (value.isInteger()) {
@@ -1115,6 +1146,45 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	public ASTNode visitToken(BehaviorGrammarParser.TokenContext ctx) 
 	{ 
+				
+		BehaviorGrammarParser.ExpressionContext stringEq1 =  ctx.ex1;
+		BehaviorGrammarParser.ExpressionContext numToken = ctx.ex2;
+		
+		String input =  (this.visit(stringEq1)).asString();
+
+		logger.debug("visitToken:" + input );
+		
+		ASTNode numberToken = this.visit(numToken); 
+		if (numberToken.isInteger() == false) 
+		{
+			throw new RuntimeException("param number_from is not valid: " + numberToken.toString());
+		}
+				
+		Integer token = (numberToken).asInterger();
+
+		StringTokenizer defaultTokenizer = new StringTokenizer(input, SystemConstants.TOKEN_SEP);
+		int countTokens = defaultTokenizer.countTokens();
+		
+		if (countTokens >= token){
+			int i = 0;
+			while (defaultTokenizer.hasMoreTokens())
+			{
+			    if (i == token){
+			    	return new ASTNode( defaultTokenizer.nextToken() );
+			    }
+			    else { 
+			    	i++;
+			    }
+			}
+		} else {
+			throw new RuntimeException("The number of token requested:" + token + " is greater than the token count " + countTokens);
+		}
+		
+		return ASTNode.VOID;
+    }	
+	
+	public ASTNode visitSubstring(BehaviorGrammarParser.SubstringContext ctx) 
+	{ 
 		BehaviorGrammarParser.ExpressionContext stringEq1 =  ctx.ex1;
 		BehaviorGrammarParser.ExpressionContext numberFrom = ctx.ex2;
 		BehaviorGrammarParser.ExpressionContext numberTo = ctx.ex3;
@@ -1139,6 +1209,21 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 		return new ASTNode(ret);
 	}
+
+	public ASTNode visitStartWith(BehaviorGrammarParser.StartwithContext ctx) 
+	{ 
+				
+		BehaviorGrammarParser.ExpressionContext stringParamCtx1 =  ctx.ex1;
+		BehaviorGrammarParser.ExpressionContext StringParamCtx2 = ctx.ex2;
+		
+		String stringParam1 =  (this.visit(stringParamCtx1)).asString();
+		String stringParam2 =  (this.visit(StringParamCtx2)).asString();
+		
+		logger.debug("visitStartWith - Param1:"+ stringParam1 + " Param2:" + stringParam2 );
+						
+		return new ASTNode( new Boolean(stringParam1.startsWith(stringParam2)));
+		
+    } 
 
 	public ASTNode visitRepeat(BehaviorGrammarParser.RepeatContext ctx) 
 	{ 

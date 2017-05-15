@@ -24,13 +24,18 @@ import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.language.behavior.BehaviorDefPhase;
 import com.advicetec.language.transformation.SyntaxChecking;
 
 import org.antlr.v4.runtime.Token;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DefPhase extends TransformationGrammarBaseListener 
 {
 
+	static Logger logger = LogManager.getLogger(DefPhase.class.getName());
+	
 	private TransformationGrammarParser parser = null;
 	private ParseTreeProperty<Scope> scopes; 
 	private GlobalScope globals;
@@ -158,6 +163,9 @@ public class DefPhase extends TransformationGrammarBaseListener
 	
 	public void enterDisplay(@NotNull TransformationGrammarParser.DisplayContext ctx) 
 	{ 
+		
+		logger.debug("enterDisplay");
+		
 		String name = ctx.deviceId.getText(); 
 		Symbol s = currentScope.resolve(name);
 		

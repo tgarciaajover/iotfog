@@ -84,7 +84,9 @@ log : LOG expression SEMICOLON
 expression : expression EXPO expression  							# Expon
 			| MINUS expression                     					# unaryMinusExpr
  			| NOT expression                        				# notExpr
-			| token													# ref_split 
+			| token													# ref_split
+			| substring                                             # ref_substring
+			| startwith                                             # ref_startwith 
 			| status												# ref_status
 		    | expression op=( MULT | DIVI | MOD ) expression  		# Mult
 			| expression op=(PLUS | MINUS) expression  				# AddSub
@@ -95,8 +97,14 @@ expression : expression EXPO expression  							# Expon
 			| atom													# ref_atom
 			;
 
-token 		: TOKEN PR_OPN ex1=expression ',' ex2=expression ',' ex3=expression PR_CLS
+token 		: TOKEN PR_OPN ex1=expression ',' ex2=expression PR_CLS
 	;
+
+substring   : TOKEN PR_OPN ex1=expression ',' ex2=expression ',' ex3=expression PR_CLS
+    ;
+
+startwith   : STARTWITH  PR_OPN ex1=expression ',' ex2=expression PR_CLS
+    ;
 
 status		: STATUS DOT ID
 	;
@@ -170,6 +178,7 @@ IMPORT 		: 'import';
 AS 			: 'as';
 TIMER		: 'timer';
 REPEAT		: 'repeat';
+STARTWITH   : 'start_with';
 
 OR 		: 	'OR';
 AND 	: 	'AND';
