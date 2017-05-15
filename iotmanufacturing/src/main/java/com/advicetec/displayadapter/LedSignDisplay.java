@@ -7,12 +7,17 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.stream.Stream;
+
+import javax.xml.bind.DatatypeConverter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.displayadapter.Display;
 import com.advicetec.displayadapter.Display.Background;
+import com.advicetec.displayadapter.Display.TestCommand;
 import com.advicetec.displayadapter.Display.TextColor;
 import com.advicetec.displayadapter.Display.Flash;
 import com.advicetec.displayadapter.Display.FontSize;
@@ -45,6 +50,8 @@ public class LedSignDisplay implements Output {
 	private char[] backColor;
 	private char[] verticalAlign;
 	private char[] horizontalAlign;
+
+	private String message;
 	
 	/**
 	 * Default constructor.
@@ -141,11 +148,15 @@ public class LedSignDisplay implements Output {
 	 * @return The response.
 	 */
 	public String publishMessage(String message){
+		return publishBytes(encodeMessage(message));
+	}
+
+	
+	public String publishBytes(byte[] bytes){
 		String s = null;
 		try {
-			byte[] toSend = encodeMessage(message);
 			byte[] toReceive = new byte[1024];
-			DatagramPacket packet = new DatagramPacket(toSend, toSend.length,netAddress, dstPort);
+			DatagramPacket packet = new DatagramPacket(bytes, bytes.length,netAddress, dstPort);
 			DatagramSocket socket = new DatagramSocket();
 			socket.send(packet);
 			
@@ -153,15 +164,18 @@ public class LedSignDisplay implements Output {
 			socket.setSoTimeout(10000);
 			DatagramPacket received = new DatagramPacket(toReceive,toReceive.length);
 			socket.receive(received);
-			s = new String(received.getData());
+			byte[] bytes2 = received.getData();
+			System.out.println("length:"+received.getLength());
+			s = new String(DatatypeConverter.printHexBinary(bytes2));
+			s=(String)s.subSequence(0, received.getLength()*2);
 			socket.close();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			logger.error("Error sending the message:"+message);
+			logger.error("Error sending the message:"
+					+ DatatypeConverter.printBase64Binary(bytes));
 			e.printStackTrace();
 		}
-		
 		return s;
 	}
 
@@ -506,6 +520,58 @@ public class LedSignDisplay implements Output {
 		
 	}
 	
+	public void setMessage(String message){
+		this.message = message;
+	}
 	
+	public byte[] getDataLen(){
+		int len = message.length();
+		String s = Integer.toHexString(len);
+		while(s.length() < 4)
+			s="0".concat(s);
+		return DatatypeConverter.parseHexBinary(s);
+	}
 	
+	public byte[] generateHeader(char[] group, char[] unit, char[] seq, char[] comand, String payHex){
+		
+		char[] flag = {0x00,0x00};
+		char[] array = concat(TestCommand.AUTO_TEST,flag);
+		
+		array = concat(seq,array);
+		array = concat(unit,array);
+		array = concat(group,array);
+		
+		String len = Integer.toHexString(payHex.length());
+		while(len.length()<4)
+			len = "0".concat(len);
+		// 0008
+		String a = len.substring(2,3) + len.substring(0,1);
+
+		array = concat(a.toCharArray(),array);
+		array = concat(array,payHex.toCharArray());
+		byte[] check = Display.checksum(new String(array).getBytes());
+		
+		byte[] head = new String(Display.DATA_PREFIX_OUT).getBytes();
+		
+		head = concat(head,check);
+		head = concat(head,new String(array).getBytes());
+		
+		return head;
+	}
+	
+	private char[] concat(char[] a, char[] b){
+		int len = a.length + b.length;
+		char[] res = new char[len];
+		System.arraycopy(a, 0, res, 0, a.length);
+		System.arraycopy(b, 0, res, a.length, b.length);
+		return res;
+	}
+	
+	private byte[] concat(byte[] a, byte[] b){
+		int len = a.length + b.length;
+		byte[] res = new byte[len];
+		System.arraycopy(a, 0, res, 0, a.length);
+		System.arraycopy(b, 0, res, a.length, b.length);
+		return res;
+	}
 }

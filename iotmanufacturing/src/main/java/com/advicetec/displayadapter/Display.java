@@ -1,10 +1,16 @@
 package com.advicetec.displayadapter;
 
+import javax.xml.bind.DatatypeConverter;
+
 public class Display{
 
 	public static final char[] START  = {0x01};
 	public static final char[] ADDRESS = {0x02};
 
+	public static final char[] DATA_PREFIX_OUT = {0x55,0xa7};
+	public static final char[] DATA_PREFIX_IN = {0x55,0xa8};
+	public static final char[] DST_ADDR = {0x01,0x01};
+	
 	public static final char[] HEAD = {'Q','Z','0','0','S','A','X'};
 	public static final char[] EOF = {0x4};
 	public static final char[] NEW_FRAME = {0x0c};
@@ -163,4 +169,25 @@ public class Display{
 		public final static char[] BOTTOM = {com,'2'};
 	}
 
+	public static class TestCommand{
+		private final static char com = 0x03;
+		
+		public final static char[] CONX_TEST = {com,0x01};
+		public final static char[] AUTO_TEST = {com,0x02};
+		public final static char[] ALL_BRIGTH_TEST = {com,0x03};
+		
+		public final static char[] END_TEST = {com,0x09};
+	}
+	
+	public static byte[] checksum(final byte[] bytes){
+		int checksum = 0;
+		for(byte b: bytes){
+			checksum += 0xff & b;
+		}
+		String s = Integer.toHexString(checksum);
+		if(s.length()%2 != 0)
+			s="0".concat(s);
+		
+		return DatatypeConverter.parseHexBinary(s);
+	}
 }
