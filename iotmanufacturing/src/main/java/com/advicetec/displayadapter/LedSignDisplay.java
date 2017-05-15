@@ -7,6 +7,9 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -532,46 +535,58 @@ public class LedSignDisplay implements Output {
 		return DatatypeConverter.parseHexBinary(s);
 	}
 	
-	public byte[] generateHeader(char[] group, char[] unit, char[] seq, char[] comand, String payHex){
+	public byte[] generatePacketPayLoad(String group, String unit, String seq, String comand, String payHex){
 		
-		char[] flag = {0x00,0x00};
-		char[] array = concat(TestCommand.AUTO_TEST,flag);
+		String flag = "00" + "00";
+		String array = TestCommand.AUTO_TEST + flag;
 		
-		array = concat(seq,array);
-		array = concat(unit,array);
-		array = concat(group,array);
+		array = seq + array;
+		array = unit + array;
+		array = group + array;
 		
+		String src_address = "00" + "00";
+		array = src_address + array;
+		
+		System.out.println("array until now :" + array );
+		String len = getBytesDataLen(payHex);
+		
+		System.out.println("payload len:" + len);
+		array = len + array;
+		
+		System.out.println("array until now 2:" + array );
+		
+		// put data payload
+		array = array + payHex;
+		
+		System.out.println("array until now 3:" + array );
+				
+		String checkHex = Display.checksum(DatatypeConverter.parseHexBinary(array));
+		
+		System.out.println("check" + checkHex );
+		
+		String headSt = Display.DATA_PREFIX_OUT;
+		
+		String head = headSt + checkHex;
+		
+		head = head + array;
+		
+		System.out.println("head:" + head );
+		
+		return  DatatypeConverter.parseHexBinary(head);
+	}
+	
+	
+	private String getBytesDataLen(String payHex){ 
 		String len = Integer.toHexString(payHex.length());
-		while(len.length()<4)
+		
+		while(len.length()<4){
 			len = "0".concat(len);
-		// 0008
-		String a = len.substring(2,3) + len.substring(0,1);
+		}
+				
+		String a = len.substring(2,4) + len.substring(0,2);
+		
+		return a;
+	}
+	
 
-		array = concat(a.toCharArray(),array);
-		array = concat(array,payHex.toCharArray());
-		byte[] check = Display.checksum(new String(array).getBytes());
-		
-		byte[] head = new String(Display.DATA_PREFIX_OUT).getBytes();
-		
-		head = concat(head,check);
-		head = concat(head,new String(array).getBytes());
-		
-		return head;
-	}
-	
-	private char[] concat(char[] a, char[] b){
-		int len = a.length + b.length;
-		char[] res = new char[len];
-		System.arraycopy(a, 0, res, 0, a.length);
-		System.arraycopy(b, 0, res, a.length, b.length);
-		return res;
-	}
-	
-	private byte[] concat(byte[] a, byte[] b){
-		int len = a.length + b.length;
-		byte[] res = new byte[len];
-		System.arraycopy(a, 0, res, 0, a.length);
-		System.arraycopy(b, 0, res, a.length, b.length);
-		return res;
-	}
 }

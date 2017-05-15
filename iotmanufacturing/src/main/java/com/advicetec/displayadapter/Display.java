@@ -7,7 +7,7 @@ public class Display{
 	public static final char[] START  = {0x01};
 	public static final char[] ADDRESS = {0x02};
 
-	public static final char[] DATA_PREFIX_OUT = {0x55,0xa7};
+	public static final String DATA_PREFIX_OUT = "55" + "a7";
 	public static final char[] DATA_PREFIX_IN = {0x55,0xa8};
 	public static final char[] DST_ADDR = {0x01,0x01};
 	
@@ -170,24 +170,27 @@ public class Display{
 	}
 
 	public static class TestCommand{
-		private final static char com = 0x03;
+		private final static String com = "03";
 		
-		public final static char[] CONX_TEST = {com,0x01};
-		public final static char[] AUTO_TEST = {com,0x02};
-		public final static char[] ALL_BRIGTH_TEST = {com,0x03};
+		public final static String CONX_TEST = com + "01";
+		public final static String AUTO_TEST = com + "02";
+		public final static String ALL_BRIGTH_TEST = com + "03";
 		
-		public final static char[] END_TEST = {com,0x09};
+		public final static String END_TEST = com + "09";
 	}
 	
-	public static byte[] checksum(final byte[] bytes){
+	public static String checksum(final byte[] bytes){
 		int checksum = 0;
+		
 		for(byte b: bytes){
 			checksum += 0xff & b;
 		}
-		String s = Integer.toHexString(checksum);
-		if(s.length()%2 != 0)
-			s="0".concat(s);
+				
+		String s = String.format("%04X", checksum);
 		
-		return DatatypeConverter.parseHexBinary(s);
+		// put it on little endian.
+		s = s.substring(2,4) + s.substring(0,2);
+		
+		return s;
 	}
 }

@@ -503,6 +503,19 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		switch (symbol.getType())
 		{
 		case tINT:
+            if (value.isInteger()) {
+            	return value;
+            } else if (value.isString()) { 
+            	try {
+            		return new ASTNode(Integer.valueOf(value.asString()));
+            	} catch (NumberFormatException e){
+            		logger.error("Number exception:" + e.getMessage());
+            		throw new RuntimeException(e.getMessage());
+            	}
+            } else{
+            	throw new RuntimeException("The value given is of invalid type");
+            }
+		
 		case tDATETIME:
 		case tBOOL:
 		case tDATE:
@@ -546,6 +559,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			}
 			else if (value.isInteger()) {
 				return new ASTNode(new Double(value.asInterger()));
+			} else if (value.isString()) {
+				try {
+					return new ASTNode(Double.valueOf(value.asString()));
+				} catch (NumberFormatException e){
+					logger.error("Number exception:" + e.getMessage());
+					throw new RuntimeException(e.getMessage());
+				}
 			}
 		case tVOID:
 			throw new RuntimeException("The value given is of type void");
@@ -602,6 +622,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	}
 	
 	@Override 
+	public ASTNode visitRef_startwith(TransformationGrammarParser.Ref_startwithContext ctx) 
+	{ 
+		logger.debug("visit ref start with");
+		
+		return this.visit(ctx.startwith());
+	}
+	
+	@Override 
 	public ASTNode visitInteger(TransformationGrammarParser.IntegerContext ctx) 
 	{ 
 		System.out.println("visitInteger");
@@ -638,19 +666,21 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitStr(TransformationGrammarParser.StrContext ctx) 
 	{ 
-		// System.out.println("visitStr");
+		logger.debug("visitStr");
 		
 		String str = ctx.getText();
 	     
 		// strip quotes
 	    str = str.substring(1, str.length() - 1).replace("\"\"", "\"");
+	    
+	    logger.debug("visitStr" + "end value:" + str);
 	    return new ASTNode(str);
 	}
 	
 	@Override 
 	public ASTNode visitParens(TransformationGrammarParser.ParensContext ctx) 
 	{ 
-		// System.out.println("visitParens");
+		logger.debug("visitParens text:" + ctx.expression().getText());
 		
 		return this.visit(ctx.expression()); 
 	}
@@ -996,10 +1026,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return new ASTNode(ret);
 	}
 
-	
-	public ASTNode visitStartWith(TransformationGrammarParser.StartwithContext ctx) 
+	@Override
+	public ASTNode visitStartwith(TransformationGrammarParser.StartwithContext ctx)
 	{ 
-				
+		logger.debug("visitStartWith context");		
+		
 		TransformationGrammarParser.ExpressionContext stringParamCtx1 =  ctx.ex1;
 		TransformationGrammarParser.ExpressionContext StringParamCtx2 = ctx.ex2;
 		
@@ -1116,7 +1147,9 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
         for(TransformationGrammarParser.Condition_blockContext condition : conditions) {
 
-            ASTNode evaluated = this.visit(condition.expression());
+            
+        	System.out.println(condition.getText());
+        	ASTNode evaluated = this.visit(condition.expression());
             
             System.out.println("evaluated:" + evaluated.toString());
             
