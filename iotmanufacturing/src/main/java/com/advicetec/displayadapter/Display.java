@@ -3,7 +3,7 @@ package com.advicetec.displayadapter;
 import javax.xml.bind.DatatypeConverter;
 
 public class Display{
-
+ 
 	public static final String START  = "01";
 	public static final String ADDRESS = "02";
 
