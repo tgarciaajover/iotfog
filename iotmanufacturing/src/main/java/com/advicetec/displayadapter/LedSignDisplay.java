@@ -154,7 +154,11 @@ public class LedSignDisplay implements Output {
 		return publishBytes(encodeMessage(message));
 	}
 
-	
+	/**
+	 * Publishes a udp packet and returns the response
+	 * @param bytes The data to publish.
+	 * @return A string with the response.
+	 */
 	public String publishBytes(byte[] bytes){
 		String s = null;
 		try {
@@ -171,6 +175,7 @@ public class LedSignDisplay implements Output {
 			System.out.println("length:"+received.getLength());
 			s = new String(DatatypeConverter.printHexBinary(bytes2));
 			s=(String)s.subSequence(0, received.getLength()*2);
+			
 			socket.close();
 		} catch (SocketException e) {
 			e.printStackTrace();
