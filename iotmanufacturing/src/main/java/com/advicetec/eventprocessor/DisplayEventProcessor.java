@@ -43,17 +43,17 @@ public class DisplayEventProcessor implements Processor
 			LedSignDisplay led = new LedSignDisplay();
 			led.setDstPort(displayDevice.getPort());
 			led.setNetAddress(displayDevice.getIpAddress());
-			led.setBackColor(displayDevice.getDisplayType().getBackColor());
-			led.setInMode(displayDevice.getDisplayType().getInMode());
-			led.setOutMode(displayDevice.getDisplayType().getOutMode());
-			led.setLetterSize(displayDevice.getDisplayType().getLetterSize());
-			led.setLineSpacing(displayDevice.getDisplayType().getLineSpacing());
+			led.setLanguageBackColor(displayDevice.getDisplayType().getBackColor());
+			led.setLanguageInMode(displayDevice.getDisplayType().getInMode());
+			led.setLanguageOutMode(displayDevice.getDisplayType().getOutMode());
+			led.setLanguageLetterSize(displayDevice.getDisplayType().getLetterSize());
+			led.setLanguageLineSpacing(displayDevice.getDisplayType().getLineSpacing());
 			led.setSignalHeight(displayDevice.getDisplayType().getPixelsHeight());
 			led.setSignalWidth(displayDevice.getDisplayType().getPixelsWidth());
-			led.setSpeed(displayDevice.getDisplayType().getSpeed());
-			led.setTextColor(displayDevice.getDisplayType().getTextColor());
-			led.setVerticalAlign(displayDevice.getDisplayType().getVerticalAlignment());
-			led.setHorizontalAlign(displayDevice.getDisplayType().getHorizontalAlignment());
+			led.setLanguageSpeed(displayDevice.getDisplayType().getSpeed());
+			led.setLanguageTextColor(displayDevice.getDisplayType().getTextColor());
+			led.setLanguageVerticalAlign(displayDevice.getDisplayType().getVerticalAlignment());
+			led.setLanguageHorizontalAlign(displayDevice.getDisplayType().getHorizontalAlignment());
 			led.publishMessage(text);
 
 
