@@ -53,7 +53,7 @@ public class TranslationClassesResource extends ServerResource
 	
 	
 	/**
-	 * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
+	 * Scans all classes accessible from the context class loader. Classes belong to the given package and subpackages.
 	 *
 	 * @param packageName The base package
 	 * @return The classes
