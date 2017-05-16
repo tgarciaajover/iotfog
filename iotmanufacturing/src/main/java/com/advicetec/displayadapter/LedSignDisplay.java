@@ -7,29 +7,23 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.stream.Stream;
-
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.advicetec.displayadapter.Display;
-import com.advicetec.displayadapter.Display.Background;
-import com.advicetec.displayadapter.Display.TestCommand;
-import com.advicetec.displayadapter.Display.TextColor;
-import com.advicetec.displayadapter.Display.Flash;
-import com.advicetec.displayadapter.Display.FontSize;
-import com.advicetec.displayadapter.Display.HorizontalAlign;
-import com.advicetec.displayadapter.Display.LineSpacing;
-import com.advicetec.displayadapter.Display.PatternControl;
-import com.advicetec.displayadapter.Display.Pause;
-import com.advicetec.displayadapter.Display.Speed;
-import com.advicetec.displayadapter.Display.VerticalAlign;
+import com.advicetec.displayadapter.JetFile2Protocol;
+import com.advicetec.displayadapter.JetFile2Protocol.Background;
+import com.advicetec.displayadapter.JetFile2Protocol.TestCommand;
+import com.advicetec.displayadapter.JetFile2Protocol.TextColor;
+import com.advicetec.displayadapter.JetFile2Protocol.Flash;
+import com.advicetec.displayadapter.JetFile2Protocol.FontSize;
+import com.advicetec.displayadapter.JetFile2Protocol.HorizontalAlign;
+import com.advicetec.displayadapter.JetFile2Protocol.LineSpacing;
+import com.advicetec.displayadapter.JetFile2Protocol.PatternControl;
+import com.advicetec.displayadapter.JetFile2Protocol.Pause;
+import com.advicetec.displayadapter.JetFile2Protocol.Speed;
+import com.advicetec.displayadapter.JetFile2Protocol.VerticalAlign;
 import com.advicetec.utils.UdpUtils;
 
 
@@ -127,8 +121,8 @@ public class LedSignDisplay implements Output {
 	 * @return
 	 */
 	public byte[] encodeMessage(String message){
-		return UdpUtils.toBytes(UdpUtils.merge(
-				Display.HEAD,
+		return UdpUtils.merge(
+				JetFile2Protocol.HEAD,
 				inMode,
 				outMode,
 				speed,
@@ -140,9 +134,9 @@ public class LedSignDisplay implements Output {
 				backColor,
 				verticalAlign,
 				horizontalAlign,
-				message.toCharArray(),
-				Display.EOF
-				));
+				message,
+				JetFile2Protocol.EOF
+				).getBytes();
 	}
 
 	@Override
@@ -341,19 +335,19 @@ public class LedSignDisplay implements Output {
 	public void setLanguageInMode(String inMode) {
 		switch (inMode) {
 		case "JO":
-			this.inMode = Display.PatternControl.I_JUMP_OUT;
+			this.inMode = JetFile2Protocol.PatternControl.I_JUMP_OUT;
 			break;
 		case "ML":
-			this.inMode = Display.PatternControl.I_MOVE_LEFT;
+			this.inMode = JetFile2Protocol.PatternControl.I_MOVE_LEFT;
 			break;
 		case "MR":
-			this.inMode = Display.PatternControl.I_MOVE_RIGHT;
+			this.inMode = JetFile2Protocol.PatternControl.I_MOVE_RIGHT;
 			break;
 		case "SL":
-			this.inMode = Display.PatternControl.I_SCROLL_LEFT;
+			this.inMode = JetFile2Protocol.PatternControl.I_SCROLL_LEFT;
 			break;
 		case "SR":
-			this.inMode = Display.PatternControl.I_SCROLL_RIGHT;
+			this.inMode = JetFile2Protocol.PatternControl.I_SCROLL_RIGHT;
 			break;
 		default:
 			logger.error("Invalid In mode "+ inMode + ".");
@@ -364,19 +358,19 @@ public class LedSignDisplay implements Output {
 	public void setLanguageOutMode(String outMode2) {
 		switch (outMode2) {
 		case "JO":
-			this.outMode = Display.PatternControl.O_JUMP_OUT;
+			this.outMode = JetFile2Protocol.PatternControl.O_JUMP_OUT;
 			break;
 		case "ML":
-			this.outMode = Display.PatternControl.O_MOVE_LEFT;
+			this.outMode = JetFile2Protocol.PatternControl.O_MOVE_LEFT;
 			break;
 		case "MR":
-			this.outMode = Display.PatternControl.O_MOVE_RIGHT;
+			this.outMode = JetFile2Protocol.PatternControl.O_MOVE_RIGHT;
 			break;
 		case "SL":
-			this.outMode = Display.PatternControl.O_SCROLL_LEFT;
+			this.outMode = JetFile2Protocol.PatternControl.O_SCROLL_LEFT;
 			break;
 		case "SR":
-			this.outMode = Display.PatternControl.O_SCROLL_RIGHT;
+			this.outMode = JetFile2Protocol.PatternControl.O_SCROLL_RIGHT;
 			break;
 		default:
 			logger.error("Invalid OUT mode "+ outMode2 + ".");
@@ -571,11 +565,11 @@ public class LedSignDisplay implements Output {
 		
 		System.out.println("array until now 3:" + array );
 				
-		String checkHex = Display.checksum(DatatypeConverter.parseHexBinary(array));
+		String checkHex = UdpUtils.checksum(DatatypeConverter.parseHexBinary(array));
 		
 		System.out.println("check" + checkHex );
 		
-		String headSt = Display.DATA_PREFIX_OUT;
+		String headSt = JetFile2Protocol.DATA_PREFIX_OUT;
 		
 		String head = headSt + checkHex;
 		

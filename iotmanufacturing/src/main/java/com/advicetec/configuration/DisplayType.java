@@ -43,7 +43,7 @@ public class DisplayType extends ConfigurationObject
     String speed;
 	
 	@JsonProperty("line_spacing") 
-    Integer lineSpacing;
+    String lineSpacing;
 
 	@JsonProperty("letter_size") 
 	String letterSize;
@@ -128,11 +128,11 @@ public class DisplayType extends ConfigurationObject
 		this.speed = speed;
 	}
 
-	public Integer getLineSpacing() {
+	public String getLineSpacing() {
 		return lineSpacing;
 	}
 
-	public void setLineSpacing(Integer lineSpacing) {
+	public void setLineSpacing(String lineSpacing) {
 		this.lineSpacing = lineSpacing;
 	}
 

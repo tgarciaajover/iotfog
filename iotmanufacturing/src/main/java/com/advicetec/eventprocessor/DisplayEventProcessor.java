@@ -23,6 +23,7 @@ public class DisplayEventProcessor implements Processor
 		this.event = event;
 	}
 
+	
 	public List<DelayEvent> process() throws SQLException 
 	{
 		

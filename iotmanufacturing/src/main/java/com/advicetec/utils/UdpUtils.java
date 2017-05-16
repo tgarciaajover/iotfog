@@ -1,6 +1,7 @@
 package com.advicetec.utils;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -22,6 +23,7 @@ public class UdpUtils {
 		return buffer.array();
 	}
 
+	
 	public static char[] merge(final char[]...arrays){
 		char[] prev = {};
 		for(char[] array : arrays){
@@ -31,6 +33,15 @@ public class UdpUtils {
 			prev = res;
 		}
 		
+		return prev;
+	}
+	
+	
+	public static String merge(final String...arrays){
+		String prev = "";
+		for(String array : arrays){
+			prev.concat(array);
+		}		
 		return prev;
 	}
 	
@@ -81,13 +92,8 @@ public class UdpUtils {
 		for(byte b: bytes){
 			checksum += 0xff & b;
 		}
-				
 		String s = String.format("%04X", checksum);
-		
-		// put it on little endian.
-		s = s.substring(2,4) + s.substring(0,2);
-		
-		return s;
+		return swap(s);
 	}
 	
 	
@@ -96,7 +102,7 @@ public class UdpUtils {
 		if(hexString.length() % 2 != 0){
 			sb = new StringBuilder("0".concat(hexString));
 		}
-		for(int i =0; i<(sb.length()/4); i=i+2){
+		for(int i =0; i<=(sb.length()/4); i=i+2){
 			int pos = i*2;
 			String subA = sb.substring(pos, pos+2);
 			String subB= sb.substring(sb.length()-pos-2, sb.length()-pos);
@@ -104,5 +110,49 @@ public class UdpUtils {
 			sb.replace(sb.length()-pos-2, sb.length()-pos, subA);
 		}
 		return sb.toString();
+	}
+	
+	
+	public static String getBytes(String bytes,int from, int to) throws IndexOutOfBoundsException{
+		if(from*2 > bytes.length() || to*2 > bytes.length()){
+			throw new IndexOutOfBoundsException("Cannot get the bytes from:"+from+" to:"+to);
+		}
+		
+		return bytes.substring(from*2, to*2);
+	}
+	
+	/**
+	 * Returns a hex string of lenght given by paramenter.
+	 * @param x The integer
+	 * @param bytes String lenght.
+	 * @return
+	 */
+	public static String int2HexString(int x, int bytes){
+		StringBuilder res = new StringBuilder(Integer.toHexString(x));
+		while(res.length()<bytes*2)
+			res.insert(0, "0");
+		return swap(res.toString());
+	}
+	
+	/**
+	 * 
+	 * @param hex
+	 * @return
+	 */
+	public static String hexString2Ascii(String hex){
+		byte[] bytes = DatatypeConverter.parseHexBinary(hex);
+		String s = null;
+		try {
+			s =new String(bytes,"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return s;
+	}
+	
+	public static String ascii2hexString(String s){
+		byte[] bytes = s.getBytes();
+		return DatatypeConverter.printHexBinary(bytes);
 	}
 }

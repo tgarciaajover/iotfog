@@ -60,6 +60,7 @@ public class DisplayTypeContainer extends Container
 		        object.setInMode(inMode);
 		        object.setOutMode(outMode);
 		        object.setSpeed(speed);
+		        // TODO line spacing is integer or string
 		        object.setLineSpacing(lineSpacing);
 		        object.setLetterSize(letterSize);
 		        object.setVerticalAlignment(verticalAlign);
