@@ -48,17 +48,17 @@ public class LedSignDisplay implements Output {
 	private InetAddress netAddress;
 	private String description;
 	
-	private char[] inMode;
-	private char[] outMode;
-	private char[] speed;
-	private char[] pause;
-	private char[] lineSpacing;
-	private char[] letterSize;
-	private char[] flash;
-	private char[] textColor;
-	private char[] backColor;
-	private char[] verticalAlign;
-	private char[] horizontalAlign;
+	private String inMode;
+	private String outMode;
+	private String speed;
+	private String pause;
+	private String lineSpacing;
+	private String letterSize;
+	private String flash;
+	private String textColor;
+	private String backColor;
+	private String verticalAlign;
+	private String horizontalAlign;
 
 	private String message;
 	
@@ -88,10 +88,10 @@ public class LedSignDisplay implements Output {
 	}
 	
 	public LedSignDisplay(int signalWidth, int signalHeight,
-			Inet4Address netAddress, char[] inMode, char[] outMode,
-			char[] speed, char[] pause, char[] lineSpacing, char[] letterSize,
-			char[] flash, char[] textColor, char[] backColor,
-			char[] verticalAlign, char[] horizontalAlign) {
+			Inet4Address netAddress, String inMode, String outMode,
+			String speed, String pause, String lineSpacing, String letterSize,
+			String flash, String textColor, String backColor,
+			String verticalAlign, String horizontalAlign) {
 		super();
 		this.signalWidth = signalWidth;
 		this.signalHeight = signalHeight;
@@ -225,79 +225,79 @@ public class LedSignDisplay implements Output {
 		this.netAddress = netAddress;
 	}
 
-	public char[] getInMode() {
+	public String getInMode() {
 		return inMode;
 	}
 
-	public void setInMode(char[] inMode) {
+	public void setInMode(String inMode) {
 		this.inMode = inMode;
 	}
 
-	public char[] getOutMode() {
+	public String getOutMode() {
 		return outMode;
 	}
 
-	public void setOutMode(char[] outMode) {
+	public void setOutMode(String outMode) {
 		this.outMode = outMode;
 	}
 
-	public char[] getSpeed() {
+	public String getSpeed() {
 		return speed;
 	}
 
-	public void setSpeed(char[] speed) {
+	public void setSpeed(String speed) {
 		this.speed = speed;
 	}
 
-	public char[] getPause() {
+	public String getPause() {
 		return pause;
 	}
 
-	public void setPause(char[] pause) {
+	public void setPause(String pause) {
 		this.pause = pause;
 	}
 
-	public char[] getLineSpacing() {
+	public String getLineSpacing() {
 		return lineSpacing;
 	}
 
-	public void setLineSpacing(char[] lineSpacing) {
+	public void setLineSpacing(String lineSpacing) {
 		this.lineSpacing = lineSpacing;
 	}
 
-	public char[] getLetterSize() {
+	public String getLetterSize() {
 		return letterSize;
 	}
 
-	public void setLetterSize(char[] letterSize) {
+	public void setLetterSize(String letterSize) {
 		this.letterSize = letterSize;
 	}
 
-	public char[] getFlash() {
+	public String getFlash() {
 		return flash;
 	}
 
-	public void setFlash(char[] flash) {
+	public void setFlash(String flash) {
 		this.flash = flash;
 	}
 
-	public char[] getTextColor() {
+	public String getTextColor() {
 		return textColor;
 	}
 
-	public void setTextColor(char[] textColor) {
+	public void setTextColor(String textColor) {
 		this.textColor = textColor;
 	}
 
-	public char[] getBackColor() {
+	public String getBackColor() {
 		return backColor;
 	}
 
-	public void setBackColor(char[] backColor) {
+	public void setBackColor(String backColor) {
 		this.backColor = backColor;
 	}
 	
-	public void setBackColor(String backColor) {
+	public void setLanguageBackColor(String backColor) {
 		switch(backColor){
 		case "K":
 			this.backColor = Background.BLACK;
@@ -318,19 +318,19 @@ public class LedSignDisplay implements Output {
 		
 	}
 
-	public char[] getVerticalAlign() {
+	public String getVerticalAlign() {
 		return verticalAlign;
 	}
 
-	public void setVerticalAlign(char[] verticalAlign) {
+	public void setVerticalAlign(String verticalAlign) {
 		this.verticalAlign = verticalAlign;
 	}
 
-	public char[] getHorizontalAlign() {
+	public String getHorizontalAlign() {
 		return horizontalAlign;
 	}
 
-	public void setHorizontalAlign(char[] horizontalAlign) {
+	public void setHorizontalAlign(String horizontalAlign) {
 		this.horizontalAlign = horizontalAlign;
 	}
 
@@ -338,7 +338,7 @@ public class LedSignDisplay implements Output {
 		return description;
 	}
 
-	public void setInMode(String inMode) {
+	public void setLanguageInMode(String inMode) {
 		switch (inMode) {
 		case "JO":
 			this.inMode = Display.PatternControl.I_JUMP_OUT;
@@ -361,7 +361,7 @@ public class LedSignDisplay implements Output {
 		}
 	}
 
-	public void setOutMode(String outMode2) {
+	public void setLanguageOutMode(String outMode2) {
 		switch (outMode2) {
 		case "JO":
 			this.outMode = Display.PatternControl.O_JUMP_OUT;
@@ -385,7 +385,7 @@ public class LedSignDisplay implements Output {
 		
 	}
 
-	public void setLetterSize(String letterSize) {
+	public void setLanguageLetterSize(String letterSize) {
 		switch (letterSize) {
 		case "0":
 			this.letterSize = FontSize.EN_5X5;
@@ -408,7 +408,7 @@ public class LedSignDisplay implements Output {
 		}
 	}
 
-	public void setLineSpacing(Integer lineSpacing2) {
+	public void setLanguageLineSpacing(Integer lineSpacing2) {
 		switch (lineSpacing2) {
 		case 0:
 			lineSpacing = LineSpacing.LS0;
@@ -447,7 +447,7 @@ public class LedSignDisplay implements Output {
 		
 	}
 
-	public void setSpeed(String speed2) {
+	public void setLanguageSpeed(String speed2) {
 	
 		switch (speed2) {
 		case "0":
@@ -477,7 +477,7 @@ public class LedSignDisplay implements Output {
 		}
 	}
 
-	public void setTextColor(String color) {
+	public void setLanguageTextColor(String color) {
 		switch(color){
 		case "K":
 			this.textColor = TextColor.BLACK;
@@ -498,7 +498,7 @@ public class LedSignDisplay implements Output {
 		
 	}
 
-	public void setVerticalAlign(String vertical) {
+	public void setLanguageVerticalAlign(String vertical) {
 		
 		switch (vertical) {
 		case "0":
@@ -516,7 +516,7 @@ public class LedSignDisplay implements Output {
 		}
 	}
 
-	public void setHorizontalAlign(String horizontal) {
+	public void setLanguageHorizontalAlign(String horizontal) {
 		switch (horizontal) {
 		case "0":
 			horizontalAlign = HorizontalAlign.CENTER;
