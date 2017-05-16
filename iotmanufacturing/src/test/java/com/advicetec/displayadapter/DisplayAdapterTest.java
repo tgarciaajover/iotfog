@@ -15,6 +15,15 @@ public class DisplayAdapterTest {
 		System.out.println(String.valueOf(val));
 	}
 	
+	@Test
+	public void swapTest(){
+		String code = "0102";
+		System.out.println("Original:"+code + "swap:"+UdpUtils.swap(code));
+		code = "010203";
+		System.out.println("Original:"+code + "swap:"+UdpUtils.swap(code));
+		code = "10203";
+		System.out.println("Original:"+code + "swap:"+UdpUtils.swap(code));
+	}
 
 	@Test
 	public void messageTest(){
@@ -28,11 +37,11 @@ public class DisplayAdapterTest {
 		String chk = Display.checksum(
 				DatatypeConverter.parseHexBinary("000000000101010003010000"));
 		
-		System.out.println(chk);
+		System.out.println("Check:"+chk);
 		// "55a7f302000000000101020001020400434f4e4649472e535953000004000100"
 		// 
 		//"55A8ED04000000000101010003010300898EFFFF6400A8C001010000"
-		 
+		
 		// "55a5db0014003031303101000000030100000000"
 		
 //		String mes = "000000000101020001020400434f4e4649472e535953000004000100";

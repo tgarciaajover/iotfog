@@ -32,6 +32,12 @@ import com.advicetec.displayadapter.Display.Speed;
 import com.advicetec.displayadapter.Display.VerticalAlign;
 import com.advicetec.utils.UdpUtils;
 
+
+/**
+ * 
+ * @author user
+ *
+ */
 public class LedSignDisplay implements Output {
 	
 	static Logger logger = LogManager.getLogger(LedSignDisplay.class.getName());

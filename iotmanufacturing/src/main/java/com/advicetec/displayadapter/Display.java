@@ -1,7 +1,5 @@
 package com.advicetec.displayadapter;
 
-import javax.xml.bind.DatatypeConverter;
-
 public class Display{
  
 	public static final String START  = "01";
