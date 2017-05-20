@@ -7,23 +7,16 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.displayadapter.JetFile2Protocol;
-import com.advicetec.displayadapter.JetFile2Protocol.Background;
 import com.advicetec.displayadapter.JetFile2Protocol.TestCommand;
-import com.advicetec.displayadapter.JetFile2Protocol.TextColor;
-import com.advicetec.displayadapter.JetFile2Protocol.Flash;
-import com.advicetec.displayadapter.JetFile2Protocol.FontSize;
-import com.advicetec.displayadapter.JetFile2Protocol.HorizontalAlign;
-import com.advicetec.displayadapter.JetFile2Protocol.LineSpacing;
-import com.advicetec.displayadapter.JetFile2Protocol.PatternControl;
-import com.advicetec.displayadapter.JetFile2Protocol.Pause;
-import com.advicetec.displayadapter.JetFile2Protocol.Speed;
-import com.advicetec.displayadapter.JetFile2Protocol.VerticalAlign;
+import com.advicetec.displayadapter.TextFormat;
+import com.advicetec.displayadapter.TextFormat.DisposalMode;
 import com.advicetec.utils.UdpUtils;
 
 
@@ -36,11 +29,19 @@ public class LedSignDisplay implements Output {
 	
 	static Logger logger = LogManager.getLogger(LedSignDisplay.class.getName());
 	
+	/**
+	 * Address
+	 */
+	private int group;
+	private int unit;
+	
 	private int signalWidth;
 	private int signalHeight;
 	private int dstPort;
 	private InetAddress netAddress;
 	private String description;
+	
+	private int serial;
 	
 	private String inMode;
 	private String outMode;
@@ -60,6 +61,11 @@ public class LedSignDisplay implements Output {
 	 * Default constructor.
 	 */
 	public LedSignDisplay(){
+		this.group = 1;
+		this.unit = 1;
+		
+		this.serial = 1;
+		
 		this.signalWidth = 128;
 		this.signalHeight = 32;
 		this.dstPort = 3001;
@@ -68,17 +74,17 @@ public class LedSignDisplay implements Output {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-		this.inMode = PatternControl.I_MOVE_LEFT;
-		this.outMode = PatternControl.O_MOVE_LEFT;
-		this.speed = Speed.MED_FAST;
-		this.pause = Pause.SEC_0000;
-		this.lineSpacing = LineSpacing.LS1;
-		this.letterSize = FontSize.EN_7X6;
-		this.flash = Flash.OFF;
-		this.textColor = TextColor.RED;
-		this.backColor = Background.BLACK;
-		this.verticalAlign = VerticalAlign.CENTER;
-		this.horizontalAlign = HorizontalAlign.CENTER;
+		this.inMode = TextFormat.PatternControl.I_MOVE_LEFT;
+		this.outMode = TextFormat.PatternControl.O_MOVE_LEFT;
+		this.speed = TextFormat.Speed.MED_FAST;
+		this.pause = TextFormat.Pause.SEC_0000;
+		this.lineSpacing = TextFormat.LineSpacing.LS1;
+		this.letterSize = TextFormat.FontSize.EN_7X6;
+		this.flash = TextFormat.Flash.OFF;
+		this.textColor = TextFormat.TextColor.RED;
+		this.backColor = TextFormat.Background.BLACK;
+		this.verticalAlign = TextFormat.VerticalAlign.BOTTOM;
+		this.horizontalAlign = TextFormat.HorizontalAlign.RIGHT;
 	}
 	
 	public LedSignDisplay(int signalWidth, int signalHeight,
@@ -121,8 +127,9 @@ public class LedSignDisplay implements Output {
 	 * @return
 	 */
 	public byte[] encodeMessage(String message){
+		
 		return UdpUtils.merge(
-				JetFile2Protocol.HEAD,
+				TextFormat.HEAD,
 				inMode,
 				outMode,
 				speed,
@@ -135,7 +142,7 @@ public class LedSignDisplay implements Output {
 				verticalAlign,
 				horizontalAlign,
 				message,
-				JetFile2Protocol.EOF
+				TextFormat.EOT
 				).getBytes();
 	}
 
@@ -151,6 +158,22 @@ public class LedSignDisplay implements Output {
 	 * @return The response.
 	 */
 	public String publishMessage(String message){
+		StringBuilder sb = new StringBuilder( TextFormat.HEAD );
+		sb.append(DisposalMode.DEFAULT);
+		sb.append(lineSpacing);
+		sb.append( pause + UdpUtils.ascii2hexString("0000") );
+		sb.append(verticalAlign);
+		sb.append(inMode);
+		sb.append(outMode);
+		sb.append(speed);
+		sb.append(textColor);
+		sb.append(backColor);
+		sb.append(letterSize);
+		sb.append(flash);
+		sb.append(UdpUtils.ascii2hexString(message) );
+		sb.append(TextFormat.LINE_FEED);
+		sb.append(TextFormat.EOF);
+		
 		return publishBytes(encodeMessage(message));
 	}
 
@@ -186,6 +209,8 @@ public class LedSignDisplay implements Output {
 		}
 		return s;
 	}
+	
+	
 
 	public int getSignalWidth() {
 		return signalWidth;
@@ -294,16 +319,16 @@ public class LedSignDisplay implements Output {
 	public void setLanguageBackColor(String backColor) {
 		switch(backColor){
 		case "K":
-			this.backColor = Background.BLACK;
+			this.backColor = TextFormat.Background.BLACK;
 			break;
 		case "R":
-			this.backColor = Background.RED;
+			this.backColor = TextFormat.Background.RED;
 			break;
 		case "G":
-			this.backColor = Background.GREEN;
+			this.backColor = TextFormat.Background.GREEN;
 			break;
 		case "Y":
-			this.backColor = Background.AMBER;
+			this.backColor = TextFormat.Background.AMBER;
 			break;
 		default:
 			logger.error("Invalid color "+ backColor + " for backgroud.");	
@@ -335,19 +360,19 @@ public class LedSignDisplay implements Output {
 	public void setLanguageInMode(String inMode) {
 		switch (inMode) {
 		case "JO":
-			this.inMode = JetFile2Protocol.PatternControl.I_JUMP_OUT;
+			this.inMode = TextFormat.PatternControl.I_JUMP_OUT;
 			break;
 		case "ML":
-			this.inMode = JetFile2Protocol.PatternControl.I_MOVE_LEFT;
+			this.inMode = TextFormat.PatternControl.I_MOVE_LEFT;
 			break;
 		case "MR":
-			this.inMode = JetFile2Protocol.PatternControl.I_MOVE_RIGHT;
+			this.inMode = TextFormat.PatternControl.I_MOVE_RIGHT;
 			break;
 		case "SL":
-			this.inMode = JetFile2Protocol.PatternControl.I_SCROLL_LEFT;
+			this.inMode = TextFormat.PatternControl.I_SCROLL_LEFT;
 			break;
 		case "SR":
-			this.inMode = JetFile2Protocol.PatternControl.I_SCROLL_RIGHT;
+			this.inMode = TextFormat.PatternControl.I_SCROLL_RIGHT;
 			break;
 		default:
 			logger.error("Invalid In mode "+ inMode + ".");
@@ -358,19 +383,19 @@ public class LedSignDisplay implements Output {
 	public void setLanguageOutMode(String outMode2) {
 		switch (outMode2) {
 		case "JO":
-			this.outMode = JetFile2Protocol.PatternControl.O_JUMP_OUT;
+			this.outMode = TextFormat.PatternControl.O_JUMP_OUT;
 			break;
 		case "ML":
-			this.outMode = JetFile2Protocol.PatternControl.O_MOVE_LEFT;
+			this.outMode = TextFormat.PatternControl.O_MOVE_LEFT;
 			break;
 		case "MR":
-			this.outMode = JetFile2Protocol.PatternControl.O_MOVE_RIGHT;
+			this.outMode = TextFormat.PatternControl.O_MOVE_RIGHT;
 			break;
 		case "SL":
-			this.outMode = JetFile2Protocol.PatternControl.O_SCROLL_LEFT;
+			this.outMode = TextFormat.PatternControl.O_SCROLL_LEFT;
 			break;
 		case "SR":
-			this.outMode = JetFile2Protocol.PatternControl.O_SCROLL_RIGHT;
+			this.outMode = TextFormat.PatternControl.O_SCROLL_RIGHT;
 			break;
 		default:
 			logger.error("Invalid OUT mode "+ outMode2 + ".");
@@ -382,19 +407,19 @@ public class LedSignDisplay implements Output {
 	public void setLanguageLetterSize(String letterSize) {
 		switch (letterSize) {
 		case "0":
-			this.letterSize = FontSize.EN_5X5;
+			this.letterSize = TextFormat.FontSize.EN_5X5;
 			break;
 		case "1":
-			this.letterSize = FontSize.EN_7X6;
+			this.letterSize = TextFormat.FontSize.EN_7X6;
 			break;
 		case "2":
-			this.letterSize = FontSize.EN_14X8;
+			this.letterSize = TextFormat.FontSize.EN_14X8;
 			break;
 		case "3":
-			this.letterSize = FontSize.EN_15X9;
+			this.letterSize = TextFormat.FontSize.EN_15X9;
 			break;
 		case "4":
-			this.letterSize = FontSize.EN_16X9;
+			this.letterSize = TextFormat.FontSize.EN_16X9;
 			break;
 		default:
 			logger.error("Invalid font size "+ letterSize + ".");
@@ -405,34 +430,34 @@ public class LedSignDisplay implements Output {
 	public void setLanguageLineSpacing(Integer lineSpacing2) {
 		switch (lineSpacing2) {
 		case 0:
-			lineSpacing = LineSpacing.LS0;
+			lineSpacing = TextFormat.LineSpacing.LS0;
 			break;
 		case 1:
-			lineSpacing = LineSpacing.LS1;
+			lineSpacing = TextFormat.LineSpacing.LS1;
 			break;
 		case 2:
-			lineSpacing = LineSpacing.LS2;
+			lineSpacing = TextFormat.LineSpacing.LS2;
 			break;
 		case 3:
-			lineSpacing = LineSpacing.LS3;
+			lineSpacing = TextFormat.LineSpacing.LS3;
 			break;
 		case 4:
-			lineSpacing = LineSpacing.LS4;
+			lineSpacing = TextFormat.LineSpacing.LS4;
 			break;
 		case 5:
-			lineSpacing = LineSpacing.LS5;
+			lineSpacing = TextFormat.LineSpacing.LS5;
 			break;
 		case 6:
-			lineSpacing = LineSpacing.LS6;
+			lineSpacing = TextFormat.LineSpacing.LS6;
 			break;
 		case 7:
-			lineSpacing = LineSpacing.LS7;
+			lineSpacing = TextFormat.LineSpacing.LS7;
 			break;
 		case 8:
-			lineSpacing = LineSpacing.LS8;
+			lineSpacing = TextFormat.LineSpacing.LS8;
 			break;
 		case 9:
-			lineSpacing = LineSpacing.LS9;
+			lineSpacing = TextFormat.LineSpacing.LS9;
 			break;
 		default:
 			logger.error("Invalid linespacing "+ lineSpacing2 + ".");
@@ -445,25 +470,25 @@ public class LedSignDisplay implements Output {
 	
 		switch (speed2) {
 		case "0":
-			speed = Speed.VERY_FAST;
+			speed = TextFormat.Speed.VERY_FAST;
 			break;
 		case "1":
-			speed = Speed.FAST;
+			speed = TextFormat.Speed.FAST;
 			break;
 		case "2":
-			speed = Speed.MED_FAST;
+			speed = TextFormat.Speed.MED_FAST;
 			break;
 		case "3":
-			speed = Speed.MEDIUM;
+			speed = TextFormat.Speed.MEDIUM;
 			break;
 		case "4":
-			speed = Speed.MED_SLOW;
+			speed = TextFormat.Speed.MED_SLOW;
 			break;
 		case "5":
-			speed = Speed.SLOW;
+			speed = TextFormat.Speed.SLOW;
 			break;
 		case "6":
-			speed = Speed.VERY_SLOW;
+			speed = TextFormat.Speed.VERY_SLOW;
 			break;
 		default:
 			logger.error("Invalid speed "+ speed2 + ".");
@@ -474,16 +499,16 @@ public class LedSignDisplay implements Output {
 	public void setLanguageTextColor(String color) {
 		switch(color){
 		case "K":
-			this.textColor = TextColor.BLACK;
+			this.textColor = TextFormat.TextColor.BLACK;
 			break;
 		case "R":
-			this.textColor = TextColor.RED;
+			this.textColor = TextFormat.TextColor.RED;
 			break;
 		case "G":
-			this.textColor = TextColor.GREEN;
+			this.textColor = TextFormat.TextColor.GREEN;
 			break;
 		case "Y":
-			this.textColor = TextColor.AMBER;
+			this.textColor = TextFormat.TextColor.AMBER;
 			break;
 		default:
 			logger.error("Invalid text color "+ color + ".");	
@@ -496,13 +521,13 @@ public class LedSignDisplay implements Output {
 		
 		switch (vertical) {
 		case "0":
-			verticalAlign = VerticalAlign.CENTER;
+			verticalAlign = TextFormat.VerticalAlign.CENTER;
 			break;
 		case "1":
-			verticalAlign = VerticalAlign.TOP;
+			verticalAlign = TextFormat.VerticalAlign.TOP;
 			break;
 		case "2":
-			verticalAlign = VerticalAlign.BOTTOM;
+			verticalAlign = TextFormat.VerticalAlign.BOTTOM;
 			break;
 		default:
 			logger.error("Invalid vertical align "+ vertical + ".");
@@ -513,13 +538,13 @@ public class LedSignDisplay implements Output {
 	public void setLanguageHorizontalAlign(String horizontal) {
 		switch (horizontal) {
 		case "0":
-			horizontalAlign = HorizontalAlign.CENTER;
+			horizontalAlign = TextFormat.HorizontalAlign.CENTER;
 			break;
 		case "1":
-			horizontalAlign = HorizontalAlign.LEFT;
+			horizontalAlign = TextFormat.HorizontalAlign.LEFT;
 			break;
 		case "2":
-			horizontalAlign = HorizontalAlign.RIGHT;
+			horizontalAlign = TextFormat.HorizontalAlign.RIGHT;
 			break;
 		default:
 			logger.error("Invalid horizontal align "+ horizontal + ".");
@@ -528,9 +553,21 @@ public class LedSignDisplay implements Output {
 		
 	}
 	
+	public void setGroup( int g){
+		this.group = g;
+	}
+	
+	public void setUnit(int u){
+		this.unit = u;
+	}
+	////////////////////////////////////////////////////////////////
+	
 	public void setMessage(String message){
 		this.message = message;
 	}
+	
+	
+	
 	
 	public byte[] getDataLen(){
 		int len = message.length();
@@ -539,6 +576,7 @@ public class LedSignDisplay implements Output {
 			s="0".concat(s);
 		return DatatypeConverter.parseHexBinary(s);
 	}
+	
 	
 	public byte[] generatePacketPayLoad(String group, String unit, String seq, String comand, String payHex){
 		
@@ -587,11 +625,50 @@ public class LedSignDisplay implements Output {
 		while(len.length()<4){
 			len = "0".concat(len);
 		}
-				
 		String a = len.substring(2,4) + len.substring(0,2);
-		
 		return a;
 	}
 	
+	
+	public void sentToDisplay(JetFile2Packet packet){
+		publishBytes(packet.toBytes());
+	}
+	
+	
+	public boolean startDisplay(){
+		// create a packet start
+		JetFile2Packet out = new JetFile2Packet();
+		out.setCommand(JetFile2Protocol.BlackScreenCommand.START);
+		out.setGroup(group);
+		out.setUnit(unit);
+		out.setSerial(serial);
+		
+		JetFile2Packet in = new JetFile2Packet( publishBytes(out.toBytes()) );
+		return in.getStatus().equals(JetFile2Protocol.SUCESS);
+	}
+	
+	
+	public boolean writeSysFile(){
+		JetFile2Packet out = new JetFile2Packet();
+		out.setCommand(JetFile2Protocol.InfoWrite.WRITE_SYS_FILE);
+		out.setGroup(group);
+		out.setUnit(unit);
+		out.setSerial(serial);
+		
+		return false;
+	}
+	
+	public boolean endDisplay(){
+		// create a packet start
+		JetFile2Packet out = new JetFile2Packet();
+		out.setCommand(JetFile2Protocol.BlackScreenCommand.END);
+		out.setGroup(group);
+		out.setUnit(unit);
+		out.setSerial(serial);
+		
+		JetFile2Packet in = new JetFile2Packet( publishBytes(out.toBytes()) );
+		return in.getStatus().equals(JetFile2Protocol.SUCESS);
+	}
 
+	
 }

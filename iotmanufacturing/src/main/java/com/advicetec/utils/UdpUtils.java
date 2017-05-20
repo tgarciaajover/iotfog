@@ -122,7 +122,7 @@ public class UdpUtils {
 	}
 	
 	/**
-	 * Returns a hex string of lenght given by paramenter.
+	 * Returns a hex string, in litle endiand format, of lenght given by paramenter.
 	 * @param x The integer
 	 * @param bytes String lenght.
 	 * @return
@@ -151,8 +151,32 @@ public class UdpUtils {
 		return s;
 	}
 	
+	/**
+	 * 
+	 * @param s
+	 * @return
+	 */
 	public static String ascii2hexString(String s){
 		byte[] bytes = s.getBytes();
 		return DatatypeConverter.printHexBinary(bytes);
+	}
+
+
+	/**
+	 * Creates a hex string from the parameter, with the number of bytes 
+	 * specified by paramenter.
+	 * 
+	 * @param string
+	 * @param i
+	 * @return
+	 */
+	public static String ascii2hexString(String s, int bytes) {
+		StringBuilder res = new StringBuilder(s);
+		
+		if(res.length() >= bytes*2)
+			return res.substring(0, bytes*2);
+		while(res.length() < bytes*2)
+			res.append("0");
+		return res.toString();
 	}
 }

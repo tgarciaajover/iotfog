@@ -18,184 +18,86 @@ public class JetFile2Protocol {
 	
 	public static final String ONE = "01";
 	
-	public static final String START  = "01";
+	public static final String SUCESS = "0090";
+	
+	
 	public static final String ADDRESS = "02";
 
 	public static final String DATA_PREFIX_OUT = "55" + "a7";
 	public static final String DATA_PREFIX_IN = "55" + "a8";
 	public static final String DST_ADDR = "01" + "01";
 	
-	public static final String HEAD = "51" + "5A" + "30" + "30" + "53" + "41" + "58";
-	public static final String EOF = "04";
-	public static final String NEW_FRAME = "0c";
-	public static final String LINE_FEED = "0d";
-	public static final String Halfspace = "82";
 
+
+	/**
+	 * 01 READING DATA
+	 * @author user
+	 *
+	 */
 	public static class ReadingData{
 		private final static String com = "01";
 		public final static String ABS_ADD = com + "01";
 		public final static String SYS_FILES = com + "02";
+		public final static String FONT_LIB = com + "03";
+		
+		public final static String DEFAULT_DISP_STY = com + "0c";
 	}
 
-	public static class Flash{
-		private final static String com = "07";
-		public final static String ON = com + "1";
-		public final static String OFF = com + "0";
+	/**
+	 * 02 INFORMATION WRITE
+	 * @author user
+	 *
+	 */
+	public static class InfoWrite{
+		private final static String com = "02";
+		
+		public final static String WRITE_SYS_FILE = com + "02";
+		public final static String WRITE_FONT = com + "03";
+		public final static String WRITE_TXT = com + "04";
+		public final static String WRITE_STR = com + "05";
+		
+		public final static String WRITE_CRC = com + "0e";
 	}
-
-	public static class LineSpacing{
-		private final static String com = "08";
-
-		public final static String LS0 = com + "30";
-		public final static String LS1 = com + "31";
-		public final static String LS2 = com + "32";
-		public final static String LS3 = com + "33";
-		public final static String LS4 = com + "34";
-		public final static String LS5 = com + "35";
-		public final static String LS6 = com + "36";
-		public final static String LS7 = com + "37";
-		public final static String LS8 = com + "38";
-		public final static String LS9 = com + "39";
-	}
-
-	public static class PatternControl {
-		private final static String com = "0A";
-		private final static String I = "49";
-		private final static String O = "4F";
-
-		public final static String I_RANDOM = com + I + "2F";
-		public final static String O_RANDOM = com + O + "2F";
-		public final static String I_JUMP_OUT = com + I + "30";
-		public final static String O_JUMP_OUT = com + O + "30";
-		public final static String I_MOVE_LEFT = com + I + "31";
-		public final static String O_MOVE_LEFT = com + O + "31";
-		public final static String I_MOVE_RIGHT = com + I + "32";
-		public final static String O_MOVE_RIGHT =  com + O + "32";
-		public final static String I_SCROLL_LEFT = com + I + "33";
-		public final static String O_SCROLL_LEFT = com + O + "33";
-		public final static String I_SCROLL_RIGHT = com + I + "34";
-		public final static String O_SCROLL_RIGHT = com + O + "34";
-		public final static String I_MOVE_UP = com + I + "35";
-		public final static String O_MOVE_UP = com + O + "35";
-		public final static String I_MOVE_DOWN = com + I + "36";
-		public final static String O_MOVE_DOWM = com + O + "36";
-		public final static String I_SCROLL_LR = com + I + "37";
-		public final static String O_SCROLL_LR = com + O + "37";
-		public final static String I_SCROLL_UP = com + I + "38";
-		public final static String O_SCROLL_UP = com + O + "38";
-		public final static String I_SCROLL_DOWN = com + I + "39";
-		public final static String O_SCROLL_DOWN = com + O + "39";
-		public final static String I_FOLD_LR = com + I + "3A";
-		public final static String O_FOLD_LR = com + O + "3A";
-		public final static String I_FOLD_UD = com + I + "3B";
-		public final static String O_FOLD_UD = com + O + "3B";
-		public final static String I_SCROLL_UD = com + I + "3C";
-		public final static String O_SCROLL_UD = com + O + "3C";
-		public final static String I_SUTTLE_LR = com + I + "3D";
-		public final static String O_SUTTLE_LR = com + O + "3D";
-		public final static String I_SUTTLE_UD = com + I + "3E";
-		public final static String O_SUTTLE_UD = com + O + "3E";
-		public final static String I_PEEL_OFF_L = com + I + "3F";
-		public final static String O_PEEL_OFF_L = com + O + "3F";
-		public final static String I_PEEL_OFF_R = com + I + "40";
-		public final static String O_PEEL_OFF_R = com + O + "40";
-
-		public final static String I_RAINDROPS = com + I + "43";
-		public final static String O_RAINDROPS = com + O + "43";
-		public final static String I_RANDOM_MOSAIC = com + I + "44";
-		public final static String O_RANDOM_MOSAIC = com + O + "44";
-		public final static String I_TWINKLE_STARS = com + I + "45";
-		public final static String O_TWINKLE_STARS = com + O + "45";
-		public final static String I_HIP_HOP = com + I + "46";
-		public final static String O_HIP_HOP = com + O + "46";
-		public final static String I_RADAR = com + I + "47";
-		public final static String O_RADAR = com + O + "47";
-	}
-
-	public static class Pause{
-		private final static String com = "0E";
-
-		public final static String SEC_00 = com + "30";
-		public final static String MIL_SEC_00 = com + "31";
-		public final static String SEC_0000 = com + "32";
-		public final static String MILSEC_0000 = com + "33";
-	}
-
-	public static class Speed{
-		private final static String com = "0F";
-
-		public final static String VERY_FAST = com + "30";
-		public final static String FAST = com + "31";
-		public final static String MED_FAST = com + "32";
-		public final static String MEDIUM = com + "33";
-		public final static String MED_SLOW = com + "34";
-		public final static String SLOW = com + "35";
-		public final static String VERY_SLOW = com + "36";
-	}
-
-	public static class FontSize{
-		private final static String com = "1A";
-
-		public final static String EN_5X5 = com + "30";
-		public final static String EN_7X6 = com + "31";
-		public final static String EN_14X8 = com + "32";
-		public final static String EN_15X9 = com + "33";
-		public final static String EN_16X9 = com + "34";
-		public final static String EN_24X16 = com + "36";
-		public final static String EN_32X18 = com + "38";
-	}
-
-	public static class DisposalMode{
-		static final String CONSTRAINT = "1b" + "30" + "61";
-		static final String DEFAULT = "1b" + "30" + "62";
-	}
-
-	public static class TextColor{
-		private final static String com = "1C";
-
-		public final static String BLACK = com + "30";
-		public final static String RED = com + "31";
-		public final static String GREEN = com + "32";
-		public final static String AMBER = com + "33";
-		public final static String MIX_PAL1 = com + "34";
-		public final static String MIX_PAL2 = com + "35";
-		public final static String MIX_PAL3 = com + "36";
-		public final static String MIX_PAL4 = com + "37";
-	}
-
-	public static class Background{
-		private final static String com = "1D";
-
-		public final static String BLACK = com + "30";
-		public final static String RED = com + "31";
-		public final static String GREEN = com + "32";
-		public final static String AMBER = com + "33";
-	}
-
-	public static class HorizontalAlign{
-		private final static String com = "1E";
-
-		public final static String CENTER = com + "30";
-		public final static String LEFT = com + "31";
-		public final static String RIGHT = com + "32";
-	}
-
-	public static class VerticalAlign{
-		private final static String com = "1F";
-
-		public final static String CENTER = com + "30";
-		public final static String TOP = com + "1";
-		public final static String BOTTOM = com + "2";
-	}
-
+	/**
+	 * 03 TEST COMMAND
+	 * @author user
+	 *
+	 */
 	public static class TestCommand{
 		private final static String com = "03";
 		
 		public final static String CONX_TEST = com + "01";
 		public final static String AUTO_TEST = com + "02";
 		public final static String ALL_BRIGTH_TEST = com + "03";
+		public final static String ALL_BLUE_TEST = com + "06";
 		
 		public final static String END_TEST = com + "09";
+	}
+	
+	/**
+	 * 04 BLACK SCREEN COMMAND
+	 * @author user
+	 *
+	 */
+	public static class BlackScreenCommand{
+		private final static String com = "04";
+		
+		public final static String RESET = com + "00";
+		public final static String START = com + "01";
+		public final static String END = com + "02";
+		public final static String SWITCH_OFF = com + "03";
+		public final static String SWITCH_ON= com + "04";
+	}
+	
+	/**
+	 * 07 FILE CONTROL COMMAND
+	 * @author user
+	 *
+	 */
+	public static class FileControlCommand{
+		private final static String com = "07";
+		
+		public final static String DISK_INFO = com + "0D";
 	}
 	
 	
@@ -314,6 +216,14 @@ public class JetFile2Protocol {
 	{
 		return message.substring(START_DSTADDR*2, (END_DSTADDR+1)*2);
 	}
+	
+	public static String getGroup(String message){
+		return getDestinAddress(message).substring(0, 2);
+	}
+	
+	public static String getUnit(String message){
+		return getDestinAddress(message).substring(2, 4);
+	}
 
 	public static String getPacketSerial(String message)
 	{
@@ -325,6 +235,23 @@ public class JetFile2Protocol {
 		return message.substring(START_CMD*2, (END_CMD + 1)*2);
 	}
 
+	public static String getFlag(String message) {
+		
+		return message.substring(START_FLAG*2, (END_FLAG + 1)*2);
+	}
+	
+	public static String getArgs(int arglen, String message) {
+		if(arglen == 0)
+			return "";
+		return message.substring(ARG*2, ARG*2 + 2*4*arglen);
+	}
+	
+	public static String getData(int arglen, int datalen, String message){
+		int dataStart = ARG*2 + 2*4*arglen;
+		if(datalen == 0)
+			return "";
+		return message.substring(dataStart, dataStart + datalen*2);
+	}
 	
 	///////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////
@@ -431,9 +358,12 @@ public class JetFile2Protocol {
 			String args = UdpUtils.getBytes(echo, ARG, dataOff );
 			String data = UdpUtils.getBytes(echo,dataOff,dataOff + datalen);
 			
-			System.out.println("File size:"+UdpUtils.getBytes(args, 0, 2));
-			System.out.println("Packet serial:"+UdpUtils.getBytes(args, 2, 4));
-			System.out.println("BigFile size:"+UdpUtils.getBytes(args, 4, 8));
+			String filesize = UdpUtils.swap(UdpUtils.getBytes(args, 0, 2));
+			System.out.println("File size:"+filesize+" - "+Integer.parseInt(filesize, 16));
+			String serial = UdpUtils.swap(UdpUtils.getBytes(args, 2, 4));
+			System.out.println("Packet serial:"+serial+" - "+Integer.parseInt(serial, 16));
+			String bigfilesize = UdpUtils.swap(UdpUtils.getBytes(args, 4, 8));
+			System.out.println("BigFile size:"+bigfilesize+" - "+Integer.parseInt(bigfilesize, 16));
 			System.out.println("DATA:"+data);
 
 		} catch (Exception e) {
@@ -443,10 +373,163 @@ public class JetFile2Protocol {
 		}
 		return null;
 	}
+
+	public static String readFontLibraryCommand(int serial,String group, String unit) {
+
+		return null;
+	}
+
+	/**
+	 * Reads information of the designated disk, it includes the type of disk
+	 * total size, and free size. <br> 
+	 * Command: 070d 
+	 * @return
+	 */
+	public static String obtainDiskInformationCommand() {
+		
+		return null;
+	}
+
+	public static String getStatus(String message) {
+		if(getFlag(message).equals(ONE))
+			return UdpUtils.swap(message.substring(ARG*2, (ARG+2)*2));
+		return "";
+	}
+
+	//////////////////////
+	// PACKET PROCESSING
+	/////////////////////
+	
+	public static String processPacket(JetFile2Packet packet){
+		if(!checkStructure(packet)){
+			logger.warn("Something is wrong with the packet content!");
+			return null;
+		}
+		String command = packet.getCommand();
+		switch(command){
+		case InfoWrite.WRITE_SYS_FILE:
+			return command0202(packet);
+		case InfoWrite.WRITE_TXT:
+			return command0204(packet);
+		default:
+			logger.error("Command is not supported!");
+		}
+		
+		return null;
+	}
 	
 	
+	public static String command0202(JetFile2Packet packet){
+		
+		if(packet.getFlag() == 1) // in-echo
+			return packet.getData();
+					
+		if(packet.getArglen() != 6)
+			logger.warn("Command 0x0202 needs 6 arguments");
+		
+		String args = packet.getArgs();
+		if(args.length() != 24*2)
+			logger.warn("Command 0x0202 needs 6 arguments");
+
+		String systemFilename = args.substring(0, 24);
+		String totalSize = args.substring(24, 32);
+		String packetSize = args.substring(32, 36);
+		String quantity = args.substring(36, 40);
+		String currentPacket = args.substring(40, 44);
+		String note = args.substring(44);
+		String data = packet.getData();
+			
+		StringBuilder sb = new StringBuilder();
+		sb.append("System filename:").append(systemFilename)
+		.append(",total size:").append(totalSize)
+		.append(",packet size:").append(packetSize)
+		.append(",quantity:").append(quantity)
+		.append(",curren packet:").append(currentPacket)
+		.append(",note").append(note)
+		.append(",data:").append(data);
+		
+		return sb.toString();
+	}
+
+	/**
+	 * Writes text file
+	 * @param packet
+	 * @return
+	 */
+	public static String command0204(JetFile2Packet packet){
+		
+		if(packet.getFlag() == 1) // in-echo
+			return packet.getData();
+		
+		String args = packet.getArgs();
+		if(packet.getArglen() != 6 || args.length() != 24*2)
+			logger.warn("Command 0x0202 needs 6 arguments");
+		
+		String codeDiskPartition = args.substring(0, 2);
+		String ringingTimes = args.substring(2, 4);
+		String textfileLabel = args.substring(4, 28);
+		String filesize = args.substring(28, 36);
+		String pcktsize = args.substring(36, 40);
+		String quantity = args.substring(40, 44);
+		String currentPacket = args.substring(44, 48);
+		String data = packet.getData();
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("Disk partition:").append(codeDiskPartition)
+		.append(",ringing:").append(ringingTimes)
+		.append(",file label:").append(textfileLabel)
+		.append(",file size:").append(filesize)
+		.append(",packet size:").append(pcktsize)
+		.append(",quantity:").append(quantity)
+		.append(",current:").append(currentPacket)
+		.append(",data:").append(data);
+		return sb.toString();
+	}
+
+	public static JetFile2Packet command0204(String hexData ){
+		JetFile2Packet packet = new JetFile2Packet();
+		packet.setData(hexData);
+		
+		String codeDiskPartition = "D";
+		String ringingTimes = "00";
+		String textfileLabel = UdpUtils.ascii2hexString("temp.txt",12);
+		String filesize = UdpUtils.int2HexString(packet.getDatalen(), 4);
+		String pcktsize = UdpUtils.int2HexString(768, 2);
+		String quantity = UdpUtils.int2HexString(1, 2);
+		String currentPacket = UdpUtils.int2HexString(1, 2);
+		StringBuilder args = new StringBuilder(UdpUtils.ascii2hexString(codeDiskPartition, 1));
+		args.append(ringingTimes)
+		.append(textfileLabel)
+		.append(filesize)
+		.append(pcktsize)
+		.append(quantity)
+		.append(currentPacket);
+		
+		packet.setArgs(args.toString());
+		packet.setChecksum();
+		
+		return packet;
+	}
 	
-	////////////////////
-	////////////////////
+	/**
+	 * 
+	 * @param packet
+	 * @return
+	 */
+	private static boolean checkStructure(JetFile2Packet packet) {
+		String body = packet.bodyString();
+		String chk = packet.getChecksum();
+		if(!UdpUtils.checksum(DatatypeConverter.parseHexBinary(body)).equalsIgnoreCase(chk))
+			return false;
+
+		if(packet.getArgs().length() != 2*4*packet.getArglen())
+			return false;
+		
+		if(packet.getData().length() != 2*packet.getDatalen())
+			return false;
+		
+		return true;
+	}
+	
 	
 }
