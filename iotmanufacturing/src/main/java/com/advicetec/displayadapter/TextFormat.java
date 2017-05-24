@@ -1,5 +1,6 @@
 package com.advicetec.displayadapter;
 
+
 public class TextFormat {
 
 	public static final String SOH = "01"; // start of heading

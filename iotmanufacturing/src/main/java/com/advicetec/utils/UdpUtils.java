@@ -122,6 +122,19 @@ public class UdpUtils {
 	}
 	
 	/**
+	 * Returns a substring from a hex string representation.
+	 * @param hexStr
+	 * @param offset
+	 * @param many
+	 * @return
+	 * @throws IndexOutOfBoundsException
+	 */
+	public static String getFields(String hexStr,int offset, int many) throws IndexOutOfBoundsException{		
+		return getBytes(hexStr, offset, (offset+many));
+	}
+	
+	
+	/**
 	 * Returns a hex string, in litle endiand format, of lenght given by paramenter.
 	 * @param x The integer
 	 * @param bytes String lenght.
@@ -171,12 +184,22 @@ public class UdpUtils {
 	 * @return
 	 */
 	public static String ascii2hexString(String s, int bytes) {
-		StringBuilder res = new StringBuilder(s);
+		char[] array = s.toCharArray();
+		StringBuilder res = new StringBuilder();
+		
+		for (int i = 0; i < array.length; i++) {
+			String by =Integer.toHexString((int)array[i]);
+			if(by.length() > 2)
+				by = "0"+by;
+			res.append(by);
+		}
 		
 		if(res.length() >= bytes*2)
 			return res.substring(0, bytes*2);
+		
 		while(res.length() < bytes*2)
 			res.append("0");
+		
 		return res.toString();
 	}
 }

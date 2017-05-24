@@ -14,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.displayadapter.JetFile2Protocol;
-import com.advicetec.displayadapter.JetFile2Protocol.TestCommand;
 import com.advicetec.displayadapter.TextFormat;
 import com.advicetec.displayadapter.TextFormat.DisposalMode;
 import com.advicetec.utils.UdpUtils;
@@ -67,7 +66,7 @@ public class LedSignDisplay implements Output {
 		this.serial = 1;
 		
 		this.signalWidth = 128;
-		this.signalHeight = 32;
+		this.signalHeight = 16;
 		this.dstPort = 3001;
 		try {
 			this.netAddress = (Inet4Address) Inet4Address.getByName("192.168.0.100");
@@ -157,11 +156,12 @@ public class LedSignDisplay implements Output {
 	 * @param message String with the message.
 	 * @return The response.
 	 */
-	public String publishMessage(String message){
+	public boolean publishMessage(String message){
+		// create the message
 		StringBuilder sb = new StringBuilder( TextFormat.HEAD );
 		sb.append(DisposalMode.DEFAULT);
 		sb.append(lineSpacing);
-		sb.append( pause + UdpUtils.ascii2hexString("0000") );
+		sb.append(pause + UdpUtils.ascii2hexString("0000") );
 		sb.append(verticalAlign);
 		sb.append(inMode);
 		sb.append(outMode);
@@ -174,9 +174,39 @@ public class LedSignDisplay implements Output {
 		sb.append(TextFormat.LINE_FEED);
 		sb.append(TextFormat.EOF);
 		
-		return publishBytes(encodeMessage(message));
+		// create the packet
+		JetFile2Packet textfile = JetFile2Protocol.InfoWrite.command0204(sb.toString());
+		textfile.setGroup(group);
+		textfile.setUnit(unit);
+		textfile.setSerial(serial);
+		textfile.setChecksum();
+		
+		JetFile2Packet fileWrite = JetFile2Protocol.InfoWrite.command0202(textfile.getChecksum(), UdpUtils.int2HexString(textfile.getDatalen(),2));
+		
+		if(!connectionTest() ){
+			logger.error("Connnection test error!");
+			return false;
+		}
+
+		// publish filewrite 0202
+		JetFile2Packet in0202 = publishPacket(fileWrite);
+		if(in0202.getStatus().equals(JetFile2Protocol.SUCESS)){	
+			//publish 0204 the file with the message
+			JetFile2Packet in0204 = publishPacket(textfile);
+			return in0204.getStatus().equals(JetFile2Protocol.SUCESS);
+		}
+		
+		return false;
 	}
 
+	/**
+	 * Returns the response after publishing a packet.
+	 * @param packet
+	 * @return
+	 */
+	public JetFile2Packet publishPacket(JetFile2Packet packet){
+		return new JetFile2Packet( publishBytes(DatatypeConverter.parseHexBinary(packet.toHexString())) );
+	}
 	/**
 	 * Publishes a udp packet and returns the response
 	 * @param bytes The data to publish.
@@ -189,22 +219,27 @@ public class LedSignDisplay implements Output {
 			DatagramPacket packet = new DatagramPacket(bytes, bytes.length,netAddress, dstPort);
 			DatagramSocket socket = new DatagramSocket();
 			socket.send(packet);
+			System.out.println("publish the packet "+DatatypeConverter.printHexBinary(packet.getData() ) );
+			logger.info("publish the packet "+packet.toString());
 			
 			// receives the response
 			socket.setSoTimeout(10000);
 			DatagramPacket received = new DatagramPacket(toReceive,toReceive.length);
 			socket.receive(received);
 			byte[] bytes2 = received.getData();
-			System.out.println("length:"+received.getLength());
+			
+			
 			s = new String(DatatypeConverter.printHexBinary(bytes2));
-			s=(String)s.subSequence(0, received.getLength()*2);
+			s = (String)s.subSequence(0, received.getLength()*2);
+			System.out.println("Received packet:"+s+", length:"+received.getLength());
+			logger.info("Received packet:"+s+", length:"+received.getLength());
 			
 			socket.close();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			logger.error("Error sending the message:"
-					+ DatatypeConverter.printBase64Binary(bytes));
+					+ DatatypeConverter.printHexBinary(bytes));
 			e.printStackTrace();
 		}
 		return s;
@@ -560,13 +595,13 @@ public class LedSignDisplay implements Output {
 	public void setUnit(int u){
 		this.unit = u;
 	}
-	////////////////////////////////////////////////////////////////
 	
 	public void setMessage(String message){
 		this.message = message;
 	}
 	
 	
+	////////////////////////////////////////////////////////////////
 	
 	
 	public byte[] getDataLen(){
@@ -577,77 +612,29 @@ public class LedSignDisplay implements Output {
 		return DatatypeConverter.parseHexBinary(s);
 	}
 	
-	
-	public byte[] generatePacketPayLoad(String group, String unit, String seq, String comand, String payHex){
+	/**
+	 * Command 0102 Read system files
+	 * @return
+	 */
+	public boolean readSysFiles(){
 		
-		String flag = "00" + "00";
-		String array = TestCommand.AUTO_TEST + flag;
-		
-		array = seq + array;
-		array = unit + array;
-		array = group + array;
-		
-		String src_address = "00" + "00";
-		array = src_address + array;
-		
-		System.out.println("array until now :" + array );
-		String len = getBytesDataLen(payHex);
-		
-		System.out.println("payload len:" + len);
-		array = len + array;
-		
-		System.out.println("array until now 2:" + array );
-		
-		// put data payload
-		array = array + payHex;
-		
-		System.out.println("array until now 3:" + array );
-				
-		String checkHex = UdpUtils.checksum(DatatypeConverter.parseHexBinary(array));
-		
-		System.out.println("check" + checkHex );
-		
-		String headSt = JetFile2Protocol.DATA_PREFIX_OUT;
-		
-		String head = headSt + checkHex;
-		
-		head = head + array;
-		
-		System.out.println("head:" + head );
-		
-		return  DatatypeConverter.parseHexBinary(head);
-	}
-	
-	
-	private String getBytesDataLen(String payHex){ 
-		String len = Integer.toHexString(payHex.length());
-		
-		while(len.length()<4){
-			len = "0".concat(len);
-		}
-		String a = len.substring(2,4) + len.substring(0,2);
-		return a;
-	}
-	
-	
-	public void sentToDisplay(JetFile2Packet packet){
-		publishBytes(packet.toBytes());
-	}
-	
-	
-	public boolean startDisplay(){
-		// create a packet start
-		JetFile2Packet out = new JetFile2Packet();
-		out.setCommand(JetFile2Protocol.BlackScreenCommand.START);
+		JetFile2Packet out = JetFile2Protocol.ReadingData.command0102();
 		out.setGroup(group);
 		out.setUnit(unit);
 		out.setSerial(serial);
+		out.setChecksum();
 		
-		JetFile2Packet in = new JetFile2Packet( publishBytes(out.toBytes()) );
-		return in.getStatus().equals(JetFile2Protocol.SUCESS);
+		JetFile2Packet in = publishPacket(out);
+		ConfigHead resp = JetFile2Protocol.command0102(in);
+		System.out.println(resp);
+		
+		return resp != null; 
 	}
 	
-	
+	/**
+	 * Command 0202
+	 * @return
+	 */
 	public boolean writeSysFile(){
 		JetFile2Packet out = new JetFile2Packet();
 		out.setCommand(JetFile2Protocol.InfoWrite.WRITE_SYS_FILE);
@@ -658,17 +645,59 @@ public class LedSignDisplay implements Output {
 		return false;
 	}
 	
-	public boolean endDisplay(){
+	
+
+	/**
+	 * Command 0301
+	 * @return
+	 */
+	public boolean connectionTest(){
+		JetFile2Packet packet = JetFile2Protocol.TestCommand.command0301();
+		JetFile2Packet in = publishPacket(packet);
+		String resp = JetFile2Protocol.processPacket(in);
+		System.out.println(resp);
+		return resp != null;
+	}
+	
+	/** 
+	 * Command 0302
+	 * @return
+	 */
+	public boolean autoTest(){
+		JetFile2Packet packet = JetFile2Protocol.TestCommand.command0302();
+		JetFile2Packet in = publishPacket(packet);
+		return in.getStatus().equals(JetFile2Protocol.SUCESS);
+	}
+	
+	/**
+	 * Command 0401
+	 * @return
+	 */
+	public boolean startDisplay(){
 		// create a packet start
 		JetFile2Packet out = new JetFile2Packet();
-		out.setCommand(JetFile2Protocol.BlackScreenCommand.END);
+		out.setCommand(JetFile2Protocol.BlackScreenCommand.START);
 		out.setGroup(group);
 		out.setUnit(unit);
 		out.setSerial(serial);
-		
-		JetFile2Packet in = new JetFile2Packet( publishBytes(out.toBytes()) );
+		out.setChecksum();
+		JetFile2Packet in = publishPacket(out);
 		return in.getStatus().equals(JetFile2Protocol.SUCESS);
 	}
-
 	
+	/**
+	 * Command 0402
+	 * @return
+	 */
+	public boolean endDisplay(){
+		// create a packet start
+		JetFile2Packet out = JetFile2Protocol.BlackScreenCommand.endDisplay();
+		out.setGroup(group);
+		out.setUnit(unit);
+		out.setSerial(serial);
+		out.setChecksum();
+		
+		JetFile2Packet in = publishPacket(out);
+		return in.getStatus().equals(JetFile2Protocol.SUCESS);
+	}
 }

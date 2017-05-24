@@ -89,9 +89,9 @@ public class JetFile2Packet{
 		this.flag = flag;
 	}
 
-	public void setArgs(String args) {
-		this.args = args;
-		arglen = args.length() / 8;
+	public void setArgs(String hexStr) {
+		this.args = hexStr;
+		arglen = hexStr.length() / 8;
 	}
 
 	public void setData(String hexdata) {
@@ -168,11 +168,16 @@ public class JetFile2Packet{
 	 * @return
 	 */
 	public String toHexString(){
+		
+		String body = bodyString();
+		//System.out.println(body);
+		byte[] bytes = DatatypeConverter.parseHexBinary(body);
+		String chk = UdpUtils.checksum(bytes);
+		
 		StringBuilder sb = new StringBuilder();
-		String chk = UdpUtils.checksum(DatatypeConverter.parseHexBinary(bodyString()));
 		sb.append(syn);
 		sb.append(chk);
-		sb.append(bodyString());
+		sb.append(body);
 		return sb.toString();
 	}
 	

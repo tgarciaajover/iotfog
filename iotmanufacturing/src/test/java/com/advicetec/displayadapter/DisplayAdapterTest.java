@@ -33,7 +33,7 @@ public class DisplayAdapterTest {
 	@Test
 	public void messageTest(){
 		LedSignDisplay display = new LedSignDisplay();
-		UdpUtils.printOutput( display.encodeMessage("Esto es una prueba!"));
+		display.publishMessage("Esto es una prueba!");
 	}
 	
 	@Test
@@ -76,8 +76,8 @@ public class DisplayAdapterTest {
 		String subGroup = "01";
 		String seq = "01" + "00";
 		
-		byte[] bytes2 = display.generatePacketPayLoad(group, subGroup, seq, TestCommand.AUTO_TEST,"");
-		System.out.println("test"+DatatypeConverter.printHexBinary(bytes2));
+		//byte[] bytes2 = display.generatePacketPayLoad(group, subGroup, seq, TestCommand.AUTO_TEST,"");
+		//System.out.println("test"+DatatypeConverter.printHexBinary(bytes2));
 		
 		//System.out.println("response"+display.publishBytes(bytes2));
 	}
@@ -115,7 +115,8 @@ public class DisplayAdapterTest {
 	@Test
 	public void obtainDiskInformationCommandTest(){
 		String snt = "55a7a0000000000001010900070d0100463a0000";
-		String cal = JetFile2Protocol.obtainDiskInformationCommand();
+		JetFile2Packet packet = new JetFile2Packet(snt);
+		String cal = JetFile2Protocol.FileControlCommand.obtainDiskInformationCommand();
 	}
 	
 	@Test 
@@ -153,8 +154,12 @@ public class DisplayAdapterTest {
 	
 	@Test
 	public void writeText(){
+		LedSignDisplay display = new LedSignDisplay();
 		String snt = "55a74e26ba00000001010c0002040600440074656d702e4e6d6700000000ba000000000301000100015a303002410f1b306208310e32303030301f321e310a49310a4f2f0f321c311d301a31073057454c434f4d45210d73646b6a666c6b660d044e6f74654e6d672066696c652076657273696f6e3a76332e373120202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202004";
 		JetFile2Packet p1 = new JetFile2Packet(snt);
+		
+		System.out.println(display.publishPacket(p1) );
+		
 		System.out.println(JetFile2Protocol.processPacket(p1));
 		
 		String rcv = "55a8a7000200000001010c00020400010090";
@@ -163,5 +168,30 @@ public class DisplayAdapterTest {
 	}
 	
 	
+	@Test
+	public void connectionTest(){
+		LedSignDisplay display = new LedSignDisplay();
+		System.out.println("start display:" + display.startDisplay() );
+		System.out.println("connection test: " + display.connectionTest() );
+	//	System.out.println("auto test:"+display.autoTest());
+		
+		System.out.println("message test:"+display.publishMessage("Mensaje"));
+		System.out.println("end display: " + display.endDisplay() );
+	}
+	
+	
+	@Test
+	public void readSysFile(){
+		String str = "55a82c2cd80000000101130001020200d8000100d8000000aa558000100000000400040030750000000000400800040a0700220000000041010100006400a8c0001d6f01da6f0900898e2509000000000000000014000000000000000000000000000000fefffeff00000000000b3230313630363231303837003894dbe3cec5e4400a54657863656c6c656e74000010003500a400d000e000e800f000ff0000c800a8c000ffffff0080200100000000002f0b0000000000000f000000020000000000000000000000000000000000000000000000000000ffff990001000100626f6c6431312e666e74000053000000";
+		JetFile2Packet in = new JetFile2Packet(str);
+		ConfigHead resp = JetFile2Protocol.command0102(in);
+		System.out.println(resp);
+	}
+	
+	
+	@Test
+	public void sysFileWriteTest(){
+		
+	}
 }
 

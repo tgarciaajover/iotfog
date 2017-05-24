@@ -1,6 +1,7 @@
 package com.advicetec.displayadapter;
 
 import java.net.InetAddress;
+import java.time.LocalDate;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -27,7 +28,9 @@ public class JetFile2Protocol {
 	public static final String DATA_PREFIX_IN = "55" + "a8";
 	public static final String DST_ADDR = "01" + "01";
 	
+	public static final String SQ = "5351";
 
+	public static final String TEMP_FILE = "temp.Nmg";
 
 	/**
 	 * 01 READING DATA
@@ -41,6 +44,21 @@ public class JetFile2Protocol {
 		public final static String FONT_LIB = com + "03";
 		
 		public final static String DEFAULT_DISP_STY = com + "0c";
+		
+		/**
+		 * Read system Files
+		 * @return
+		 */
+		public static JetFile2Packet command0102(){
+			JetFile2Packet packet = new JetFile2Packet();
+			packet.setCommand(SYS_FILES);
+			String argHex = UdpUtils.ascii2hexString("CONFIG.SYS",12);
+			argHex.concat(UdpUtils.int2HexString(4, 2)); // packet size
+			argHex.concat(UdpUtils.int2HexString(1, 2)); // packet serial
+			packet.setArgs(argHex);
+			packet.setChecksum();
+			return packet;
+		}
 	}
 
 	/**
@@ -57,6 +75,74 @@ public class JetFile2Protocol {
 		public final static String WRITE_STR = com + "05";
 		
 		public final static String WRITE_CRC = com + "0e";
+		
+		/**
+		 * System file write-in
+		 * @return
+		 */
+		public static JetFile2Packet command0202(String check, String filesize){
+			JetFile2Packet packet = new JetFile2Packet();
+			packet.setCommand(WRITE_SYS_FILE);
+			
+			StringBuilder args = new StringBuilder(); // 6 args
+			args.append( UdpUtils.ascii2hexString("SEQUENT.SYS",12) )
+			.append(UdpUtils.int2HexString(44, 4)) // file size 0x2c
+			.append("0003") // size of packet
+			.append(UdpUtils.int2HexString(1, 2)) // quantity 
+			.append(UdpUtils.int2HexString(1, 2)) // current packet
+			.append(UdpUtils.int2HexString(0, 2)) // Note
+			;
+			
+			StringBuilder data = new StringBuilder(SQ); // header
+			data.append(UdpUtils.int2HexString(4, 1)); // file type
+			data.append(UdpUtils.int2HexString(0, 1)); // valid marking
+			data.append(UdpUtils.int2HexString(1, 2)); // scheduled files
+			data.append(UdpUtils.int2HexString(0, 2)); // rsv
+			
+			data.append(UdpUtils.ascii2hexString("D")); // drive
+			data.append(UdpUtils.ascii2hexString("T")); // T for text
+			data.append("0f"); // file label
+			data.append("7f"); // week repetition
+			LocalDate today = LocalDate.now();
+			data.append(new DateTimeStruct(today.getYear(),today.getMonthValue(),today.getDayOfMonth()).toHexString());
+			data.append(new DateTimeStruct(today.getYear(),today.getMonthValue(),today.getDayOfMonth()).toHexString());
+			data.append(check);	// checksum 2 "0c16"; verifica el contenido del archivo
+			data.append(filesize); // filesize 2 ba00 del siguiente archivo
+			data.append(UdpUtils.ascii2hexString(TEMP_FILE, 12));// filename 12
+			
+			packet.setChecksum();
+			return packet;
+		}
+		
+		public static JetFile2Packet command0204(String hexData ){
+			JetFile2Packet packet = new JetFile2Packet();
+			packet.setCommand(InfoWrite.WRITE_TXT);
+			packet.setData(hexData);
+			
+			String codeDiskPartition = UdpUtils.ascii2hexString("D",1);
+			String ringingTimes = "00";
+			String textfileLabel = UdpUtils.ascii2hexString(TEMP_FILE,12);
+			String filesize = UdpUtils.int2HexString(packet.getDatalen(), 4);
+			String pcktsize = UdpUtils.int2HexString(768, 2);
+			String quantity = UdpUtils.int2HexString(1, 2);
+			String currentPacket = UdpUtils.int2HexString(1, 2);
+			
+			StringBuilder args = new StringBuilder(codeDiskPartition);
+			args.append(ringingTimes)
+			.append(textfileLabel)
+			.append(filesize)
+			.append(pcktsize)
+			.append(quantity)
+			.append(currentPacket);
+			
+			System.out.println("args:"+args.toString());
+			packet.setArgs(args.toString());
+			System.out.println(packet.toHexString());
+			packet.setChecksum();
+			
+			return packet;
+		}
+		
 	}
 	/**
 	 * 03 TEST COMMAND
@@ -72,6 +158,29 @@ public class JetFile2Protocol {
 		public final static String ALL_BLUE_TEST = com + "06";
 		
 		public final static String END_TEST = com + "09";
+		
+		
+		/**
+		 * Auto test
+		 * @return
+		 */
+		public static JetFile2Packet command0302(){
+			JetFile2Packet packet = new JetFile2Packet();
+			packet.setCommand(AUTO_TEST);
+			packet.setChecksum();
+			return packet;
+		}
+		
+		/**
+		 * Implements the command CONNECTION TEST 0301. <br>
+		 * @return
+		 */
+		public static JetFile2Packet command0301(){
+			JetFile2Packet packet = new JetFile2Packet();
+			packet.setCommand(CONX_TEST);
+			packet.setChecksum();
+			return packet;
+		}
 	}
 	
 	/**
@@ -87,6 +196,38 @@ public class JetFile2Protocol {
 		public final static String END = com + "02";
 		public final static String SWITCH_OFF = com + "03";
 		public final static String SWITCH_ON= com + "04";
+		
+		
+		/**
+		 * Reset command 0400
+		 * @return
+		 */
+		public static JetFile2Packet reset(){
+			JetFile2Packet packet = new JetFile2Packet();
+			packet.setCommand(BlackScreenCommand.RESET);
+			packet.setArgs("");
+			return packet;
+		}
+		
+		/**
+		 * Reset command 0401
+		 * @return
+		 */
+		public static JetFile2Packet start(){
+			JetFile2Packet packet = new JetFile2Packet();
+			packet.setCommand(BlackScreenCommand.START);
+			return packet;
+		}
+		
+		/**
+		 * Reset command 0402
+		 * @return
+		 */
+		public static JetFile2Packet endDisplay(){
+			JetFile2Packet packet = new JetFile2Packet();
+			packet.setCommand(BlackScreenCommand.END);
+			return packet;
+		}
 	}
 	
 	/**
@@ -98,6 +239,29 @@ public class JetFile2Protocol {
 		private final static String com = "07";
 		
 		public final static String DISK_INFO = com + "0D";
+		
+		/**
+		 * disk information command 070d
+		 * @return
+		 */
+		public static JetFile2Packet diskInformation(String disk){
+			JetFile2Packet packet = new JetFile2Packet();
+			packet.setCommand(DISK_INFO);
+			packet.setArgs(UdpUtils.ascii2hexString(disk, 4));
+			packet.setChecksum();
+			return packet;
+		}
+		
+		/**
+		 * Reads information of the designated disk, it includes the type of disk
+		 * total size, and free size. <br> 
+		 * Command: 070d 
+		 * @return
+		 */
+		public static String obtainDiskInformationCommand() {
+			
+			return null;
+		}
 	}
 	
 	
@@ -379,16 +543,7 @@ public class JetFile2Protocol {
 		return null;
 	}
 
-	/**
-	 * Reads information of the designated disk, it includes the type of disk
-	 * total size, and free size. <br> 
-	 * Command: 070d 
-	 * @return
-	 */
-	public static String obtainDiskInformationCommand() {
-		
-		return null;
-	}
+	
 
 	public static String getStatus(String message) {
 		if(getFlag(message).equals(ONE))
@@ -396,10 +551,15 @@ public class JetFile2Protocol {
 		return "";
 	}
 
-	//////////////////////
-	// PACKET PROCESSING
-	/////////////////////
+	/////////////////////////////////////////////////////////////////
+	//                        PACKET PROCESSING
+	////////////////////////////////////////////////////////////////
 	
+	/**
+	 * This method processes the response from the display.
+	 * @param packet
+	 * @return
+	 */
 	public static String processPacket(JetFile2Packet packet){
 		if(!checkStructure(packet)){
 			logger.warn("Something is wrong with the packet content!");
@@ -409,8 +569,16 @@ public class JetFile2Protocol {
 		switch(command){
 		case InfoWrite.WRITE_SYS_FILE:
 			return command0202(packet);
+			
 		case InfoWrite.WRITE_TXT:
 			return command0204(packet);
+			
+		case TestCommand.CONX_TEST:
+			return command0301(packet);
+			
+		case ReadingData.SYS_FILES:
+			return null;
+			
 		default:
 			logger.error("Command is not supported!");
 		}
@@ -418,7 +586,30 @@ public class JetFile2Protocol {
 		return null;
 	}
 	
+	/**
+	 * 
+	 * @param packet
+	 * @return
+	 */
+	public static ConfigHead command0102(JetFile2Packet packet){
+		String args = packet.getArgs();
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("Arglen:").append(packet.getArglen()) // 2
+		.append(",file size:").append(UdpUtils.getBytes(args, 0, 2))
+		.append(",packet serial numb:").append(UdpUtils.getBytes(args, 2, 4))
+		.append(",file size:").append(UdpUtils.getBytes(args, 4, 8));
+		
+		System.out.println(sb.toString());
+		
+		return new ConfigHead(packet.getData());
+	}
 	
+	/** 
+	 * System write file
+	 * @param packet
+	 * @return
+	 */
 	public static String command0202(JetFile2Packet packet){
 		
 		if(packet.getFlag() == 1) // in-echo
@@ -463,7 +654,7 @@ public class JetFile2Protocol {
 		
 		String args = packet.getArgs();
 		if(packet.getArglen() != 6 || args.length() != 24*2)
-			logger.warn("Command 0x0202 needs 6 arguments");
+			logger.warn("Command 0x0204 needs 6 arguments");
 		
 		String codeDiskPartition = args.substring(0, 2);
 		String ringingTimes = args.substring(2, 4);
@@ -486,30 +677,32 @@ public class JetFile2Protocol {
 		return sb.toString();
 	}
 
-	public static JetFile2Packet command0204(String hexData ){
-		JetFile2Packet packet = new JetFile2Packet();
-		packet.setData(hexData);
-		
-		String codeDiskPartition = "D";
-		String ringingTimes = "00";
-		String textfileLabel = UdpUtils.ascii2hexString("temp.txt",12);
-		String filesize = UdpUtils.int2HexString(packet.getDatalen(), 4);
-		String pcktsize = UdpUtils.int2HexString(768, 2);
-		String quantity = UdpUtils.int2HexString(1, 2);
-		String currentPacket = UdpUtils.int2HexString(1, 2);
-		StringBuilder args = new StringBuilder(UdpUtils.ascii2hexString(codeDiskPartition, 1));
-		args.append(ringingTimes)
-		.append(textfileLabel)
-		.append(filesize)
-		.append(pcktsize)
-		.append(quantity)
-		.append(currentPacket);
-		
-		packet.setArgs(args.toString());
-		packet.setChecksum();
-		
-		return packet;
+	
+
+	
+	/**
+	 * Connection test
+	 * @return
+	 */
+	public static String command0301(JetFile2Packet packet){
+		String echo = packet.toHexString();
+		StringBuilder res = new StringBuilder();
+		try {
+			packet.getArgs();
+			String args = UdpUtils.getBytes(echo, ARG, ARG + 12);
+			res.append("Prog Version:"+UdpUtils.getBytes(args, 0, 2));
+			res.append(",FPGA Version:"+UdpUtils.getBytes(args, 2, 4));
+			byte[] ip = DatatypeConverter.parseHexBinary(UdpUtils.swap(UdpUtils.getBytes(args, 4, 8)));
+			res.append(",Ip Address:"+InetAddress.getByAddress(ip).toString());
+			res.append(",Sign address:"+UdpUtils.getBytes(args, 8, 10));
+		} catch (Exception e) {
+			logger.error("Header test was wrong!");
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		return res.toString();
 	}
+
 	
 	/**
 	 * 
