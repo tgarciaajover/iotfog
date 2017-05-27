@@ -11,6 +11,7 @@ import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
 import com.advicetec.monitorAdapter.AdapterManager;
+import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
 
 public class EventManager extends Manager
@@ -19,8 +20,11 @@ public class EventManager extends Manager
 	private static EventManager instance=null;
 	private static ConfigurationManager confManager = null;
 	private BlockingQueue delayedQueue = null;
-	
-	
+	private int maxModbusConnections = 0;
+	private int numActiveConnections = 0;
+	private List<TCPMasterConnection> availableConnections = null;
+	private List<TCPMasterConnection> usedConnections = null;
+		
 	public static EventManager getInstance()
 	{
 		if (instance==null)
@@ -34,6 +38,14 @@ public class EventManager extends Manager
 		confManager = ConfigurationManager.getInstance();
 		this.delayedQueue = new DelayQueue();
 		
+		// This list contains the connections available to be used by any handler.
+		this.availableConnections = new ArrayList<TCPMasterConnection>();
+		
+		// This list contains the connections being used by some handler
+		this.usedConnections = new ArrayList<TCPMasterConnection>();
+		
+		// Maximum number of modbus connections. 
+		int maxModbusConnections = Integer.valueOf(getProperty("MaxModbusConnections")); 
 	}	
 
 	public void run() 
@@ -67,4 +79,12 @@ public class EventManager extends Manager
 		System.out.println("Ending Event Manager run");
 	}	
 
+	private synchronized TCPMasterConnection getModbusConnection()
+	{
+		if (numActiveConnections <= maxModbusConnections)
+		
+		else{
+			return null;
+		}
+	}
 }

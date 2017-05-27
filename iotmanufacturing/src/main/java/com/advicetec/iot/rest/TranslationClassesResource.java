@@ -2,26 +2,25 @@ package com.advicetec.iot.rest;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 
-import com.advicetec.configuration.ConfigurationManager;
-import com.advicetec.configuration.Signal;
-import com.advicetec.configuration.SignalContainer;
-import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 import com.advicetec.monitorAdapter.protocolconverter.MqttDigital;
 
 public class TranslationClassesResource extends ServerResource  
 {
+	
+	static Logger logger = LogManager.getLogger(TranslationClassesResource.class.getName());
 
 	  /**
 	   * Returns the Signal instance requested by the URL. 
@@ -34,16 +33,20 @@ public class TranslationClassesResource extends ServerResource
 	   */
 	  @Get("json")
 	  public Representation getSignal() throws Exception {
-
+  		  
 		// Create an empty JSon representation.
 		Representation result;
 
 	    // The requested classes name.
 		MqttDigital mqttDigital = new MqttDigital();
 		
-		String packageStr = mqttDigital.getClass().getPackage().getName() + ".protocolconverter";
+		logger.debug("Starting GetSignal");
+		
+		String packageStr = mqttDigital.getClass().getPackage().getName();
 		String classesNames[] = getClasses(packageStr);
 		String json = new ObjectMapper().writeValueAsString(classesNames);
+		
+		logger.debug("Classes:" + json);
 		
 	    result = new JsonRepresentation(json);
 
@@ -62,46 +65,54 @@ public class TranslationClassesResource extends ServerResource
 	 */
 	private static String[] getClasses(String packageName)
 	        throws ClassNotFoundException, IOException {
+		
 	    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 	    assert classLoader != null;
 	    String path = packageName.replace('.', '/');
-	    Enumeration<URL> resources = classLoader.getResources(path);
-	    List<File> dirs = new ArrayList<File>();
-	    while (resources.hasMoreElements()) {
-	        URL resource = resources.nextElement();
-	        dirs.add(new File(resource.getFile()));
+	    
+	    logger.debug("getClasses:" + path);
+	    
+	    ArrayList<File> fileList = new ArrayList<File>();
+	    listf( path, fileList );
+
+	    String strRet[] = new  String[fileList.size()]; 
+	    
+	    int i = 0;
+	    for(File elem : fileList)
+	    {
+	    	strRet[i] = elem.getName();
+	    	i++;
 	    }
-	    ArrayList<String> classes = new ArrayList<String>();
-	    for (File directory : dirs) {
-	        classes.addAll(findClasses(directory, packageName));
-	    }
-	    return classes.toArray(new String[classes.size()]);
+	    
+	    return strRet;
 	}
 
-	/**
-	 * Recursive method used to find all classes name in a given directory and subdirs.
-	 *
-	 * @param directory   The base directory
-	 * @param packageName The package name for classes found inside the base directory
-	 * @return The classes names
-	 * @throws ClassNotFoundException
-	 */
-	private static List<String> findClasses(File directory, String packageName) throws ClassNotFoundException {
-	    List<String> classes = new ArrayList<String>();
-	    if (!directory.exists()) {
-	        return classes;
-	    }
-	    File[] files = directory.listFiles();
-	    for (File file : files) {
-	        if (file.isDirectory()) 
-	        {
-	            assert !file.getName().contains(".");
-	            classes.addAll(findClasses(file, packageName + "." + file.getName()));
-	        } else if (file.getName().endsWith(".java")) {
-	            classes.add(Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6)).getName());
-	        }
-	    }
-	    return classes;
+	
+	public static void listf(String directoryName, ArrayList<File> files)
+	{
+		
+		ArrayList<String> excludeFiles = new ArrayList<String>();
+		excludeFiles.add("MqttDigital.java");
+		excludeFiles.add("Translator.java");
+		directoryName = "src/main/java/" + directoryName;
+		
+		Path p1 = Paths.get(directoryName);
+						
+		File directory = new File(p1.toUri());
+		
+		if (directory.isDirectory()){
+		
+		    // get all the files from a directory
+		    File[] fList = directory.listFiles();
+		    for (File file : fList)
+		    {
+		        if ((file.isFile()) && (excludeFiles.contains(file.getName()) == false))
+		        {
+		            files.add(file);
+		        }
+		    }
+		}
+	    
 	}
 	
 }

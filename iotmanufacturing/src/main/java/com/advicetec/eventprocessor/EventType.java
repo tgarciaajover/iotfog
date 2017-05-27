@@ -9,7 +9,9 @@ public enum EventType
 	   PRODUCTION_ORDER(3,"Production Order"),
 	   WEB_APPLICATION_QUERY_EVENT(4,"Web Application Query Event"),
 	   DISPLAY_EVENT(5,"Display Event"),
-	   INVALID(6,"Invalid Event");
+	   MODBUS_READ_EVENT(6,"Modbus Read Event"),
+	   MODBUS_WRITE_EVENT(7,"Modbus Write Event"),
+	   INVALID(8,"Invalid Event");
 	  
 	   private int code;
 	   private String name;
