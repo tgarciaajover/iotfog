@@ -1,6 +1,6 @@
 package com.advicetec.eventprocessor;
 
-public abstract class ModBusTcpEvent 
+public abstract class ModBusTcpEvent extends Event
 {
 
 	// Type of modbus type
@@ -15,12 +15,20 @@ public abstract class ModBusTcpEvent
 	// Slave UId  
 	private Integer Uid;
 	
+	// Milliseconds when it has to be repeated
+	private long milliseconds; 
+	
+	// it says if it has to be repeated or not.
+	private boolean repeated;
+	
 	public ModBusTcpEvent(String ipAddress, int port, Integer uid, ModBusTcpEventType type) {
-		super();
+		super(EventType.MODBUS_READ_EVENT);
 		this.ipAddress = ipAddress;
 		this.port = port;
 		this.Uid = uid;
 		this.type = type;
+		this.milliseconds = 0;
+		this.repeated = false;
 	}
 
 	public String getIpAddress() {
@@ -50,5 +58,23 @@ public abstract class ModBusTcpEvent
 	public ModBusTcpEventType getType() {
 		return type;
 	}
+
+	public long getMilliseconds() {
+		return milliseconds;
+	}
+
+	public void setMilliseconds(long milliseconds) {
+		this.milliseconds = milliseconds;
+	}
+
+	public boolean isRepeated() {
+		return repeated;
+	}
+
+	public void setRepeated(boolean repeated) {
+		this.repeated = repeated;
+	}
+
+
 	
 }

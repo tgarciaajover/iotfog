@@ -16,7 +16,7 @@ public class ModBusTcpDiscreteDataInputEvent extends ModBusTcpEvent
 
 	public ModBusTcpDiscreteDataInputEvent(String ipAddress, int port,
 			Integer uid, int offset, int count, int repeat) {
-		super(ipAddress, port, uid);
+		super(ipAddress, port, uid, ModBusTcpEventType.READ_DISCRETE);
 		// TODO Auto-generated constructor stub
 		
 		this.offset = offset;
