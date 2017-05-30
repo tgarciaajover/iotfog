@@ -2,11 +2,15 @@ package com.advicetec.configuration;
 
 import java.sql.SQLException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.advicetec.core.Configurable;
 
 public class ConfigurationManager extends Configurable
 {
 	private static ConfigurationManager instance=null;
+	static Logger logger = LogManager.getLogger(ConfigurationManager.class.getName());
 	
 	private SignalUnitContainer signalUnits;
 	private SignalTypeContainer signalTypes;
@@ -116,16 +120,17 @@ public class ConfigurationManager extends Configurable
 		return this.displayDevices;
 	}
 	
-	public MonitoringDevice getMonitoringDevice(String macAddress)
+	public MonitoringDevice getMonitoringDevice(String deviceAddress)
 	{
-		return this.monitoringDevices.getByMacAddress(macAddress);
+		return this.monitoringDevices.getByMacAddress(deviceAddress);
 	}
 	
 	
 	public String getTransformation(String macAddress, String portLabel){
-		System.out.println("In getTransformation macAddress:" + macAddress + "portLabel:" + portLabel );
+		logger.debug("In getTransformation macAddress:" + macAddress + "portLabel:" + portLabel );
+		
 		if (this.monitoringDevices.getByMacAddress(macAddress) == null){
-			System.out.println("Monitoring Device not Found");
+			logger.error("Monitoring Device with address:" + macAddress +" not Found");
 			return null;
 		} else { 
 			return	this.monitoringDevices.getByMacAddress(macAddress).getTranformation(portLabel);
@@ -137,15 +142,15 @@ public class ConfigurationManager extends Configurable
 	}
 	
 	public Integer getMeasuredEntity(String macAddress, String portLabel){
-		System.out.println("start getMeasuredEntity params:" + macAddress + "|" + portLabel);
+		logger.debug("start getMeasuredEntity params:" + macAddress + "|" + portLabel);
 		MonitoringDevice mDevice = this.monitoringDevices.getByMacAddress(macAddress); 
 		if ( mDevice == null){
-			System.out.println("Monitoring Device not found");
+			logger.error("Monitoring Device with address:"+ macAddress +" not found");
 			return null;
 		}
 		else { 		
 			if (mDevice.getInputOutputPort(portLabel) == null){
-				System.out.println("Port not found in monitoring device");
+				logger.error("Port:"+ portLabel + " not found in monitoring device");
 				return null;
 			} 
 			else {

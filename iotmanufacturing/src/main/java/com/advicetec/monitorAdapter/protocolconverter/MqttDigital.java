@@ -6,11 +6,15 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.advicetec.core.AttributeType;
 import com.advicetec.configuration.SystemConstants;
 
 public class MqttDigital implements Translator
 {
+	static Logger logger = LogManager.getLogger(MqttDigital.class.getName());
 
 	public MqttDigital()
 	{
@@ -28,7 +32,7 @@ public class MqttDigital implements Translator
 		// The mqtt message for a digital input payload has the following form:
 		// topic | datetime | value
 		
-		System.out.println("content:" + content +"split token:"+ SystemConstants.MSG_SEP);
+		logger.debug("content:" + content +"split token:"+ SystemConstants.MSG_SEP);
 		String [] tokens = content.split(SystemConstants.MSG_SEP);
 		
 		for (int i = 0; i < tokens.length; i++) {
@@ -45,11 +49,11 @@ public class MqttDigital implements Translator
 		InterpretedSignal valueSignal;
 		// TODO: replace constant values by constant defined in a property file.
 		if ((value.floatValue() >= 0.0) && (value.floatValue() <= 0.5)){
-			System.out.println("value arrive which is false");
+			logger.debug("arrived value is interpreted as FALSE");
 			boolean finalValue = false;
 			valueSignal = new InterpretedSignal(AttributeType.BOOLEAN, new Boolean(finalValue));
 		} else {
-			System.out.println("value arrive which is true");
+			logger.debug("arrived value is interpreted as TRUE");
 			boolean finalValue = true;
 			valueSignal = new InterpretedSignal(AttributeType.BOOLEAN, new Boolean(finalValue));
 		}

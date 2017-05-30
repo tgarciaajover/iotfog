@@ -1,5 +1,7 @@
 package com.advicetec.monitorAdapter;
 
+import java.util.List;
+
 import com.advicetec.MessageProcessor.UnifiedMessage;
 
 /**
@@ -9,5 +11,5 @@ import com.advicetec.MessageProcessor.UnifiedMessage;
  */
 public interface ProtocolConverter {
 
-	public UnifiedMessage getUnifiedMessage() throws Exception;
+	public List<UnifiedMessage> getUnifiedMessage() throws Exception;
 }

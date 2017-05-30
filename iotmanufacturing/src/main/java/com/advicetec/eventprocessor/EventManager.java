@@ -2,7 +2,6 @@ package com.advicetec.eventprocessor;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.sql.Time;
 import java.time.LocalDateTime;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -12,31 +11,27 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayQueueConsumer;
-import com.advicetec.MessageProcessor.MessageHandler;
-import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
 import com.advicetec.language.behavior.BehaviorDefPhase;
-import com.advicetec.monitorAdapter.AdapterManager;
-import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
 
 public class EventManager extends Manager
 {
 
+	static Logger logger = LogManager.getLogger(EventManager.class.getName());
+	
 	private static EventManager instance=null;
 	private static ConfigurationManager confManager = null;
 	private BlockingQueue delayedQueue = null;
 	private int maxModbusConnections = 0;
 	private int timeOut = 0; 
-	static Logger logger = LogManager.getLogger(BehaviorDefPhase.class.getName());
+	
 	
 	// This hashmap contains the available connections for the ipadress in the key of the hashmap. 
 	private Map<String, Stack<Map.Entry<LocalDateTime,TCPMasterConnection>> > availableConnections = null;
@@ -216,8 +211,8 @@ public class EventManager extends Manager
     			throw new Exception("The connection for Ip Address was not found in Connection Container" + ipAddress);
     		}
     	} else {
-    		logger.error("Ip Address Not found In Connection Container" + ipAddress);
-    		throw new Exception("Ip Address Not found In Connection Container" + ipAddress);
+    		logger.error("Ip Address Not found In Connection Container:" + ipAddress);
+    		throw new Exception("Ip Address Not found In Connection Container:" + ipAddress);
     	}
     }
 }

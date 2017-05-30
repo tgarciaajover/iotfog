@@ -1,9 +1,11 @@
 package com.advicetec.monitorAdapter;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish;
 
@@ -18,6 +20,7 @@ import com.advicetec.monitorAdapter.protocolconverter.Translator;
 public class Mqtt2UnifiedMessage implements ProtocolConverter
 {
 
+	static Logger logger = LogManager.getLogger(Mqtt2UnifiedMessage.class.getName());
 	private MqttPublish mqttMessage;
 	
 	public Mqtt2UnifiedMessage(){
@@ -29,14 +32,14 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 	}
 	
 	
-	public UnifiedMessage getUnifiedMessage() throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+	public List<UnifiedMessage> getUnifiedMessage() throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
 	{
 		// facility/group/device/port
 		String topic = mqttMessage.getTopicName();
 		String[] fields = topic.split(SystemConstants.TOPIC_SEP);
 		
 		for (int i = 0; i < fields.length; i++) {
-			System.out.println("field: "+ i + "value:" + fields[i]);
+			logger.debug("field: "+ i + "value:" + fields[i]);
 		}
 				
 		String deviceID = fields[1];  // Device Id - example Mac Address: 10:10:10:10:10:10 
@@ -48,7 +51,7 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 		String transformation = confManager.getTransformation(deviceID, portLabel);
 		String className = confManager.getClassName(deviceID, portLabel);
 		
-		System.out.println("className param:" + className);
+		logger.debug("className param:" + className);
 		String packageStr = this.getClass().getPackage().getName() + ".protocolconverter";
 		String classToLoad = packageStr + "." + className;
 
@@ -56,30 +59,30 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 
 		try {
 			
-			Class c = Class.forName(classToLoad);
-			Translator object = (Translator) c.newInstance();
+			Translator object = (Translator) Class.forName(classToLoad).newInstance();
 		
 			values = object.translate(mqttMessage.getPayload());
 			// TODO: call the measuredEntititiesFacade by mac address.
 			
 			 Integer measuringEntityId = confManager.getMeasuredEntity(deviceID, portLabel);
 			 if (measuringEntityId != null){
-				 return new SampleMessage(device, device.getInputOutputPort(portLabel), measuringEntityId, values, transformation);
+				 ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
+				 theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), measuringEntityId, values, transformation));
+				 return theList;
 			 } else {
 				 // TODO: register the error in the log file. 
-				 System.out.println("No Measuring Entity Registered for the device:" + deviceID + " port:" + portLabel);
+				 logger.error("No Measuring Entity Registered for the device:" + deviceID + " port:" + portLabel);
 				 return null;
 			 }
 
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block
-			System.out.println("Error in mqtt message" + e.getMessage());
+			logger.error("Error in mqtt message" + e.getMessage());
 			e.printStackTrace();
 		}  catch (ClassNotFoundException e){
-			System.out.println("Error Class not found" + e.getMessage());
+			logger.error("Error Class not found" + e.getMessage());
 		}
 
-		
 		return null;
 	}
 
