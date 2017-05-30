@@ -203,6 +203,19 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 	
+	public synchronized MeasuredEntityBehavior getBehavior(String name)
+	{
+		logger.debug("behavior:" + name);
+
+		for (int i = 0; i < this.behaviors.size(); i++){
+			MeasuredEntityBehavior measuredEntityBehavior = this.behaviors.get(i);
+			if (measuredEntityBehavior.getName().compareTo(name) == 0){
+				return measuredEntityBehavior;
+			}
+		}
+		return null;
+	}
+	
 	public synchronized void removeBehaviors()
 	{
 		this.behaviors.clear();

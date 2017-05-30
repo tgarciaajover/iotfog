@@ -58,10 +58,14 @@ public class EventManager extends Manager
 		// This list contains the connections being used by some handler
 		this.usedConnections = new HashMap<String, Stack<Map.Entry<LocalDateTime,TCPMasterConnection>>>();
 		
-		// Maximum number of modbus connections. 
-		maxModbusConnections = Integer.valueOf(getProperty("MaxModbusConnections")); 
+		// Maximum number of modbus connections.
+		String strMaxModbusConnections = getProperty("MaxModbusConnections");
+		strMaxModbusConnections = strMaxModbusConnections.replaceAll("\\s","");
+		maxModbusConnections = Integer.valueOf(strMaxModbusConnections); 
 		
-		timeOut = Integer.valueOf(getProperty("TimeOut"));
+		String strTimeOut = getProperty("TimeOut");
+		strTimeOut = strTimeOut.replaceAll("\\s","");
+		timeOut = Integer.valueOf(strTimeOut);
 	}	
 
 	public void run() 

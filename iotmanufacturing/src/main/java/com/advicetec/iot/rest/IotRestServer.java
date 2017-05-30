@@ -58,10 +58,14 @@ public class IotRestServer extends Application {
       router.attach("/DeviceType/{uniqueID}", DeviceTypeResource.class);
       router.attach("/MonitoringDevice/{uniqueID}", MonitoringDeviceResource.class);
       router.attach("/MeasuredEntity/{uniqueID}", MeasuredEntityResource.class);
+      router.attach("/MeasuredEntityBehavior/{uniqueID}{BehaviorID}", MeasuredEntityBehaviorResource.class);
+      router.attach("/MeasuredEntityStateBehavior/{uniqueID}{BehaviorID}", MeasuredEntityStateBehaviorResource.class);
       router.attach("/Status/{uniqueID}", StatusResource.class);
       router.attach("/AttributeValue/{uniqueID}", AttributeValueResource.class);
       router.attach("/StateInterval/{uniqueID}", IntervalResource.class);
-      router.attach("/TranslationClasses", TranslationClassesResource.class);      
+      router.attach("/TranslationClasses", TranslationClassesResource.class);  
+      router.attach("/Register/ActivityRegister", ActivityRegistrationResource.class);  
+      
       
       // Return the root router
       return router;
