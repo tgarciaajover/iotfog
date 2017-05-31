@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonSubTypes;
@@ -16,6 +18,7 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
+
 import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.TimeInterval;
@@ -59,6 +62,8 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	@JsonProperty("behaviors")
 	protected List<MeasuredEntityBehavior> behaviors;
     
+	@JsonProperty("statebehaviors")
+	protected List<MeasuredEntityStateBehavior> stateBehaviors;
 	
     @JsonIgnore
     protected LocalDateTime startDateTimeStatus;	// last time interval
@@ -77,6 +82,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		//measures = new HashMap<String, MeasuredAttributeValue>();
 		//intervals = new HashMap<String, StateInterval>();
 		attributes = new ArrayList<AttributeMeasuredEntity>();
+		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
 	}
 
     
@@ -189,6 +195,30 @@ public abstract class MeasuredEntity extends ConfigurationObject
 			this.behaviors.add(measuredEntityBehavior2);
 		}
 	}
+
+	public synchronized void putStateBehavior(Integer id, String stateBehaviorType, String descr, String behavior_text)
+	{
+		boolean inserted = false; 
+		for (int i = 0; i < this.stateBehaviors.size(); i++){
+			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
+			if (measuredEntityStateBehavior.getStateBehaviorType().compareTo(stateBehaviorType) == 0){
+				MeasuredEntityStateBehavior measuredEntityStateBehavior2 = new MeasuredEntityStateBehavior(id, stateBehaviorType);
+				measuredEntityStateBehavior2.setDescr(descr);
+				measuredEntityStateBehavior2.setBehaviorText(behavior_text);
+				this.stateBehaviors.remove(i);
+				this.stateBehaviors.add(measuredEntityStateBehavior2);
+				inserted = true;
+				break;
+			}
+		}
+		
+		if (inserted == false){
+			MeasuredEntityStateBehavior measuredEntityStateBehavior2 = new MeasuredEntityStateBehavior(id, stateBehaviorType);
+			measuredEntityStateBehavior2.setDescr(descr);
+			measuredEntityStateBehavior2.setBehaviorText(behavior_text);
+			this.stateBehaviors.add(measuredEntityStateBehavior2);
+		}
+	}
 	
 	public synchronized String getBehaviorText(String name)
 	{
@@ -201,6 +231,77 @@ public abstract class MeasuredEntity extends ConfigurationObject
 			}
 		}
 		return null;
+	}
+
+	public synchronized String getStateBehaviorText(String stateBehaviorType)
+	{
+		logger.debug("State Behavior:" + stateBehaviorType);
+		
+		for (int i = 0; i < this.stateBehaviors.size(); i++){
+			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
+			if (measuredEntityStateBehavior.getStateBehaviorType().compareTo(stateBehaviorType) == 0){
+				return measuredEntityStateBehavior.getBehavior_text();
+			}
+		}
+		return null;
+	}
+	
+	public synchronized MeasuredEntityBehavior behaviorFromJSON(String json)
+	{
+		ObjectMapper mapper = new ObjectMapper();
+		
+		//Convert object to JSON string and pretty print
+		MeasuredEntityBehavior measuredEntityBehavior;
+		try {
+		
+			measuredEntityBehavior = mapper.readValue(json, MeasuredEntityBehavior.class);
+			
+	    	this.putBehavior(measuredEntityBehavior.getId(), measuredEntityBehavior.getName(), measuredEntityBehavior.getDescr() , measuredEntityBehavior.getBehavior_text()); 
+	    	return measuredEntityBehavior;
+		    	
+		
+		} catch (JsonParseException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		return null;
+
+	}
+
+	public synchronized MeasuredEntityStateBehavior stateBehaviorFromJSON(String json)
+	{
+		ObjectMapper mapper = new ObjectMapper();
+		
+		//Convert object to JSON string and pretty print
+		MeasuredEntityStateBehavior measuredEntityStateBehavior;
+		try {
+		
+			measuredEntityStateBehavior = mapper.readValue(json, MeasuredEntityStateBehavior.class);
+			
+	    	this.putBehavior(measuredEntityStateBehavior.getId(), measuredEntityStateBehavior.getStateBehaviorType(), measuredEntityStateBehavior.getDescr() , measuredEntityStateBehavior.getBehavior_text()); 
+	    	return measuredEntityStateBehavior;
+		    	
+		
+		} catch (JsonParseException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		return null;
+
 	}
 	
 	public synchronized MeasuredEntityBehavior getBehavior(String name)
@@ -215,10 +316,29 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		}
 		return null;
 	}
+
+	public synchronized MeasuredEntityStateBehavior getStateBehavior(String stateBehaviorType)
+	{
+		logger.debug("State Behavior:" + stateBehaviorType);
+
+		for (int i = 0; i < this.stateBehaviors.size(); i++){
+			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
+			if (measuredEntityStateBehavior.getStateBehaviorType().compareTo(stateBehaviorType) == 0){
+				return measuredEntityStateBehavior;
+			}
+		}
+		return null;
+	}
+	
 	
 	public synchronized void removeBehaviors()
 	{
 		this.behaviors.clear();
+	}
+
+	public synchronized void removeStateBehaviors()
+	{
+		this.stateBehaviors.clear();
 	}
 
 	
