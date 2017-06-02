@@ -7,7 +7,6 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.junit.Test;
 
-import com.advicetec.displayadapter.JetFile2Protocol.TestCommand;
 import com.advicetec.utils.UdpUtils;
 
 public class DisplayAdapterTest {
@@ -46,7 +45,6 @@ public class DisplayAdapterTest {
 	
 	@Test
 	public void publishMessageTest(){
-		LedSignDisplay display = new LedSignDisplay();
 		String chk = UdpUtils.checksum(
 				DatatypeConverter.parseHexBinary("000000000101010003010000"));
 		
@@ -72,9 +70,6 @@ public class DisplayAdapterTest {
 		byte[] bytes1 = DatatypeConverter.parseHexBinary("55a70700000000000101010003010000");
 		System.out.println("response"+display.publishBytes(bytes1));
 		*/
-		String group = "01";
-		String subGroup = "01";
-		String seq = "01" + "00";
 		
 		//byte[] bytes2 = display.generatePacketPayLoad(group, subGroup, seq, TestCommand.AUTO_TEST,"");
 		//System.out.println("test"+DatatypeConverter.printHexBinary(bytes2));
@@ -112,6 +107,7 @@ public class DisplayAdapterTest {
 		String cal = JetFile2Protocol.readFontLibraryCommand(4,"01","01");
 	}
 	
+	
 	@Test
 	public void obtainDiskInformationCommandTest(){
 		String snt = "55a7a0000000000001010900070d0100463a0000";
@@ -142,7 +138,7 @@ public class DisplayAdapterTest {
 		
 		String rcv = "55a8a4000200000001010a00040100010090";
 		JetFile2Packet in = new JetFile2Packet( rcv );
-		assertTrue(in.getData().equalsIgnoreCase(JetFile2Protocol.SUCESS));
+		//assertTrue(in.getData().equalsIgnoreCase(JetFile2Protocol.StatusCode.SUCESS));
 		
 		snt = "55a7210a2c00000001010b000202060053455155454e542e535953002c0000000003010001000000535104000100000044540f7f172005150101010117200515010101010c16ba0074656d702e4e6d6700000000";
 		JetFile2Packet p2 = new JetFile2Packet(snt);
@@ -171,26 +167,54 @@ public class DisplayAdapterTest {
 	@Test
 	public void connectionTest(){
 		LedSignDisplay display = new LedSignDisplay();
-		System.out.println("start display:" + display.startDisplay() );
+		System.out.println("start display:" + display.startBlackScreen() );
 		System.out.println("connection test: " + display.connectionTest() );
 	//	System.out.println("auto test:"+display.autoTest());
 		
-		System.out.println("message test:"+display.publishMessage("Mensaje"));
-		System.out.println("end display: " + display.endDisplay() );
+		System.out.println("message test:"+display.publishMessage("Mensa"));
+		System.out.println("end display: " + display.endBlackScreen() );
 	}
 	
 	
 	@Test
 	public void readSysFile(){
-		String str = "55a82c2cd80000000101130001020200d8000100d8000000aa558000100000000400040030750000000000400800040a0700220000000041010100006400a8c0001d6f01da6f0900898e2509000000000000000014000000000000000000000000000000fefffeff00000000000b3230313630363231303837003894dbe3cec5e4400a54657863656c6c656e74000010003500a400d000e000e800f000ff0000c800a8c000ffffff0080200100000000002f0b0000000000000f000000020000000000000000000000000000000000000000000000000000ffff990001000100626f6c6431312e666e74000053000000";
-		JetFile2Packet in = new JetFile2Packet(str);
+		LedSignDisplay display = new LedSignDisplay();
+		//String str = "55a82c2cd80000000101130001020200d8000100d8000000aa558000100000000400040030750000000000400800040a0700220000000041010100006400a8c0001d6f01da6f0900898e2509000000000000000014000000000000000000000000000000fefffeff00000000000b3230313630363231303837003894dbe3cec5e4400a54657863656c6c656e74000010003500a400d000e000e800f000ff0000c800a8c000ffffff0080200100000000002f0b0000000000000f000000020000000000000000000000000000000000000000000000000000ffff990001000100626f6c6431312e666e74000053000000";
+		
+		display.readSystemFiles();
+		
+		JetFile2Packet out = JetFile2Protocol.ReadingData.command0102(4,1);
+		out.setChecksum();
+		System.out.println("packet out:\n" + out.toHexString());
+		JetFile2Packet in = display.publishPacket(out);
+		System.out.println("packet in :\n" + in.getData());
 		ConfigHead resp = JetFile2Protocol.command0102(in);
 		System.out.println(resp);
 	}
 	
 	
 	@Test
-	public void sysFileWriteTest(){
+	public void sysFileWriteTest()
+	{
+		LedSignDisplay display = new LedSignDisplay();
+		display.setOutMode(TextFormat.PatternControl.O_RANDOM);
+		display.setInMode(TextFormat.PatternControl.I_RANDOM);
+		String message = "jajajja ya Funciona!";
+
+		display.out(message);
+	}
+	
+	@Test
+	public void resetTest(){
+		LedSignDisplay display = new LedSignDisplay();
+		display.out("Before reset!");
+		try {
+			display.reset();
+			Thread.sleep(10000);
+			display.out("After reset!");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		
 	}
 }

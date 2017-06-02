@@ -1,6 +1,5 @@
 package com.advicetec.displayadapter;
 
-import javax.rmi.CORBA.Util;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +17,7 @@ public class JetFile2Packet{
 	private String src;
 	private int group;
 	private int unit;
-	private int serial;
+	private int packetSerial;
 	private String command;
 	private int arglen;
 	private int flag;
@@ -32,7 +31,7 @@ public class JetFile2Packet{
 		src = "0000";
 		group = 0;
 		unit = 0;
-		serial = 0;
+		packetSerial = 0;
 		command = "";
 		arglen = 0;
 		flag = 0;
@@ -52,7 +51,7 @@ public class JetFile2Packet{
 		src = JetFile2Protocol.getSourceAddress(hexString);
 		group = Integer.parseInt(JetFile2Protocol.getGroup(hexString),16);
 		unit = Integer.parseInt(JetFile2Protocol.getUnit(hexString),16);
-		serial = Integer.parseInt(UdpUtils.swap(JetFile2Protocol.getPacketSerial(hexString)),16);
+		packetSerial = Integer.parseInt(UdpUtils.swap(JetFile2Protocol.getPacketSerial(hexString)),16);
 		command = JetFile2Protocol.getCommands(hexString);
 		arglen = Integer.parseInt(JetFile2Protocol.getArglen(hexString),16);
 		flag = Integer.parseInt(JetFile2Protocol.getFlag(hexString),16);
@@ -78,7 +77,7 @@ public class JetFile2Packet{
 	}
 
 	public void setSerial(int serial) {
-		this.serial = serial;
+		this.packetSerial = serial;
 	}
 
 	public void setCommand(String command) {
@@ -116,7 +115,7 @@ public class JetFile2Packet{
 	}
 
 	public int getSerial() {
-		return serial;
+		return packetSerial;
 	}
 
 	public String getCommand() {
@@ -154,7 +153,7 @@ public class JetFile2Packet{
 		sb.append(src);
 		sb.append(UdpUtils.int2HexString(group, 1));
 		sb.append(UdpUtils.int2HexString(unit, 1));
-		sb.append(UdpUtils.int2HexString(serial, 2));
+		sb.append(UdpUtils.int2HexString(packetSerial, 2));
 		sb.append(command);
 		sb.append(UdpUtils.int2HexString(arglen, 1));
 		sb.append(UdpUtils.int2HexString(flag, 1));

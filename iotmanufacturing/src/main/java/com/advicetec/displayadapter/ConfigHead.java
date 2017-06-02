@@ -75,9 +75,10 @@ public class ConfigHead {
 	String functionlist2; // firmware function list
 	// 188 = 0xbc
 
-	public ConfigHead(String data){
-		if(!UdpUtils.getFields(data, 0, 2).equalsIgnoreCase("aa55") || data.length() != 216*2){ // 0xd8
-			logger.error(" Format does not match: "+ UdpUtils.getFields(data, 0, 2));
+	
+	public ConfigHead(String data, int expectedSize){
+		if(!UdpUtils.getFields(data, 0, 2).equalsIgnoreCase("aa55") || data.length() != expectedSize*2 || data.length() < 160){ // 216 0xd8
+			logger.error(" Format does not match: "+ data);
 		}else{
 			System.out.println(data);
 			

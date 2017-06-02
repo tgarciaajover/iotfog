@@ -2,6 +2,8 @@ package com.advicetec.displayadapter;
 
 import java.net.InetAddress;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -19,7 +21,6 @@ public class JetFile2Protocol {
 	
 	public static final String ONE = "01";
 	
-	public static final String SUCESS = "0090";
 	
 	
 	public static final String ADDRESS = "02";
@@ -32,6 +33,40 @@ public class JetFile2Protocol {
 
 	public static final String TEMP_FILE = "temp.Nmg";
 
+	public enum StatusCode{
+		SUCESS("0090","Sucess"),
+		OK("4f4b","Sucess"),
+		OPEN_FILE_FAIL("1090","Failure open file"),
+		WRITE_FILE_FAIL("1290","Failure writing the file");
+		
+		private static final Map<String, StatusCode> _map = new HashMap<String, StatusCode>();
+		private String code;
+		private String meaning;
+		
+		static {
+			for(StatusCode code: StatusCode.values()){
+				_map.put(code.code, code);
+			}
+		}
+		
+		private  StatusCode(String cod, String mean) {
+			code = cod;
+			meaning = mean;
+		}
+		
+		public static StatusCode getStatus(String code){
+			return _map.get(code); 
+		}
+		
+		public static String getMeaning(String code){
+			return _map.get(code).meaning;
+		}
+		
+		public boolean equals(StatusCode other){
+			return this.code == other.code;
+		}
+	}
+	
 	/**
 	 * 01 READING DATA
 	 * @author user
@@ -49,13 +84,14 @@ public class JetFile2Protocol {
 		 * Read system Files
 		 * @return
 		 */
-		public static JetFile2Packet command0102(){
+		public static JetFile2Packet command0102(int filesize, int packetserial){
 			JetFile2Packet packet = new JetFile2Packet();
 			packet.setCommand(SYS_FILES);
-			String argHex = UdpUtils.ascii2hexString("CONFIG.SYS",12);
-			argHex.concat(UdpUtils.int2HexString(4, 2)); // packet size
-			argHex.concat(UdpUtils.int2HexString(1, 2)); // packet serial
-			packet.setArgs(argHex);
+			StringBuilder argHex = new StringBuilder( UdpUtils.ascii2hexString("CONFIG.SYS",12) );
+			argHex.append(UdpUtils.int2HexString(filesize, 2)); // packet size
+			argHex.append(UdpUtils.int2HexString(packetserial, 2)); // packet serial
+			
+			packet.setArgs(argHex.toString());
 			packet.setChecksum();
 			return packet;
 		}
@@ -92,6 +128,8 @@ public class JetFile2Protocol {
 			.append(UdpUtils.int2HexString(1, 2)) // current packet
 			.append(UdpUtils.int2HexString(0, 2)) // Note
 			;
+			// set args
+			packet.setArgs(args.toString());
 			
 			StringBuilder data = new StringBuilder(SQ); // header
 			data.append(UdpUtils.int2HexString(4, 1)); // file type
@@ -110,7 +148,11 @@ public class JetFile2Protocol {
 			data.append(filesize); // filesize 2 ba00 del siguiente archivo
 			data.append(UdpUtils.ascii2hexString(TEMP_FILE, 12));// filename 12
 			
+			// set data
+			packet.setData(data.toString());
+			// set checksum
 			packet.setChecksum();
+			
 			return packet;
 		}
 		
@@ -223,7 +265,7 @@ public class JetFile2Protocol {
 		 * Reset command 0402
 		 * @return
 		 */
-		public static JetFile2Packet endDisplay(){
+		public static JetFile2Packet endBlackScreen(){
 			JetFile2Packet packet = new JetFile2Packet();
 			packet.setCommand(BlackScreenCommand.END);
 			return packet;
@@ -587,22 +629,24 @@ public class JetFile2Protocol {
 	}
 	
 	/**
+	 * System file read after 0102 command.<br>
+	 * Interpret the response to 0102 packet.
 	 * 
 	 * @param packet
 	 * @return
 	 */
 	public static ConfigHead command0102(JetFile2Packet packet){
 		String args = packet.getArgs();
-		
-		StringBuilder sb = new StringBuilder();
-		sb.append("Arglen:").append(packet.getArglen()) // 2
-		.append(",file size:").append(UdpUtils.getBytes(args, 0, 2))
-		.append(",packet serial numb:").append(UdpUtils.getBytes(args, 2, 4))
-		.append(",file size:").append(UdpUtils.getBytes(args, 4, 8));
-		
-		System.out.println(sb.toString());
-		
-		return new ConfigHead(packet.getData());
+		if(packet.getArglen() *2 == args.length()){
+			StringBuilder sb = new StringBuilder();
+			sb.append("Arglen:").append(packet.getArglen()) // 2
+			.append(",file size:").append(UdpUtils.getBytes(args, 0, 2))
+			.append(",packet serial numb:").append(UdpUtils.getBytes(args, 2, 4))
+			.append(",file size:").append(UdpUtils.getBytes(args, 4, 8));
+
+			//System.out.println(sb.toString());
+		}
+		return new ConfigHead(packet.getData(),packet.getDatalen());
 	}
 	
 	/** 

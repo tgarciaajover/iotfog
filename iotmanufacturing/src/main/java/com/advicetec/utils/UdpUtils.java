@@ -147,6 +147,10 @@ public class UdpUtils {
 		return swap(res.toString());
 	}
 	
+	public static int hexString2Int(String hexStr){
+		return Integer.parseInt(UdpUtils.swap(hexStr),16);
+	}
+	
 	/**
 	 * 
 	 * @param hex

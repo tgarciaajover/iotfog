@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.displayadapter.JetFile2Protocol;
 import com.advicetec.displayadapter.TextFormat;
+import com.advicetec.displayadapter.JetFile2Protocol.StatusCode;
 import com.advicetec.displayadapter.TextFormat.DisposalMode;
 import com.advicetec.utils.UdpUtils;
 
@@ -25,23 +26,23 @@ import com.advicetec.utils.UdpUtils;
  *
  */
 public class LedSignDisplay implements Output {
-	
+
 	static Logger logger = LogManager.getLogger(LedSignDisplay.class.getName());
-	
+
 	/**
 	 * Address
 	 */
 	private int group;
 	private int unit;
-	
+
 	private int signalWidth;
 	private int signalHeight;
 	private int dstPort;
 	private InetAddress netAddress;
 	private String description;
-	
-	private int serial;
-	
+
+	private int packetSerial; // packet serial
+
 	private String inMode;
 	private String outMode;
 	private String speed;
@@ -55,16 +56,18 @@ public class LedSignDisplay implements Output {
 	private String horizontalAlign;
 
 	private String message;
-	
+
+	private ConfigHead config;
+
 	/**
 	 * Default constructor.
 	 */
 	public LedSignDisplay(){
 		this.group = 1;
 		this.unit = 1;
-		
-		this.serial = 1;
-		
+
+		this.packetSerial = 1;
+
 		this.signalWidth = 128;
 		this.signalHeight = 16;
 		this.dstPort = 3001;
@@ -85,7 +88,7 @@ public class LedSignDisplay implements Output {
 		this.verticalAlign = TextFormat.VerticalAlign.BOTTOM;
 		this.horizontalAlign = TextFormat.HorizontalAlign.RIGHT;
 	}
-	
+
 	public LedSignDisplay(int signalWidth, int signalHeight,
 			Inet4Address netAddress, String inMode, String outMode,
 			String speed, String pause, String lineSpacing, String letterSize,
@@ -108,17 +111,24 @@ public class LedSignDisplay implements Output {
 		this.horizontalAlign = horizontalAlign;
 	}
 
-	
+
 	public void setDescription(String description){
 		this.description = description;
 	}
 	
+	public int getPacketSerial(){
+		packetSerial++;
+		return packetSerial;
+	}
+
 	@Override
 	public void out(String message) {
-		// create the UDP packet
-		
+		connectionTest();
+		readSystemFiles();
+		publishMessage(message);
+		endBlackScreen();
 	}
-	
+
 	/**
 	 * This method builds the message in raw format to be sent to the display.
 	 * 
@@ -126,7 +136,7 @@ public class LedSignDisplay implements Output {
 	 * @return
 	 */
 	public byte[] encodeMessage(String message){
-		
+
 		return UdpUtils.merge(
 				TextFormat.HEAD,
 				inMode,
@@ -157,7 +167,8 @@ public class LedSignDisplay implements Output {
 	 * @return The response.
 	 */
 	public boolean publishMessage(String message){
-		// create the message
+
+		// create the text message
 		StringBuilder sb = new StringBuilder( TextFormat.HEAD );
 		sb.append(DisposalMode.DEFAULT);
 		sb.append(lineSpacing);
@@ -173,29 +184,34 @@ public class LedSignDisplay implements Output {
 		sb.append(UdpUtils.ascii2hexString(message) );
 		sb.append(TextFormat.LINE_FEED);
 		sb.append(TextFormat.EOF);
-		
-		// create the packet
+
+		// create the text packet
 		JetFile2Packet textfile = JetFile2Protocol.InfoWrite.command0204(sb.toString());
-		textfile.setGroup(group);
-		textfile.setUnit(unit);
-		textfile.setSerial(serial);
-		textfile.setChecksum();
-		
+		completePacket(textfile);
+
+		// create the file write packet
 		JetFile2Packet fileWrite = JetFile2Protocol.InfoWrite.command0202(textfile.getChecksum(), UdpUtils.int2HexString(textfile.getDatalen(),2));
-		
+		//System.out.println("Filewrite:" + fileWrite.toHexString());
+
+		// test the connection
 		if(!connectionTest() ){
 			logger.error("Connnection test error!");
 			return false;
 		}
 
 		// publish filewrite 0202
+		endBlackScreen();
+		startBlackScreen();
 		JetFile2Packet in0202 = publishPacket(fileWrite);
-		if(in0202.getStatus().equals(JetFile2Protocol.SUCESS)){	
+
+		//System.out.println("Status after file write (0202): " +StatusCode.getMeaning(in0202.getStatus()));
+
+		if(StatusCode.getStatus(in0202.getStatus()).equals(JetFile2Protocol.StatusCode.SUCESS)){	
 			//publish 0204 the file with the message
 			JetFile2Packet in0204 = publishPacket(textfile);
-			return in0204.getStatus().equals(JetFile2Protocol.SUCESS);
+			return in0204.getStatus().equals(JetFile2Protocol.StatusCode.SUCESS);
 		}
-		
+		endBlackScreen();
 		return false;
 	}
 
@@ -219,21 +235,21 @@ public class LedSignDisplay implements Output {
 			DatagramPacket packet = new DatagramPacket(bytes, bytes.length,netAddress, dstPort);
 			DatagramSocket socket = new DatagramSocket();
 			socket.send(packet);
-			System.out.println("publish the packet "+DatatypeConverter.printHexBinary(packet.getData() ) );
+			//System.out.println("publish the packet "+DatatypeConverter.printHexBinary(packet.getData() ) );
 			logger.info("publish the packet "+packet.toString());
-			
+
 			// receives the response
 			socket.setSoTimeout(10000);
 			DatagramPacket received = new DatagramPacket(toReceive,toReceive.length);
 			socket.receive(received);
 			byte[] bytes2 = received.getData();
-			
-			
+
+
 			s = new String(DatatypeConverter.printHexBinary(bytes2));
 			s = (String)s.subSequence(0, received.getLength()*2);
-			System.out.println("Received packet:"+s+", length:"+received.getLength());
+			//System.out.println("Received packet:"+s+", length:"+received.getLength());
 			logger.info("Received packet:"+s+", length:"+received.getLength());
-			
+
 			socket.close();
 		} catch (SocketException e) {
 			e.printStackTrace();
@@ -244,8 +260,8 @@ public class LedSignDisplay implements Output {
 		}
 		return s;
 	}
-	
-	
+
+
 
 	public int getSignalWidth() {
 		return signalWidth;
@@ -350,7 +366,7 @@ public class LedSignDisplay implements Output {
 	public void setBackColor(String backColor) {
 		this.backColor = backColor;
 	}
-	
+
 	public void setLanguageBackColor(String backColor) {
 		switch(backColor){
 		case "K":
@@ -369,7 +385,7 @@ public class LedSignDisplay implements Output {
 			logger.error("Invalid color "+ backColor + " for backgroud.");	
 			break;
 		}
-		
+
 	}
 
 	public String getVerticalAlign() {
@@ -436,7 +452,7 @@ public class LedSignDisplay implements Output {
 			logger.error("Invalid OUT mode "+ outMode2 + ".");
 			break;
 		}
-		
+
 	}
 
 	public void setLanguageLetterSize(String letterSize) {
@@ -498,11 +514,11 @@ public class LedSignDisplay implements Output {
 			logger.error("Invalid linespacing "+ lineSpacing2 + ".");
 			break;
 		}
-		
+
 	}
 
 	public void setLanguageSpeed(String speed2) {
-	
+
 		switch (speed2) {
 		case "0":
 			speed = TextFormat.Speed.VERY_FAST;
@@ -549,11 +565,11 @@ public class LedSignDisplay implements Output {
 			logger.error("Invalid text color "+ color + ".");	
 			break;
 		}
-		
+
 	}
 
 	public void setLanguageVerticalAlign(String vertical) {
-		
+
 		switch (vertical) {
 		case "0":
 			verticalAlign = TextFormat.VerticalAlign.CENTER;
@@ -585,25 +601,25 @@ public class LedSignDisplay implements Output {
 			logger.error("Invalid horizontal align "+ horizontal + ".");
 			break;
 		}
-		
+
 	}
-	
+
 	public void setGroup( int g){
 		this.group = g;
 	}
-	
+
 	public void setUnit(int u){
 		this.unit = u;
 	}
-	
+
 	public void setMessage(String message){
 		this.message = message;
 	}
-	
-	
+
+
 	////////////////////////////////////////////////////////////////
-	
-	
+
+
 	public byte[] getDataLen(){
 		int len = message.length();
 		String s = Integer.toHexString(len);
@@ -611,26 +627,34 @@ public class LedSignDisplay implements Output {
 			s="0".concat(s);
 		return DatatypeConverter.parseHexBinary(s);
 	}
-	
+
 	/**
-	 * Command 0102 Read system files
+	 * Command 0102 Read system files<br>
+	 * Sends a request packet to the display and recovers 
 	 * @return
 	 */
-	public boolean readSysFiles(){
+	public boolean readSystemFiles(){
+
+		int filesize = 4;
+		int packetserial = 1;
+
+		JetFile2Packet out = JetFile2Protocol.ReadingData.command0102(filesize, packetserial);
+
+		JetFile2Packet in = publishPacket(completePacket(out) );
+		int filelen = UdpUtils.hexString2Int(UdpUtils.getBytes(in.getArgs(), 0, 2) );
+		int serialnum = UdpUtils.hexString2Int(UdpUtils.getBytes(in.getArgs(), 2, 4) );
 		
-		JetFile2Packet out = JetFile2Protocol.ReadingData.command0102();
-		out.setGroup(group);
-		out.setUnit(unit);
-		out.setSerial(serial);
-		out.setChecksum();
+		//System.out.println("filelen:" + filelen + ",serialnum:" + serialnum);
 		
-		JetFile2Packet in = publishPacket(out);
-		ConfigHead resp = JetFile2Protocol.command0102(in);
-		System.out.println(resp);
-		
-		return resp != null; 
+		out = JetFile2Protocol.ReadingData.command0102(filelen, serialnum);
+		in = publishPacket(completePacket(out));
+		config = JetFile2Protocol.command0102(in);
+
+		//System.out.println(config);
+
+		return config != null; 
 	}
-	
+
 	/**
 	 * Command 0202
 	 * @return
@@ -638,66 +662,98 @@ public class LedSignDisplay implements Output {
 	public boolean writeSysFile(){
 		JetFile2Packet out = new JetFile2Packet();
 		out.setCommand(JetFile2Protocol.InfoWrite.WRITE_SYS_FILE);
-		out.setGroup(group);
-		out.setUnit(unit);
-		out.setSerial(serial);
-		
+
 		return false;
 	}
-	
-	
+
+
 
 	/**
 	 * Command 0301
 	 * @return
 	 */
 	public boolean connectionTest(){
-		JetFile2Packet packet = JetFile2Protocol.TestCommand.command0301();
-		JetFile2Packet in = publishPacket(packet);
+		JetFile2Packet out = new JetFile2Packet();
+		out.setCommand(JetFile2Protocol.TestCommand.CONX_TEST);
+		JetFile2Packet in = publishPacket(completePacket(out));
+
 		String resp = JetFile2Protocol.processPacket(in);
 		System.out.println(resp);
 		return resp != null;
 	}
-	
+
 	/** 
 	 * Command 0302
 	 * @return
 	 */
 	public boolean autoTest(){
-		JetFile2Packet packet = JetFile2Protocol.TestCommand.command0302();
-		JetFile2Packet in = publishPacket(packet);
-		return in.getStatus().equals(JetFile2Protocol.SUCESS);
+		JetFile2Packet out = new JetFile2Packet();
+		out.setCommand(JetFile2Protocol.TestCommand.AUTO_TEST);
+		JetFile2Packet in = publishPacket(completePacket(out));
+		return in.getStatus().equals(JetFile2Protocol.StatusCode.SUCESS);
 	}
-	
+
+
+	/**
+	 * Command 0400
+	 * @return
+	 */
+	public boolean reset(){
+		// create a packet start
+		JetFile2Packet out = new JetFile2Packet();
+		out.setCommand(JetFile2Protocol.BlackScreenCommand.RESET);
+		JetFile2Packet in = publishPacket(completePacket(out));
+		return in.getStatus().equals(JetFile2Protocol.StatusCode.SUCESS);
+	}
+
 	/**
 	 * Command 0401
 	 * @return
 	 */
-	public boolean startDisplay(){
+	public boolean startBlackScreen(){
 		// create a packet start
 		JetFile2Packet out = new JetFile2Packet();
 		out.setCommand(JetFile2Protocol.BlackScreenCommand.START);
-		out.setGroup(group);
-		out.setUnit(unit);
-		out.setSerial(serial);
-		out.setChecksum();
-		JetFile2Packet in = publishPacket(out);
-		return in.getStatus().equals(JetFile2Protocol.SUCESS);
+		JetFile2Packet in = publishPacket(completePacket(out));
+		return in.getStatus().equals(JetFile2Protocol.StatusCode.SUCESS);
 	}
-	
+
 	/**
 	 * Command 0402
 	 * @return
 	 */
-	public boolean endDisplay(){
+	public boolean endBlackScreen(){
 		// create a packet start
-		JetFile2Packet out = JetFile2Protocol.BlackScreenCommand.endDisplay();
+		JetFile2Packet out = JetFile2Protocol.BlackScreenCommand.endBlackScreen();
+		JetFile2Packet in = publishPacket(completePacket(out));
+		System.out.println("end display:" + in.getData());
+		return in.getStatus().equals(JetFile2Protocol.StatusCode.SUCESS);
+	}
+
+	/**
+	 * Command 070d
+	 * @return
+	 */
+	public boolean diskInfo(String disk){
+		// create a packet start
+		JetFile2Packet out = JetFile2Protocol.FileControlCommand.diskInformation(disk);
+		JetFile2Packet in = publishPacket(completePacket(out));
+		logger.debug("disk info:" + in.getData());
+		return in.getStatus().equals(JetFile2Protocol.StatusCode.SUCESS);
+	}
+
+	/**
+	 * This method is useful when the command is simple and the display only
+	 * returns the code.
+	 * 
+	 * @param out
+	 * @return
+	 */
+	private JetFile2Packet completePacket(JetFile2Packet out){
 		out.setGroup(group);
 		out.setUnit(unit);
-		out.setSerial(serial);
+		out.setSerial(getPacketSerial());
 		out.setChecksum();
-		
-		JetFile2Packet in = publishPacket(out);
-		return in.getStatus().equals(JetFile2Protocol.SUCESS);
+		return out;
 	}
 }
