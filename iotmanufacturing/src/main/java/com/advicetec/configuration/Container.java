@@ -124,6 +124,11 @@ public abstract class Container
 	{
 		return references.get(field); 
 	}
+
+	public synchronized void removeObject(Integer id)
+	{
+		this.configuationObjects.remove(id);
+	}
 	
 	public synchronized int size()
 	{

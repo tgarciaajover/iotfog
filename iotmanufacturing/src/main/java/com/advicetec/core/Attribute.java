@@ -113,6 +113,26 @@ public class Attribute
 		return json;
 	}
 	
+	public boolean equals(Attribute other){
+		if ( this.name.compareTo(other.name) != 0 )
+			return false;
+		
+		if (!(this.type.equals(other.type)))
+		    return false;
+	
+		if (!(this.unit.equals(other.unit)))
+			return false;
+		
+		if (this.trend != other.trend)
+			return false;
+		
+		if (this.origin != other.origin)
+			return false;
+		
+		return true;
+					
+	}
+	
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append("name: ").append(name).append(",");

@@ -122,7 +122,7 @@ public final class StateInterval implements Storable
 		return false;
 	}
 
-	void setKey(String newKey) {
+	public void setKey(String newKey) {
 		this.key = newKey;
 	}
 	

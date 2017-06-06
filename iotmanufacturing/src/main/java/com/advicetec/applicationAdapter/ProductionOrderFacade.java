@@ -1,4 +1,4 @@
-package com.advicetec.measuredentitity;
+package com.advicetec.applicationAdapter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -27,6 +27,10 @@ import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.measuredentitity.MeasuredAttributeValue;
+import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.advicetec.measuredentitity.MeasuringState;
+import com.advicetec.measuredentitity.StateInterval;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
@@ -41,25 +45,30 @@ import com.advicetec.persistence.StatusStore;
  * @author maldofer
  *
  */
-public final class MeasuredEntityFacade {
+public final class ProductionOrderFacade {
 
 
-	static Logger logger = LogManager.getLogger(MeasuredEntityFacade.class.getName());
+	static Logger logger = LogManager.getLogger(ProductionOrderFacade.class.getName());
 	
-	private MeasuredEntity entity;
-	// Keeps an in-memory entity status
+	private ProductionOrder pOrder;
+	
+	// Keeps an in-memory entity status (The status is the set of variables register for the production order)
 	private StatusStore status;
+	
+	// The first string in the outer map corresponds to the attribute, datetime in the inner map corresponds to
+	// the exact time when the variable change and the key assigned to this change within the cache.
 	private Map<String,SortedMap<LocalDateTime,String>> attMap;
 	private MeasureAttributeValueCache attValueCache;
 	
-	// This map stores endTime, startTime,
-	private TreeMap<LocalDateTime,String> statesMap;
+	// This map stores endTime, startTime of every state
+	// A state is created when a stop or ready condition show up.  
+	private SortedMap<LocalDateTime,String> statesMap;
 	private StateIntervalCache stateCache;
 
 	
-	public MeasuredEntityFacade(MeasuredEntity entity) 
+	public ProductionOrderFacade(ProductionOrder pOrder) 
 	{
-		this.entity = entity;
+		this.pOrder = pOrder;
 		status = new StatusStore();
 		attValueCache= MeasureAttributeValueCache.getInstance();
 		attMap = new HashMap<String,SortedMap<LocalDateTime,String>>();
@@ -67,16 +76,16 @@ public final class MeasuredEntityFacade {
 		stateCache = StateIntervalCache.getInstance();	
 	}
 
-	public MeasuredEntity getEntity() {
-		return entity;
+	public ProductionOrder getProductionOrder() {
+		return pOrder;
 	}
 
-	public void setEntity(MeasuredEntity entity) {
-		this.entity = entity;
+	public void setProductionOrder(ProductionOrder pOrder) {
+		this.pOrder = pOrder;
 	}
 
 	public MeasuredEntityType getType(){
-		return entity.getType();
+		return pOrder.getType();
 	}
 
 	/**
@@ -103,7 +112,6 @@ public final class MeasuredEntityFacade {
 		// stores this value into status
 		status.setAttributeValue(attrValue);
 		
-
 		// The key for a measuredAttributeValue is the name of the attribute plus the timestamp
 		// The key for an attributeValue is the name of the attribute. 
 		String attName = mav.getAttr().getName();
@@ -128,8 +136,8 @@ public final class MeasuredEntityFacade {
 	/**
 	 * 
 	 * @param valueMap 
-	 * @param parent Identificator from the MeasuredEntity
-	 * @param parentType Type of the Measured Entity.
+	 * @param parent Identificator from the Production Order
+	 * @param parentType Type of the Production Order.
 	 */
 	public void importAttributeValues(Map<String, ASTNode> valueMap, Integer parent, MeasuredEntityType parentType) {
 
@@ -233,10 +241,10 @@ public final class MeasuredEntityFacade {
 			String[] keyArray = keys.toArray( new String[keys.size()]);
 			return getFromCache(keyArray);
 			
-		} else if(oldest.isAfter(to)) {
+		} else if(oldest.isAfter(to)){
 			
 			// get all values from database
-			return attValueCache.getFromDatabase(entity.getId(),entity.getType(),
+			return attValueCache.getFromDatabase(this.pOrder.getId(),this.pOrder.getType(),
 					status.getAttribute(attrName),from, oldest);
 		} else {
 			SortedMap<LocalDateTime,String> subMap = 
@@ -246,7 +254,7 @@ public final class MeasuredEntityFacade {
 			String[] keyArray = keys.toArray( new String[keys.size()]);
 			
 			ArrayList<AttributeValue> newList = attValueCache.
-					getFromDatabase(entity.getId(),entity.getType(),
+					getFromDatabase(this.pOrder.getId(),this.pOrder.getType(),
 							status.getAttribute(attrName),from, oldest);
 			newList.addAll(getFromCache(keyArray));
 			
@@ -271,7 +279,7 @@ public final class MeasuredEntityFacade {
 	public void deleteOldStates(LocalDateTime oldest){
 		statesMap = (TreeMap<LocalDateTime, String>) statesMap.tailMap(oldest, true);
 	}
-	
+		
 	public String getByIntervalByAttributeNameJSON(
 			String attrName, LocalDateTime from, LocalDateTime to){
 
@@ -318,8 +326,7 @@ public final class MeasuredEntityFacade {
 		String[] keyArray = (String[]) internalMap.values().toArray();
 		if(n>= internalMap.size()){
 			return getFromCache(keyArray);
-		}
-		else{
+		} else {
 			for (int i = keyArray.length - n - 1; i < keyArray.length; i++) {
 				maValues.add(attValueCache.getFromCache(keyArray[i]));
 			}
@@ -357,9 +364,8 @@ public final class MeasuredEntityFacade {
 		return new JSONArray(getStatusValues());
 	}
 	
-	
 	public void importAttributeValues(Map<String, ASTNode> valueMap) {
-		importAttributeValues(valueMap,entity.getId(),entity.getType());
+		importAttributeValues(valueMap,this.pOrder.getId(),this.pOrder.getType());
 
 	}
 
@@ -367,11 +373,10 @@ public final class MeasuredEntityFacade {
 		return status.getAttributeValues();
 	}
 
-	
 	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
-		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType());
-		stateInterval.setKey(entity.getId()+stateInterval.getKey());
+		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType());
+		stateInterval.setKey(this.pOrder.getId()+stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());
 		StateIntervalCache.getInstance().storeToCache(stateInterval);
@@ -446,10 +451,10 @@ public final class MeasuredEntityFacade {
 			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
 				list.add(stateCache.getFromCache(entry.getValue()));
 			}
-		} else if(oldest.isAfter(to)){
+		}else if(oldest.isAfter(to)){
 			// all values are in the database 
-			list.addAll(stateCache.getFromDatabase(entity.getId(),entity.getType(),from,to));
-		} else {
+			list.addAll(stateCache.getFromDatabase(this.pOrder.getId(),this.pOrder.getType(),from,to));
+		}else{
 			
 		     // get from cache
 			SortedMap<LocalDateTime, String> subMap = statesMap.subMap(oldest, to);
@@ -457,7 +462,7 @@ public final class MeasuredEntityFacade {
 				list.add(stateCache.getFromCache(entry.getValue()));
 			}
 			// get from database
-			list.addAll(stateCache.getFromDatabase(entity.getId(),entity.getType(),from,oldest));
+			list.addAll(stateCache.getFromDatabase(this.pOrder.getId(),this.pOrder.getType(),from,oldest));
 		}
 		return list;
 	}
@@ -500,17 +505,14 @@ public final class MeasuredEntityFacade {
 		return status.toXml();
 	}
 
-	public MeasuringState getCurrentState()
+	public void start()
 	{
-		return this.entity.getCurrentState();
+		TimeInterval tInterval= new TimeInterval(this.pOrder.getCurrentStatDateTime(), LocalDateTime.now()); 
+		registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), tInterval);
+		this.pOrder.startInterval(MeasuringState.OPERATING, null);
+		
 	}
 	
-	public void startExecutedObject(ExecutedEntity executedEntity){
-		this.entity.addExecutedEntity(executedEntity);
-	}
 	
-	public void removeExecutedObject(Integer id){
-		this.entity.removeExecutedEntity(id);
-	}
 }
 

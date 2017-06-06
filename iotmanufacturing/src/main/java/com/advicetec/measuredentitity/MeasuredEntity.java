@@ -3,7 +3,9 @@ package com.advicetec.measuredentitity;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +22,7 @@ import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.advicetec.configuration.ConfigurationObject;
+import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
@@ -65,9 +68,21 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	@JsonProperty("statebehaviors")
 	protected List<MeasuredEntityStateBehavior> stateBehaviors;
 	
+	@JsonProperty("statebehaviors")
+	protected List<MeasuredEntityStateTransition> stateTransitions;
+	
     @JsonIgnore
     protected LocalDateTime startDateTimeStatus;	// last time interval
-      
+    
+    @JsonIgnore
+    protected MeasuringState currentState;	// current state
+
+    @JsonIgnore
+    protected ReasonCode currentReason;	// current Reason Code for the Status.
+
+    @JsonIgnore
+    protected Map<Integer, ExecutedEntity> executedEntities;
+    
     @JsonIgnore
     protected List<AttributeMeasuredEntity> attributes;
     
@@ -79,10 +94,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		createDate = LocalDateTime.now();
 		behaviors = new ArrayList<MeasuredEntityBehavior>();
 		startDateTimeStatus = LocalDateTime.now();
-		//measures = new HashMap<String, MeasuredAttributeValue>();
-		//intervals = new HashMap<String, StateInterval>();
+		currentState = MeasuringState.SCHEDULEDOWN;
+		currentReason = null;
+
 		attributes = new ArrayList<AttributeMeasuredEntity>();
 		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
+		executedEntities = new HashMap<Integer, ExecutedEntity>();
+		
 	}
 
     
@@ -220,6 +238,11 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		}
 	}
 	
+	public synchronized void putStateTransition()
+	{
+		
+	}
+	
 	public synchronized String getBehaviorText(String name)
 	{
 		logger.debug("behavior:" + name);
@@ -344,6 +367,8 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	
 	public synchronized void updateEntityConfiguration(MeasuredEntity measuredEntity) {
 
+		logger.debug("Update Entity Configuration - MeasuredEntity" + measuredEntity);
+		
 		// update behaviors.
 		removeBehaviors();
 		for ( int i=0; i < measuredEntity.behaviors.size(); i++)
@@ -354,9 +379,52 @@ public abstract class MeasuredEntity extends ConfigurationObject
 							measuredEntity.behaviors.get(i).getBehavior_text() );			
 		}
 		
+		// update state behaviors.
+		removeStateBehaviors();
+		for ( int i=0; i < measuredEntity.stateBehaviors.size(); i++)
+		{
+			putStateBehavior(measuredEntity.stateBehaviors.get(i).getId(),
+					     measuredEntity.stateBehaviors.get(i).getStateBehaviorType(), 
+						   measuredEntity.stateBehaviors.get(i).getDescr(), 
+							measuredEntity.stateBehaviors.get(i).getBehavior_text() );			
+		}
+		
 		if (measuredEntity instanceof Machine){
 			
 		}
 	}
-	
+
+    @JsonIgnore
+    public void startInterval(MeasuringState newState, ReasonCode rCode) {
+    	currentState = newState;
+    	currentReason= rCode;
+    	startDateTimeStatus = LocalDateTime.now();
+    }
+    
+    @JsonIgnore
+    public MeasuringState getCurrentState(){
+    	return this.currentState;
+    }
+    
+    @JsonIgnore
+    public ReasonCode getCurrentReason(){
+    	return this.currentReason;
+    }
+    
+    @JsonIgnore
+    public LocalDateTime getCurrentStatDateTime(){
+    	return this.startDateTimeStatus;
+    }
+
+    public void addExecutedEntity(ExecutedEntity executedEntity){
+    	this.executedEntities.put(executedEntity.getId(), executedEntity);
+    }
+    
+    public ExecutedEntity getExecutedEntity(Integer id){
+    	return this.executedEntities.get(id);
+    }
+    
+    public void removeExecutedEntity(Integer id){
+    	this.executedEntities.remove(id);
+    }
 }

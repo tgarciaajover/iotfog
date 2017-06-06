@@ -23,7 +23,8 @@ public class MeasuredEntityContainer extends Container {
 	
 	static String sqlSelect1 = "SELECT id, code, descr, create_date, type FROM setup_measuredentity";
 	static String sqlSelect2 = "SELECT id, name, descr, behavior_text, create_date, last_updttm, measure_entity_id FROM setup_measuredentitybehavior WHERE measure_entity_id = ";
-	
+	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
+	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
 	
 	public MeasuredEntityContainer(String driver, String server, String user, String password) {
 		super(driver, server, user, password);
@@ -74,12 +75,23 @@ public class MeasuredEntityContainer extends Container {
 			rs1.close();
 
 			// loop through the measured entities and load their behaviors
-			
 			for( Integer id : this.configuationObjects.keySet()){
 				MeasuredEntity measuredEntity = (MeasuredEntity) this.configuationObjects.get(id);
 				loadBehaviors(measuredEntity);
 			}
-			
+
+			// loop through the measured entities and load their state behaviors
+			for( Integer id : this.configuationObjects.keySet()){
+				MeasuredEntity measuredEntity = (MeasuredEntity) this.configuationObjects.get(id);
+				loadStateBehaviors(measuredEntity);
+			}
+
+			// loop through the measured entities and load their state transitions
+			for( Integer id : this.configuationObjects.keySet()){
+				MeasuredEntity measuredEntity = (MeasuredEntity) this.configuationObjects.get(id);
+				loadStateTransitions(measuredEntity);
+			}
+
 			super.disconnect();
 			
 			
@@ -114,6 +126,57 @@ public class MeasuredEntityContainer extends Container {
 		        entity.putBehavior(id, name, descr, behaviorText);
 			}
 			rs2.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+
+	}
+
+	public void loadStateBehaviors(MeasuredEntity entity)
+	{
+		try 
+		{
+			String sqlSelect = sqlSelect4 + String.valueOf(entity.getId());  
+			ResultSet rs4 = super.pst.executeQuery(sqlSelect);
+			
+			while (rs4.next()) 
+			{
+		        Integer id   		     = rs4.getInt("id");  
+		        String stateBehaviorType = rs4.getString("state_behavior_type");
+		        String descr             = rs4.getString("descr");
+		        String behaviorText      = rs4.getString("behavior_text");
+		        
+		        entity.putStateBehavior(id, stateBehaviorType, descr, behaviorText);
+			}
+			rs4.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+
+	}
+
+	public void loadStateTransitions(MeasuredEntity entity)
+	{
+		try 
+		{
+			String sqlSelect = sqlSelect3 + String.valueOf(entity.getId());  
+			ResultSet rs3 = super.pst.executeQuery(sqlSelect);
+			
+			while (rs3.next()) 
+			{
+		        
+				Integer id   		     = rs3.getInt("id");
+				String  stateFrom        = rs3.getString("state_from");
+		        Integer reasonCodeFrom   = rs3.getString("reason_code_id");
+		        Integer behavior 		 = rs3.getString("behavior_id");
+		        
+		        entity.putStateTransition(id, stateFrom, reasonCodeFrom, behavior);
+			}
+			rs3.close();
 
 		} catch (SQLException e) {
 			logger.error(e.getMessage());

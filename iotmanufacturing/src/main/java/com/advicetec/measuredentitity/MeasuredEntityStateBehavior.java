@@ -17,10 +17,7 @@ import com.advicetec.core.serialization.LocalDateTimeSerializer;
 
 public class MeasuredEntityStateBehavior extends  ConfigurationObject
 {
-	
-	@JsonProperty("id")
-	Integer id; 
-	
+		
 	@JsonProperty("state_behavior_type")
 	String stateBehaviorType;
 	
