@@ -99,6 +99,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 		attributes = new ArrayList<AttributeMeasuredEntity>();
 		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
+		stateTransitions = new ArrayList<MeasuredEntityStateTransition>();
 		executedEntities = new HashMap<Integer, ExecutedEntity>();
 		
 	}
@@ -216,26 +217,28 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	public synchronized void putStateBehavior(Integer id, String stateBehaviorType, String descr, String behavior_text)
 	{
-		boolean inserted = false; 
+		logger.debug("Put State Behavior" + Integer.toString(this.stateBehaviors.size()));
+		
+		MeasuredEntityStateBehavior measuredEntityStateBehavior2 = new MeasuredEntityStateBehavior(id, stateBehaviorType);
+		measuredEntityStateBehavior2.setDescr(descr);
+		measuredEntityStateBehavior2.setBehaviorText(behavior_text);
+
 		for (int i = 0; i < this.stateBehaviors.size(); i++){
 			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
 			if (measuredEntityStateBehavior.getId() == id){
-				MeasuredEntityStateBehavior measuredEntityStateBehavior2 = new MeasuredEntityStateBehavior(id, stateBehaviorType);
-				measuredEntityStateBehavior2.setDescr(descr);
-				measuredEntityStateBehavior2.setBehaviorText(behavior_text);
+				logger.debug("removed element");
 				this.stateBehaviors.remove(i);
-				this.stateBehaviors.add(measuredEntityStateBehavior2);
-				inserted = true;
 				break;
 			}
 		}
 		
-		if (inserted == false){
-			MeasuredEntityStateBehavior measuredEntityStateBehavior2 = new MeasuredEntityStateBehavior(id, stateBehaviorType);
-			measuredEntityStateBehavior2.setDescr(descr);
-			measuredEntityStateBehavior2.setBehaviorText(behavior_text);
-			this.stateBehaviors.add(measuredEntityStateBehavior2);
+		this.stateBehaviors.add(measuredEntityStateBehavior2);
+
+		for (int i = 0; i < this.stateBehaviors.size(); i++){
+			logger.debug("statebehavior:" + this.stateBehaviors.get(i).toString());
 		}
+		
+		logger.debug("Method end. Num State Behavior" + Integer.toString(this.stateBehaviors.size()));
 	}
 	
 	public synchronized void putStateTransition(Integer id, MeasuringState stateFrom, Integer reasonCodeFrom, Integer behavior, LocalDateTime createDate)
@@ -286,8 +289,25 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 	
-	public synchronized MeasuredEntityStateTransition getStateTransition(Integer id){
-
+	public synchronized MeasuredEntityStateBehavior getStateBehavior(Integer id)
+	{
+		logger.debug("get State Behavior:" + Integer.toString(id));
+		
+		for (int i = 0; i < this.stateBehaviors.size(); i++){
+			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
+			if (measuredEntityStateBehavior.getId() == id ){
+				logger.debug("stateBehavior" + measuredEntityStateBehavior.toString());
+				return this.stateBehaviors.get(i);
+			}
+		}
+		
+		return null;
+	}
+	
+	
+	
+	public synchronized MeasuredEntityStateTransition getStateTransition(Integer id)
+	{
 		for (int i = 0; i < this.stateTransitions.size(); i++){
 			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
 			if (measuredEntityStateTransition.getId() == id ){

@@ -5,10 +5,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.advicetec.configuration.MonitoringDeviceContainer;
 import com.advicetec.configuration.SignalUnitContainer;
 import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredEntity;
@@ -25,9 +28,12 @@ public class MeasuredEntityManager extends Configurable {
 	private static MeasuredEntityManager instance=null;
 	private MeasuredEntityContainer measuredEntities;
 	
+	static Logger logger = LogManager.getLogger(MeasuredEntityManager.class.getName());
+	
 	private List<MeasuredEntityFacade> entities;
 	
 	private MeasuredEntityManager() throws SQLException{
+		
 		super("MeasuredEntity");
 		entities = new ArrayList<MeasuredEntityFacade>();
 		
@@ -55,6 +61,8 @@ public class MeasuredEntityManager extends Configurable {
 			MeasuredEntityFacade f = new MeasuredEntityFacade(m);
 			entities.add(f);
 		}
+		
+		logger.info("Num facades that have been read:" + Integer.toString(this.entities.size()) );
 		
 	}
 
@@ -97,10 +105,16 @@ public class MeasuredEntityManager extends Configurable {
 	 * @return NULL if there is not an entity with the given id.
 	 */
 	public MeasuredEntityFacade getFacadeOfEntityById(final Integer entityId){	
+		
+		logger.debug("getFacadeOfEntityById" + Integer.toString(entityId) );
+		
 		for (MeasuredEntityFacade facade : entities) {
+			
 			if (facade.getEntity() == null)
-				System.out.println("error - entity is null");
+				logger.error("entity registered is null");
 			else{ 
+				logger.debug("facade:" + Integer.toString(facade.getEntity().getId()));
+				
 				if(facade.getEntity().getId() == entityId){
 					return facade;
 				}

@@ -70,6 +70,11 @@ public class MeasuredEntityStateBehavior extends  ConfigurationObject
 		this.createDate = createDate;
 	}
 	
+	public String toString(){
+		return "Id:" + Integer.toString(this.getId()) + 
+					" type:" + this.getStateBehaviorType() + 
+						" descr:" + this.getDescr() + "text:" +this.getBehavior_text(); 
+	}
 	
 	public String toJson()
 	{

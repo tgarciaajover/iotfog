@@ -50,7 +50,7 @@ public class MeasuredEntityContainer extends Container {
 		        		        		        
 				MeasuredEntity measuredEntity = null;
 				
-				System.out.println("Entity Category:" + entityCategory);
+				logger.info("measured Entity id:" + id.toString() +  " Entity Category:" + entityCategory);
 				switch (entityCategory)
 		        {
 		           case "M":
@@ -60,7 +60,7 @@ public class MeasuredEntityContainer extends Container {
 		        	   measuredEntity = new Plant(id);
 		        	   break;
 		           default:
-		               System.out.println("Error entity category is not identified");
+		        	   logger.error("Error entity category is not identified");
 		        }
 				
 		        measuredEntity.setDescr(descr);
@@ -138,19 +138,20 @@ public class MeasuredEntityContainer extends Container {
 	{
 		try 
 		{
-			String sqlSelect = sqlSelect4 + String.valueOf(entity.getId());  
-			ResultSet rs4 = super.pst.executeQuery(sqlSelect);
+			String sqlSelect = sqlSelect3 + String.valueOf(entity.getId());  
+			ResultSet rs3 = super.pst.executeQuery(sqlSelect);
 			
-			while (rs4.next()) 
+			while (rs3.next()) 
 			{
-		        Integer id   		     = rs4.getInt("id");  
-		        String stateBehaviorType = rs4.getString("state_behavior_type");
-		        String descr             = rs4.getString("descr");
-		        String behaviorText      = rs4.getString("behavior_text");
+		        Integer id   		     = rs3.getInt("id");  
+		        String stateBehaviorType = rs3.getString("state_behavior_type");
+		        String descr             = rs3.getString("descr");
+		        String behaviorText      = rs3.getString("behavior_text");
 		        
 		        entity.putStateBehavior(id, stateBehaviorType, descr, behaviorText);
 			}
-			rs4.close();
+			
+			rs3.close();
 
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
@@ -163,17 +164,17 @@ public class MeasuredEntityContainer extends Container {
 	{
 		try 
 		{
-			String sqlSelect = sqlSelect3 + String.valueOf(entity.getId());  
-			ResultSet rs3 = super.pst.executeQuery(sqlSelect);
+			String sqlSelect = sqlSelect4 + String.valueOf(entity.getId());  
+			ResultSet rs4 = super.pst.executeQuery(sqlSelect);
 			
-			while (rs3.next()) 
+			while (rs4.next()) 
 			{
 		        
-				Integer id   		     = rs3.getInt("id");
-				String  stateFromTxt     = rs3.getString("state_from");
-		        Integer reasonCodeFrom   = rs3.getInt("reason_code_id");
-		        Integer behavior 		 = rs3.getInt("behavior_id");
-		        Timestamp timestamp 	 = rs3.getTimestamp("create_date");
+				Integer id   		     = rs4.getInt("id");
+				String  stateFromTxt     = rs4.getString("state_from");
+		        Integer reasonCodeFrom   = rs4.getInt("reason_code_id");
+		        Integer behavior 		 = rs4.getInt("behavior_id");
+		        Timestamp timestamp 	 = rs4.getTimestamp("create_date");
 		        
 		        MeasuringState stateFrom = MeasuringState.UNDEFINED;
 		        
@@ -183,12 +184,14 @@ public class MeasuredEntityContainer extends Container {
 		        	stateFrom = MeasuringState.SCHEDULEDOWN;
 		        } else if (stateFromTxt.compareTo("U") == 0){
 		        	stateFrom = MeasuringState.UNSCHEDULEDOWN;
+		        } else {
+		        	stateFrom = MeasuringState.UNDEFINED;
 		        }
 		        
 		        entity.putStateTransition(id, stateFrom, reasonCodeFrom, behavior, timestamp.toLocalDateTime());
 			}
 			
-			rs3.close();
+			rs4.close();
 
 		} catch (SQLException e) {
 			logger.error(e.getMessage());

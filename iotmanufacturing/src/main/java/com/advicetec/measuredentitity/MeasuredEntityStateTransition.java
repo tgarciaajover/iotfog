@@ -37,7 +37,7 @@ public class MeasuredEntityStateTransition extends ConfigurationObject
 	@JsonProperty("behavior")
 	private int behavior;  
 	
-	public MeasuredEntityStateTransition(Integer id) {
+	public MeasuredEntityStateTransition(@JsonProperty("id") Integer id) {
 		super(id);
 	}
 
