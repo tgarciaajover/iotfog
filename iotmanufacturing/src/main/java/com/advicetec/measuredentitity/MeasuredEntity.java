@@ -219,7 +219,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		boolean inserted = false; 
 		for (int i = 0; i < this.stateBehaviors.size(); i++){
 			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
-			if (measuredEntityStateBehavior.getStateBehaviorType().compareTo(stateBehaviorType) == 0){
+			if (measuredEntityStateBehavior.getId() == id){
 				MeasuredEntityStateBehavior measuredEntityStateBehavior2 = new MeasuredEntityStateBehavior(id, stateBehaviorType);
 				measuredEntityStateBehavior2.setDescr(descr);
 				measuredEntityStateBehavior2.setBehaviorText(behavior_text);
@@ -238,8 +238,25 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		}
 	}
 	
-	public synchronized void putStateTransition()
+	public synchronized void putStateTransition(Integer id, MeasuringState stateFrom, Integer reasonCodeFrom, Integer behavior, LocalDateTime createDate)
 	{
+		logger.debug("Put State Transition");
+		
+		MeasuredEntityStateTransition measuredEntityStateTransitionNew = new MeasuredEntityStateTransition(id);
+		measuredEntityStateTransitionNew.setStateFrom(stateFrom);
+		measuredEntityStateTransitionNew.setResonCode(reasonCodeFrom);
+		measuredEntityStateTransitionNew.setBehavior(behavior);
+		measuredEntityStateTransitionNew.setCreateDate(createDate);
+
+		for (int i = 0; i < this.stateTransitions.size(); i++){
+			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
+			if (measuredEntityStateTransition.getId() == id ){
+				this.stateTransitions.remove(i);
+				break;
+			}
+		}
+		
+		this.stateTransitions.add(measuredEntityStateTransitionNew);
 		
 	}
 	
@@ -266,6 +283,18 @@ public abstract class MeasuredEntity extends ConfigurationObject
 				return measuredEntityStateBehavior.getBehavior_text();
 			}
 		}
+		return null;
+	}
+	
+	public synchronized MeasuredEntityStateTransition getStateTransition(Integer id){
+
+		for (int i = 0; i < this.stateTransitions.size(); i++){
+			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
+			if (measuredEntityStateTransition.getId() == id ){
+				return this.stateTransitions.get(i);
+			}
+		}
+		
 		return null;
 	}
 	

@@ -170,12 +170,24 @@ public class MeasuredEntityContainer extends Container {
 			{
 		        
 				Integer id   		     = rs3.getInt("id");
-				String  stateFrom        = rs3.getString("state_from");
-		        Integer reasonCodeFrom   = rs3.getString("reason_code_id");
-		        Integer behavior 		 = rs3.getString("behavior_id");
+				String  stateFromTxt     = rs3.getString("state_from");
+		        Integer reasonCodeFrom   = rs3.getInt("reason_code_id");
+		        Integer behavior 		 = rs3.getInt("behavior_id");
+		        Timestamp timestamp 	 = rs3.getTimestamp("create_date");
 		        
-		        entity.putStateTransition(id, stateFrom, reasonCodeFrom, behavior);
+		        MeasuringState stateFrom = MeasuringState.UNDEFINED;
+		        
+		        if (stateFromTxt.compareTo("O") == 0){
+		        	stateFrom = MeasuringState.OPERATING;
+		        } else if (stateFromTxt.compareTo("S") == 0){
+		        	stateFrom = MeasuringState.SCHEDULEDOWN;
+		        } else if (stateFromTxt.compareTo("U") == 0){
+		        	stateFrom = MeasuringState.UNSCHEDULEDOWN;
+		        }
+		        
+		        entity.putStateTransition(id, stateFrom, reasonCodeFrom, behavior, timestamp.toLocalDateTime());
 			}
+			
 			rs3.close();
 
 		} catch (SQLException e) {

@@ -10,7 +10,8 @@ public enum MeasuringState
 
    OPERATING(0,"Operating"),
    SCHEDULEDOWN(1,"ScheduleDown"),
-   UNSCHEDULEDOWN(2,"UnScheduleDown");
+   UNSCHEDULEDOWN(2,"UnScheduleDown"),
+   UNDEFINED(3, "Undefined");
    
    @JsonProperty 
    private int value;

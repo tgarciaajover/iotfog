@@ -60,6 +60,7 @@ public class IotRestServer extends Application {
       router.attach("/MeasuredEntity/{uniqueID}", MeasuredEntityResource.class);
       router.attach("/MeasuredEntity/{uniqueID}/Behavior/{BehaviorID}", MeasuredEntityBehaviorResource.class);
       router.attach("/MeasuredEntity/{uniqueID}/StateBehavior/{BehaviorID}", MeasuredEntityStateBehaviorResource.class);
+      router.attach("/MeasuredEntity/{uniqueID}/StateTransition/{TransitionID}", MeasuredEntityStateTransitionResource.class);
       router.attach("/Status/{uniqueID}", StatusResource.class);
       router.attach("/AttributeValue/{uniqueID}", AttributeValueResource.class);
       router.attach("/StateInterval/{uniqueID}", IntervalResource.class);
