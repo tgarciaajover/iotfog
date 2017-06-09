@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,10 +24,16 @@ import com.advicetec.applicationAdapter.ProductionOrderFacade;
 import com.advicetec.applicationAdapter.ProductionOrderManager;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCodeContainer;
+import com.advicetec.core.AttributeType;
+import com.advicetec.eventprocessor.EventManager;
+import com.advicetec.eventprocessor.MeasuredEntityEvent;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.measuredentitity.MeasuringState;
+import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 import com.advicetec.monitorAdapter.protocolconverter.MqttDigital;
+import com.advicetec.mpmcqueue.QueueType;
+import com.advicetec.mpmcqueue.Queueable;
 
 public class ActivityRegistrationResource extends ServerResource  
 {
@@ -113,24 +120,37 @@ public class ActivityRegistrationResource extends ServerResource
 	        		        	
 	        	
 	        } else if (tipoActividad.compareTo("C") == 0) {
-	        	// Start of a new stop, call the behavior.
 	        	
 	    		// Look for it in the Reason Code database.
 	    		ConfigurationManager confManager = ConfigurationManager.getInstance();
 	    		ReasonCodeContainer reasonCodeCon = confManager.getReasonCodeContainer();
 	    		reasonCodeCon.getObject(idRazonParada);
+
+	        	// Start of a new stop, call the behavior.
 	    		
-	        	// ask if there are production orders already in execution. 
-	        	List<ExecutingObject> objects = measuredEntityFacade.getEntity().getExecutingObjects();
+	    		// Get the current state of the measured entity
+	    		if (measuredEntityFacade.getEntity()== null){
+	    			logger.error("No entity assigned to this measured entity facade");
+	    		} else {
+	    			MeasuringState state =  measuredEntityFacade.getEntity().getCurrentState();
+	    			String behavior = measuredEntityFacade.getEntity().getBehaviorText(state, idRazonParada);
+	    			
+	    			ArrayList<InterpretedSignal> signals = new ArrayList<InterpretedSignal>();
+	    			InterpretedSignal reasonSignal = new InterpretedSignal(AttributeType.INT, new Integer(idRazonParada));
+	    			signals.add(reasonSignal);
 
-	        	// End of the production order
-	        	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
-
-	        	// loop through the objects and put them stopped.
-	        	for (int i = 0; i < objects.size(); i++){
-	        		ProductionOrderFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(objects.get(i).getId());
-	        		productionOrderFacade.stop();
-	        	}
+					MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuredEntityFacade.getEntity().getId(), signals );
+					event.setRepeated(false);
+					event.setMilliseconds(0); // To be executed now.
+					
+					EventManager eventManager = EventManager.getInstance();
+					
+					Queueable obj = new Queueable(QueueType.EVENT, event);
+					eventManager.getQueue().enqueue(6, obj);
+					
+	    		}
+	    		
+	    		// 
 	        	
 	        	// If there is a new stop by the application, the machine should be stopped. In case that it is not stopped, we should 
 	        	// report the error.

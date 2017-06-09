@@ -476,4 +476,15 @@ public abstract class MeasuredEntity extends ConfigurationObject
     public void removeExecutedEntity(Integer id){
     	this.executedEntities.remove(id);
     }
+
+
+	public String getBehaviorText(MeasuringState state, Integer idRazonParada) {
+		for (int i = 0; i < this.stateTransitions.size(); i++){
+			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
+			if (measuredEntityStateTransition.getStateFrom() == state ){
+				this.stateTransitions.remove(i);
+				break;
+			}
+		}
+	}
 }
