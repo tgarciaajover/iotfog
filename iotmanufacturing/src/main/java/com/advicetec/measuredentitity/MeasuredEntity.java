@@ -479,12 +479,20 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 
 	public String getBehaviorText(MeasuringState state, Integer idRazonParada) {
+		int behaviorId = 0; 
 		for (int i = 0; i < this.stateTransitions.size(); i++){
 			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
-			if (measuredEntityStateTransition.getStateFrom() == state ){
-				this.stateTransitions.remove(i);
+			if ((measuredEntityStateTransition.getStateFrom() == state ) && (measuredEntityStateTransition.getResonCode() == idRazonParada)) {
+				behaviorId = this.stateTransitions.get(i).getBehavior();
 				break;
 			}
 		}
+		
+		if (behaviorId > 0){
+			if (this.getStateBehavior(behaviorId) != null)
+				return this.getStateBehavior(behaviorId).getBehavior_text();
+		}
+		
+		return null;
 	}
 }

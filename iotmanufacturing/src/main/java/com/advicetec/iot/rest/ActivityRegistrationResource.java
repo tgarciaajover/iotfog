@@ -161,9 +161,6 @@ public class ActivityRegistrationResource extends ServerResource
 	    
 	    }
 		
-				
-
-		reasonCodeCon.fromJSON(jsonText);
 
 		getResponse().setStatus(Status.SUCCESS_OK);
 
