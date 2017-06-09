@@ -51,7 +51,7 @@ public class ActivityRegistrationResource extends ServerResource
 	@Put("json")
 	@Post("json")
 	public Representation putActivityRegister(Representation representation) throws Exception {
-
+ 
 		// Create an empty JSon representation.
 		Representation result;
 		
