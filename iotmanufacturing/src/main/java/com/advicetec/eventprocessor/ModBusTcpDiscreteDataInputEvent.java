@@ -11,9 +11,6 @@ public class ModBusTcpDiscreteDataInputEvent extends ModBusTcpEvent
 	// Number of id to read
 	private int count;
 	
-	// Number of times to repeat the read.
-	private int repeat;
-
 	public ModBusTcpDiscreteDataInputEvent(String ipAddress, int port,
 			Integer uid, int offset, int count, int repeat) {
 		super(ipAddress, port, uid, ModBusTcpEventType.READ_DISCRETE);
@@ -21,7 +18,6 @@ public class ModBusTcpDiscreteDataInputEvent extends ModBusTcpEvent
 		
 		this.offset = offset;
 		this.count = count;
-		this.repeat = repeat;
 		
 	}
 
@@ -31,10 +27,6 @@ public class ModBusTcpDiscreteDataInputEvent extends ModBusTcpEvent
 
 	public int getCount() {
 		return count;
-	}
-
-	public int getRepeat() {
-		return repeat;
 	}
 	
 }

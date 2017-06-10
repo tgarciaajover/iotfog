@@ -18,6 +18,8 @@ import com.advicetec.mpmcqueue.Queueable;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
 import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesResponse;
+import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
+import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
 public class ModBusTcpProcessor implements Processor {
@@ -38,6 +40,7 @@ public class ModBusTcpProcessor implements Processor {
 
 		eventManager = EventManager.getInstance();
 		ArrayList<DelayEvent> retEvts = new ArrayList<DelayEvent>();
+		Map<String, Object> dictionary = new HashMap<String, Object>();
 		
 		try {
 			// Obtains the connection 
@@ -50,7 +53,6 @@ public class ModBusTcpProcessor implements Processor {
 				case READ_DISCRETE: 
 					ModBusTcpDiscreteDataInputEvent evt = (ModBusTcpDiscreteDataInputEvent) event;
 					adapterManager = AdapterManager.getInstance(); 				
-					String resDiscrete[] = new String[evt.getRepeat()];
 				    ReadInputDiscretesRequest req = null; //the request
 					ReadInputDiscretesResponse res = null; //the response
 			
@@ -63,20 +65,20 @@ public class ModBusTcpProcessor implements Processor {
 					trans.setRequest(req);
 					
 					// Execute the transaction repeat times
-					int k = 0;
-					do {
-					  trans.execute();
-					  res = (ReadInputDiscretesResponse) trans.getResponse();
-					  resDiscrete[k] = res.getDiscretes().toString();
-					  k++;
-					} while (k < evt.getRepeat());
-					
-					Map<String, Object> dictionary = new HashMap<String, Object>();
-					
+					trans.execute();
+					res = (ReadInputDiscretesResponse) trans.getResponse();
+					byte byteRes[] = new byte[evt.getCount()];  
+					for (int i = 0; i < evt.getCount(); i++){
+						boolean bool = res.getDiscretes().getBit(i);
+						byteRes[i] = (byte)(bool?1:0);
+					}
+										
 					dictionary.put("IPAddress", event.getIpAddress());
 					dictionary.put("UID", event.getUid());
-					dictionary.put("Type", (Integer)event.getType().getValue());
-					dictionary.put("Read", resDiscrete);
+					dictionary.put("Offset", evt.getOffset());
+					dictionary.put("Count", evt.getCount());
+					dictionary.put("Type", (Integer) event.getType().getValue());
+					dictionary.put("Read", byteRes);
 					
 					Queueable obj = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
 					adapterManager.getQueue().enqueue(6, obj);
@@ -90,6 +92,40 @@ public class ModBusTcpProcessor implements Processor {
 					
 					break;
 				case READ_REGISTER:
+
+					ModBusTcpInputRegisterEvent evt2 = (ModBusTcpInputRegisterEvent) event;
+					adapterManager = AdapterManager.getInstance(); 				
+					ReadInputRegistersRequest req2 = null; //the request
+					ReadInputRegistersResponse res2 = null; //the response
+			
+					// Prepare the request
+					req2 = new ReadInputRegistersRequest(evt2.getOffset(), evt2.getCount());
+					req2.setUnitID(evt2.getUid());
+			
+					// Prepare the transaction
+					trans = new ModbusTCPTransaction(con);
+					trans.setRequest(req2);
+					
+ 				    trans.execute();
+					res2 = (ReadInputRegistersResponse) trans.getResponse();
+					
+					dictionary.put("IPAddress", event.getIpAddress());
+					dictionary.put("UID", event.getUid());
+					dictionary.put("Offset", evt2.getOffset());
+					dictionary.put("Count", evt2.getCount());
+					dictionary.put("Type", (Integer) event.getType().getValue());
+					dictionary.put("Read", res2.getMessage());
+					
+					Queueable obj2 = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
+					adapterManager.getQueue().enqueue(6, obj2);
+					
+					// Insert again in the queue the event
+					if (evt2.isRepeated()){
+						long milliseconds = evt2.getMilliseconds();
+						DelayEvent dEvent = new DelayEvent(event,milliseconds);
+						retEvts.add(dEvent);
+					}
+					
 					break;
 				case WRITE_DISCRETE:
 						// TODO: we are not writing anything.

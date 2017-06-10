@@ -14,16 +14,17 @@ public class ModBusDiscrete implements Translator {
 	static Logger logger = LogManager.getLogger(ModBusDiscrete.class.getName());
 	
 	public ModBusDiscrete() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	public List<InterpretedSignal> translate(byte[] payload) {
 		
 		List<InterpretedSignal> listReturn = new ArrayList<InterpretedSignal>();
-		Double value = Double.parseDouble(new String(payload, StandardCharsets.UTF_8));
-		InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.BOOLEAN, value);
-		listReturn.add(valueSignal);
+		
+		for (int i = 0; i < payload.length; i++){
+			InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.BOOLEAN, payload[i]==1? true : false);
+			listReturn.add(valueSignal);
+		}
 		
 		return listReturn;
 	}
