@@ -14,7 +14,11 @@ import org.codehaus.jackson.map.ObjectMapper;
 import com.advicetec.configuration.MonitoringDeviceContainer;
 import com.advicetec.configuration.SignalUnitContainer;
 import com.advicetec.core.Configurable;
+import com.advicetec.eventprocessor.EventManager;
+import com.advicetec.eventprocessor.ModBusTcpEvent;
 import com.advicetec.measuredentitity.MeasuredEntity;
+import com.advicetec.mpmcqueue.QueueType;
+import com.advicetec.mpmcqueue.Queueable;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 
 /**
@@ -31,6 +35,7 @@ public class MeasuredEntityManager extends Configurable {
 	static Logger logger = LogManager.getLogger(MeasuredEntityManager.class.getName());
 	
 	private List<MeasuredEntityFacade> entities;
+	private int modBusPort;
 	
 	private MeasuredEntityManager() throws SQLException{
 		
@@ -52,6 +57,7 @@ public class MeasuredEntityManager extends Configurable {
 		String server = properties.getProperty("server");
 		String user = properties.getProperty("user");
 		String password = properties.getProperty("password");
+		this.modBusPort = Integer.valueOf(properties.getProperty("ModBusPort"));
 
 		measuredEntities = new MeasuredEntityContainer(driver, server, user, password);
 		measuredEntities.loadContainer();
@@ -63,6 +69,20 @@ public class MeasuredEntityManager extends Configurable {
 		}
 		
 		logger.info("Num facades that have been read:" + Integer.toString(this.entities.size()) );
+		
+		List<ModBusTcpEvent> events = measuredEntities.getModBusEvents( modBusPort );
+		
+		for (ModBusTcpEvent evt : events){
+			Queueable obj = new Queueable(QueueType.EVENT, evt);
+			try {
+				
+				EventManager.getInstance().getQueue().enqueue(6, obj);
+				
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+		}
 		
 	}
 

@@ -1,6 +1,6 @@
 package com.advicetec.eventprocessor;
 
-public class ModBusTcpInputRegisterEvent extends ModBusTcpEvent
+public class ModBusTcpOutputRegisterEvent extends ModBusTcpEvent
 {
 
 	// offset of the register to bring 
@@ -9,7 +9,7 @@ public class ModBusTcpInputRegisterEvent extends ModBusTcpEvent
 	// Number of id to read
 	private int count;
 		
-	public ModBusTcpInputRegisterEvent(String ipAddress, int port, Integer uid, int offset, int count, boolean repeat) {
+	public ModBusTcpOutputRegisterEvent(String ipAddress, int port, Integer uid, int offset, int count, boolean repeat) {
 		super(ipAddress, port, uid, ModBusTcpEventType.READ_REGISTER);
 
 		super.setRepeated(repeat);

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +18,13 @@ import com.advicetec.configuration.DeviceType;
 import com.advicetec.configuration.IOSignalDeviceType;
 import com.advicetec.configuration.Signal;
 import com.advicetec.configuration.SignalUnitContainer;
+import com.advicetec.eventprocessor.ModBusTcpDiscreteDataInputEvent;
+import com.advicetec.eventprocessor.ModBusTcpDiscreteDataOutputEvent;
+import com.advicetec.eventprocessor.ModBusTcpEvent;
+import com.advicetec.eventprocessor.ModBusTcpEventType;
+import com.advicetec.eventprocessor.ModBusTcpInputRegisterEvent;
+import com.advicetec.eventprocessor.ModBusTcpOutputRegisterEvent;
+import com.advicetec.utils.ModBusUtils;
 
 public class MeasuredEntityContainer extends Container {
 
@@ -25,6 +34,7 @@ public class MeasuredEntityContainer extends Container {
 	static String sqlSelect2 = "SELECT id, name, descr, behavior_text, create_date, last_updttm, measure_entity_id FROM setup_measuredentitybehavior WHERE measure_entity_id = ";
 	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
 	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
+	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
 	
 	public MeasuredEntityContainer(String driver, String server, String user, String password) {
 		super(driver, server, user, password);
@@ -236,5 +246,71 @@ public class MeasuredEntityContainer extends Container {
 		return null;
 	}	
 	
+	public List<ModBusTcpEvent> getModBusEvents( int port ){
+
+		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
 		
+		try 
+		{
+			String sqlSelect = sqlSelect5;  
+			ResultSet rs5 = super.pst.executeQuery(sqlSelect);
+			
+			while (rs5.next()) 
+			{
+		        String ipaddress        	= rs5.getString("ip_address");
+				Integer measured_entity_id  = rs5.getInt("measured_entity_id");  
+		        String portLabel        	= rs5.getString("port_label");
+		        
+		        if (ModBusUtils.isPortLabelValid(portLabel) == false){
+		        	logger.error("Port label" + portLabel + " is invalid");
+		        } else {
+		        	ModBusTcpEventType type = ModBusUtils.getModBusType(portLabel);
+		        	Integer unitId = ModBusUtils.getUnitId(portLabel);
+		        	Integer offset = ModBusUtils.getOffset(portLabel);
+		        	Integer count = ModBusUtils.getCount(portLabel);
+		        	
+		        	switch (type){
+		        		case READ_DISCRETE:
+		        			ModBusTcpDiscreteDataInputEvent evnt1 = new ModBusTcpDiscreteDataInputEvent(ipaddress, port,
+		        					unitId, offset, count, true);
+		        			// TODO: Establish where to put this parameter.
+		        			evnt1.setMilliseconds(5000); 
+		        			events.add(evnt1);
+		        			break;
+		        		case READ_REGISTER:
+		        			ModBusTcpInputRegisterEvent evnt2 = new ModBusTcpInputRegisterEvent(ipaddress, port,
+		        					unitId, offset, count, true);
+		        			evnt2.setMilliseconds(5000); 
+		        			events.add(evnt2);
+		        			break;
+		        		case WRITE_DISCRETE:
+		        			ModBusTcpDiscreteDataOutputEvent evnt3 = new ModBusTcpDiscreteDataOutputEvent(ipaddress, port,
+		        					unitId, offset, count, true);
+		        			// TODO: Establish where to put this parameter.
+		        			evnt3.setMilliseconds(5000); 
+		        			events.add(evnt3);
+		        			break;
+		        		case WRITE_REGISTER:
+		        			ModBusTcpOutputRegisterEvent evnt4 = new ModBusTcpOutputRegisterEvent(ipaddress, port,
+		        					unitId, offset, count, true);
+		        			evnt4.setMilliseconds(5000); 
+		        			events.add(evnt4);
+		        			break;
+		        		case INVALID:
+		        			logger.error("The type of action in the port is invalid - Port label:" + portLabel);
+		        			break;
+		        	}
+		        }
+		        
+			}
+			rs5.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		return events;
+
+	}
 }

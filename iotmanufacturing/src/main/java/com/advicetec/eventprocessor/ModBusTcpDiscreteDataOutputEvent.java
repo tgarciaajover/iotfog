@@ -1,6 +1,6 @@
 package com.advicetec.eventprocessor;
 
-public class ModBusTcpDiscreteDataInputEvent extends ModBusTcpEvent
+public class ModBusTcpDiscreteDataOutputEvent extends ModBusTcpEvent
 {
 
 	// Discrete Data input
@@ -11,7 +11,7 @@ public class ModBusTcpDiscreteDataInputEvent extends ModBusTcpEvent
 	// Number of id to read
 	private int count;
 	
-	public ModBusTcpDiscreteDataInputEvent(String ipAddress, int port,
+	public ModBusTcpDiscreteDataOutputEvent(String ipAddress, int port,
 			Integer uid, int offset, int count, boolean repeat) {
 		super(ipAddress, port, uid, ModBusTcpEventType.READ_DISCRETE);
 		// TODO Auto-generated constructor stub

@@ -14,6 +14,7 @@ import com.advicetec.configuration.MonitoringDevice;
 import com.advicetec.eventprocessor.ModBusTcpEventType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 import com.advicetec.monitorAdapter.protocolconverter.Translator;
+import com.advicetec.utils.ModBusUtils;
 
 public class Modbus2UnifiedMessage implements ProtocolConverter {
 
@@ -26,7 +27,6 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	private ModBusTcpEventType type; // type of modbus event
 	private String[] readDiscrete;   // measures
 
-	private final String PREFIX = "M";
 
 	public Modbus2UnifiedMessage(Map<String, Object> dictionary) {
 		ipAddr = (String) dictionary.get("IPAddress");
@@ -35,10 +35,7 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 		readDiscrete = (String[]) dictionary.get("Read");
 	}
 
-	public String buildPortLabel()
-	{
-		return PREFIX + "-" + Integer.toString(this.offSet) + "-" + Integer.toString(this.count); 
-	}
+
 	
 	@Override
 	public List<UnifiedMessage> getUnifiedMessage() throws Exception {
@@ -62,7 +59,8 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 			ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
 			for(String val: readDiscrete){
 				values = object.translate(val.getBytes());
-				theList.add(new SampleMessage(device, device.getInputOutputPort(buildPortLabel()), measuringEntityId, values, transformation));
+				theList.add(new SampleMessage(device, device.getInputOutputPort(
+						ModBusUtils.buildPortLabel(this.type, this.uid, this.offSet, this.count)), measuringEntityId, values, transformation));
 			}
 			return theList;
 		} else if (type.equals(ModBusTcpEventType.READ_REGISTER)) {
@@ -71,7 +69,8 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 			for(String val: readDiscrete){
 				values = object.translate(val.getBytes());				
 				// Build the port label as: PREFIX + "-" + offset + "-" + count 
-				theList.add(new SampleMessage(device, device.getInputOutputPort(buildPortLabel()), measuringEntityId, values, transformation));
+				theList.add(new SampleMessage(device, device.getInputOutputPort(
+						ModBusUtils.buildPortLabel(this.type, this.uid, this.offSet, this.count)), measuringEntityId, values, transformation));
 			}
 			return theList;
 		}
