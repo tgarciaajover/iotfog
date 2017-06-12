@@ -1,15 +1,9 @@
 package com.advicetec.measuredentitity;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-
-import com.advicetec.configuration.SignalUnitContainer;
 import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.persistence.MeasureAttributeValueCache;
@@ -112,6 +106,19 @@ public class MeasuredEntityManager extends Configurable {
 	public MeasuredEntityContainer getMeasuredEntityContainer()
 	{
 		return this.measuredEntities;
+	}
+
+	
+	public Integer getMeasuredEntityId(String company, String location,
+			String plant, String machineId) {
+		
+		// TODO Marenetes hacer la consulta del modelo canonico y retornar el ID de la máquina
+		return null;
+	}
+	
+	public String getCannonicalById(Integer id){
+		// TODO Marentes retornal el id canonico dado el measure entity id
+		return null;
 	}
 	
 }

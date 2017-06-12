@@ -85,7 +85,6 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
 	}
 
-    
     public String getCode() {
 		return code;
 	}

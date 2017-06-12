@@ -65,7 +65,12 @@ public class IotRestServer extends Application {
       router.attach("/StateInterval/{uniqueID}", IntervalResource.class);
       router.attach("/TranslationClasses", TranslationClassesResource.class);  
       router.attach("/Register/ActivityRegister", ActivityRegistrationResource.class);  
-      
+      // POST request for state array by time range 
+      router.attach("/State",StateResource.class);
+      // POST requent for trend variable
+      router.attach("/Trend",TrendResource.class);
+      // POST requent for downtime reasons
+      router.attach("/DowntimeReason",DowntimeReasonResource.class);
       
       // Return the root router
       return router;

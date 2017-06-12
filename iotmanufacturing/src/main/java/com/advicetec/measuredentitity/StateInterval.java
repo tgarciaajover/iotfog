@@ -10,7 +10,6 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.advicetec.configuration.ReasonCode;
-import com.advicetec.core.AttributeValue;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.Storable;
 
