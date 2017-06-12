@@ -3,7 +3,9 @@ package com.advicetec.measuredentitity;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +22,7 @@ import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.advicetec.configuration.ConfigurationObject;
+import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
@@ -65,9 +68,21 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	@JsonProperty("statebehaviors")
 	protected List<MeasuredEntityStateBehavior> stateBehaviors;
 	
+	@JsonProperty("statebehaviors")
+	protected List<MeasuredEntityStateTransition> stateTransitions;
+	
     @JsonIgnore
     protected LocalDateTime startDateTimeStatus;	// last time interval
-      
+    
+    @JsonIgnore
+    protected MeasuringState currentState;	// current state
+
+    @JsonIgnore
+    protected ReasonCode currentReason;	// current Reason Code for the Status.
+
+    @JsonIgnore
+    protected Map<Integer, ExecutedEntity> executedEntities;
+    
     @JsonIgnore
     protected List<AttributeMeasuredEntity> attributes;
     
@@ -79,10 +94,14 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		createDate = LocalDateTime.now();
 		behaviors = new ArrayList<MeasuredEntityBehavior>();
 		startDateTimeStatus = LocalDateTime.now();
-		//measures = new HashMap<String, MeasuredAttributeValue>();
-		//intervals = new HashMap<String, StateInterval>();
+		currentState = MeasuringState.SCHEDULEDOWN;
+		currentReason = null;
+
 		attributes = new ArrayList<AttributeMeasuredEntity>();
 		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
+		stateTransitions = new ArrayList<MeasuredEntityStateTransition>();
+		executedEntities = new HashMap<Integer, ExecutedEntity>();
+		
 	}
 
     public String getCode() {
@@ -197,26 +216,50 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	public synchronized void putStateBehavior(Integer id, String stateBehaviorType, String descr, String behavior_text)
 	{
-		boolean inserted = false; 
+		logger.debug("Put State Behavior" + Integer.toString(this.stateBehaviors.size()));
+		
+		MeasuredEntityStateBehavior measuredEntityStateBehavior2 = new MeasuredEntityStateBehavior(id, stateBehaviorType);
+		measuredEntityStateBehavior2.setDescr(descr);
+		measuredEntityStateBehavior2.setBehaviorText(behavior_text);
+
 		for (int i = 0; i < this.stateBehaviors.size(); i++){
 			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
-			if (measuredEntityStateBehavior.getStateBehaviorType().compareTo(stateBehaviorType) == 0){
-				MeasuredEntityStateBehavior measuredEntityStateBehavior2 = new MeasuredEntityStateBehavior(id, stateBehaviorType);
-				measuredEntityStateBehavior2.setDescr(descr);
-				measuredEntityStateBehavior2.setBehaviorText(behavior_text);
+			if (measuredEntityStateBehavior.getId() == id){
+				logger.debug("removed element");
 				this.stateBehaviors.remove(i);
-				this.stateBehaviors.add(measuredEntityStateBehavior2);
-				inserted = true;
 				break;
 			}
 		}
 		
-		if (inserted == false){
-			MeasuredEntityStateBehavior measuredEntityStateBehavior2 = new MeasuredEntityStateBehavior(id, stateBehaviorType);
-			measuredEntityStateBehavior2.setDescr(descr);
-			measuredEntityStateBehavior2.setBehaviorText(behavior_text);
-			this.stateBehaviors.add(measuredEntityStateBehavior2);
+		this.stateBehaviors.add(measuredEntityStateBehavior2);
+
+		for (int i = 0; i < this.stateBehaviors.size(); i++){
+			logger.debug("statebehavior:" + this.stateBehaviors.get(i).toString());
 		}
+		
+		logger.debug("Method end. Num State Behavior" + Integer.toString(this.stateBehaviors.size()));
+	}
+	
+	public synchronized void putStateTransition(Integer id, MeasuringState stateFrom, Integer reasonCodeFrom, Integer behavior, LocalDateTime createDate)
+	{
+		logger.debug("Put State Transition");
+		
+		MeasuredEntityStateTransition measuredEntityStateTransitionNew = new MeasuredEntityStateTransition(id);
+		measuredEntityStateTransitionNew.setStateFrom(stateFrom);
+		measuredEntityStateTransitionNew.setResonCode(reasonCodeFrom);
+		measuredEntityStateTransitionNew.setBehavior(behavior);
+		measuredEntityStateTransitionNew.setCreateDate(createDate);
+
+		for (int i = 0; i < this.stateTransitions.size(); i++){
+			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
+			if (measuredEntityStateTransition.getId() == id ){
+				this.stateTransitions.remove(i);
+				break;
+			}
+		}
+		
+		this.stateTransitions.add(measuredEntityStateTransitionNew);
+		
 	}
 	
 	public synchronized String getBehaviorText(String name)
@@ -242,6 +285,35 @@ public abstract class MeasuredEntity extends ConfigurationObject
 				return measuredEntityStateBehavior.getBehavior_text();
 			}
 		}
+		return null;
+	}
+	
+	public synchronized MeasuredEntityStateBehavior getStateBehavior(Integer id)
+	{
+		logger.debug("get State Behavior:" + Integer.toString(id));
+		
+		for (int i = 0; i < this.stateBehaviors.size(); i++){
+			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
+			if (measuredEntityStateBehavior.getId() == id ){
+				logger.debug("stateBehavior" + measuredEntityStateBehavior.toString());
+				return this.stateBehaviors.get(i);
+			}
+		}
+		
+		return null;
+	}
+	
+	
+	
+	public synchronized MeasuredEntityStateTransition getStateTransition(Integer id)
+	{
+		for (int i = 0; i < this.stateTransitions.size(); i++){
+			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
+			if (measuredEntityStateTransition.getId() == id ){
+				return this.stateTransitions.get(i);
+			}
+		}
+		
 		return null;
 	}
 	
@@ -343,6 +415,8 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	
 	public synchronized void updateEntityConfiguration(MeasuredEntity measuredEntity) {
 
+		logger.debug("Update Entity Configuration - MeasuredEntity" + measuredEntity);
+		
 		// update behaviors.
 		removeBehaviors();
 		for ( int i=0; i < measuredEntity.behaviors.size(); i++)
@@ -353,9 +427,71 @@ public abstract class MeasuredEntity extends ConfigurationObject
 							measuredEntity.behaviors.get(i).getBehavior_text() );			
 		}
 		
+		// update state behaviors.
+		removeStateBehaviors();
+		for ( int i=0; i < measuredEntity.stateBehaviors.size(); i++)
+		{
+			putStateBehavior(measuredEntity.stateBehaviors.get(i).getId(),
+					     measuredEntity.stateBehaviors.get(i).getStateBehaviorType(), 
+						   measuredEntity.stateBehaviors.get(i).getDescr(), 
+							measuredEntity.stateBehaviors.get(i).getBehavior_text() );			
+		}
+		
 		if (measuredEntity instanceof Machine){
 			
 		}
 	}
-	
+
+    @JsonIgnore
+    public void startInterval(MeasuringState newState, ReasonCode rCode) {
+    	currentState = newState;
+    	currentReason= rCode;
+    	startDateTimeStatus = LocalDateTime.now();
+    }
+    
+    @JsonIgnore
+    public MeasuringState getCurrentState(){
+    	return this.currentState;
+    }
+    
+    @JsonIgnore
+    public ReasonCode getCurrentReason(){
+    	return this.currentReason;
+    }
+    
+    @JsonIgnore
+    public LocalDateTime getCurrentStatDateTime(){
+    	return this.startDateTimeStatus;
+    }
+
+    public void addExecutedEntity(ExecutedEntity executedEntity){
+    	this.executedEntities.put(executedEntity.getId(), executedEntity);
+    }
+    
+    public ExecutedEntity getExecutedEntity(Integer id){
+    	return this.executedEntities.get(id);
+    }
+    
+    public void removeExecutedEntity(Integer id){
+    	this.executedEntities.remove(id);
+    }
+
+
+	public String getBehaviorText(MeasuringState state, Integer idRazonParada) {
+		int behaviorId = 0; 
+		for (int i = 0; i < this.stateTransitions.size(); i++){
+			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
+			if ((measuredEntityStateTransition.getStateFrom() == state ) && (measuredEntityStateTransition.getResonCode() == idRazonParada)) {
+				behaviorId = this.stateTransitions.get(i).getBehavior();
+				break;
+			}
+		}
+		
+		if (behaviorId > 0){
+			if (this.getStateBehavior(behaviorId) != null)
+				return this.getStateBehavior(behaviorId).getBehavior_text();
+		}
+		
+		return null;
+	}
 }

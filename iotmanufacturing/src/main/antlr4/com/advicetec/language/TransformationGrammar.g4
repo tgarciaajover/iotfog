@@ -88,6 +88,7 @@ expression : expression EXPO expression  							# Expon
 			| substring                                             # ref_substring
 			| startwith                                             # ref_startwith 
 			| status												# ref_status
+			| state                                                 # ref_state
 		    | expression op=( MULT | DIVI | MOD ) expression  		# Mult
 			| expression op=(PLUS | MINUS) expression  				# AddSub
  			| expression op=(LTEQ | GTEQ | LT | GT) expression		# relationalExpr
@@ -108,7 +109,10 @@ startwith   : STARTWITH  PR_OPN ex1=expression ',' ex2=expression PR_CLS
 
 status		: STATUS DOT ID
 	;
-	
+
+state       : STATE DOT POSSIBLE_STATES
+    ;
+    
 atom :		ID								# Var
 			| TEXT_DATE						# Date
 			| TEXT_TIME						# Time
@@ -172,6 +176,7 @@ DISPLAY 	: 'display';
 SAVE		: 'save';
 TOKEN 		: 'token';
 STATUS 		: 'STATUS';
+STATE       : 'STATE';
 TREND		: 'trend';
 ROUND 		: 'round'; 
 IMPORT 		: 'import'; 
@@ -179,6 +184,8 @@ AS 			: 'as';
 TIMER		: 'timer';
 REPEAT		: 'repeat';
 STARTWITH   : 'start_with';
+
+POSSIBLE_STATES : OPERATIVE | SCHED_DOWN | UNSCHED_DOWN; 
 
 OR 		: 	'OR';
 AND 	: 	'AND';
@@ -209,7 +216,9 @@ K_VOID  	: 'void';
 K_DATE		: 'date';
 K_TIME		: 'time';
 K_DATETIME 	: 'datetime';
-
+OPERATIVE 	: 'operative';
+SCHED_DOWN  : 'sched_down';
+UNSCHED_DOWN : 'unsched_down';
 
 SEMICOLON 		: ';';
 COMMA 	  		: ',';

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -14,52 +13,48 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
+import com.advicetec.core.serialization.MeasuringStateSerializer;
+import com.advicetec.core.serialization.MeasuringStateDeserializer;
 
-public class MeasuredEntityStateBehavior extends  ConfigurationObject
+
+public class MeasuredEntityStateTransition extends ConfigurationObject 
 {
-		
-	@JsonProperty("state_behavior_type")
-	String stateBehaviorType;
+
+	@JsonProperty("state_from")
+	@JsonSerialize(using = MeasuringStateSerializer.class)
+	@JsonDeserialize(using = MeasuringStateDeserializer.class)	
+	private MeasuringState stateFrom;
 	
-	@JsonProperty("descr")
-	String descr;
-	
-	@JsonProperty("behavior_text")
-	String behaviorText;
+	@JsonProperty("reason_code")
+	private int reasonCode;
 
 	@JsonProperty("create_date") 
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
 	private LocalDateTime createDate;
-		
-	@JsonCreator
-	public MeasuredEntityStateBehavior(@JsonProperty("id") Integer id, @JsonProperty("state_behavior_type") String stateBehaviorType) {
+
+	
+	@JsonProperty("behavior")
+	private int behavior;  
+	
+	public MeasuredEntityStateTransition(@JsonProperty("id") Integer id) {
 		super(id);
-		this.stateBehaviorType = stateBehaviorType;
 	}
 
-	public void setStateBehaviorType(String stateBehaviorType) {
-		this.stateBehaviorType = stateBehaviorType;
+	public MeasuringState getStateFrom() {
+		return stateFrom;
 	}
 
-	public void setDescr(String descr) {
-		this.descr = descr;
+	public void setStateFrom(MeasuringState stateFrom) {
+		this.stateFrom = stateFrom;
 	}
 
-	public void setBehaviorText(String behaviorText) {
-		this.behaviorText = behaviorText;
+	public int getResonCode() {
+		return reasonCode;
 	}
 
-	public String getStateBehaviorType() {
-		return stateBehaviorType;
-	}
-
-	public String getDescr() {
-		return descr;
-	}
-
-	public String getBehavior_text() {
-		return behaviorText;
+	public void setResonCode(int resonCode) {
+		this.reasonCode = resonCode;
 	}
 
 	public LocalDateTime getCreateDate() {
@@ -69,13 +64,15 @@ public class MeasuredEntityStateBehavior extends  ConfigurationObject
 	public void setCreateDate(LocalDateTime createDate) {
 		this.createDate = createDate;
 	}
-	
-	public String toString(){
-		return "Id:" + Integer.toString(this.getId()) + 
-					" type:" + this.getStateBehaviorType() + 
-						" descr:" + this.getDescr() + "text:" +this.getBehavior_text(); 
+
+	public int getBehavior() {
+		return behavior;
 	}
-	
+
+	public void setBehavior(int behavior) {
+		this.behavior = behavior;
+	}
+
 	public String toJson()
 	{
 		ObjectMapper mapper = new ObjectMapper();
@@ -96,6 +93,5 @@ public class MeasuredEntityStateBehavior extends  ConfigurationObject
 		}
 		
 		return jsonInString;
-	}	
-	
+	}
 }

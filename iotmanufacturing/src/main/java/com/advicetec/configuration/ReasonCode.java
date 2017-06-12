@@ -13,13 +13,21 @@ import com.advicetec.core.serialization.LocalDateTimeSerializer;
 
 public class ReasonCode extends ConfigurationObject 
 {
+	@JsonProperty("reason_id")
+	private String cannonicalReasonId;
+	@JsonProperty("company")
+	private String cannonicalCompany;
+	@JsonProperty("location")
+	private String cannonicalLocation;
+	@JsonProperty("plant")
+	private String cannonicalPlant;
 	
 	@JsonProperty("descr")
 	String description;
-	
+	/* tipo de falla */
 	@JsonProperty("group")
 	String group;
-	
+	/* clasificacion para el OEE*/
 	@JsonProperty("classification")
 	String classification;
 
@@ -91,4 +99,37 @@ public class ReasonCode extends ConfigurationObject
 		}
 		return json;
 	}
+	
+	public void setCannonicalReasonId(String cannonicalReasonId) {
+		this.cannonicalReasonId = cannonicalReasonId;
+	}
+
+	public void setCannonicalCompany(String cannonicalCompany) {
+		this.cannonicalCompany = cannonicalCompany;
+	}
+
+	public void setCannonicalLocation(String cannonicalLocation) {
+		this.cannonicalLocation = cannonicalLocation;
+	}
+
+	public void setCannonicalPlant(String cannonicalPlant) {
+		this.cannonicalPlant = cannonicalPlant;
+	}
+
+	public String getCannonicalReasonId() {
+		return cannonicalReasonId;
+	}
+
+	public String getCannonicalCompany() {
+		return cannonicalCompany;
+	}
+
+	public String getCannonicalLocation() {
+		return cannonicalLocation;
+	}
+
+	public String getCannonicalPlant() {
+		return cannonicalPlant;
+	}
+
 }

@@ -4,8 +4,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import com.advicetec.core.Configurable;
+import com.advicetec.eventprocessor.EventManager;
+import com.advicetec.eventprocessor.ModBusTcpEvent;
 import com.advicetec.measuredentitity.MeasuredEntity;
+import com.advicetec.mpmcqueue.QueueType;
+import com.advicetec.mpmcqueue.Queueable;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 
 /**
@@ -19,9 +25,13 @@ public class MeasuredEntityManager extends Configurable {
 	private static MeasuredEntityManager instance=null;
 	private MeasuredEntityContainer measuredEntities;
 	
+	static Logger logger = LogManager.getLogger(MeasuredEntityManager.class.getName());
+	
 	private List<MeasuredEntityFacade> entities;
+	private int modBusPort;
 	
 	private MeasuredEntityManager() throws SQLException{
+		
 		super("MeasuredEntity");
 		entities = new ArrayList<MeasuredEntityFacade>();
 		
@@ -40,6 +50,7 @@ public class MeasuredEntityManager extends Configurable {
 		String server = properties.getProperty("server");
 		String user = properties.getProperty("user");
 		String password = properties.getProperty("password");
+		this.modBusPort = Integer.valueOf(properties.getProperty("ModBusPort"));
 
 		measuredEntities = new MeasuredEntityContainer(driver, server, user, password);
 		measuredEntities.loadContainer();
@@ -48,6 +59,22 @@ public class MeasuredEntityManager extends Configurable {
 			MeasuredEntity m = (MeasuredEntity) measuredEntities.getObject(i);
 			MeasuredEntityFacade f = new MeasuredEntityFacade(m);
 			entities.add(f);
+		}
+		
+		logger.info("Num facades that have been read:" + Integer.toString(this.entities.size()) );
+		
+		List<ModBusTcpEvent> events = measuredEntities.getModBusEvents( modBusPort );
+		
+		for (ModBusTcpEvent evt : events){
+			Queueable obj = new Queueable(QueueType.EVENT, evt);
+			try {
+				
+				EventManager.getInstance().getQueue().enqueue(6, obj);
+				
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
 		}
 		
 	}
@@ -91,10 +118,16 @@ public class MeasuredEntityManager extends Configurable {
 	 * @return NULL if there is not an entity with the given id.
 	 */
 	public MeasuredEntityFacade getFacadeOfEntityById(final Integer entityId){	
+		
+		logger.debug("getFacadeOfEntityById" + Integer.toString(entityId) );
+		
 		for (MeasuredEntityFacade facade : entities) {
+			
 			if (facade.getEntity() == null)
-				System.out.println("error - entity is null");
+				logger.error("entity registered is null");
 			else{ 
+				logger.debug("facade:" + Integer.toString(facade.getEntity().getId()));
+				
 				if(facade.getEntity().getId() == entityId){
 					return facade;
 				}

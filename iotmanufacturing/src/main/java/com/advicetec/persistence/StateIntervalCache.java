@@ -8,26 +8,22 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
-import org.codehaus.jackson.annotate.JsonProperty;
-
 import com.advicetec.configuration.ConfigurationManager;
+import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.configuration.ReasonCodeContainer;
-import com.advicetec.core.Attribute;
-import com.advicetec.core.AttributeValue;
-
 import com.advicetec.core.Configurable;
-
 import com.advicetec.measuredentitity.MeasuredEntityType;
-
 import com.advicetec.core.TimeInterval;
-import com.advicetec.measuredentitity.MeasuredAttributeValue;
-import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.advicetec.measuredentitity.Machine;
+import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuringState;
 import com.advicetec.measuredentitity.StateInterval;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -55,8 +51,10 @@ public class StateIntervalCache extends Configurable {
 	private static Connection conn  = null; 
 	private static PreparedStatement pst = null;
 
-	final private static String sqlStatusIntervalRangeSelect = "select datetime_from, datetime_to, status, reason_code where id_owner = ? and owner_type = ? and ((datetime_from >= ? and datetime_from <= ?) or (datetime_to >= ? and datetime_to <= ?))";
+	private String sqlDownTimeReasons;
 	
+	final private static String sqlStatusIntervalRangeSelect = "SELECT datetime_from, datetime_to, status, reason_code FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? and ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? and datetime_to <= ?))";
+			
 	private static Cache<String, StateInterval> cache;
 	PreparedStatement preparedStatement;
 
@@ -72,6 +70,13 @@ public class StateIntervalCache extends Configurable {
 		MAX_SIZE = Integer.valueOf(properties.getProperty("max_size"));
 		WRITE_TIME = Integer.valueOf(properties.getProperty("write_time"));
 		DELETE_TIME = Integer.valueOf(properties.getProperty("delete_time"));
+
+		if (this.DB_DRIVER.compareTo("org.postgresql.Driver") == 0){
+			sqlDownTimeReasons = "SELECT reason_code, COUNT(*) AS counter, SUM(DATE_PART('minute',datetime_to - datetime_from)) AS duration FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? AND ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? AND datetime_to <= ?)) GROUP BY reason_code";
+		} else if (this.DB_DRIVER.compareTo("com.microsoft.sqlserver.jdbc.SQLServerDriver") == 0){
+			sqlDownTimeReasons = "SELECT reason_code, COUNT(*) AS counter, SUM(DATEDIFF(minute,datetime_from,datetime_to)) AS duration FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? AND ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? AND datetime_to <= ?)) GROUP BY reason_code";
+		}
+
 	}
 	
 	
@@ -269,6 +274,7 @@ public class StateIntervalCache extends Configurable {
 		return LocalDateTime.now().minusSeconds(WRITE_TIME + DELETE_TIME);
 	}
 	
+	
 	public ArrayList<StateInterval> getFromDatabase(Integer entityId, MeasuredEntityType mType,
 			LocalDateTime from, LocalDateTime to) {
 		
@@ -338,11 +344,82 @@ public class StateIntervalCache extends Configurable {
 			}
 		}
 		
-		return list;
+		return list;	
+	}
+	
+	
+	private DowntimeReason getDowntimeReasonFromDataBase(){
+		return null;
+	}
+	
+	
+	/**
+	 * Returns a list of Downtime Reasons from database.
+	 * @param entity
+	 * @param from
+	 * @param to
+	 * @return
+	 */
+	public Map<Integer,DowntimeReason> getDownTimeReasonsByInterval(MeasuredEntity entity,
+			LocalDateTime from, LocalDateTime to){
+		Map<Integer,DowntimeReason> map = new HashMap<Integer,DowntimeReason>();
+		
+		try{
+			Class.forName(DB_DRIVER);
+			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			conn.setAutoCommit(false);
+			pst = conn.prepareStatement(this.sqlDownTimeReasons);
+			pst.setInt(1, entity.getId());
+			pst.setInt(2, entity.getType().getValue());
+			pst.setTimestamp(3, Timestamp.valueOf(from));
+			pst.setTimestamp(4, Timestamp.valueOf(to));
+			pst.setTimestamp(5, Timestamp.valueOf(from));
+			pst.setTimestamp(6, Timestamp.valueOf(to));
+			ResultSet rs =  pst.executeQuery();
+			
+			ConfigurationManager manager = ConfigurationManager.getInstance();
+			ReasonCodeContainer reasonCont =  manager.getReasonCodeContainer();
+			
+			while (rs.next())
+			{
+				// datetime_from, datetime_to, status, reason_code
+				Integer reasonCode = rs.getInt("reason_code");
+				Integer counter = rs.getInt("counter");
+				Double duration = rs.getDouble("duration");
+				if(entity.getType() == MeasuredEntityType.MACHINE){
+					ReasonCode reason = (ReasonCode) reasonCont.getObject(reasonCode);
+					if(reason != null){
+						map.put(reasonCode,new DowntimeReason(((Machine)entity).getCannonicalMachineId(), 
+							reason.getCannonicalReasonId(), reason.getDescription(), counter, duration) );
+					}	
+				}
+			}
+		}catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		finally{
+			if(pst!=null)
+			{
+				try
+				{
+					pst.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
 
-		
-		
-		
-		
+			if(conn!=null) 
+			{
+				try
+				{
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return map;
 	}
 }

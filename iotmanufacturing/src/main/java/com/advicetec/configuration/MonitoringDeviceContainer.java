@@ -68,7 +68,8 @@ public class MonitoringDeviceContainer extends Container
 			
 			ResultSet rs2 = super.pst.executeQuery(sqlSelect2);
 			while (rs2.next())
-			{
+			{		     
+
 				Integer id     			= rs2.getInt("id"); 
 		        String transformation	= rs2.getString("transformation_text");
 		        Integer deviceId    	= rs2.getInt("device_id");

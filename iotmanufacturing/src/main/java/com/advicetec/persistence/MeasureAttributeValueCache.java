@@ -248,28 +248,6 @@ public class MeasureAttributeValueCache extends Configurable {
 		}
 	}
 
-	/**
-	 * 
-	 * @param entityId
-	 * @param attrName
-	 * @param from
-	 * @param to
-	 * @return
-	 */
-	public ArrayList<AttributeValue> getAttributeValuesByRange(Integer entityId,
-			String attrName, LocalDateTime from, LocalDateTime to) {
-		LocalDateTime oldest = LocalDateTime.now().minusSeconds(WRITE_TIME + DELETE_TIME);
-
-		// all values are in the cache
-		if(oldest.isBefore(from)){
-			
-		}
-		// get elements from cache
-		
-		// get elements from database
-		return null;
-	}
-
 	public LocalDateTime getOldestTime(){
 		return LocalDateTime.now().minusSeconds(WRITE_TIME + DELETE_TIME);
 	}

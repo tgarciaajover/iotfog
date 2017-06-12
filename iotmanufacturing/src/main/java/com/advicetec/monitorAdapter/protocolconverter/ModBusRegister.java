@@ -1,6 +1,5 @@
 package com.advicetec.monitorAdapter.protocolconverter;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,24 +8,26 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.core.AttributeType;
 
-public class ModBusDiscrete implements Translator {
-	
+public class ModBusRegister implements Translator {
+
 	static Logger logger = LogManager.getLogger(ModBusDiscrete.class.getName());
 	
-	public ModBusDiscrete() {
+	public ModBusRegister() {
 	}
 
 	@Override
 	public List<InterpretedSignal> translate(byte[] payload) {
 		
 		List<InterpretedSignal> listReturn = new ArrayList<InterpretedSignal>();
-		
-		for (int i = 0; i < payload.length; i++){
-			InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.BOOLEAN, payload[i]==1? true : false);
+		int i = 1; // The first byte corresponds to array len.
+		while  (i < payload.length) {
+			Integer val = ((payload[i] & 0xff) << 8) | (payload[i+1] & 0xff);
+			InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.INT, val);
 			listReturn.add(valueSignal);
+			i = i + 2;
 		}
 		
 		return listReturn;
 	}
-
+	
 }

@@ -14,6 +14,7 @@ import com.advicetec.configuration.MonitoringDevice;
 import com.advicetec.eventprocessor.ModBusTcpEventType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 import com.advicetec.monitorAdapter.protocolconverter.Translator;
+import com.advicetec.utils.ModBusUtils;
 
 public class Modbus2UnifiedMessage implements ProtocolConverter {
 
@@ -21,6 +22,8 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 
 	private String ipAddr; // Address of concentrator
 	private Integer uid;   // id of device measure
+	private Integer offSet; // Number of the first register
+	private Integer count;   // Number of elements read. 
 	private ModBusTcpEventType type; // type of modbus event
 	private String[] readDiscrete;   // measures
 
@@ -31,6 +34,7 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 		type = ModBusTcpEventType.from( ((int) dictionary.get("Type")) );
 		readDiscrete = (String[]) dictionary.get("Read");
 	}
+
 
 	
 	@Override
@@ -50,12 +54,23 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 		List<InterpretedSignal> values;
 		Integer measuringEntityId = confManager.getMeasuredEntity(ipAddr, uidStr);
 
-		if(type.equals(ModBusTcpEventType.READ_DISCRETE)){
+		if (type.equals(ModBusTcpEventType.READ_DISCRETE)) {
 			Translator object = (Translator) Class.forName(classToLoad).newInstance();
 			ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
 			for(String val: readDiscrete){
 				values = object.translate(val.getBytes());
-				theList.add(new SampleMessage(device, device.getInputOutputPort(uid), measuringEntityId, values, transformation));
+				theList.add(new SampleMessage(device, device.getInputOutputPort(
+						ModBusUtils.buildPortLabel(this.type, this.uid, this.offSet, this.count)), measuringEntityId, values, transformation));
+			}
+			return theList;
+		} else if (type.equals(ModBusTcpEventType.READ_REGISTER)) {
+			Translator object = (Translator) Class.forName(classToLoad).newInstance();
+			ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
+			for(String val: readDiscrete){
+				values = object.translate(val.getBytes());				
+				// Build the port label as: PREFIX + "-" + offset + "-" + count 
+				theList.add(new SampleMessage(device, device.getInputOutputPort(
+						ModBusUtils.buildPortLabel(this.type, this.uid, this.offSet, this.count)), measuringEntityId, values, transformation));
 			}
 			return theList;
 		}

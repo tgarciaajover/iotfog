@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.temporal.ChronoUnit;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -121,7 +122,7 @@ public final class StateInterval implements Storable
 		return false;
 	}
 
-	void setKey(String newKey) {
+	public void setKey(String newKey) {
 		this.key = newKey;
 	}
 	
@@ -149,5 +150,9 @@ public final class StateInterval implements Storable
 	public int compareTo(StateInterval a)
 	{
 		return this.toString().compareTo(a.toString());
+	}
+
+	public Double getDurationMin() {
+		return (double) ChronoUnit.MINUTES.between(interval.getStart(),interval.getEnd());
 	}
 }

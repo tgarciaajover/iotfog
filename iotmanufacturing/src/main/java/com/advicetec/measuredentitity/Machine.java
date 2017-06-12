@@ -9,6 +9,7 @@ public class Machine extends ProductionEntity {
 	String cannonicalCompany;
 	String cannonicalLocation;
 	String cannonicalPlant;
+	String cannonicalGroup;
 	
 	@JsonCreator
 	public Machine(@JsonProperty("id") Integer id){
@@ -46,5 +47,12 @@ public class Machine extends ProductionEntity {
 	public void setCannonicalPlant(String cannonicalPlant) {
 		this.cannonicalPlant = cannonicalPlant;
 	}
+
+	public void setCannonicalGroup(String machineGroup) {
+		this.cannonicalGroup = machineGroup;
+	}
 	
+	public String getCannonicalGroup(){
+		return cannonicalGroup;
+	}
 }

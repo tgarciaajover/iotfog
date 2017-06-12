@@ -20,7 +20,7 @@ public class ConfigurationManager extends Configurable
 	private ReasonCodeContainer reasonCodes;
 	private DisplayTypeContainer displayTypes;
 	private DisplayDeviceContainer displayDevices;
-
+	
     public static ConfigurationManager getInstance()
     {
     	if (instance == null){
@@ -57,6 +57,7 @@ public class ConfigurationManager extends Configurable
 		monitoringDevices.addReference("Signal", signals);
 		monitoringDevices.addReference("DeviceType", deviceTypes);
 		
+		// container from configuration
 		reasonCodes = new ReasonCodeContainer(driver, server, user, password);
 		
 		// Add Display Types 

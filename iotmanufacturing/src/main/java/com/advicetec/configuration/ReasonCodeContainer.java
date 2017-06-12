@@ -17,6 +17,7 @@ public class ReasonCodeContainer extends Container
 	static Logger logger = LogManager.getLogger(ReasonCodeContainer.class.getName());
 	
 	static String sqlSelect = "SELECT id, descr, classification, down, create_date, group_cd FROM setup_idlereason";
+	static String sqlReasonSelect = "SELECT idlereason_ptr_id, id_compania, id_sede, id_planta, id_razon_parada FROM setup_idlereasonhostsystem WHERE idlereason_ptr_id = ";
 
 	public ReasonCodeContainer(String driver, String server, String user, String password) 
 	{	
@@ -57,6 +58,13 @@ public class ReasonCodeContainer extends Container
 			}
 			
 			rs.close();
+			
+			// loop through the measured entities and load their behaviors
+			for( Integer id : this.configuationObjects.keySet()){
+				ReasonCode reasonCode = (ReasonCode) this.configuationObjects.get(id);
+				loadCannonicalReasonCodes(reasonCode);
+			}
+			
 
 			super.disconnect();
 			
@@ -72,6 +80,34 @@ public class ReasonCodeContainer extends Container
         	throw new SQLException(error);
         }
 		
+		
+	}
+
+	private void loadCannonicalReasonCodes(ReasonCode reasonCode) {
+		try 
+		{
+			String sqlSelect = sqlReasonSelect + String.valueOf(reasonCode.getId());  
+			ResultSet rs = super.pst.executeQuery(sqlSelect);
+
+			while (rs.next()) 
+			{
+				String company 		= rs.getString("id_compania");
+				String location     = rs.getString("id_sede");
+				String plant   		= rs.getString("id_planta");
+				String reason = rs.getString("id_razon_parada");
+
+				reasonCode.setCannonicalCompany(company);
+				reasonCode.setCannonicalLocation(location);
+				reasonCode.setCannonicalPlant(plant);
+				reasonCode.setCannonicalReasonId(reason);
+			}
+
+			rs.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
 		
 	}
 
