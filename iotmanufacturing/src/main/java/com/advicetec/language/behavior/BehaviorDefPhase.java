@@ -21,6 +21,7 @@ import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.LocalScope;
 import com.advicetec.language.ast.Scope;
+import com.advicetec.language.ast.StateSymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
@@ -291,6 +292,11 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 			defineVarArray(ctx.type(), ctx.id1, numElem);
 		}
 	}
+	
+	public void exitState(BehaviorGrammarParser.StateContext ctx) { }
+	{ 
+		defineState();
+	}
 
 	public void defineAttributeArray(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, int numElem, Token unit)
 	{
@@ -381,6 +387,15 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		// System.out.println("Define var: " + var.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 
+	public void defineState()
+	{
+		// Define the symbol in the global scope
+		if (globals.resolve("state") == null){
+			StateSymbol state = new StateSymbol();
+			globals.define(state);
+		}
+	}
+	
 	public GlobalScope getGlobalScope(){
 		return globals;
 	}

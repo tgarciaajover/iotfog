@@ -67,7 +67,7 @@ public class MeasuredEntityEventProcessor implements Processor
 					// Store the new attributes and their values.  
 					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap(), AttributeOrigin.BEHAVIOR);
 					entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());
-
+					entityFacade.setCurrentState(interpreter.getGlobalSpace().getSymbolMap());
 
 					Map<String, Symbol> symbols =  interpreter.getGlobalScope().getSymbolMap();
 

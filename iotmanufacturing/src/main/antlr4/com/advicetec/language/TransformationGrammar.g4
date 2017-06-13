@@ -35,6 +35,7 @@ sentence : block									# ref_block
 			| timer									# ref_event
 			| repeat								# ref_repeat
 			| RETURN expression SEMICOLON		   	# ref_return
+			| state_assign                          # ref_state_assign
 			| assign								# ref_assign
  			| round									# ref_round 			
 			| log 									# ref_log
@@ -52,6 +53,9 @@ unit_dec	: UNIT id1=ID STRING SEMICOLON
 
 assign 		: ID ASG expression SEMICOLON
 	; 
+
+state_assign : STATE ASG POSSIBLE_STATES SEMICOLON
+    ;
 
 display  	: DISPLAY PR_OPN deviceId=ID ',' expression PR_CLS SEMICOLON
 	;
@@ -110,7 +114,7 @@ startwith   : STARTWITH  PR_OPN ex1=expression ',' ex2=expression PR_CLS
 status		: STATUS DOT ID
 	;
 
-state       : STATE DOT POSSIBLE_STATES
+state       : STATE
     ;
     
 atom :		ID								# Var

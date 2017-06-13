@@ -18,6 +18,7 @@ import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.LocalScope;
 import com.advicetec.language.ast.Scope;
+import com.advicetec.language.ast.StateSymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
@@ -218,6 +219,11 @@ public class DefPhase extends TransformationGrammarBaseListener
 		defineUnit( ctx.getParent(), ctx.id1, ctx.ID().getText(),ctx.STRING().getText());
 	}
 
+	@Override public void exitState(TransformationGrammarParser.StateContext ctx) 
+	{
+		defineState();
+	}
+	
 	public void exitAtrib_dec(TransformationGrammarParser.Atrib_decContext ctx) 
 	{ 
 		
@@ -266,6 +272,15 @@ public class DefPhase extends TransformationGrammarBaseListener
 		// System.out.println("Define unit: " + unt.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 
+	public void defineState()
+	{
+		// Define the symbol in the global scope
+		if (globals.resolve("state") == null){
+			StateSymbol state = new StateSymbol();
+			globals.define(state);
+		}
+	}
+	
 	public void defineVar(TransformationGrammarParser.TypeContext typeCtx, Token nameToken)
 	{
 

@@ -47,6 +47,7 @@ sentence : block									# ref_block
 			| timer									# ref_event
 			| repeat								# ref_repeat				
 			| RETURN expression SEMICOLON		   	# ref_return
+			| state_assign                          # ref_state_assign
 			| assign								# ref_assign
 			| assign_vec							# ref_assign_vec
 			| expression SEMICOLON				  	# ref_call
@@ -60,6 +61,9 @@ assign 		: ID ASG expression SEMICOLON
 
 assign_vec 	: ID '[' numElement=INT ']' ASG expression SEMICOLON
 	; 
+
+state_assign : STATE ASG POSSIBLE_STATES SEMICOLON
+    ;
 
 var_dec 	: VARIABLE type ID (ASG expression)? SEMICOLON
 	;
@@ -120,6 +124,7 @@ expression : ID  PR_OPN expressionList?  PR_CLS  					# Call // func call like f
  			| substring                                             # ref_substring
  			| startwith                                             # ref_startwith 
  			| status												# ref_status
+ 			| state                                                 # ref_state
  			| ID '[' expression ']'                     		    # ExprArrayIndex // arrayId[i]
 		    | expression op=( MULT | DIVI | MOD ) expression  		# Mult
 			| expression op=(PLUS | MINUS) expression  				# AddSub
@@ -141,6 +146,9 @@ startwith   : STARTWITH  PR_OPN ex1=expression ',' ex2=expression PR_CLS
 
 status		: STATUS DOT ID
 	;
+						
+state       : STATE
+    ;
 						
 atom 		:	ID								# Var
 		| DATE							# Date
@@ -210,6 +218,7 @@ TOKEN 		: 'token';
 DISPLAY 	: 'display';
 SAVE		: 'save';
 STATUS 		: 'STATUS';
+STATE       : 'STATE';
 COUNT_OVER_TIME : 'count_over_time';
 MAX_OVER_TIME	: 'max_over_time';
 TREND		: 'trend';
@@ -219,6 +228,8 @@ AS 			: 'as';
 TIMER		: 'timer';
 REPEAT		: 'repeat';
 STARTWITH   : 'start_with';
+
+POSSIBLE_STATES : OPERATIVE | SCHED_DOWN | UNSCHED_DOWN; 
 
 STRING : '"' .*?  '"';
 
@@ -262,7 +273,9 @@ K_DATETIME 	: 'datetime';
 K_VOID  	: 'void';
 K_DATE		: 'date';
 K_TIME		: 'time';
-
+OPERATIVE 	: 'operative';
+SCHED_DOWN  : 'sched_down';
+UNSCHED_DOWN : 'unsched_down';
 
 IF 		: 'if';
 ELSE 	: 'else';

@@ -33,12 +33,14 @@ import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.MemorySpace;
 import com.advicetec.language.ast.ReturnValue;
 import com.advicetec.language.ast.Scope;
+import com.advicetec.language.ast.StateSymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.TransformationSpace;
 import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
+import com.advicetec.measuredentitity.MeasuringState;
 
 public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 {
@@ -230,7 +232,6 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		}
 	}	
 	
-
 	public ASTNode AssignAttribute(AttributeSymbol toAssign, TransformationGrammarParser.Atrib_decContext ctx)
 	{
 		
@@ -371,7 +372,84 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 				
 	}
 	
+	public ASTNode visitState(TransformationGrammarParser.StateContext ctx) 
+	{ 
+		String id = "state"; 
+		
+		MemorySpace space = null;
+		ASTNode node = null;
 
+		space = getSpaceWithSymbol(id);
+		if ( space==null ){ 
+			MeasuringState state = facade.getCurrentState();
+			switch (state){
+				case OPERATING:
+					node = new ASTNode(new Integer(0));
+					break;
+				case SCHEDULEDOWN:
+					node = new ASTNode(new Integer(1));
+					break;
+				case UNSCHEDULEDOWN:
+					node = new ASTNode(new Integer(2));
+					break;
+				case UNDEFINED:
+					node = new ASTNode(new Integer(3));
+					break;
+			}
+		} else {
+			node = space.get(id);
+		}
+
+		return node;
+		 
+	}
+
+	public ASTNode visitState_assign(TransformationGrammarParser.State_assignContext ctx) 
+	{ 
+		String id = "state";
+		// Bring the symbol from the global scope 
+		Symbol symbol = currentScope.resolve(id);
+		
+		Integer value = null;
+		ASTNode node = null;
+
+		MemorySpace space = null;
+
+		space = getSpaceWithSymbol(symbol.getName());
+		if ( space==null ){ 
+			space = getGlobalSpace(); // create in current space
+		}
+		
+		// Verify the symbol as of type StateSymbol
+		if (symbol instanceof StateSymbol ){
+			
+			String newState = ctx.POSSIBLE_STATES().getText();
+			
+			if (newState.compareTo("operative") == 0){
+				value = new Integer(0);
+				node = new ASTNode(value); 
+			} else if (newState.compareTo("sched_down") == 0 ){
+				value = new Integer(1);
+				node = new ASTNode(value); 
+			} else if (newState.compareTo("unsched_down") == 0 ){
+				value = new Integer(2);
+				node = new ASTNode(value); 
+			} else {
+				value = new Integer(3);
+				node = new ASTNode(value); 
+			}
+
+			space.put(symbol.getName(), node);         // store
+			return node;
+			
+		} else {
+			String error = "the state is not registered in the status as type state symbol";
+			logger.error(error);
+			throw new RuntimeException( error );			
+		}
+				 
+	}
+	
 	public ASTNode initializeAttribute(Symbol symbol)
 	{
 		

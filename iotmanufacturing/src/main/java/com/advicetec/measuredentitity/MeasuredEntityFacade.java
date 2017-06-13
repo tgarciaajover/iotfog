@@ -29,6 +29,8 @@ import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.language.ast.ASTNode;
+import com.advicetec.language.ast.AttributeSymbol;
+import com.advicetec.language.ast.StateSymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.DowntimeReason;
@@ -128,7 +130,18 @@ public final class MeasuredEntityFacade {
 		return status.getAttributeValueByName(attName);
 	}
 
-
+	/**
+	 * Returns the current state of the measured entity. 
+	 * @return  If there is not entity assigned return undefined.
+	 */    
+	public MeasuringState getCurrentState(){
+    	 if (this.entity == null){
+    		 return MeasuringState.UNDEFINED;
+    	 } else {
+    		 return this.entity.getCurrentState();
+    	 }
+     }
+	
 	/**
 	 * 
 	 * @param valueMap 
@@ -671,19 +684,36 @@ public final class MeasuredEntityFacade {
 		return map;
 	}
 	
-	
-
-	public MeasuringState getCurrentState()
-	{
-		return this.entity.getCurrentState();
-	}
-	
 	public void startExecutedObject(ExecutedEntity executedEntity){
 		this.entity.addExecutedEntity(executedEntity);
 	}
 	
 	public void removeExecutedObject(Integer id){
 		this.entity.removeExecutedEntity(id);
+	}
+	
+
+	public void setCurrentState(Map<String, ASTNode> symbolMap) {
+
+		for (Map.Entry<String, ASTNode> entry : symbolMap.entrySet()) 
+		{
+			if(entry.getKey().compareTo("state") == 0 ){
+				ASTNode node = entry.getValue();
+				Integer newState = node.asInterger();
+				
+				if (newState == 0){
+					this.entity.startInterval(MeasuringState.OPERATING, null);
+				} else if (newState == 1){
+					this.entity.startInterval(MeasuringState.SCHEDULEDOWN, null);
+				} else if (newState == 2){
+					this.entity.startInterval(MeasuringState.UNSCHEDULEDOWN, null);
+				} else {
+					logger.error("The new state is being set to undefined, which is incorrect");
+				}	
+				
+			}
+		}
+
 	}
 }
 
