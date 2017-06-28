@@ -7,15 +7,12 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
 import com.advicetec.MessageProcessor.MessageManager;
-import com.advicetec.MessageProcessor.SampleProcessor;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.AdapterManager;
-import com.advicetec.persistence.StatusStore;
 import com.advicetec.utils.MqttSubscriber;
-import com.google.inject.spi.Message;
 import com.advicetec.iot.rest.IotRestServer;
 
 public class IotInit extends Configurable 
@@ -38,6 +35,7 @@ public class IotInit extends Configurable
 		
 		// Property configurator
 		
+		logger.info("Start IOT engine");
 		
 		configManager = ConfigurationManager.getInstance();
 		eventManager = EventManager.getInstance();
@@ -47,7 +45,8 @@ public class IotInit extends Configurable
 
 		// Init the configuration  
 		configManager.loadConfiguration();
-
+		
+		logger.info("IOT engine Loaded");
 		
 	}
 	
@@ -67,11 +66,11 @@ public class IotInit extends Configurable
 
 			IotInit iotInit = IotInit.getInstance();
 			iotInit.adapterManager.run();
-			System.out.println("after running adapter Manager");
+			logger.debug("after running adapter Manager");
 			iotInit.messageManager.run();
-			System.out.println("after running message Manager");
+			logger.debug("after running message Manager");
 			iotInit.eventManager.run();
-			System.out.println("after running event Manager");
+			logger.debug("after running event Manager");
 
 			// Init the Rest server 
 			String rest_port = iotInit.properties.getProperty("rest_port");

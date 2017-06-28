@@ -80,7 +80,6 @@ public class ConfigHead {
 		if(!UdpUtils.getFields(data, 0, 2).equalsIgnoreCase("aa55") || data.length() != expectedSize*2 || data.length() < 160){ // 216 0xd8
 			logger.error(" Format does not match: "+ data);
 		}else{
-			System.out.println(data);
 			
 			screenWidth = UdpUtils.getFields(data, 2, 2); // screen width
 			screenHeight = UdpUtils.getFields(data, 4, 2); // screen height

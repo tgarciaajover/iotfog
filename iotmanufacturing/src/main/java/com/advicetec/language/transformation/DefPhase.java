@@ -219,7 +219,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 		defineUnit( ctx.getParent(), ctx.id1, ctx.ID().getText(),ctx.STRING().getText());
 	}
 
-	@Override public void exitState(TransformationGrammarParser.StateContext ctx) 
+	public void exitState(TransformationGrammarParser.StateContext ctx) 
 	{
 		defineState();
 	}

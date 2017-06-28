@@ -25,14 +25,16 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	private Integer offSet; // Number of the first register
 	private Integer count;   // Number of elements read. 
 	private ModBusTcpEventType type; // type of modbus event
-	private String[] readDiscrete;   // measures
+	private byte[] readDiscrete;   // measures
 
 
 	public Modbus2UnifiedMessage(Map<String, Object> dictionary) {
 		ipAddr = (String) dictionary.get("IPAddress");
 		uid = (Integer) dictionary.get("UID");
+		offSet = (Integer) dictionary.get("Offset");
+		count = (Integer) dictionary.get("Count");
 		type = ModBusTcpEventType.from( ((int) dictionary.get("Type")) );
-		readDiscrete = (String[]) dictionary.get("Read");
+		readDiscrete = (byte[]) dictionary.get("Read");
 	}
 
 
@@ -40,38 +42,34 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	@Override
 	public List<UnifiedMessage> getUnifiedMessage() throws Exception {
 
-		String uidStr = Integer.toString(uid);
-
+		logger.info("type: " + this.type + " uid:" + this.uid + " offset: " + this.offSet + "count: " + this.count);
+		
+		String portLabel = ModBusUtils.buildPortLabel(this.type, this.uid, this.offSet, this.count);
+				
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
 		MonitoringDevice device = confManager.getMonitoringDevice(ipAddr);
-		String transformation = confManager.getTransformation(ipAddr, uidStr);
-		String className = confManager.getClassName(ipAddr, uidStr);
+		String transformation = confManager.getTransformation(ipAddr, portLabel);
+		String className = confManager.getClassName(ipAddr, portLabel);
 
 		logger.debug("ClassName param:" + className);
 		String packageStr = this.getClass().getPackage().getName() + ".protocolconverter";
 		String classToLoad = packageStr + "." + className;
 
 		List<InterpretedSignal> values;
-		Integer measuringEntityId = confManager.getMeasuredEntity(ipAddr, uidStr);
+		Integer measuringEntityId = confManager.getMeasuredEntity(ipAddr, portLabel);
 
 		if (type.equals(ModBusTcpEventType.READ_DISCRETE)) {
 			Translator object = (Translator) Class.forName(classToLoad).newInstance();
 			ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
-			for(String val: readDiscrete){
-				values = object.translate(val.getBytes());
-				theList.add(new SampleMessage(device, device.getInputOutputPort(
-						ModBusUtils.buildPortLabel(this.type, this.uid, this.offSet, this.count)), measuringEntityId, values, transformation));
-			}
+			values = object.translate(readDiscrete);
+			theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), measuringEntityId, values, transformation));
 			return theList;
 		} else if (type.equals(ModBusTcpEventType.READ_REGISTER)) {
 			Translator object = (Translator) Class.forName(classToLoad).newInstance();
 			ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
-			for(String val: readDiscrete){
-				values = object.translate(val.getBytes());				
-				// Build the port label as: PREFIX + "-" + offset + "-" + count 
-				theList.add(new SampleMessage(device, device.getInputOutputPort(
-						ModBusUtils.buildPortLabel(this.type, this.uid, this.offSet, this.count)), measuringEntityId, values, transformation));
-			}
+			values = object.translate(readDiscrete);				
+			// Build the port label as: PREFIX + "-" + offset + "-" + count 
+			theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), measuringEntityId, values, transformation));
 			return theList;
 		}
 		return null;

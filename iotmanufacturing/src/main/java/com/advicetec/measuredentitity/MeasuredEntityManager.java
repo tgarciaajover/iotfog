@@ -71,7 +71,7 @@ public class MeasuredEntityManager extends Configurable {
 		for (ModBusTcpEvent evt : events){
 			Queueable obj = new Queueable(QueueType.EVENT, evt);
 			try {
-				logger.info("new modbus event created");
+				logger.info("new: " + events.size() +  " modbus event created");
 				EventManager.getInstance().getQueue().enqueue(6, obj);
 				
 			} catch (InterruptedException e) {

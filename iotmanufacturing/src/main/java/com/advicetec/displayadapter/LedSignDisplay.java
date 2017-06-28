@@ -678,7 +678,7 @@ public class LedSignDisplay implements Output {
 		JetFile2Packet in = publishPacket(completePacket(out));
 
 		String resp = JetFile2Protocol.processPacket(in);
-		System.out.println(resp);
+		logger.debug(resp);
 		return resp != null;
 	}
 
@@ -726,7 +726,7 @@ public class LedSignDisplay implements Output {
 		// create a packet start
 		JetFile2Packet out = JetFile2Protocol.BlackScreenCommand.endBlackScreen();
 		JetFile2Packet in = publishPacket(completePacket(out));
-		System.out.println("end display:" + in.getData());
+		logger.debug("end display:" + in.getData());
 		return in.getStatus().equals(JetFile2Protocol.StatusCode.SUCESS);
 	}
 

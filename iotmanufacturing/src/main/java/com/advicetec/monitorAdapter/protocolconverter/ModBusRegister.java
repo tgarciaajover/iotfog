@@ -22,6 +22,7 @@ public class ModBusRegister implements Translator {
 		int i = 1; // The first byte corresponds to array len.
 		while  (i < payload.length) {
 			Integer val = ((payload[i] & 0xff) << 8) | (payload[i+1] & 0xff);
+			logger.debug("translated value: " + String.valueOf(val));
 			InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.INT, val);
 			listReturn.add(valueSignal);
 			i = i + 2;

@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -22,6 +24,8 @@ import com.advicetec.core.serialization.LocalDateTimeSerializer;
 public class MonitoringDevice extends ConfigurationObject
 {
 
+	static Logger logger = LogManager.getLogger(MonitoringDevice.class.getName());
+	
 	@JsonProperty("device_type") 
 	private DeviceType type;
 	
@@ -125,9 +129,9 @@ public class MonitoringDevice extends ConfigurationObject
 	@JsonIgnore
 	public String getTranformation(String portLabel){
 		Integer id = this.portsByLabel.get(portLabel);
-		System.out.println("Port requested:" + portLabel + "Port id:" + id);
+		logger.debug("Port requested:" + portLabel + "Port id:" + id);
 		if (getInputOutputPort(id) == null){
-			System.out.println("Error Label Port not found");
+			logger.debug("Error Label Port: " + id + " not found");
 			return null;
 		} else {
 			return  getInputOutputPort(id).getTransformationText();
@@ -145,7 +149,7 @@ public class MonitoringDevice extends ConfigurationObject
 		Integer id = this.portsByLabel.get(portLabel);
 
 		if (getInputOutputPort(id) == null){
-			System.out.println("Error Label Port not found");
+			logger.debug("Error Label Port: " + id + " not found");
 			return null;
 		} else {
 			return getInputOutputPort(id).getSignalType().getType().getClassName();

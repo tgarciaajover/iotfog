@@ -54,12 +54,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		this.scopes = new ParseTreeProperty<Scope>();
 		this.parser = parser;
 		this.compilationErrors = new ArrayList<SyntaxError>();
+		globals = new GlobalScope();
 	}	
 	
 	public void enterProgram(BehaviorGrammarParser.ProgramContext ctx)
 	{
 		// System.out.println("Enter program");
-		globals = new GlobalScope();
 		currentScope = globals;
 	}		
 
@@ -293,7 +293,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		}
 	}
 	
-	public void exitState(BehaviorGrammarParser.StateContext ctx) { }
+	public void exitState(BehaviorGrammarParser.StateContext ctx)
 	{ 
 		defineState();
 	}

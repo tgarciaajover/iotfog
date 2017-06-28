@@ -95,15 +95,15 @@ public class MeasuredEntityEventProcessor implements Processor
 					entityFacade.getStatus();
 				}
 				else {
-					// TODO: put in the log all the traced errors.
+					logger.debug("Number of Errors :" + String.valueOf(errorList.size()));
 				}
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
+				logger.debug("Error message:" + e.getMessage());
 				e.printStackTrace();
 			}
 
 		} else {
-			// TODO: put the log error saying that there is not facade.
+			logger.error("Facade not found" + measuringEntity);
 		}
 
 		return ret;

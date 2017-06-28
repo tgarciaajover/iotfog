@@ -169,7 +169,6 @@ public class JetFile2Packet{
 	public String toHexString(){
 		
 		String body = bodyString();
-		//System.out.println(body);
 		byte[] bytes = DatatypeConverter.parseHexBinary(body);
 		String chk = UdpUtils.checksum(bytes);
 		

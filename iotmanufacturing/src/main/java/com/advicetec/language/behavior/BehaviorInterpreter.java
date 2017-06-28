@@ -178,7 +178,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	public ASTNode visitVar_dec(BehaviorGrammarParser.Var_decContext ctx) 
 	{ 
 		String id = ctx.ID().getText();
-		System.out.println("visitVar_dec");
 		Symbol s = currentScope.resolve(id);
 
 		// the declaration includes an assignment
@@ -370,7 +369,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	public ASTNode visitState(BehaviorGrammarParser.StateContext ctx) 
 	{ 
 		String id = "state"; 
-		
+
 		MemorySpace space = null;
 		ASTNode node = null;
 
@@ -378,33 +377,33 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		if ( space==null ){ 
 			MeasuringState state = facade.getCurrentState();
 			switch (state){
-				case OPERATING:
-					node = new ASTNode(new Integer(0));
-					break;
-				case SCHEDULEDOWN:
-					node = new ASTNode(new Integer(1));
-					break;
-				case UNSCHEDULEDOWN:
-					node = new ASTNode(new Integer(2));
-					break;
-				case UNDEFINED:
-					node = new ASTNode(new Integer(3));
-					break;
+			case OPERATING:
+				node = new ASTNode(new Integer(0));
+				break;
+			case SCHEDULEDOWN:
+				node = new ASTNode(new Integer(1));
+				break;
+			case UNSCHEDULEDOWN:
+				node = new ASTNode(new Integer(2));
+				break;
+			case UNDEFINED:
+				node = new ASTNode(new Integer(3));
+				break;
 			}
 		} else {
 			node = space.get(id);
 		}
 
 		return node;
-		 
+
 	}
-	
+
 	public ASTNode visitState_assign(BehaviorGrammarParser.State_assignContext ctx) 
 	{ 
 		String id = "state";
 		// Bring the symbol from the global scope 
 		Symbol symbol = currentScope.resolve(id);
-		
+
 		Integer value = null;
 		ASTNode node = null;
 
@@ -414,12 +413,12 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		if ( space==null ){ 
 			space = getGlobalSpace(); // create in current space
 		}
-		
+
 		// Verify the symbol as of type StateSymbol
 		if (symbol instanceof StateSymbol ){
-			
+
 			String newState = ctx.POSSIBLE_STATES().getText();
-			
+
 			if (newState.compareTo("operative") == 0){
 				value = new Integer(0);
 				node = new ASTNode(value); 
@@ -436,13 +435,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 			space.put(symbol.getName(), node);         // store
 			return node;
-			
+
 		} else {
 			String error = "the state is not registered in the status as type state symbol";
 			logger.error(error);
 			throw new RuntimeException( error );			
 		}
-				 
+
 	}
 
 	public ASTNode visitVect_var_dec(BehaviorGrammarParser.Vect_var_decContext ctx) 
@@ -584,14 +583,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}
 
 		logger.debug("initializeSymbol:" + symbol.getName());
-	
+
 		if (!((symbol instanceof VariableSymbol) || (symbol instanceof AttributeSymbol))){
 			String error = "Calling inialize for a symbol which is not variable nor attribute";
 			logger.error(error);			
 			throw new RuntimeException( error );
-			
+
 		}
-		
+
 		switch (symbol.getType())
 		{
 
@@ -722,36 +721,36 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 			return value;
 
 		case tSTRING:
-            if (value.isBoolean()) {
-            	return new ASTNode(String.valueOf(value.asBoolean()));
-            } else if (value.isDate()) {
-            	
-            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.DATE_FORMAT);
-            	String formatDate = value.asDate().format(formatter);
-            	return new ASTNode(formatDate);
-            	
-            } else if (value.isDateTime()) {
-            	
-            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.DATETIME_FORMAT);
-            	String formatDateTime = value.asDateTime().format(formatter);
-            	return new ASTNode(formatDateTime);
-            	
-            } else if (value.isTime()) {
+			if (value.isBoolean()) {
+				return new ASTNode(String.valueOf(value.asBoolean()));
+			} else if (value.isDate()) {
 
-            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.TIME_FORMAT);
-            	String formatTime = value.asTime().format(formatter);
-            	return new ASTNode(formatTime);
-            	
-            } else if (value.isDouble()) {
-            	return new ASTNode(String.valueOf(value.asDouble()));
-            } else if (value.isInteger()) {
-            	return new ASTNode(String.valueOf(value.asInterger()));
-            } else if (value.isString()) {
-            	return value;
-            } else {
-            	throw new RuntimeException("The value given is of invalid type");
-            }
-			
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.DATE_FORMAT);
+				String formatDate = value.asDate().format(formatter);
+				return new ASTNode(formatDate);
+
+			} else if (value.isDateTime()) {
+
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.DATETIME_FORMAT);
+				String formatDateTime = value.asDateTime().format(formatter);
+				return new ASTNode(formatDateTime);
+
+			} else if (value.isTime()) {
+
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SystemConstants.TIME_FORMAT);
+				String formatTime = value.asTime().format(formatter);
+				return new ASTNode(formatTime);
+
+			} else if (value.isDouble()) {
+				return new ASTNode(String.valueOf(value.asDouble()));
+			} else if (value.isInteger()) {
+				return new ASTNode(String.valueOf(value.asInterger()));
+			} else if (value.isString()) {
+				return value;
+			} else {
+				throw new RuntimeException("The value given is of invalid type");
+			}
+
 		case tFLOAT:
 			if (value.isDouble()) {
 				return value;
@@ -768,7 +767,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}	
 	}
 
-	
+
 	@Override 
 	public ASTNode visitAssign_vec(BehaviorGrammarParser.Assign_vecContext ctx) 
 	{ 
@@ -892,14 +891,12 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitInteger(BehaviorGrammarParser.IntegerContext ctx) 
 	{ 
-		System.out.println("visitInteger");
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 
 	@Override
 	public ASTNode visitYear(BehaviorGrammarParser.YearContext ctx) 
 	{ 
-		System.out.println("visitYear");
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 
@@ -911,23 +908,18 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitFloat(BehaviorGrammarParser.FloatContext ctx) 
 	{ 
-		System.out.println("visit Float");
-
 		return new ASTNode(Double.valueOf(ctx.getText()));
 	}
 
 	@Override 
 	public ASTNode visitBoolean(BehaviorGrammarParser.BooleanContext ctx) 
 	{ 
-		System.out.println("visitBoolean");
-
 		return new ASTNode(Boolean.valueOf(ctx.getText()));
 	}
 
 	@Override 
 	public ASTNode visitStr(BehaviorGrammarParser.StrContext ctx) 
 	{ 
-		System.out.println("visitStr");
 
 		String str = ctx.getText();
 
@@ -939,7 +931,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitParens(BehaviorGrammarParser.ParensContext ctx) 
 	{ 
-		System.out.println("visitParens");
 
 		return this.visit(ctx.expression()); 
 	}
@@ -947,7 +938,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitMult(BehaviorGrammarParser.MultContext ctx) 
 	{ 
-		System.out.println("visitMult");
 
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
@@ -1000,7 +990,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitAddSub(BehaviorGrammarParser.AddSubContext ctx) 
 	{ 
-		System.out.println("visitAddSub");
 
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
@@ -1044,8 +1033,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	public ASTNode visitExpon(BehaviorGrammarParser.ExponContext ctx) 
 	{ 
 
-		System.out.println("visitExpon");
-
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
 
@@ -1066,8 +1053,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitRelationalExpr(BehaviorGrammarParser.RelationalExprContext ctx) 
 	{ 
-
-		System.out.println("visitRelationalExpr");
 
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
@@ -1133,8 +1118,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitEqualityExpr(BehaviorGrammarParser.EqualityExprContext ctx) 
 	{ 
-
-		System.out.println("visitEqualityExpr");
 
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
@@ -1212,7 +1195,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitOrExpr(BehaviorGrammarParser.OrExprContext ctx) 
 	{ 
-		System.out.println("visitOrExpr");
+		logger.debug("visitOrExpr");
 
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
@@ -1225,43 +1208,43 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	public ASTNode visitToken(BehaviorGrammarParser.TokenContext ctx) 
 	{ 
-				
+
 		BehaviorGrammarParser.ExpressionContext stringEq1 =  ctx.ex1;
 		BehaviorGrammarParser.ExpressionContext numToken = ctx.ex2;
-		
+
 		String input =  (this.visit(stringEq1)).asString();
 
 		logger.debug("visitToken:" + input );
-		
+
 		ASTNode numberToken = this.visit(numToken); 
 		if (numberToken.isInteger() == false) 
 		{
 			throw new RuntimeException("param number_from is not valid: " + numberToken.toString());
 		}
-				
+
 		Integer token = (numberToken).asInterger();
 
 		StringTokenizer defaultTokenizer = new StringTokenizer(input, SystemConstants.TOKEN_SEP);
 		int countTokens = defaultTokenizer.countTokens();
-		
+
 		if (countTokens >= token){
 			int i = 0;
 			while (defaultTokenizer.hasMoreTokens())
 			{
-			    if (i == token){
-			    	return new ASTNode( defaultTokenizer.nextToken() );
-			    }
-			    else { 
-			    	i++;
-			    }
+				if (i == token){
+					return new ASTNode( defaultTokenizer.nextToken() );
+				}
+				else { 
+					i++;
+				}
 			}
 		} else {
 			throw new RuntimeException("The number of token requested:" + token + " is greater than the token count " + countTokens);
 		}
-		
+
 		return ASTNode.VOID;
-    }	
-	
+	}	
+
 	public ASTNode visitSubstring(BehaviorGrammarParser.SubstringContext ctx) 
 	{ 
 		BehaviorGrammarParser.ExpressionContext stringEq1 =  ctx.ex1;
@@ -1291,18 +1274,18 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	public ASTNode visitStartWith(BehaviorGrammarParser.StartwithContext ctx) 
 	{ 
-				
+
 		BehaviorGrammarParser.ExpressionContext stringParamCtx1 =  ctx.ex1;
 		BehaviorGrammarParser.ExpressionContext StringParamCtx2 = ctx.ex2;
-		
+
 		String stringParam1 =  (this.visit(stringParamCtx1)).asString();
 		String stringParam2 =  (this.visit(StringParamCtx2)).asString();
-		
+
 		logger.debug("visitStartWith - Param1:"+ stringParam1 + " Param2:" + stringParam2 );
-						
+
 		return new ASTNode( new Boolean(stringParam1.startsWith(stringParam2)));
-		
-    } 
+
+	} 
 
 	public ASTNode visitRepeat(BehaviorGrammarParser.RepeatContext ctx) 
 	{ 
@@ -1426,8 +1409,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		// update the current scope to the one defined in the function. 
 		currentScope = (FunctionSymbol) fs;
 
-		System.out.println("Starting function: "+ fname + " currentScope:" + currentScope.getScopeName());
-
 		// Counts the number of parameters included.
 		int argCount = 0;
 		BehaviorGrammarParser.ExpressionListContext listParams = ctx.expressionList();        
@@ -1436,8 +1417,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 			for ( BehaviorGrammarParser.ExpressionContext expres : listParams.expression())
 				argCount++;
 		}
-
-		System.out.println("num params:" + argCount);
 
 		// check for argument compatibility
 		if ( argCount==0 )
@@ -1489,7 +1468,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 		// goes up in the current scope.
 		currentScope = saveScope;
-		System.out.println("Starting function: "+ fname + "Ending currentScope:" + currentScope.getScopeName());
 		return result;
 
 	}
@@ -1640,57 +1618,66 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		// Call the facade to get the attribute value during the interval. 
 		List<AttributeValue> values = facade.getByIntervalByAttributeName(attributeId, from, now);
 
-		
+
 		double valueRet = 0;
 		AttributeType type = null;
 		for (int i = 0; i < values.size(); i++) {
 			AttributeValue value = values.get(i);
-			type = value.getAttr().getType();
-
-			switch (type)
-			{
-			case DOUBLE:
-				Double doubleValue = (Double) value.getValue();
-				valueRet = doubleValue.doubleValue() + valueRet;
-				break;
-
-			case INT:
-				Integer integerValue = (Integer) value.getValue();
-				valueRet = integerValue.intValue() + valueRet;
-				break;
-
-			case BOOLEAN:
-				boolean boolValue = ((Boolean) value.getValue()).booleanValue();
-				if (boolValue == true){
-					valueRet = valueRet + 1;
+			if ((value == null) || (value.getAttr() == null) ){
+				if (value == null){
+					logger.error("value attribute is null with  attribute:" + attributeId + "num attribute values:" + values.size() + "index:" + i);
 				}
-				break;
-
-			case STRING:
-				valueRet = valueRet + 1;
-				break;				 
-
-			case DATETIME:
-				valueRet = valueRet + 1;
-				break;				 				
-
-			case DATE:
-				valueRet = valueRet + 1;
-				break;				 				
-
-			case TIME:
-				valueRet = valueRet + 1;
-				break;				 				
-
-			case VOID:
-				throw new RuntimeException("The Void type is not comparable with the operator maximum");
-
-			default:
-				throw new RuntimeException("unknown type: " + type.name());
+				else{
+					logger.error("value attribute has an attribute definition null - attribute:" + attributeId);
+				}
+				
+			} else {
+				type = value.getAttr().getType();
+	
+				switch (type)
+				{
+				case DOUBLE:
+					Double doubleValue = (Double) value.getValue();
+					valueRet = doubleValue.doubleValue() + valueRet;
+					break;
+	
+				case INT:
+					Integer integerValue = (Integer) value.getValue();
+					valueRet = integerValue.intValue() + valueRet;
+					break;
+	
+				case BOOLEAN:
+					boolean boolValue = ((Boolean) value.getValue()).booleanValue();
+					if (boolValue == true){
+						valueRet = valueRet + 1;
+					}
+					break;
+	
+				case STRING:
+					valueRet = valueRet + 1;
+					break;				 
+	
+				case DATETIME:
+					valueRet = valueRet + 1;
+					break;				 				
+	
+				case DATE:
+					valueRet = valueRet + 1;
+					break;				 				
+	
+				case TIME:
+					valueRet = valueRet + 1;
+					break;				 				
+	
+				case VOID:
+					throw new RuntimeException("The Void type is not comparable with the operator maximum");
+	
+				default:
+					throw new RuntimeException("unknown type: " + type.name());
+				}
 			}
-
 		}		
-		
+
 		Object objRet = null;
 		if (type != null){
 			switch (type)
@@ -1708,8 +1695,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 				objRet = new Integer(new Double(valueRet).intValue() );
 				break;				 				
 			}
+		} else {
+			// There are not measures in the cache or database. 
+			objRet = new Integer(0);
 		}
-		
+
 		logger.debug("Attribute Type:" + type.getName() + "Output" + objRet + "total samples" + values.size());
 
 		return new ASTNode(objRet);

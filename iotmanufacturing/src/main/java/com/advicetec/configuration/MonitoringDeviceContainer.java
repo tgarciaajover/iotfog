@@ -22,12 +22,16 @@ public class MonitoringDeviceContainer extends Container
 	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id, port_label, measured_entity_id FROM setup_inputoutputport";
 
 	private Map<String, Integer> indexByMac;
+	private Map<String, Integer> indexByIpAddress;
+	private Map<String, Integer> indexBySerial;
 
 	
 	public MonitoringDeviceContainer(String driver, String server, String user, String password) 
 	{	
 		super(driver, server, user, password);
 		indexByMac = new HashMap<String, Integer>();
+		indexByIpAddress = new HashMap<String, Integer>();
+		indexBySerial = new HashMap<String, Integer>();
 	}
 	
 	public void loadContainer() throws SQLException
@@ -60,8 +64,14 @@ public class MonitoringDeviceContainer extends Container
 		        object.setCreate_date(timestamp.toLocalDateTime());
 		        
 		        super.configuationObjects.put(id, object);
-		        indexByMac.put(macAddress,id);
-		      
+		        if (!macAddress.isEmpty())
+		        	indexByMac.put(macAddress,id);
+		        
+		        if (!ipAddress.isEmpty())
+		        	indexByIpAddress.put(ipAddress, id);
+		        
+		        if (!serial.isEmpty())
+		        	indexBySerial.put(serial,id);
 			}
 			
 			rs1.close();
@@ -126,6 +136,28 @@ public class MonitoringDeviceContainer extends Container
 		
 	}
 	
+	public synchronized MonitoringDevice getByIpAddress(String ipAddress)
+	{
+		logger.debug("serach by ipaddress:" + ipAddress);
+		Integer id = this.indexByIpAddress.get(ipAddress);
+		if (id != null)
+			return (MonitoringDevice) super.getObject(id);
+		else
+			return null;
+		
+	}
+
+	public synchronized MonitoringDevice getBySerial(String serial)
+	{
+		logger.debug("serach by serial:" + serial);
+		Integer id = this.indexBySerial.get(serial);
+		if (id != null)
+			return (MonitoringDevice) super.getObject(id);
+		else
+			return null;
+		
+	}
+
 	public synchronized void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();

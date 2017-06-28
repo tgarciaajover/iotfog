@@ -123,28 +123,45 @@ public class ConfigurationManager extends Configurable
 	
 	public MonitoringDevice getMonitoringDevice(String deviceAddress)
 	{
-		return this.monitoringDevices.getByMacAddress(deviceAddress);
+		if ( this.monitoringDevices.getByMacAddress(deviceAddress) == null)
+		{
+			if (this.monitoringDevices.getByIpAddress(deviceAddress) == null)
+			{
+				if (this.monitoringDevices.getBySerial(deviceAddress) == null)
+				{
+					return null;
+				} else {
+					return this.monitoringDevices.getBySerial(deviceAddress);
+				}
+			} else {
+				return this.monitoringDevices.getByIpAddress(deviceAddress);
+			}
+			
+		} else {
+			return this.monitoringDevices.getByMacAddress(deviceAddress);
+		}
+			
 	}
 	
 	
 	public String getTransformation(String macAddress, String portLabel){
 		logger.debug("In getTransformation macAddress:" + macAddress + "portLabel:" + portLabel );
 		
-		if (this.monitoringDevices.getByMacAddress(macAddress) == null){
+		if (this.getMonitoringDevice(macAddress) == null){
 			logger.error("Monitoring Device with address:" + macAddress +" not Found");
 			return null;
 		} else { 
-			return	this.monitoringDevices.getByMacAddress(macAddress).getTranformation(portLabel);
+			return	this.getMonitoringDevice(macAddress).getTranformation(portLabel);
 		}
 	}
 		
 	public String getClassName(String macAddress, String portLabel){
-		return this.monitoringDevices.getByMacAddress(macAddress).getClassName(portLabel);
+		return this.getMonitoringDevice(macAddress).getClassName(portLabel);
 	}
 	
 	public Integer getMeasuredEntity(String macAddress, String portLabel){
 		logger.debug("start getMeasuredEntity params:" + macAddress + "|" + portLabel);
-		MonitoringDevice mDevice = this.monitoringDevices.getByMacAddress(macAddress); 
+		MonitoringDevice mDevice = this.getMonitoringDevice(macAddress); 
 		if ( mDevice == null){
 			logger.error("Monitoring Device with address:"+ macAddress +" not found");
 			return null;

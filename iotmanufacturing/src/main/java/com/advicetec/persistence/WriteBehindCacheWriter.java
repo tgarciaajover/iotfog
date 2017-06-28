@@ -73,7 +73,6 @@ public final class WriteBehindCacheWriter<K, V> implements CacheWriter<K, V>
 
   @Override
   public void write(K key, V value) {
-	System.out.println("entro en write:" + ZonedDateTime.now() + " key:" + key.toString() + " value:" + value.toString());  
     subject.onNext(new SimpleImmutableEntry<>(key, value));
   }
 
@@ -99,9 +98,7 @@ public final class WriteBehindCacheWriter<K, V> implements CacheWriter<K, V>
 
     /** The callback to perform the writing to the database or repository. */
     public Builder<K, V> writeAction(Consumer<Map<K, V>> writeAction) {
-      System.out.println("entro en writeAction");
       this.writeAction = requireNonNull(writeAction);
-      System.out.println("Salio en writeAction");
       return this;
     }
 

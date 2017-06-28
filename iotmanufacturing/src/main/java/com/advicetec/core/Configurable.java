@@ -6,6 +6,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.advicetec.configuration.Container;
+
 /**
  * This class implements a reader for properties file
  * @author user
@@ -13,6 +18,8 @@ import java.util.Properties;
  */
 public abstract class Configurable {
 
+	static Logger logger = LogManager.getLogger(Configurable.class.getName());
+	
 	protected Properties properties;
 	
 	public Configurable(String filename){
@@ -32,11 +39,9 @@ public abstract class Configurable {
 		    this.properties.load(reader);		 		 
 		    reader.close();
 		} catch (FileNotFoundException ex) {
-		    // TODO include in the log file
-			System.out.println("File" + filename + " not found");
+			logger.error("File" + filename + " not found");
 		} catch (IOException ex) {
-			// TODO include in the log file
-			System.out.println("Input Output error reading the file:" + filename );
+			logger.error("Input Output error reading the file:" + filename );
 		}
 	}
 	

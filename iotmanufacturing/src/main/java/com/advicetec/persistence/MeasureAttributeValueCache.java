@@ -98,7 +98,6 @@ public class MeasureAttributeValueCache extends Configurable {
 			                	});
 	
 			                	int ret[] = pst.executeBatch();
-			                	System.out.println("Number of commands executed:" + ret.length);
 			        			conn.commit();
 		        			} catch (ClassNotFoundException e) {
 								// TODO Auto-generated catch block
@@ -147,7 +146,6 @@ public class MeasureAttributeValueCache extends Configurable {
 	}
 
 	public void cacheStore(AttributeValue mav){
-		System.out.println("guardando el attribute value:" + mav.toString());
 		cache.put(mav.getKey(), mav);
 	}
 
@@ -271,7 +269,7 @@ public class MeasureAttributeValueCache extends Configurable {
 			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 			conn.setAutoCommit(false);
 			pst = conn.prepareStatement(this.sqlMeasureAttributeValueRangeSelect);
-			pst.setInt(1, entityId);
+			pst.setString(1, String.valueOf(entityId));
 			pst.setString(2, attribute.getName());
 			pst.setTimestamp(3, Timestamp.valueOf(from));
 			pst.setTimestamp(4, Timestamp.valueOf(to));
