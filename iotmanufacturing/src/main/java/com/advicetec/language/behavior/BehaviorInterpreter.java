@@ -198,7 +198,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	public ASTNode visitUnit_dec(BehaviorGrammarParser.Unit_decContext ctx) 
 	{ 
-		// System.out.println("visit Unit dec");
+		logger.debug("visit Unit dec");
 
 		String id = ctx.ID().getText();
 		getGlobalSpace().put(id, new ASTNode(new Object()));         // store
@@ -241,7 +241,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		{
 			AttributeSymbol s1 = (AttributeSymbol) s;
 
-			System.out.println("s1 unit:" + s1.getUnitOfMeasure() + "sysattr : " + toAssign.getUnitOfMeasure());
+			logger.debug("s1 unit:" + s1.getUnitOfMeasure() + "sysattr : " + toAssign.getUnitOfMeasure());
 
 			if (((s1.getUnitOfMeasure() == null) && (toAssign.getUnitOfMeasure() == null))
 					|| (s1.getUnitOfMeasure().equals(toAssign.getUnitOfMeasure())) )
@@ -449,7 +449,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 		String id = ctx.ID().getText();
 
-		System.out.println("Visit vector variable declaration id:" + id);
+		logger.debug("Visit vector variable declaration id:" + id);
 
 		int numElements = Integer.valueOf(ctx.numElements.getText());
 		Symbol vec = currentScope.resolve(id);
@@ -515,7 +515,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	public ASTNode visitVect_attrib_dec(BehaviorGrammarParser.Vect_attrib_decContext ctx) 
 	{ 		
 		String id = ctx.id1.getText();
-		System.out.println("Visit vector attribute declaration id:" + id);
+		logger.debug("Visit vector attribute declaration id:" + id);
 
 		int numElements = Integer.valueOf(ctx.numElements.getText());
 		Symbol vec = currentScope.resolve(id);
@@ -846,7 +846,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	public ASTNode visitVar(BehaviorGrammarParser.VarContext ctx) 
 	{ 
 
-		System.out.println("visitVar");
+		logger.debug("visitVar");
 
 		String id = ctx.getText();
 
@@ -1364,14 +1364,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitBlock(BehaviorGrammarParser.BlockContext ctx) 
 	{ 
-		// System.out.println("VisitBlock");
+		logger.debug("VisitBlock");
 
 		currentScope = scopes.get(ctx);
-		// System.out.println(currentScope);
+		logger.debug(currentScope);
 
 		for (BehaviorGrammarParser.SentenceContext sentence : ctx.sentence() )
 		{
-			// System.out.println("it is going to run sentence");
+			logger.debug("it is going to run sentence");
 			this.visit(sentence);
 		}
 

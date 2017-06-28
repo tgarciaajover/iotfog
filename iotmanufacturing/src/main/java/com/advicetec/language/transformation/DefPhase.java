@@ -53,7 +53,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 	public void enterProgram(TransformationGrammarParser.ProgramContext ctx)
 	{
-		// System.out.println("Enter program");
+		logger.debug("Enter program");
 		globals = new GlobalScope();
 		currentScope = globals;
 	}
@@ -88,7 +88,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 		
 	public void enterDotted_name(TransformationGrammarParser.Dotted_nameContext ctx)
 	{ 
-		// System.out.println("enterDotted_name");
+		logger.debug("enterDotted_name");
 		List<TerminalNode> ids = ctx.ID();
 		String id;
 				
@@ -183,7 +183,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 	public void enterBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
 
-		// System.out.println("Entering block" + currentScope);
+		logger.debug("Entering block" + currentScope);
 		
 		// push new scope by making new one that points to enclosing scope
 		LocalScope local = new LocalScope(currentScope);
@@ -197,7 +197,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 	
 	public void exitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
-		// System.out.println("exitBlock" + currentScope);
+		logger.debug("exitBlock" + currentScope);
 
 		// pop scope
 		currentScope = currentScope.getEnclosingScope();
@@ -205,7 +205,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 	public void exitProgramparameter(TransformationGrammarParser.ProgramparameterContext ctx) 
 	{ 
-		// System.out.println("parameter:" + ctx.ID().getText());
+		logger.debug("parameter:" + ctx.ID().getText());
 		defineVar(ctx.type(), ctx.ID().getSymbol());
 	}
 
@@ -254,7 +254,8 @@ public class DefPhase extends TransformationGrammarBaseListener
 		} else {
 			globals.define(atr);
 		}
-		// System.out.println("Define attribute: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
+		
+		logger.debug("Define attribute: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 
 	public void defineUnit(ParserRuleContext ctx, Token nameToken, String unitId, String descr )
@@ -269,7 +270,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 			globals.define(unt);
 		}
 
-		// System.out.println("Define unit: " + unt.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
+		logger.debug("Define unit: " + unt.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 
 	public void defineState()
@@ -293,9 +294,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 		// Define the symbol in the current scope
 		currentScope.define(var);
 
-		// System.out.println("Define var: " + var.getName() + 
-		//						" scopeName:" + currentScope.getScopeName() + 
-		//							"tokenType:" + typeTokenType + " type:" + type.name());
+		logger.debug("Define var: " + var.getName() + " scopeName:" + currentScope.getScopeName() + "tokenType:" + typeTokenType + " type:" + type.name());
 	}
 
 	public GlobalScope getGlobalScope()

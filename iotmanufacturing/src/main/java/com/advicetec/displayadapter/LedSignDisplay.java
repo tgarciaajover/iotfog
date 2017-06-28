@@ -191,7 +191,6 @@ public class LedSignDisplay implements Output {
 
 		// create the file write packet
 		JetFile2Packet fileWrite = JetFile2Protocol.InfoWrite.command0202(textfile.getChecksum(), UdpUtils.int2HexString(textfile.getDatalen(),2));
-		//System.out.println("Filewrite:" + fileWrite.toHexString());
 
 		// test the connection
 		if(!connectionTest() ){
@@ -203,8 +202,6 @@ public class LedSignDisplay implements Output {
 		endBlackScreen();
 		startBlackScreen();
 		JetFile2Packet in0202 = publishPacket(fileWrite);
-
-		//System.out.println("Status after file write (0202): " +StatusCode.getMeaning(in0202.getStatus()));
 
 		if(StatusCode.getStatus(in0202.getStatus()).equals(JetFile2Protocol.StatusCode.SUCESS)){	
 			//publish 0204 the file with the message
@@ -235,7 +232,6 @@ public class LedSignDisplay implements Output {
 			DatagramPacket packet = new DatagramPacket(bytes, bytes.length,netAddress, dstPort);
 			DatagramSocket socket = new DatagramSocket();
 			socket.send(packet);
-			//System.out.println("publish the packet "+DatatypeConverter.printHexBinary(packet.getData() ) );
 			logger.info("publish the packet "+packet.toString());
 
 			// receives the response
@@ -247,7 +243,6 @@ public class LedSignDisplay implements Output {
 
 			s = new String(DatatypeConverter.printHexBinary(bytes2));
 			s = (String)s.subSequence(0, received.getLength()*2);
-			//System.out.println("Received packet:"+s+", length:"+received.getLength());
 			logger.info("Received packet:"+s+", length:"+received.getLength());
 
 			socket.close();
@@ -643,14 +638,10 @@ public class LedSignDisplay implements Output {
 		JetFile2Packet in = publishPacket(completePacket(out) );
 		int filelen = UdpUtils.hexString2Int(UdpUtils.getBytes(in.getArgs(), 0, 2) );
 		int serialnum = UdpUtils.hexString2Int(UdpUtils.getBytes(in.getArgs(), 2, 4) );
-		
-		//System.out.println("filelen:" + filelen + ",serialnum:" + serialnum);
-		
+				
 		out = JetFile2Protocol.ReadingData.command0102(filelen, serialnum);
 		in = publishPacket(completePacket(out));
 		config = JetFile2Protocol.command0102(in);
-
-		//System.out.println(config);
 
 		return config != null; 
 	}

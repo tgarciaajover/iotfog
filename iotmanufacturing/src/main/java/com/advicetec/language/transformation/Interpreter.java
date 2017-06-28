@@ -133,7 +133,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         		argCount++;
         }
         
-        // System.out.println("num params:" + argCount);
+        logger.debug("num params:" + argCount);
 
         // check for argument compatibility
         if ( argCount==0 )
@@ -171,7 +171,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         stack.push(fspace);        // PUSH new arg, local scope
         this.visit( ((TransformationSymbol)fs).block ); 
 
-        // System.out.println("ending program:" + currentSpace.getkeys());
+        logger.debug("ending program:" + currentSpace.getkeys());
                 
         stack.pop();               // POP arg, locals
         currentSpace = saveSpace;
@@ -206,7 +206,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	
 	public ASTNode visitUnit_dec(TransformationGrammarParser.Unit_decContext ctx) 
 	{ 
-		// System.out.println("visit Unit dec");
+		logger.debug("visit Unit dec");
 		
 		String id = ctx.ID().getText();
 		getGlobalSpace().put(id, new ASTNode(new Object()));         // store
@@ -728,14 +728,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	
 	public ASTNode visitFloat(TransformationGrammarParser.FloatContext ctx) 
 	{ 
-		// System.out.println("visitFloat");
+		logger.debug("visitFloat");
 		return new ASTNode(Double.valueOf(ctx.getText()));
 	}
 	
 	@Override 
 	public ASTNode visitBoolean(TransformationGrammarParser.BooleanContext ctx) 
 	{ 
-		// System.out.println("visitBoolean");
+		logger.debug("visitBoolean");
 		
 		return new ASTNode(Boolean.valueOf(ctx.getText()));
 	}
@@ -765,7 +765,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitMult(TransformationGrammarParser.MultContext ctx) 
 	{ 
-		// System.out.println("visitMult");
+		logger.debug("visitMult");
 		
 		ASTNode left = this.visit(ctx.expression(0));
         ASTNode right = this.visit(ctx.expression(1));
@@ -816,7 +816,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitAddSub(TransformationGrammarParser.AddSubContext ctx) 
 	{ 
-		// System.out.println("visitAddSub");
+		logger.debug("visitAddSub");
 				
 		ASTNode left = this.visit(ctx.expression(0));
         ASTNode right = this.visit(ctx.expression(1));
@@ -860,7 +860,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	public ASTNode visitExpon(TransformationGrammarParser.ExponContext ctx) 
 	{ 
 		
-		// System.out.println("visitExpon");
+		logger.debug("visitExpon");
 		
 		ASTNode left = this.visit(ctx.expression(0));
         ASTNode right = this.visit(ctx.expression(1));
@@ -882,7 +882,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	public ASTNode visitRelationalExpr(TransformationGrammarParser.RelationalExprContext ctx) 
 	{ 
 		
-		// System.out.println("visitRelationalExpr");
+		logger.debug("visitRelationalExpr");
 		
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
@@ -1026,7 +1026,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitOrExpr(TransformationGrammarParser.OrExprContext ctx) 
 	{ 
-		// System.out.println("visitOrExpr");
+		logger.debug("visitOrExpr");
 		
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
@@ -1196,14 +1196,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
-		// System.out.println("VisitBlock");
+		logger.debug("VisitBlock");
 		
 		currentScope = scopes.get(ctx);
-		// System.out.println(currentScope);
+		logger.debug(currentScope);
 		
 		for (TransformationGrammarParser.SentenceContext sentence : ctx.sentence() )
 		{
-			// System.out.println("it is going to run sentence");
+			logger.debug("it is going to run sentence");
 			this.visit(sentence);
 		}
 		
@@ -1250,7 +1250,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
     @Override
     public ASTNode visitLog(TransformationGrammarParser.LogContext  ctx) {
         ASTNode value = this.visit(ctx.expression());
-        // System.out.println(value);
+        logger.debug("Log" + value);
         return value;
     }    
     
@@ -1316,7 +1316,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		String datetimeStr = (ctx.TEXT_DATETIME()).getText();
 
-		// System.out.println("given datetime:" + datetimeStr);
+		logger.debug("given datetime:" + datetimeStr);
 
 		try 
 		{	
@@ -1334,7 +1334,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	public ASTNode visitFormalparameters(TransformationGrammarParser.ProgramparameterContext ctx) 
 	{ 
 		String id = ctx.getText();
-		// System.out.println("Visit Program Parameter:" + id);
+		logger.debug("Visit Program Parameter:" + id);
 				
         ASTNode value = globals.get(id);
         if(value == null) {

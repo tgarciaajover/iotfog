@@ -86,10 +86,7 @@ public class MonitoringDeviceContainer extends Container
 		        Integer signalTypeId	= rs2.getInt("signal_type_id");
 		        String portLabel		= rs2.getString("port_label");
 		        Integer measuredEntityId = rs2.getInt("measured_entity_id");
-		        
-		        System.out.println("id:" + id);
-		        System.out.println("portLabel:" + portLabel);
-		        
+		        		        
 		        MonitoringDevice device= (MonitoringDevice) this.getObject(deviceId);
 		        Signal signal = (Signal)  this.getReferencedObject("Signal", signalTypeId);
 		        

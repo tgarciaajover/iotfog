@@ -9,6 +9,8 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.DisplayDevice;
@@ -23,12 +25,15 @@ import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
+import com.advicetec.language.behavior.BehaviorRefPhase;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 
 public class RefPhase extends TransformationGrammarBaseListener 
 {
 
+	static Logger logger = LogManager.getLogger(RefPhase.class.getName());
+	
 	TransformationGrammarParser parser = null;
 	ParseTreeProperty<Scope> scopes;
 	GlobalScope globals;
@@ -58,44 +63,14 @@ public class RefPhase extends TransformationGrammarBaseListener
 	
 	public void enterProgram(TransformationGrammarParser.ProgramContext ctx)
 	{
-		// System.out.println("refPhase enter program: ");
+		logger.debug("refPhase enter program: ");
 		currentScope = globals;
 	}	
-
-	public void exitProgram(TransformationGrammarParser.ProgramContext ctx) 
-	{ 
-		// System.out.println("refPhase exit program: ");
-	}	
-	
-	public void enterFormalparameters(TransformationGrammarParser.ProgramparametersContext ctx) 
-	{ 
-		// System.out.println("refPhase enter formal parameters: ");
-	}
-	
-	public void exitFormalparameters(TransformationGrammarParser.ProgramparametersContext ctx) 
-	{ 
-		// System.out.println("refPhase exit formal parameters: ");
-	}
-	
-	public void enterType(TransformationGrammarParser.TypeContext ctx) 
-	{ 
-		// System.out.println("refPhase enter type: ");
-	}
-	
-	public void enterRef_unit_def(TransformationGrammarParser.Ref_unit_defContext ctx) 
-	{ 
-		// System.out.println("refPhase enter ref_unit: ");
-	}
-	
-	public void exitRef_var_def(TransformationGrammarParser.Ref_var_defContext ctx) 
-	{ 
-		// System.out.println("refvar_def exit: ");
-	}
 	
 	public void exitAtrib_dec(TransformationGrammarParser.Atrib_decContext ctx)
 	{ 
 
-		// System.out.println("in exit atrib dec : ");
+		logger.debug("in exit atrib dec : ");
 		
 		// It verifies the unit of measure given as parameter.
 		if (ctx.id2 != null){
@@ -172,14 +147,14 @@ public class RefPhase extends TransformationGrammarBaseListener
 	
 	public void enterBlock(TransformationGrammarParser.BlockContext ctx)
 	{
-		// System.out.println("refPhase enter Block: ");
+		logger.debug("refPhase enter Block: ");
 		
 		currentScope = scopes.get(ctx); 
 	}
 	
 	public void exitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{
-		// System.out.println("refPhase exist Block: ");
+		logger.debug("refPhase exist Block: ");
 		
         currentScope = currentScope.getEnclosingScope();
 
@@ -190,7 +165,7 @@ public class RefPhase extends TransformationGrammarBaseListener
 				
 		String name = ctx.ID().getSymbol().getText();
 		
-		System.out.println("refPhase exist Variable : " + name);
+		logger.debug("refPhase exist Variable : " + name);
 
 		Symbol var = currentScope.resolve(name);
 		

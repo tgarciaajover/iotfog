@@ -73,7 +73,7 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 	public void exitAtrib_dec(BehaviorGrammarParser.Atrib_decContext ctx)
 	{ 
 
-		// System.out.println("in exit atrib dec : ");
+		logger.debug("in exit atrib dec : ");
 
 		// It verifies the unit of measure given as parameter.
 		if (ctx.id2 != null){

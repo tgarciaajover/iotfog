@@ -1,6 +1,7 @@
 package com.advicetec.language.transformation;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,10 +17,14 @@ import org.apache.logging.log4j.Logger;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarLexer;
 import com.advicetec.language.ast.ASTNode;
+import com.advicetec.language.ast.ArrayAttributeSymbol;
 import com.advicetec.language.ast.AttributeSymbol;
+import com.advicetec.language.ast.DisplaySymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.MemorySpace;
+import com.advicetec.language.ast.StateSymbol;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
@@ -170,6 +175,53 @@ public class InterpreterSw
         	logger.debug("Symbol:" + node + " value:" + glob.get(node));
         }
     } 
+    
+    /**
+     * Returns attributes and the state from the language global space.
+     * @return  Map string (symbol name) value (object)
+     */
+    public Map<String, ASTNode> getGlobalAttributes()
+    {
+    	Map<String, ASTNode> map = getGlobalSpace().getSymbolMap();
+    	
+    	Map<String, ASTNode> ret = new HashMap<String, ASTNode>();
+    	
+    	for (String symbolId : map.keySet()) {
+    		Symbol symbol = interpreter.getGlobalScope().resolve(symbolId);
+    		if (symbol instanceof AttributeSymbol) {
+    			ret.put(symbolId, map.get(symbolId));
+    		} else if (symbol instanceof TimerSymbol) {
+    			ret.put(symbolId, map.get(symbolId));
+    		} else if (symbol instanceof DisplaySymbol) {
+    			ret.put(symbolId, map.get(symbolId));
+    		}  else if (symbol instanceof ArrayAttributeSymbol) {
+    			ret.put(symbolId, map.get(symbolId));
+    		} 
+    	}
+    	
+    	return ret;
+    }
+
+    /**
+     * Returns attributes and the state from the language global space.
+     * @return  Map string (symbol name) value (object)
+     */
+    public Map<String, ASTNode> getState()
+    {
+    	Map<String, ASTNode> map = getGlobalSpace().getSymbolMap();
+    	
+    	Map<String, ASTNode> ret = new HashMap<String, ASTNode>();
+    	
+    	for (String symbolId : map.keySet()) {
+    		Symbol symbol = interpreter.getGlobalScope().resolve(symbolId);
+    		if (symbol instanceof StateSymbol) {
+    			ret.put(symbolId, map.get(symbolId));
+    		} 
+    	}
+    	
+    	return ret;
+    }
+
     
     public GlobalScope getGlobalScope(){
     	return defPhase.getGlobalScope();

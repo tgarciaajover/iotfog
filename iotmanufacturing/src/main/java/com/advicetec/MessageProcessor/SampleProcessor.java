@@ -77,8 +77,8 @@ public class SampleProcessor implements Processor
 					interpreter.process(program,measuringEntity,list);
 					// stores the status of attributes
 					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap(), AttributeOrigin.TRANSFORMATION);
-					entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());
-					entityFacade.setCurrentState(interpreter.getGlobalSpace().getSymbolMap());
+					entityFacade.importAttributeValues(interpreter.getGlobalAttributes());
+					entityFacade.setCurrentState(interpreter.getState());
 					
 					Map<String, Symbol> symbols =  interpreter.getGlobalScope().getSymbolMap();
 					
