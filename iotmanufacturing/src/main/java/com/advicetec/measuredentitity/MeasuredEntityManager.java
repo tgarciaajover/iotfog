@@ -33,6 +33,9 @@ public class MeasuredEntityManager extends Configurable {
 	private MeasuredEntityManager() throws SQLException{
 		
 		super("MeasuredEntity");
+		
+		logger.info("In MeasuredEntityManager constructor"  );
+		
 		entities = new ArrayList<MeasuredEntityFacade>();
 		
 		// String[] machines = properties.getProperty("machines").split(",");
@@ -68,7 +71,7 @@ public class MeasuredEntityManager extends Configurable {
 		for (ModBusTcpEvent evt : events){
 			Queueable obj = new Queueable(QueueType.EVENT, evt);
 			try {
-				
+				logger.info("new modbus event created");
 				EventManager.getInstance().getQueue().enqueue(6, obj);
 				
 			} catch (InterruptedException e) {

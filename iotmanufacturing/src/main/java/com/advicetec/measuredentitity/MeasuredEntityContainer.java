@@ -319,12 +319,17 @@ public class MeasuredEntityContainer extends Container {
 		}
 	}
 
-	public List<ModBusTcpEvent> getModBusEvents( int port ){
+	public List<ModBusTcpEvent> getModBusEvents( int port ) throws SQLException {
 
 		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
 
 		try 
 		{
+
+			super.connect();
+
+			logger.info("in getModbusEvents:" + port );
+			
 			String sqlSelect = sqlSelect5;  
 			ResultSet rs5 = super.pst.executeQuery(sqlSelect);
 
@@ -378,11 +383,19 @@ public class MeasuredEntityContainer extends Container {
 			}
 			rs5.close();
 
+			super.disconnect();
+
+		} catch (ClassNotFoundException e){
+			String error = "Could not find the driver class - Error" + e.getMessage(); 
+			logger.error(error);
+			e.printStackTrace();
+			throw new SQLException(error);
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 
+		
 		return events;
 
 	}
