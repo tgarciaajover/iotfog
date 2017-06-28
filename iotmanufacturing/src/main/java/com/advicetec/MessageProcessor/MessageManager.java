@@ -5,13 +5,19 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
 import com.advicetec.eventprocessor.EventManager;
+import com.advicetec.iot.rest.MonitoringDeviceResource;
 
 public class MessageManager extends Manager 
 {
 
+	static Logger logger = LogManager.getLogger(MessageManager.class.getName());
+	
 	private static MessageManager instance=null;
 	private ConfigurationManager confManager = null;
 	private BlockingQueue delayedQueue = null;
@@ -32,7 +38,7 @@ public class MessageManager extends Manager
 	
 	public void run() 
 	{
-		System.out.println("Start Message Manager run");
+		logger.debug("Start Message Manager run");
 		int number = Integer.valueOf(getProperty("NumProcessHandlers"));
 		List<Thread> listThread =  new ArrayList<Thread>();
 		
@@ -57,7 +63,7 @@ public class MessageManager extends Manager
 		}
 		*/
 		
-		System.out.println("Ending Message Manager run ");
+		logger.debug("Ending Message Manager run ");
 	}	
 
 }

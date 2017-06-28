@@ -86,7 +86,7 @@ public class BehaviorSyntaxChecking
         	listErrors.add(e);
         }
         
-        System.out.println("num errors:" + listErrors.size());
+        logger.debug("num errors:" + listErrors.size());
         
         return listErrors;    
 

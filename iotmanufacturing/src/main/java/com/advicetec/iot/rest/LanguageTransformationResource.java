@@ -2,6 +2,8 @@ package com.advicetec.iot.rest;
 
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.ext.xml.DomRepresentation;
@@ -21,7 +23,9 @@ import com.advicetec.language.transformation.SyntaxChecking;
 public class LanguageTransformationResource extends ServerResource 
 {
 
-	  /**
+	static Logger logger = LogManager.getLogger(LanguageTransformationResource.class.getName());  
+	
+	/**
 	   * Returns the Status instance requested by the URL. 
 	   * @return The XML representation of the status, or CLIENT_ERROR_NOT_ACCEPTABLE if the unique ID is not present.
 	   * 
@@ -31,7 +35,7 @@ public class LanguageTransformationResource extends ServerResource
 	  @Put
 	  public Representation checkSyntax(Representation representation) throws Exception {
 		  
-		  System.out.println("En Syntax Cheching");  
+		  logger.debug("En Syntax Cheching");  
 		  // Create an empty XML representation.
 		  DomRepresentation input = new DomRepresentation(representation);
 		  DomRepresentation result = new DomRepresentation();
@@ -42,13 +46,13 @@ public class LanguageTransformationResource extends ServerResource
 		  // Convert the XML representation to the Java representation.
 		  String program = sintaxChecking.getProgram(input.getDocument());
 		  
-		  System.out.println("text:" + program);
+		  logger.debug("text:" + program);
 		  
 		  if (program != null){
 
 			  List<SyntaxError> errorList = sintaxChecking.process(program);
 
-			  System.out.println("termino de revisar el codigo- va a construir el xml con los errores");
+			  logger.debug("termino de revisar el codigo- va a construir el xml con los errores");
 			  // Create the Document instance representing this XML.
 			  DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			  DocumentBuilder builder = factory.newDocumentBuilder();

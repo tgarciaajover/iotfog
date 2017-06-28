@@ -1,5 +1,7 @@
 package com.advicetec.iot.rest;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
@@ -10,12 +12,15 @@ import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 
 import com.advicetec.configuration.ConfigurationManager;
+import com.advicetec.configuration.Container;
 import com.advicetec.configuration.DisplayDevice;
 import com.advicetec.configuration.DisplayDeviceContainer;
 
 public class DisplayDeviceResource extends ServerResource  
 {
 
+	  static Logger logger = LogManager.getLogger(DisplayDeviceResource.class.getName());
+	
 	  /**
 	   * Returns the Display Device instance requested by the URL. 
 	   * 
@@ -74,7 +79,7 @@ public class DisplayDeviceResource extends ServerResource
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 		
-		System.out.println("Json:" + jsonText);
+		logger.debug("Json:" + jsonText);
 		
 	    // Look for it in the Device Type Database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
@@ -82,7 +87,7 @@ public class DisplayDeviceResource extends ServerResource
 	    
 	    displayDeviceCon.fromJSON(jsonText);
 	    
-	    System.out.println("numElements:" + displayDeviceCon.size());
+	    logger.debug("numElements:" + displayDeviceCon.size());
 	    
 	    getResponse().setStatus(Status.SUCCESS_OK);
 	    

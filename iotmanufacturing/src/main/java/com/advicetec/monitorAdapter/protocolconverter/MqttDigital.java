@@ -36,7 +36,7 @@ public class MqttDigital implements Translator
 		String [] tokens = content.split(SystemConstants.MSG_SEP);
 		
 		for (int i = 0; i < tokens.length; i++) {
-			System.out.println("token" + i + " value:" + tokens[i]);
+			logger.debug("token" + i + " value:" + tokens[i]);
 		}
 		
 		String dateTimeStr = tokens[1]; 

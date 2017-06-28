@@ -2,6 +2,8 @@ package com.advicetec.iot.rest;
 
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.restlet.data.Status;
 import org.restlet.ext.xml.DomRepresentation;
 import org.restlet.representation.Representation;
@@ -14,13 +16,16 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.advicetec.configuration.Container;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.behavior.BehaviorSyntaxChecking;
 
 public class LanguageBehaviorResource extends ServerResource 
 {
 
-	  /**
+	static Logger logger = LogManager.getLogger(LanguageBehaviorResource.class.getName());
+	
+	/**
 	   * Returns the Status instance requested by the URL. 
 	   * @return The XML representation of the status, or CLIENT_ERROR_NOT_ACCEPTABLE if the unique ID is not present.
 	   * 
@@ -30,7 +35,7 @@ public class LanguageBehaviorResource extends ServerResource
 	  @Put
 	  public Representation checkSyntax(Representation representation) throws Exception {
 		  
-		  System.out.println("En Syntax Cheching");  
+		  logger.debug("En Syntax Cheching");  
 		  // Create an empty XML representation.
 		  DomRepresentation input = new DomRepresentation(representation);
 		  DomRepresentation result = new DomRepresentation();
@@ -41,7 +46,7 @@ public class LanguageBehaviorResource extends ServerResource
 		  // Convert the XML representation to the Java representation.
 		  String program = sintaxChecking.getProgram(input.getDocument());
 		  
-		  System.out.println("text:" + program);
+		  logger.debug("text:" + program);
 		  
 		  if (program != null){
 

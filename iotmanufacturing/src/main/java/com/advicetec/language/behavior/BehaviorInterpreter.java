@@ -122,7 +122,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 				argCount++;
 		}
 
-		System.out.println("num params:" + argCount);
+		logger.debug("num params:" + argCount);
 
 		// check for argument compatibility
 		if ( argCount==0 )
@@ -160,7 +160,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		stack.push(fspace);        // PUSH new arg, local scope
 		this.visit( ((BehaviorSymbol)fs).block ); 
 
-		System.out.println("ending program:" + currentSpace.getkeys());
+		logger.debug("ending program:" + currentSpace.getkeys());
 
 
 		stack.pop();               // POP arg, locals
@@ -168,7 +168,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 		// goes up in the current scope.
 		currentScope = saveScope;
-		System.out.println("Starting function: "+ fname + "Ending currentScope:" + currentScope.getScopeName());        
+		logger.debug("Starting function: "+ fname + "Ending currentScope:" + currentScope.getScopeName());        
 
 		return result;
 
@@ -1385,7 +1385,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	public ASTNode visitCall(BehaviorGrammarParser.CallContext ctx) 
 	{ 
 
-		System.out.println("visitCall");
+		logger.debug("visitCall");
 
 		// Resolve function's name
 		String fname = ctx.ID().getText();
@@ -1504,7 +1504,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override
 	public ASTNode visitLog(BehaviorGrammarParser.LogContext  ctx) {
 		ASTNode value = this.visit(ctx.expression());
-		System.out.println(value);
+		logger.debug(value);
 		return value;
 	}    
 
@@ -1583,7 +1583,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	public ASTNode visitProgramparameters(BehaviorGrammarParser.ProgramparameterContext ctx) 
 	{ 
 		String id = ctx.getText();
-		System.out.println("Visit Program Parameter:" + id);
+		logger.debug("Visit Program Parameter:" + id);
 
 		ASTNode value = globals.get(id);
 		if(value == null) {

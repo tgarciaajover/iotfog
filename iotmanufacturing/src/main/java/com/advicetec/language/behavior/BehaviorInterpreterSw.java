@@ -95,7 +95,7 @@ public class BehaviorInterpreterSw
 
         walker.walk(defPhase, tree);
        
-        System.out.println("Defphase finished globals: " + defPhase.getGlobalScope().toString());
+        logger.debug("Defphase finished globals: " + defPhase.getGlobalScope().toString());
 
         
         // create next phase and feed symbol table info from def to ref phase

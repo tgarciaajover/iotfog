@@ -78,7 +78,7 @@ public class UdpUtils {
 		DatagramPacket received = new DatagramPacket(toReceive,toReceive.length);
 		socket.receive(received);
 		byte[] bytes2 = received.getData();
-		System.out.println("length:"+received.getLength());
+		//System.out.println("length:"+received.getLength());
 		s = new String(DatatypeConverter.printHexBinary(bytes2));
 		s=(String)s.subSequence(0, received.getLength()*2);
 
