@@ -61,7 +61,19 @@ public class EventHandler implements Runnable
 						}							
 						
 						break;
+				} else if (evnt.getEvntType() == EventType.MODBUS_READ_EVENT) {
+					    ModBusTcpEvent modbusEvt = (ModBusTcpEvent) evnt;
+					    ModBusTcpProcessor processor = new ModBusTcpProcessor(modbusEvt);
+					    logger.debug("processing modbus event");
+						List<DelayEvent> eventsToCreate = processor.process();
+						for ( int i=0; i < eventsToCreate.size(); i++){
+							DelayEvent event = eventsToCreate.get(i);
+							this.toQueue.put(event);
+						}					    
+				} else {
+					logger.debug("This event cannot be processed" + evnt.getEvntType().getName());
 				}
+				
 			}
 
 		} catch (InterruptedException e) {

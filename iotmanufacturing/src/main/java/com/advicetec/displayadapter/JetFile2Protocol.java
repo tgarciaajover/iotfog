@@ -177,9 +177,9 @@ public class JetFile2Protocol {
 			.append(quantity)
 			.append(currentPacket);
 			
-			System.out.println("args:"+args.toString());
+			logger.debug("args:"+args.toString());
 			packet.setArgs(args.toString());
-			System.out.println(packet.toHexString());
+			logger.debug(packet.toHexString());
 			packet.setChecksum();
 			
 			return packet;
@@ -385,7 +385,7 @@ public class JetFile2Protocol {
 			// Verifies Check Sum.
 			String checkSumStr = strHex.substring(START_DATALEN*2, strHex.length());
 			String checkHex = UdpUtils.checksum(DatatypeConverter.parseHexBinary(checkSumStr));
-			System.out.println(getCheckNumber(strHex));
+			logger.debug(getCheckNumber(strHex));
 			if (checkHex.compareToIgnoreCase(getCheckNumber(strHex)) != 0){
 				throw new Exception("Invalid Check Number Response");
 			}
@@ -539,11 +539,11 @@ public class JetFile2Protocol {
 		try {
 			headerTest(original,echo);
 			String args = UdpUtils.getBytes(echo, ARG, ARG + 12);
-			System.out.println("Prog Version:"+UdpUtils.getBytes(args, 0, 2));
-			System.out.println("FPGA Version:"+UdpUtils.getBytes(args, 2, 4));
+			logger.debug("Prog Version:"+UdpUtils.getBytes(args, 0, 2));
+			logger.debug("FPGA Version:"+UdpUtils.getBytes(args, 2, 4));
 			byte[] ip = DatatypeConverter.parseHexBinary(UdpUtils.swap(UdpUtils.getBytes(args, 4, 8)));
-			System.out.println("Ip Address:"+InetAddress.getByAddress(ip).toString());
-			System.out.println("Sign address:"+UdpUtils.getBytes(args, 8, 10));
+			logger.debug("Ip Address:"+InetAddress.getByAddress(ip).toString());
+			logger.debug("Sign address:"+UdpUtils.getBytes(args, 8, 10));
 		} catch (Exception e) {
 			logger.error("Header test was wrong!");
 			logger.error(e.getMessage());
@@ -565,12 +565,12 @@ public class JetFile2Protocol {
 			String data = UdpUtils.getBytes(echo,dataOff,dataOff + datalen);
 			
 			String filesize = UdpUtils.swap(UdpUtils.getBytes(args, 0, 2));
-			System.out.println("File size:"+filesize+" - "+Integer.parseInt(filesize, 16));
+			logger.debug("File size:"+filesize+" - "+Integer.parseInt(filesize, 16));
 			String serial = UdpUtils.swap(UdpUtils.getBytes(args, 2, 4));
-			System.out.println("Packet serial:"+serial+" - "+Integer.parseInt(serial, 16));
+			logger.debug("Packet serial:"+serial+" - "+Integer.parseInt(serial, 16));
 			String bigfilesize = UdpUtils.swap(UdpUtils.getBytes(args, 4, 8));
-			System.out.println("BigFile size:"+bigfilesize+" - "+Integer.parseInt(bigfilesize, 16));
-			System.out.println("DATA:"+data);
+			logger.debug("BigFile size:"+bigfilesize+" - "+Integer.parseInt(bigfilesize, 16));
+			logger.debug("DATA:"+data);
 
 		} catch (Exception e) {
 			logger.error("Header test was wrong!");
@@ -644,7 +644,6 @@ public class JetFile2Protocol {
 			.append(",packet serial numb:").append(UdpUtils.getBytes(args, 2, 4))
 			.append(",file size:").append(UdpUtils.getBytes(args, 4, 8));
 
-			//System.out.println(sb.toString());
 		}
 		return new ConfigHead(packet.getData(),packet.getDatalen());
 	}

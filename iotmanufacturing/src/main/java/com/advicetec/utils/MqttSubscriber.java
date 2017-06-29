@@ -145,8 +145,7 @@ public class MqttSubscriber extends Configurable implements MqttCallback
 			adapterManager.getQueue().enqueue(6, obj);
 			
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			System.out.println(e.getMessage());
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} 
 	}

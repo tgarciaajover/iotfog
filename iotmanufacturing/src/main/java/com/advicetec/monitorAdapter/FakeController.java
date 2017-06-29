@@ -2,6 +2,8 @@ package com.advicetec.monitorAdapter;
 
 import java.sql.Timestamp;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -10,6 +12,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish;
 
+import com.advicetec.monitorAdapter.protocolconverter.MqttDigital;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
 
@@ -22,6 +25,9 @@ import com.advicetec.mpmcqueue.Queueable;
  */
 public class FakeController implements MqttCallback{
 
+	
+	static Logger logger = LogManager.getLogger(FakeController.class.getName());
+	
 	private AdapterManager adapterManager;
 	
 	private String brokerUrl;
@@ -108,7 +114,7 @@ public class FakeController implements MqttCallback{
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
 		// TODO Auto-generated method stub
 		String time = new Timestamp(System.currentTimeMillis()).toString();
-		System.out.println("Time:\t" +time +
+		logger.debug("Time:\t" +time +
 				"  Topic:\t" + topic + 
 				"  Message:\t" + new String(message.getPayload()) +
 				"  QoS:\t" + message.getQos());

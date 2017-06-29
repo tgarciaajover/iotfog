@@ -229,7 +229,7 @@ public final class ProductionOrderFacade {
 		LocalDateTime oldest = attValueCache.getOldestTime();
 		
 		if(!attMap.containsKey(attrName)){
-			System.out.println("attribute is not in facade");
+			logger.error("attribute is not in facade");
 			return null;
 		}
 		SortedMap<LocalDateTime,String> internalMap = attMap.get(attrName);
@@ -276,9 +276,10 @@ public final class ProductionOrderFacade {
 	}
 	
 	
-	public void deleteOldStates(LocalDateTime oldest){
+	/*public void deleteOldStates(LocalDateTime oldest){
 		statesMap = (TreeMap<LocalDateTime, String>) statesMap.tailMap(oldest, true);
 	}
+	*/
 		
 	public String getByIntervalByAttributeNameJSON(
 			String attrName, LocalDateTime from, LocalDateTime to){

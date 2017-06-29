@@ -6,6 +6,8 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -21,6 +23,7 @@ public class BehaviorSyntaxChecking
 	/**  XML Tag given*/
 	private static final String PROGRAM = "program";
 
+	static Logger logger = LogManager.getLogger(BehaviorSyntaxChecking.class.getName());
 	
     public static Symbol.Type getType(int tokenType) {
 
@@ -63,16 +66,13 @@ public class BehaviorSyntaxChecking
         parser.addErrorListener(collector);
         ParseTree tree = parser.program();
 
-        // show tree in text form
-        // System.out.println(tree.toStringTree(parser));
-
         ParseTreeWalker walker = new ParseTreeWalker();
 
         BehaviorDefPhase def = new BehaviorDefPhase(parser);
 
         walker.walk(def, tree);
         
-        System.out.println("Defphase finished - numErrors:" + collector.getErrors().size() );
+        logger.debug("Defphase finished - numErrors:" + collector.getErrors().size() );
         
         // create next phase and feed symbol table info from def to ref phase
 
@@ -86,7 +86,7 @@ public class BehaviorSyntaxChecking
         	listErrors.add(e);
         }
         
-        System.out.println("num errors:" + listErrors.size());
+        logger.debug("num errors:" + listErrors.size());
         
         return listErrors;    
 

@@ -26,6 +26,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.advicetec.core.IotInit;
 import com.github.benmanes.caffeine.cache.CacheWriter;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 
@@ -50,6 +54,8 @@ import io.reactivex.subjects.PublishSubject;
 public final class WriteBehindCacheWriter<K, V> implements CacheWriter<K, V> 
 {
 
+ static Logger logger = LogManager.getLogger(WriteBehindCacheWriter.class.getName());
+	
   private final PublishSubject<Entry<K, V>> subject;
 
   
@@ -57,15 +63,15 @@ public final class WriteBehindCacheWriter<K, V> implements CacheWriter<K, V>
     subject = PublishSubject.create();
     subject.buffer(builder.bufferTimeNanos, TimeUnit.NANOSECONDS)
         .map(entries -> entries.stream().collect(
-            toMap((Entry<K,V> e) -> { if (e==null)
-            							System.out.println("e is null");
-            						  System.out.println(e.getKey()); 
+            toMap((Entry<K,V> e) -> { if (e==null){
+            							logger.error("the entry is null");
+            						  }
             						  return (K) e.getKey(); 
             						}, 
                   (Entry<K,V> e) -> {
-                	  				  if (e==null)
-                	  					  System.out.println("e is null");
-                	  				  System.out.println((V) e.getValue());
+                	  				  if (e==null){
+                	  					 logger.error("the entry is null");
+                	  				  }
                 	  				  return (V) e.getValue();
                 	  				}, builder.coalescer)))
         .subscribe(builder.writeAction::accept);
@@ -73,7 +79,6 @@ public final class WriteBehindCacheWriter<K, V> implements CacheWriter<K, V>
 
   @Override
   public void write(K key, V value) {
-	System.out.println("entro en write:" + ZonedDateTime.now() + " key:" + key.toString() + " value:" + value.toString());  
     subject.onNext(new SimpleImmutableEntry<>(key, value));
   }
 
@@ -99,9 +104,7 @@ public final class WriteBehindCacheWriter<K, V> implements CacheWriter<K, V>
 
     /** The callback to perform the writing to the database or repository. */
     public Builder<K, V> writeAction(Consumer<Map<K, V>> writeAction) {
-      System.out.println("entro en writeAction");
       this.writeAction = requireNonNull(writeAction);
-      System.out.println("Salio en writeAction");
       return this;
     }
 

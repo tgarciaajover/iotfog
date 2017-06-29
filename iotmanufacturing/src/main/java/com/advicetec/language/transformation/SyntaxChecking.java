@@ -7,6 +7,8 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
@@ -16,9 +18,12 @@ import com.advicetec.language.TransformationGrammarLexer;
 import com.advicetec.language.ast.CollectionErrorListener;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
+import com.advicetec.language.behavior.BehaviorRefPhase;
 
 public class SyntaxChecking 
 {
+	
+	static Logger logger = LogManager.getLogger(SyntaxChecking.class.getName());
 	
 	/**  XML Tag given*/
 	private static final String PROGRAM = "program";
@@ -55,14 +60,11 @@ public class SyntaxChecking
 
         TransformationGrammarParser parser = new TransformationGrammarParser(tokens);
         parser.setBuildParseTree(true);
-        //parser.removeErrorListeners();
-        //CollectionErrorListener collector = new CollectionErrorListener();
-        //parser.addErrorListener(collector);
 
         ParseTree tree = parser.program();
 
         // show tree in text form
-        // System.out.println(tree.toStringTree(parser));
+        logger.debug(tree.toStringTree(parser));
 
         ParseTreeWalker walker = new ParseTreeWalker();
 
@@ -70,7 +72,7 @@ public class SyntaxChecking
 
         walker.walk(def, tree);
         
-        // System.out.println("Defphase finished");
+        logger.debug("Defphase finished");
 
         // create next phase and feed symbol table info from def to ref phase
 
@@ -85,7 +87,7 @@ public class SyntaxChecking
         	listErrors.add(e);
         }
         
-        // System.out.println("num errors:" + listErrors.size());
+        logger.debug("num errors:" + listErrors.size());
         
         return listErrors;
        

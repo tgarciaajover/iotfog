@@ -35,7 +35,7 @@ import com.advicetec.language.ast.Symbol;
 public class SampleProcessor implements Processor 
 {
 
-	static final Logger LOGGER = LogManager.getLogger(SampleProcessor.class.getName()); 
+	static final Logger logger = LogManager.getLogger(SampleProcessor.class.getName()); 
 	private SampleMessage sample;
 	private InterpreterSw interpreter;
 	
@@ -60,7 +60,7 @@ public class SampleProcessor implements Processor
 		ArrayList<DelayEvent> ret = new ArrayList<DelayEvent>();
 		
 		if (entityFacade == null){
-			LOGGER.error("the measured Entity was not found - id:"+ measuringEntity );
+			logger.error("the measured Entity was not found - id:"+ measuringEntity );
 		} else {
 		  
 			SyntaxChecking sintaxChecking = new SyntaxChecking();
@@ -77,12 +77,12 @@ public class SampleProcessor implements Processor
 					interpreter.process(program,measuringEntity,list);
 					// stores the status of attributes
 					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap(), AttributeOrigin.TRANSFORMATION);
-					entityFacade.importAttributeValues(interpreter.getGlobalSpace().getSymbolMap());
-					entityFacade.setCurrentState(interpreter.getGlobalSpace().getSymbolMap());
+					entityFacade.importAttributeValues(interpreter.getGlobalAttributes());
+					entityFacade.setCurrentState(interpreter.getState());
 					
 					Map<String, Symbol> symbols =  interpreter.getGlobalScope().getSymbolMap();
 					
-					LOGGER.debug("Number of Symbols returned:" + String.valueOf(symbols.size()));
+					logger.debug("Number of Symbols returned:" + String.valueOf(symbols.size()));
 					
 					for (String symbolId : symbols.keySet())
 					{
@@ -90,25 +90,25 @@ public class SampleProcessor implements Processor
 						Symbol symbol = symbols.get(symbolId);
 						
 						if (symbol instanceof  ArraySymbol){
-							LOGGER.debug("Symbol:" + symbolId + "ArraySymbol");
+							logger.debug("Symbol:" + symbolId + "ArraySymbol");
 						} else if (symbol instanceof  AttributeSymbol){
-							LOGGER.debug("Symbol:" + symbolId + "AttributeSymbol");
+							logger.debug("Symbol:" + symbolId + "AttributeSymbol");
 						} else if (symbol instanceof  BehaviorSymbol){
-							LOGGER.debug("Symbol:" + symbolId + "BehaviorSymbol");
+							logger.debug("Symbol:" + symbolId + "BehaviorSymbol");
 						} else if (symbol instanceof  FunctionSymbol){
-							LOGGER.debug("Symbol:" + symbolId + "FunctionSymbol");
+							logger.debug("Symbol:" + symbolId + "FunctionSymbol");
 						} else if (symbol instanceof  ImportSymbol){
-							LOGGER.debug("Symbol:" + symbolId + "ImportSymbol");
+							logger.debug("Symbol:" + symbolId + "ImportSymbol");
 						} else if (symbol instanceof  ScopedSymbol){
-							LOGGER.debug("Symbol:" + symbolId + "ScopedSymbol");
+							logger.debug("Symbol:" + symbolId + "ScopedSymbol");
 						} else if (symbol instanceof  TimerSymbol){
-							LOGGER.debug("Symbol:" + symbolId + "TimerSymbol");
+							logger.debug("Symbol:" + symbolId + "TimerSymbol");
 						} else if (symbol instanceof  UnitMeasureSymbol){
-							LOGGER.debug("Symbol:" + symbolId + "UnitMeasureSymbol");
+							logger.debug("Symbol:" + symbolId + "UnitMeasureSymbol");
 						} else if (symbol instanceof  TransformationSymbol){
-							LOGGER.debug("Symbol:" + symbolId + "TransformationSymbol");
+							logger.debug("Symbol:" + symbolId + "TransformationSymbol");
 						} else {
-							LOGGER.debug("Symbol:" + symbolId + "Invalid symbol");
+							logger.debug("Symbol:" + symbolId + "Invalid symbol");
 						}
 						
 						if (symbol instanceof TimerSymbol)
@@ -120,7 +120,7 @@ public class SampleProcessor implements Processor
 							String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
 							
 							
-							LOGGER.debug("Symbol:" + symbolId + "behavior:" + behavior);
+							logger.debug("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
 							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, new ArrayList<InterpretedSignal>());
 							event.setRepeated(repeated);
@@ -133,12 +133,11 @@ public class SampleProcessor implements Processor
 					
 				}
 				else {
-					// TODO: put in the log all the traced errors.
+					logger.error("the interpreter found errors numErrors:" + errorList.size());
 				}
 							
 			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				System.out.println("Error:" + e1.getMessage());
+				logger.error("Error:" + e1.getMessage());
 				e1.printStackTrace();
 			}		
 		}

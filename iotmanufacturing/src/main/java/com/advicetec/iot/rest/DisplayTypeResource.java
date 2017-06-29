@@ -7,16 +7,21 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 import org.restlet.data.Status;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import com.advicetec.configuration.ConfigurationManager;
+import com.advicetec.configuration.Container;
 import com.advicetec.configuration.DisplayType;
 import com.advicetec.configuration.DisplayTypeContainer;
 
 public class DisplayTypeResource extends ServerResource  
 {
 
-	  /**
+	static Logger logger = LogManager.getLogger(DisplayTypeResource.class.getName());
+	
+	   /**
 	   * Returns the Display Type instance requested by the URL. 
 	   * 
 	   * @return The JSON representation of the Signal, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
@@ -73,7 +78,7 @@ public class DisplayTypeResource extends ServerResource
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 		
-		System.out.println("Json:" + jsonText);
+		logger.debug("Json:" + jsonText);
 		
 	    // Look for it in the Device Type Database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
@@ -81,7 +86,7 @@ public class DisplayTypeResource extends ServerResource
 	    
 	    displayTypeCon.fromJSON(jsonText);
 	    
-	    System.out.println("numElements:" + displayTypeCon.size());
+	    logger.debug("numElements:" + displayTypeCon.size());
 	    
 	    getResponse().setStatus(Status.SUCCESS_OK);
 	    

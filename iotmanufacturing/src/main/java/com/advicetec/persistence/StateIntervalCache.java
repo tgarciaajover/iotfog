@@ -15,6 +15,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.configuration.ReasonCode;
@@ -22,6 +25,7 @@ import com.advicetec.configuration.ReasonCodeContainer;
 import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.core.TimeInterval;
+import com.advicetec.iot.rest.MonitoringDeviceResource;
 import com.advicetec.measuredentitity.Machine;
 import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuringState;
@@ -37,6 +41,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  *
  */ 
 public class StateIntervalCache extends Configurable {
+	
+	static Logger logger = LogManager.getLogger(StateIntervalCache.class.getName());
 	
 	private static String DB_URL = null;
 	private static String DB_USER = null;
@@ -98,7 +104,7 @@ public class StateIntervalCache extends Configurable {
 		                .writeAction(entries -> {
 
 		                	if (entries.size() > 0) {
-			                	System.out.println("Entre en writeaction:" + entries.size());
+		                		logger.debug("In writeaction:" + entries.size());
 			        			try {
 									Class.forName(DB_DRIVER);
 				        			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
@@ -111,7 +117,7 @@ public class StateIntervalCache extends Configurable {
 				                	});
 		
 				                	int ret[] = pst.executeBatch();
-				                	System.out.println("Number of commands executed:" + ret.length);
+				                	logger.debug("Number of commands executed:" + ret.length);
 				        			conn.commit();
 			        			} catch (ClassNotFoundException e) {
 									// TODO Auto-generated catch block
