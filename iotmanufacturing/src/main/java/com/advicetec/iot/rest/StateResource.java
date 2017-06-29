@@ -14,7 +14,7 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
-import org.restlet.resource.Post;
+import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 
@@ -26,20 +26,22 @@ public class StateResource extends ServerResource {
 	static final Logger logger = LogManager.getLogger(StateResource.class.getName());
 	
 	/**
-	 * Handle a POST http request.<br>
+	 * Handle a GET http request.<br>
 	 * @param rep 
 	 * @return Representation of Json array of states from a device.
 	 * @throws ResourceException
 	 * @throws IOException If the representation is not a valid json.
 	 */
-	@Post("json")
+	@Get("json")
 	public Representation getEntityInterval(Representation rep) throws ResourceException, IOException{
 		Representation result = null;
 		JSONObject json = null;
 		
 		if(rep.getMediaType().isCompatible(MediaType.APPLICATION_JSON)){
-			// {"historicalEvents":{"machineId": mid,"company":cmpy,
-			//  "location":loc,"plant":plnt,"startDttm":strtDt,"endDttm":endDt } }
+			/*
+			 * {"historicalEvents":{"machineId": mid,"company":cmpy,
+			 * "location":loc,"plant":plnt,"startDttm":strtDt,"endDttm":endDt } }
+			 */
 			try {
 				json = new JsonRepresentation(rep).getJsonObject().getJSONObject("historicalEvents");
 			
@@ -60,7 +62,7 @@ public class StateResource extends ServerResource {
 			if(facade == null){
 				result = new JsonRepresentation("");
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
-				logger.error("Facade does not found:"+uniqueID);
+				logger.error("Facade:"+uniqueID+" does not found.");
 			}else{
 				DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MMM-dd H:m:s.n");
 				LocalDateTime dttmFrom = LocalDateTime.parse(reqStartDateTime,format); 

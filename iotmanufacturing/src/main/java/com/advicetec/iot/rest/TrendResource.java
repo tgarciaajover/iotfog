@@ -14,7 +14,7 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
-import org.restlet.resource.Post;
+import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -23,7 +23,7 @@ import com.advicetec.measuredentitity.MeasuredEntityManager;
 public class TrendResource extends ServerResource{
 	static final Logger logger = LogManager.getLogger(TrendResource.class.getName());
 
-	@Post("json")
+	@Get("json")
 	public Representation getTrendVariable(Representation rep){
 		Representation result = null;
 		JSONObject json = null;
@@ -32,7 +32,7 @@ public class TrendResource extends ServerResource{
 			// {"historicalEvents":{"machineId": mid,"company":cmpy,
 			//  "location":loc,"plant":plnt,"startDttm":strtDt,"endDttm":endDt } }
 			try {
-				json = new JsonRepresentation(rep).getJsonObject().getJSONObject("historicalEvents");
+				json = new JsonRepresentation(rep).getJsonObject().getJSONObject("variableTrend");
 
 				// Get the contact's uniqueID from the URL.
 				String canMachineId = json.getString("machineId");
