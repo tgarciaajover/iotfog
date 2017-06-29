@@ -37,7 +37,8 @@ public class IotRestServer extends Application {
     // Attach the application to the component with a defined contextRoot.
     String contextRoot = "/iotserver";
     
-    application.setDescription("Description");
+    application.setDescription("REST application");
+    application.setName("IoT server application");
     
     component.getDefaultHost().attach(contextRoot, application);
     component.start();
