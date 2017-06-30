@@ -17,16 +17,16 @@ public class EventHandler implements Runnable
 {
 
 	static Logger logger = LogManager.getLogger(EventHandler.class.getName());
-	
+
 	private PriorityQueue queue;
 
 	// This queue is to put the events.
-	private BlockingQueue toQueue;
-	
-	public EventHandler(PriorityQueue queue, BlockingQueue toQueue) {
+	private BlockingQueue delayQueue;
+
+	public EventHandler(PriorityQueue queue, BlockingQueue delayedQueue) {
 		super();
 		this.queue = queue;
-		this.toQueue = toQueue;		
+		this.delayQueue = delayedQueue;		
 	}
 
 	public void run() {
@@ -35,54 +35,78 @@ public class EventHandler implements Runnable
 
 			while (true)
 			{
+
+				int[] size = queue.size();
+				String sizeStr = "";
+				for (int i=0; i < size.length; i++){
+					sizeStr = sizeStr + "i:" + i + "size:" + size[i] + ",";
+				}
+				logger.info("before event queue size" + sizeStr );
+
 				Queueable obj = (Queueable) queue.pop();
 				Event evnt = (Event) obj.getContent();
+
+
+				size = queue.size();
+				sizeStr = "";
+				for (int i=0; i < size.length; i++){
+					sizeStr = sizeStr + "," + i + ":" + size[i] + ",";
+				}
+				logger.info("after event queue size" + sizeStr );
+
+				logger.info("start to process event:" + evnt.getId() + " type:" + evnt.getEvntType().getName());
 				
+
 				if  (evnt.getEvntType() == EventType.MEASURING_ENTITY_EVENT)
 				{				
-					    MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
-					    MeasuredEntityEventProcessor processor = new MeasuredEntityEventProcessor(measuEntyEvt);
-					    logger.debug("processing measuring entity event");
-					    List<DelayEvent> eventsToCreate = processor.process();
-						for ( int i=0; i < eventsToCreate.size(); i++){
-							DelayEvent event = eventsToCreate.get(i);
-							this.toQueue.put(event);
-						}							
-					    
-					    break;
+					MeasuredEntityEvent measuEntyEvt = (MeasuredEntityEvent) evnt;
+					MeasuredEntityEventProcessor processor = new MeasuredEntityEventProcessor(measuEntyEvt);
+					logger.info("processing measuring entity event");
+					
+					List<DelayEvent> eventsToCreate = processor.process();
+					
+					logger.info("Num events returned after processing:" + eventsToCreate.size());
+					for ( int i=0; i < eventsToCreate.size(); i++){
+						DelayEvent event = eventsToCreate.get(i);
+						this.delayQueue.put(event);
+					}							
+					
 				} else if (evnt.getEvntType() == EventType.DISPLAY_EVENT) {
-						DisplayEvent displayEvt = (DisplayEvent) evnt;
-						DisplayEventProcessor processor = new DisplayEventProcessor(displayEvt);
-						logger.debug("processing display event");
-						List<DelayEvent> eventsToCreate = processor.process();
-						for ( int i=0; i < eventsToCreate.size(); i++){
-							DelayEvent event = eventsToCreate.get(i);
-							this.toQueue.put(event);
-						}							
-						
-						break;
+					DisplayEvent displayEvt = (DisplayEvent) evnt;
+					DisplayEventProcessor processor = new DisplayEventProcessor(displayEvt);
+					logger.info("processing display event");
+					List<DelayEvent> eventsToCreate = processor.process();
+					for ( int i=0; i < eventsToCreate.size(); i++){
+						DelayEvent event = eventsToCreate.get(i);
+						this.delayQueue.put(event);
+					}							
+
 				} else if (evnt.getEvntType() == EventType.MODBUS_READ_EVENT) {
-					    ModBusTcpEvent modbusEvt = (ModBusTcpEvent) evnt;
-					    ModBusTcpProcessor processor = new ModBusTcpProcessor(modbusEvt);
-					    logger.debug("processing modbus event");
-						List<DelayEvent> eventsToCreate = processor.process();
-						for ( int i=0; i < eventsToCreate.size(); i++){
-							DelayEvent event = eventsToCreate.get(i);
-							this.toQueue.put(event);
-						}					    
+					ModBusTcpEvent modbusEvt = (ModBusTcpEvent) evnt;
+					ModBusTcpProcessor processor = new ModBusTcpProcessor(modbusEvt);
+					logger.debug("processing modbus event");
+					logger.info("Initial Num delayed enqueued elements is:" + this.delayQueue.size());
+					List<DelayEvent> eventsToCreate = processor.process();
+					for ( int i=0; i < eventsToCreate.size(); i++){
+						DelayEvent event = eventsToCreate.get(i);
+						this.delayQueue.put(event);
+					}
+					logger.info("The Num delayed enqueued elements is:" + this.delayQueue.size());
 				} else {
-					logger.debug("This event cannot be processed" + evnt.getEvntType().getName());
+					logger.error("This event cannot be processed" + evnt.getEvntType().getName());
 				}
 				
+				logger.info("finish processing event" + evnt.getId());
 			}
 
 		} catch (InterruptedException e) {
+			logger.error("Interruped Operation - Error:" + e.getMessage());
 			e.printStackTrace();
-		} catch (SQLException e){
-			System.err.println("Container error, we cannot continue");
+		} catch (Exception e){
+			logger.error("Exception:" + e.getMessage() );
 		}
 
 	}
 
-	
+
 }

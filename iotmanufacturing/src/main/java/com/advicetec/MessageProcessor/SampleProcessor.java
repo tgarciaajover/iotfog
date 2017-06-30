@@ -52,6 +52,9 @@ public class SampleProcessor implements Processor
 		
 		// Finds the measuring Entity involved. The string value is always not null
 		Integer measuringEntity = sample.getmEntity();
+		Integer mearuringDevice = sample.getmDevice().getId();
+		Integer ioPort = sample.getPort().getId();
+		
 		String program = sample.getMeaningTransformation();
 		
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
@@ -122,7 +125,7 @@ public class SampleProcessor implements Processor
 							
 							logger.debug("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
-							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, new ArrayList<InterpretedSignal>());
+							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity,mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
 							event.setRepeated(repeated);
 							event.setMilliseconds(duetime);
 							

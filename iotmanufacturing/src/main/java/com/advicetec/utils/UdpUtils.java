@@ -162,11 +162,26 @@ public class UdpUtils {
 		try {
 			s =new String(bytes,"UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return s;
 	}
+
+	/**
+	 * 
+	 * @param hex
+	 * @return
+	 */
+	public static String byteArray2Ascii(byte[] bytes){
+		String s = null;
+		try {
+			s =new String(bytes,"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		return s;
+	}
+	
 	
 	/**
 	 * 

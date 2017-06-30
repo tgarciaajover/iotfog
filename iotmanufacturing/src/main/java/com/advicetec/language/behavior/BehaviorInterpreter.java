@@ -1625,7 +1625,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 			AttributeValue value = values.get(i);
 			if ((value == null) || (value.getAttr() == null) ){
 				if (value == null){
-					logger.error("value attribute is null with  attribute:" + attributeId + "num attribute values:" + values.size() + "index:" + i);
+					logger.error("value attribute is null with  attribute:" + attributeId + " size attribute values:" + values.size() + " index:" + i);
 				}
 				else{
 					logger.error("value attribute has an attribute definition null - attribute:" + attributeId);

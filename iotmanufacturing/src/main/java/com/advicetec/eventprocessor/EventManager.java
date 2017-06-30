@@ -122,19 +122,19 @@ public class EventManager extends Manager
 		logger.info("in getModbusConnection  address: " + ipAddress + " port: " + port  );
 		
 		int usedCon = 0;
+		int avilCon = 0;
 		if (this.availableConnections.get(ipAddress) != null)
-			usedCon = this.availableConnections.get(ipAddress).size();
+			avilCon = this.availableConnections.get(ipAddress).size();
 			
 		
-		int avilCon = 0;
 		if (this.usedConnections.get(ipAddress) != null)
-			avilCon = this.usedConnections.get(ipAddress).size();
+			usedCon = this.usedConnections.get(ipAddress).size();
 		
 		if (usedCon + avilCon <= maxModbusConnections){
 			if (avilCon > 0)
 			{
 				
-				logger.info("There are avail connections - availCon: " + avilCon + " usedConnection: " + String.valueOf((usedCon + avilCon)));
+				logger.info("There are avail connections - availCon: " + avilCon + " usedConnection: " + String.valueOf((usedCon)));
 				
 				// Remove the connection from available connections
 				Map.Entry<LocalDateTime,TCPMasterConnection> ret = availableConnections.get(ipAddress).pop();
@@ -142,6 +142,8 @@ public class EventManager extends Manager
 				try{
 					// Update the connection (reconnect or maintain the connection).
 					LocalDateTime start = getActiveModbusConnection(ret);
+					
+					logger.info("The available connection stated at:" + start.toString() );
 					
 					// Create the entry.
 					Map.Entry<LocalDateTime,TCPMasterConnection> newEntry = new AbstractMap.SimpleEntry<LocalDateTime,TCPMasterConnection>(start, ret.getValue()); 
@@ -154,9 +156,7 @@ public class EventManager extends Manager
 	
 					// Insert the connection into the used connections.
 					this.usedConnections.get(ipAddress).push(newEntry);
-					
-					logger.info("here I am");
-					
+										
 					// return the connection.
 					return newEntry.getValue();
 
@@ -228,8 +228,8 @@ public class EventManager extends Manager
 						this.availableConnections.put(ipAddress, listInsert);
 					}
 					
-					// Insert the connection into the used connections.
-					this.usedConnections.get(ipAddress).push(entryCon);
+					// Insert the connection into the available connections.
+					this.availableConnections.get(ipAddress).push(entryCon);
 					
 					// The connection was found
 					found= true;

@@ -39,4 +39,9 @@ public class DisplayEvent extends Event
 	                ", display_text=" + display_text +
 	                '}';
 	}
+	
+	@Override
+	public String getKey(){
+		return super.getEvntType().getName() + "-" +  getDisplayName() + "-" +  getDisplayText();
+	}
 }

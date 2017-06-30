@@ -13,8 +13,8 @@ public abstract class MeasuringMessage extends UnifiedMessage {
 	
 	public MeasuringMessage(UnifiedMessageType type,MonitoringDevice device, InputOutputPort port, Integer entityId) {
 		super(type);
-		mDevice = mDevice;
-		port = port;
+		this.mDevice = device;
+		this.port = port;
 		mEntity = entityId;
 	}
 	

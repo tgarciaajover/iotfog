@@ -39,7 +39,7 @@ public class MeasuredEntityEventProcessor implements Processor
 		long milliseconds = this.event.getMilliseconds();
 		boolean repeat = this.event.isRepeated();
 		
-        logger.debug("process - behavior:" + behaviorName);
+        logger.info("process - behavior:" + behaviorName);
 		
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade entityFacade = entityManager.getFacadeOfEntityById(measuringEntity);
@@ -81,7 +81,7 @@ public class MeasuredEntityEventProcessor implements Processor
 							String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
 
 							// We don't send parameters to the event. 
-							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, new ArrayList<InterpretedSignal>());
+							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, this.event.getDevice(), this.event.getPort(), measuringEntity, new ArrayList<InterpretedSignal>());
 							DelayEvent dEvent = new DelayEvent(event,duetime);
 							ret.add(dEvent);
 						}
@@ -101,10 +101,13 @@ public class MeasuredEntityEventProcessor implements Processor
 				logger.debug("Error message:" + e.getMessage());
 				e.printStackTrace();
 			}
+			
 
 		} else {
 			logger.error("Facade not found" + measuringEntity);
 		}
+		
+		logger.info("end process - behavior:" + behaviorName);
 
 		return ret;
 

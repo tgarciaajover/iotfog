@@ -139,7 +139,7 @@ public class ActivityRegistrationResource extends ServerResource
 	    			InterpretedSignal reasonSignal = new InterpretedSignal(AttributeType.INT, new Integer(idRazonParada));
 	    			signals.add(reasonSignal);
 
-					MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuredEntityFacade.getEntity().getId(), signals );
+					MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuredEntityFacade.getEntity().getId(),measuredEntityFacade.getEntity(), signals );
 					event.setRepeated(false);
 					event.setMilliseconds(0); // To be executed now.
 					

@@ -42,7 +42,7 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	@Override
 	public List<UnifiedMessage> getUnifiedMessage() throws Exception {
 
-		logger.info("type: " + this.type + " uid:" + this.uid + " offset: " + this.offSet + "count: " + this.count);
+		logger.info("entering getUnifiedMessage" + "type: " + this.type + " uid:" + this.uid + " offset: " + this.offSet + "count: " + this.count);
 		
 		String portLabel = ModBusUtils.buildPortLabel(this.type, this.uid, this.offSet, this.count);
 				
@@ -57,22 +57,23 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 
 		List<InterpretedSignal> values;
 		Integer measuringEntityId = confManager.getMeasuredEntity(ipAddr, portLabel);
+		
+		ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
 
 		if (type.equals(ModBusTcpEventType.READ_DISCRETE)) {
 			Translator object = (Translator) Class.forName(classToLoad).newInstance();
-			ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
 			values = object.translate(readDiscrete);
 			theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), measuringEntityId, values, transformation));
-			return theList;
 		} else if (type.equals(ModBusTcpEventType.READ_REGISTER)) {
 			Translator object = (Translator) Class.forName(classToLoad).newInstance();
-			ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
 			values = object.translate(readDiscrete);				
 			// Build the port label as: PREFIX + "-" + offset + "-" + count 
 			theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), measuringEntityId, values, transformation));
-			return theList;
 		}
-		return null;
+		
+		logger.info("exit getUnifiedMessage - Nbr Unified Messages:" + theList.size());
+
+		return theList;
 	}
 	
 

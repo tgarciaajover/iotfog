@@ -4,6 +4,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.advicetec.mpmcqueue.PriorityQueue;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
@@ -19,6 +22,8 @@ import com.advicetec.persistence.StatusStore;
 public class MessageHandler implements Runnable
 {
 
+	static final Logger logger = LogManager.getLogger(MessageHandler.class.getName()); 
+	
 	private PriorityQueue fromQueue;
 	
 	// This queue is to put the events.
@@ -51,7 +56,12 @@ public class MessageHandler implements Runnable
 							List<DelayEvent> eventsToCreate = processor.process();	
 							for ( int i=0; i < eventsToCreate.size(); i++){
 								DelayEvent event = eventsToCreate.get(i);
-								this.toQueue.put(event);
+								if (MessageManager.getInstance().existDelayEventType(event.getKey()) == false){
+									this.toQueue.put(event);
+									MessageManager.getInstance().addDelayEventType(event.getKey());
+								} else {
+									logger.info("event of type: "+ event.getEvent().getEvntType().getName() + " already exists in the delayed queue - key:" + event.getKey() );
+								}
 							}							
 							break;
 												

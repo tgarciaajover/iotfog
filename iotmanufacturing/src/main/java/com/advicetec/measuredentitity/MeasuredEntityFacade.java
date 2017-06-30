@@ -237,6 +237,8 @@ public final class MeasuredEntityFacade {
 
 		LocalDateTime oldest = attValueCache.getOldestTime();
 
+		
+		logger.info("getByIntervalByAttributeValue from:" + from + " to:" + to);
 		if(!attMap.containsKey(attrName)){
 			logger.error("attribute:"+attrName+" is not in facade");
 			return null;
@@ -351,7 +353,14 @@ public final class MeasuredEntityFacade {
 	private ArrayList<AttributeValue> getFromCache(String[] keyArray){
 		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
 		for (String key : keyArray) {
-			maValues.add(attValueCache.getFromCache(key));
+			AttributeValue value = attValueCache.getFromCache(key);
+			if (value == null){
+				logger.error("measure attribute with key:" + key + " not found in cache");
+			} else {
+				maValues.add(value);
+			}
+				
+			
 		}
 		return maValues;
 	}
@@ -557,25 +566,6 @@ public final class MeasuredEntityFacade {
 		return list;
 	}
 
-	/**
-	 * Commands to the cache to store their attribute values into the database 
-	 * and clean the cache.
-	 */
-	public void storeAllAttributeValues(){
-		attValueCache.bulkCommit(getAllKeysFromAttributeMap());
-	}
-
-	/**
-	 * Returns the list of keys from the map of attributes.
-	 * @return
-	 */
-	private List<String> getAllKeysFromAttributeMap() {
-		List<String> attKeys = new ArrayList<String>();
-		for(Map<LocalDateTime,String> map:attMap.values()){
-			attKeys.addAll(map.values());
-		}
-		return attKeys;
-	}
 
 	/**
 	 * Commands to the cache to store all intervals into the database 

@@ -18,7 +18,6 @@ package com.advicetec.persistence;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 
-import java.time.ZonedDateTime;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,7 +28,6 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.advicetec.core.IotInit;
 import com.github.benmanes.caffeine.cache.CacheWriter;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 
@@ -85,7 +83,7 @@ public final class WriteBehindCacheWriter<K, V> implements CacheWriter<K, V>
   @Override
   public void delete(K key, V value, RemovalCause removalCause) 
   {
-	  
+	  logger.info("delete:" + key);
   }
 
   public static final class Builder<K, V> {

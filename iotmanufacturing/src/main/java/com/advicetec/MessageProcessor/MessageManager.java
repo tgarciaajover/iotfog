@@ -3,6 +3,7 @@ package com.advicetec.MessageProcessor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.DelayQueue;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +21,8 @@ public class MessageManager extends Manager
 	
 	private static MessageManager instance=null;
 	private ConfigurationManager confManager = null;
-	private BlockingQueue delayedQueue = null;
+	private BlockingQueue<DelayEvent> delayedQueue = null;
+	private ConcurrentHashMap<String, Boolean> delayedTypeEvents = null;
 	
 	public static MessageManager getInstance()
 	{
@@ -33,7 +35,8 @@ public class MessageManager extends Manager
 	{
 		super("MessageManager");	
 		this.confManager = ConfigurationManager.getInstance();
-		this.delayedQueue = new DelayQueue();
+		this.delayedQueue = new DelayQueue<DelayEvent>();
+		this.delayedTypeEvents = new ConcurrentHashMap<String, Boolean>();
 	}	
 	
 	public void run() 
@@ -51,19 +54,24 @@ public class MessageManager extends Manager
 		
 		Thread delayConsumer = new Thread(new DelayQueueConsumer("ProcessConsumer", this.delayedQueue));
 		delayConsumer.start();
-		/*
-		try {
-			delayConsumer.join();
-			for (Thread t : listThread){
-				t.join();
-			}	
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
+
 		
 		logger.debug("Ending Message Manager run ");
-	}	
+	}
+	
+	public boolean existDelayEventType(String type){
+		if (this.delayedTypeEvents.get(type) == null)
+			return false;
+		else 
+			return this.delayedTypeEvents.get(type);
+	}
+	
+	public void removeDelayEventType(String type){
+		this.delayedTypeEvents.remove(type);
+	}
+	
+	public void addDelayEventType(String type){
+		this.delayedTypeEvents.put(type, new Boolean(true));
+	}
 
 }
