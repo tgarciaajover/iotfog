@@ -21,6 +21,8 @@ import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesResponse;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
+import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersRequest;
+import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersResponse;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
 public class ModBusTcpProcessor implements Processor {
@@ -129,6 +131,44 @@ public class ModBusTcpProcessor implements Processor {
 						// Insert again in the queue the event
 						if (evt2.isRepeated()){
 							long milliseconds = evt2.getMilliseconds();
+							logger.info("New Read Modbus event to run in:" + milliseconds);
+							DelayEvent dEvent = new DelayEvent(event,milliseconds);
+							retEvts.add(dEvent);
+						}
+						
+						break;
+					case READ_HOLDING_REGISTER:
+						ModBusTcpInputRegisterEvent evt3 = (ModBusTcpInputRegisterEvent) event;
+						adapterManager = AdapterManager.getInstance(); 				
+						ReadMultipleRegistersRequest req3 = null; //the request
+						ReadMultipleRegistersResponse res3 = null; //the response
+				
+						// Prepare the request
+						req3 = new ReadMultipleRegistersRequest(evt3.getOffset(), evt3.getCount());
+						req3.setUnitID(evt3.getUid());
+				
+						// Prepare the transaction
+						trans = new ModbusTCPTransaction(con);
+						trans.setRequest(req3);
+						
+	 				    trans.execute();
+						res3 = (ReadMultipleRegistersResponse) trans.getResponse();
+						
+						dictionary.put("IPAddress", event.getIpAddress());
+						dictionary.put("UID", event.getUid());
+						dictionary.put("Offset", evt3.getOffset());
+						dictionary.put("Count", evt3.getCount());
+						dictionary.put("Type", (Integer) event.getType().getValue());
+						dictionary.put("Read", res3.getMessage());
+						
+						logger.info("UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
+						
+						Queueable obj3 = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
+						adapterManager.getQueue().enqueue(6, obj3);
+						
+						// Insert again in the queue the event
+						if (evt3.isRepeated()){
+							long milliseconds = evt3.getMilliseconds();
 							logger.info("New Read Modbus event to run in:" + milliseconds);
 							DelayEvent dEvent = new DelayEvent(event,milliseconds);
 							retEvts.add(dEvent);

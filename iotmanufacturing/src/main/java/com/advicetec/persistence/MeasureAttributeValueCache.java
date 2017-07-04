@@ -16,13 +16,9 @@ import java.util.function.BinaryOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.advicetec.configuration.DeviceType;
-import com.advicetec.configuration.IOSignalDeviceType;
-import com.advicetec.configuration.Signal;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.Configurable;
-import com.advicetec.iot.rest.MonitoringDeviceResource;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -34,9 +30,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  *
  */
 public class MeasureAttributeValueCache extends Configurable {
-	
+
 	static Logger logger = LogManager.getLogger(MeasureAttributeValueCache.class.getName());
-	
+
 	private static String DB_URL = null;
 	private static String DB_USER = null;
 	private static String DB_PASS = null;
@@ -45,7 +41,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	private static Integer MAX_SIZE = 0;
 	private static Integer WRITE_TIME = 0;
 	private static Integer DELETE_TIME = 0;
-	
+
 	private static MeasureAttributeValueCache instance = null;
 	private static Connection conn  = null; 
 	private static PreparedStatement pst = null;
@@ -58,7 +54,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	private MeasureAttributeValueCache()
 	{
 		super("MeasureAttributeValueCache");
-		
+
 		DB_DRIVER = properties.getProperty("driver");
 		DB_URL = properties.getProperty("server");
 		DB_USER = properties.getProperty("user");
@@ -72,73 +68,73 @@ public class MeasureAttributeValueCache extends Configurable {
 		logger.info("Write time:" + WRITE_TIME + "Delete Time:" + DELETE_TIME);
 
 	}
-		
+
 	public static void setCache(int initialCapacity, int maxSize){
-		
+
 		// Write behind implementation.
 		//cache = Caffeine.newBuilder()
 		//		.initialCapacity(initialCapacity)
 		//		.maximumSize(maxSize)
 		//		.recordStats()
 		//		.build();
-		
-	     cache = Caffeine.newBuilder()
-	            .expireAfterWrite(DELETE_TIME, TimeUnit.SECONDS)
-	            .initialCapacity(initialCapacity)
-	            .maximumSize(maxSize)
-	        	.writer(new WriteBehindCacheWriter.Builder<String, AttributeValue>()
-	                .bufferTime(WRITE_TIME, TimeUnit.SECONDS)
-	                .coalesce(BinaryOperator.maxBy(AttributeValue::compareTo))
-	                .writeAction(entries -> {
 
-	                	if (entries.size() > 0) {
+		cache = Caffeine.newBuilder()
+				.expireAfterWrite(DELETE_TIME, TimeUnit.SECONDS)
+				.initialCapacity(initialCapacity)
+				.maximumSize(maxSize)
+				.writer(new WriteBehindCacheWriter.Builder<String, AttributeValue>()
+						.bufferTime(WRITE_TIME, TimeUnit.SECONDS)
+						.coalesce(BinaryOperator.maxBy(AttributeValue::compareTo))
+						.writeAction(entries -> {
 
-		        			try {
-								Class.forName(DB_DRIVER);
-			        			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-			        			conn.setAutoCommit(false);
-			        			pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
-	
-			                	entries.forEach((k,v)-> {
-			                		logger.info( "db write key:" + ((MeasuredAttributeValue)v).getKey() );
-			                		((MeasuredAttributeValue)v).dbInsert(pst);
+							if (entries.size() > 0) {
 
-			                	});
-	
-			                	int ret[] = pst.executeBatch();
-			        			conn.commit();
-		        			} catch (ClassNotFoundException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (SQLException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+								try {
+									Class.forName(DB_DRIVER);
+									conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+									conn.setAutoCommit(false);
+									pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
+
+									entries.forEach((k,v)-> {
+										logger.info( "db write key:" + ((MeasuredAttributeValue)v).getKey() );
+										((MeasuredAttributeValue)v).dbInsert(pst);
+
+									});
+
+									int ret[] = pst.executeBatch();
+									conn.commit();
+								} catch (ClassNotFoundException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								} catch (SQLException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+
+								finally{
+									if(pst!=null)
+									{
+										try
+										{
+											pst.close();
+										} catch (SQLException e) {
+											e.printStackTrace();
+										}
+									}
+
+									if(conn!=null) 
+									{
+										try
+										{
+											conn.close();
+										} catch (SQLException e) {
+											e.printStackTrace();
+										}
+									}
+								}
 							}
-		        		
-		        			finally{
-		        				if(pst!=null)
-		        				{
-		        					try
-		        					{
-		        						pst.close();
-		        					} catch (SQLException e) {
-		        						e.printStackTrace();
-		        					}
-		        				}
-	
-		        				if(conn!=null) 
-		        				{
-		        					try
-		        					{
-		        						conn.close();
-		        					} catch (SQLException e) {
-		        						e.printStackTrace();
-		        					}
-		        				}
-		        			}
-	                	}
-	                }).build())
-	            .build();
+						}).build())
+				.build();
 	}
 
 	public static MeasureAttributeValueCache getInstance(){
@@ -210,7 +206,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	}
 
 	public LocalDateTime getOldestTime(){
-		
+
 		Map<String, AttributeValue> map = cache.policy().eviction().get().coldest(1);
 		// This code at most returns one value.
 		LocalDateTime ret = LocalDateTime.now();
@@ -220,9 +216,9 @@ public class MeasureAttributeValueCache extends Configurable {
 				break;
 			}
 		}
-		
+
 		return ret;
-		
+
 	}
 
 	/**
@@ -235,8 +231,8 @@ public class MeasureAttributeValueCache extends Configurable {
 	 */
 	public synchronized ArrayList<AttributeValue> getFromDatabase(Integer entityId, MeasuredEntityType mType,
 			Attribute attribute, LocalDateTime from, LocalDateTime to) {
-		
-		
+
+
 		ArrayList<AttributeValue> list = new ArrayList<AttributeValue>();
 		ResultSet rs = null;
 		try {
@@ -258,9 +254,9 @@ public class MeasureAttributeValueCache extends Configurable {
 				MeasuredAttributeValue mav = new MeasuredAttributeValue(attribute,new Object(), entityId, mType, dtime); 
 				mav.setValueFromDatabase(rs);
 				list.add(mav);
-						      
+
 			}
-			
+
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {
@@ -287,7 +283,54 @@ public class MeasureAttributeValueCache extends Configurable {
 				}
 			}
 		}
-		
+
 		return list;
 	}
+
+
+	public void bulkCommit(List<String> keys) {
+		try {
+			Class.forName(DB_DRIVER);
+			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			conn.setAutoCommit(false);
+
+			pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
+			Map<String,AttributeValue> subSet = cache.getAllPresent(keys);
+			for (AttributeValue value :	subSet.values()) {
+				if(value instanceof MeasuredAttributeValue){
+					MeasuredAttributeValue mav = (MeasuredAttributeValue) value;
+					mav.dbInsert(pst);
+					pst.addBatch();
+				}
+			}
+			pst.executeBatch();
+			conn.commit();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		finally{
+			if(pst!=null)
+			{
+				try
+				{
+					pst.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+
+			if(conn!=null) 
+			{
+				try
+				{
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
 }

@@ -8,9 +8,10 @@ public enum ModBusTcpEventType
 
 	READ_DISCRETE(0, "Read Discrete"),
 	READ_REGISTER(1, "Read register"),
-	WRITE_DISCRETE(2, "Write discrete"),
-	WRITE_REGISTER(3, "Write register"),
-	INVALID(4, "Invalid");
+	READ_HOLDING_REGISTER(2, "Read Holding register"),
+	WRITE_DISCRETE(3, "Write discrete"),
+	WRITE_REGISTER(4, "Write register"),
+	INVALID(5, "Invalid");
 
 	public int code;
 	public String name;
