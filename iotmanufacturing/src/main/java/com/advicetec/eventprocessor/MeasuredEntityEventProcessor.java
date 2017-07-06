@@ -49,8 +49,11 @@ public class MeasuredEntityEventProcessor implements Processor
 		if (entityFacade != null){
 		
 			String program = entityFacade.getEntity().getBehaviorText(behaviorName);
-
-			logger.debug("program:" + program);
+			
+			if (program == null || program.isEmpty()){
+				logger.error("the program for behavior name:" + behaviorName + " does not exist!!");
+				return ret;
+			}
 			
 			BehaviorSyntaxChecking sintaxChecking = new BehaviorSyntaxChecking();
 			try 
@@ -65,7 +68,13 @@ public class MeasuredEntityEventProcessor implements Processor
 					interpreter.process(program, measuringEntity, listParams);
 
 					// Store the new attributes and their values.  
+					if (interpreter.getGlobalScope() == null){
+						logger.error("The behavior intepreter fails !!! for behavior:" + behaviorName);
+						return ret;
+					}
 					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap(), AttributeOrigin.BEHAVIOR);
+					
+					// Import symbols' values and state
 					entityFacade.importAttributeValues(interpreter.getGlobalAttributes());
 					entityFacade.setCurrentState(interpreter.getState());
 

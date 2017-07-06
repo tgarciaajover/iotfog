@@ -1,5 +1,6 @@
 package com.advicetec.language.behavior;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -52,7 +53,14 @@ public class BehaviorSyntaxChecking
     
     public List<SyntaxError> process(String program) throws Exception 
     {
-
+    	List<SyntaxError> listErrors;
+    	
+    	if ((program == null) || program.isEmpty())
+    	{
+    		listErrors = new ArrayList<SyntaxError>();
+    		logger.info("Defphase finished - The program given is empty");
+    		return listErrors;
+    	}
     	CharStream  stream = (CharStream) new ANTLRInputStream(program);
     	BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(stream);
     	
@@ -79,7 +87,7 @@ public class BehaviorSyntaxChecking
         BehaviorRefPhase ref = new BehaviorRefPhase(parser, def.getGlobalScope(), def.getScopes());
         walker.walk(ref, tree);
         
-        List<SyntaxError> listErrors = collector.getErrors();
+        listErrors = collector.getErrors();
         
         // Add the custom errors created during the Ref phase. 
         for (SyntaxError e : ref.getErrors())  { 

@@ -71,6 +71,11 @@ public class InterpreterSw
     public void process(String program, Integer entityId, List<InterpretedSignal> parameters) throws Exception 
     {
 
+        if ((program == null) || program.isEmpty()){
+        	logger.error("The program given is empty");
+        	return;
+        }
+    	
     	CharStream  stream = (CharStream) new ANTLRInputStream(program);
 		TransformationGrammarLexer lexer = new TransformationGrammarLexer(stream);
 		

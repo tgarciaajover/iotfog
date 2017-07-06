@@ -19,7 +19,7 @@ public class MonitoringDeviceContainer extends Container
 	static Logger logger = LogManager.getLogger(MonitoringDeviceContainer.class.getName());
 	
 	static String sqlSelect1 = "SELECT id, device_type_id, descr, ip_address, mac_address, serial, create_date FROM setup_monitoringdevice";
-	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id, port_label, measured_entity_id FROM setup_inputoutputport";
+	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id, port_label, refresh_time_ms,  measured_entity_id FROM setup_inputoutputport";
 
 	private Map<String, Integer> indexByMac;
 	private Map<String, Integer> indexByIpAddress;
@@ -64,14 +64,21 @@ public class MonitoringDeviceContainer extends Container
 		        object.setCreate_date(timestamp.toLocalDateTime());
 		        
 		        super.configuationObjects.put(id, object);
-		        if (!macAddress.isEmpty())
-		        	indexByMac.put(macAddress,id);
 		        
-		        if (!ipAddress.isEmpty())
-		        	indexByIpAddress.put(ipAddress, id);
+		        if (macAddress != null){
+			        if (!macAddress.isEmpty())
+			        	indexByMac.put(macAddress,id);
+		        }
 		        
-		        if (!serial.isEmpty())
-		        	indexBySerial.put(serial,id);
+		        if (ipAddress != null){
+			        if (!ipAddress.isEmpty())
+			        	indexByIpAddress.put(ipAddress, id);
+		        }
+		        
+		        if (serial != null){
+			        if (!serial.isEmpty())
+			        	indexBySerial.put(serial,id);
+		        }
 			}
 			
 			rs1.close();
@@ -85,6 +92,7 @@ public class MonitoringDeviceContainer extends Container
 		        Integer deviceId    	= rs2.getInt("device_id");
 		        Integer signalTypeId	= rs2.getInt("signal_type_id");
 		        String portLabel		= rs2.getString("port_label");
+		        Integer refreshTimeMs   = rs2.getInt("refresh_time_ms");
 		        Integer measuredEntityId = rs2.getInt("measured_entity_id");
 		        		        
 		        MonitoringDevice device= (MonitoringDevice) this.getObject(deviceId);
@@ -95,6 +103,7 @@ public class MonitoringDeviceContainer extends Container
 		        port.setTransformationText(transformation);
 		        port.setPortLabel(portLabel);
 		        port.setMeasuringEntity(measuredEntityId);
+		        port.setRefreshTimeMs(refreshTimeMs);
 		        
 		        device.putInputOutputPort(port);
 			}

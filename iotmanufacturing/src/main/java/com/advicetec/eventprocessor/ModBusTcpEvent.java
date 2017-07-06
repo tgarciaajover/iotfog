@@ -78,5 +78,5 @@ public abstract class ModBusTcpEvent extends Event
 	public String getKey(){
 		return getEvntType().getName() + "-" + getIpAddress() + "-" + getPort() + "-" + getUid();
 	}
-	
+
 }

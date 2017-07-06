@@ -159,6 +159,12 @@ public class ConfigurationManager extends Configurable
 		return this.getMonitoringDevice(macAddress).getClassName(portLabel);
 	}
 	
+	/**
+	 * 
+	 * @param macAddress
+	 * @param portLabel
+	 * @return
+	 */
 	public Integer getMeasuredEntity(String macAddress, String portLabel){
 		logger.debug("start getMeasuredEntity params:" + macAddress + "|" + portLabel);
 		MonitoringDevice mDevice = this.getMonitoringDevice(macAddress); 

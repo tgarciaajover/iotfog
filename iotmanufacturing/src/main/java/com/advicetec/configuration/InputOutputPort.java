@@ -28,10 +28,21 @@ public class InputOutputPort extends ConfigurationObject  {
 	@JsonProperty("measured_entity")
 	private Integer measuringEntity; 
 	
+	@JsonProperty("refresh_time_ms")
+	private Integer refreshTimeMs; 
+	
 	@JsonCreator
 	public InputOutputPort(@JsonProperty("id") Integer id) {
 		super(id);
 	}	
+
+	public Integer getRefreshTimeMs() {
+		return refreshTimeMs;
+	}
+
+	public void setRefreshTimeMs(Integer refreshTimeMs) {
+		this.refreshTimeMs = refreshTimeMs;
+	}
 
 	public String getPortLabel() {
 		return portLabel;

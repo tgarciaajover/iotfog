@@ -54,7 +54,7 @@ public class ModBusTcpProcessor implements Processor {
 			} else {
 			
 				ModbusTCPTransaction trans = null; //the transaction
-				
+				logger.info("event type to process : " + event.getType().getName());
 				switch (event.getType())
 				{
 					case READ_DISCRETE: 
@@ -99,7 +99,6 @@ public class ModBusTcpProcessor implements Processor {
 						
 						break;
 					case READ_REGISTER:
-	
 						ModBusTcpInputRegisterEvent evt2 = (ModBusTcpInputRegisterEvent) event;
 						adapterManager = AdapterManager.getInstance(); 				
 						ReadInputRegistersRequest req2 = null; //the request
@@ -138,7 +137,7 @@ public class ModBusTcpProcessor implements Processor {
 						
 						break;
 					case READ_HOLDING_REGISTER:
-						ModBusTcpInputRegisterEvent evt3 = (ModBusTcpInputRegisterEvent) event;
+						ModBusTcpReadHoldingRegisterEvent evt3 = (ModBusTcpReadHoldingRegisterEvent) event;
 						adapterManager = AdapterManager.getInstance(); 				
 						ReadMultipleRegistersRequest req3 = null; //the request
 						ReadMultipleRegistersResponse res3 = null; //the response

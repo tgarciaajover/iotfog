@@ -40,4 +40,8 @@ public enum ModBusTcpEventType
 	public boolean equals(ModBusTcpEventType other){
 		return this.code == other.code;
 	}
+	
+	public String getName(){
+		return this.name;
+	}
 }

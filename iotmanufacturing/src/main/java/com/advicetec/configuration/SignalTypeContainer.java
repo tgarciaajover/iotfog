@@ -16,7 +16,7 @@ public class SignalTypeContainer extends Container
 
 	static Logger logger = LogManager.getLogger(SignalTypeContainer.class.getName());
 
-	static String sqlSelect = "SELECT id, name, class_name, create_date FROM setup_signaltype";
+	static String sqlSelect = "SELECT id, name, class_name, protocol, create_date FROM setup_signaltype";
 
 	public SignalTypeContainer(String driver, String server, String user, String password) 
 	{	
@@ -38,12 +38,14 @@ public class SignalTypeContainer extends Container
 				Integer id     = rs.getInt    ("id");
 		        String name   = rs.getString ("name");
 		        String class_name   = rs.getString ("class_name");
+		        String protocol = rs.getString("protocol");
 		        Timestamp timestamp = rs.getTimestamp("create_date");
 		        
 		        SignalType object = new SignalType(id);
 		        object.setName(name);
 		        object.setClassName(class_name);
 		        object.setCreate_date(timestamp.toLocalDateTime());
+		        object.setProtocol(protocol);
 		        super.configuationObjects.put(id, object);
 		      
 			}

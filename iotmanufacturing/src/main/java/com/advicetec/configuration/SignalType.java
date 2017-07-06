@@ -26,7 +26,17 @@ public class SignalType extends ConfigurationObject
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
 	private LocalDateTime create_date;
 	
+	@JsonProperty("protocol")
+	private String protocol;
 	
+	public String getProtocol() {
+		return protocol;
+	}
+
+	public void setProtocol(String protocol) {
+		this.protocol = protocol;
+	}
+
 	@JsonCreator
 	public SignalType(@JsonProperty("id") Integer id) {
 		super(id);

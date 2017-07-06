@@ -39,8 +39,8 @@ public class BehaviorInterpreterSw
 {
 
 	static Logger logger = LogManager.getLogger(BehaviorInterpreterSw.class.getName());
-	private BehaviorDefPhase defPhase;
-	private BehaviorInterpreter interpreter; 
+	private BehaviorDefPhase defPhase = null;
+	private BehaviorInterpreter interpreter = null; 
 	
     public static Symbol.Type getType(int tokenType) {
 
@@ -73,9 +73,14 @@ public class BehaviorInterpreterSw
      * @param parameters
      * @throws Exception
      */
-    public void process(String program, Integer entityId, List<InterpretedSignal> parameters) throws Exception 
+    @SuppressWarnings("deprecation")
+	public void process(String program, Integer entityId, List<InterpretedSignal> parameters) throws Exception 
     {
-
+        if ((program == null) || program.isEmpty()){
+        	logger.error("The program given is empty");
+        	return;
+        }
+        
     	CharStream  stream = (CharStream) new ANTLRInputStream(program);
     	BehaviorGrammarLexer lexer = new BehaviorGrammarLexer(stream);
 
@@ -179,11 +184,15 @@ public class BehaviorInterpreterSw
      * @return  Map string (symbol name) value (object)
      */
     public Map<String, ASTNode> getGlobalAttributes()
-    {
-    	Map<String, ASTNode> map = getGlobalSpace().getSymbolMap();
-    	
+    {    	
     	Map<String, ASTNode> ret = new HashMap<String, ASTNode>();
-    	
+
+    	if (getGlobalSpace() == null){
+    		return ret;
+    	}
+    		
+    	Map<String, ASTNode> map = getGlobalSpace().getSymbolMap();
+
     	for (String symbolId : map.keySet()) {
     		Symbol symbol = interpreter.getGlobalScope().resolve(symbolId);
     		if (symbol instanceof AttributeSymbol) {
@@ -205,11 +214,15 @@ public class BehaviorInterpreterSw
      * @return  Map string (symbol name) value (object)
      */
     public Map<String, ASTNode> getState()
-    {
-    	Map<String, ASTNode> map = getGlobalSpace().getSymbolMap();
-    	
+    {    	
     	Map<String, ASTNode> ret = new HashMap<String, ASTNode>();
+
+    	if (getGlobalSpace() == null){
+    		return ret;
+    	}
     	
+    	Map<String, ASTNode> map = getGlobalSpace().getSymbolMap();
+
     	for (String symbolId : map.keySet()) {
     		Symbol symbol = interpreter.getGlobalScope().resolve(symbolId);
     		if (symbol instanceof StateSymbol) {
@@ -222,10 +235,16 @@ public class BehaviorInterpreterSw
 
     
     public GlobalScope getGlobalScope(){
+    	if (defPhase == null)
+    		return null;
+    	
     	return defPhase.getGlobalScope();
     }
     
     public MemorySpace getGlobalSpace(){
+    	if (interpreter == null)
+    		return null;
+    	
     	return interpreter.getGlobalSpace();
     }
 

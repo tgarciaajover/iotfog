@@ -53,6 +53,15 @@ public class SyntaxChecking
     public List<SyntaxError> process(String program) throws Exception 
     {
 
+    	List<SyntaxError> listErrors;
+    	
+    	if ((program == null) || program.isEmpty())
+    	{
+    		listErrors = new ArrayList<SyntaxError>();
+    		logger.info("Defphase finished - The program given is empty");
+    		return listErrors;
+    	}
+    	    	
     	CharStream  stream = (CharStream) new ANTLRInputStream(program);
 		TransformationGrammarLexer lexer = new TransformationGrammarLexer(stream);
 
@@ -80,7 +89,7 @@ public class SyntaxChecking
 
         walker.walk(ref, tree);
         
-        List<SyntaxError> listErrors = new ArrayList<SyntaxError>(); // collector.getErrors();
+        listErrors = new ArrayList<SyntaxError>(); // collector.getErrors();
         
         // Add the custom errors created during the Ref phase. 
         for (SyntaxError e : ref.getErrors())  { 

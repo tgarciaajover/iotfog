@@ -212,6 +212,12 @@
          <version>2.3.3</version>
        </dependency>
 
+       <dependency>
+       	<groupId>com.microsoft.sqlserver</groupId>
+       	<artifactId>mssql-jdbc</artifactId>
+       	<version>6.2.0.jre8</version>
+       </dependency>
+       
 	</dependencies>
 
 </project>
