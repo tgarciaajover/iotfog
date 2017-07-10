@@ -24,6 +24,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeValue;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
@@ -42,7 +43,7 @@ import com.advicetec.core.serialization.LocalDateTimeSerializer;
 	    property = "type")
 	@JsonSubTypes({
 	    @Type(value = Machine.class, name = "M"),
-	    @Type(value = ProductionJob.class, name = "J") })
+	    @Type(value = Plant.class, name = "P") })
 public abstract class MeasuredEntity extends ConfigurationObject 
 {
 	
@@ -468,6 +469,15 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	this.executedEntities.put(executedEntity.getId(), executedEntity);
     }
     
+    public void stopExecuteEntities()
+    {
+		for (Integer id : this.executedEntities.keySet()){
+			ExecutedEntity executedEntity = this.executedEntities.get(id);
+			executedEntity.stop();
+		}
+    	
+    }
+    
     public ExecutedEntity getExecutedEntity(Integer id){
     	return this.executedEntities.get(id);
     }
@@ -492,6 +502,16 @@ public abstract class MeasuredEntity extends ConfigurationObject
 				return this.getStateBehavior(behaviorId).getBehavior_text();
 		}
 		
+		return null;
+	}
+
+	public AttributeValue getAttributeFromExecutedObject(String attributeId) {
+		for (Integer id : this.executedEntities.keySet()){
+			ExecutedEntity executedEntity = this.executedEntities.get(id);
+			if (executedEntity.getCurrentState() == MeasuringState.OPERATING){
+				return executedEntity.getAttributeValue(attributeId);
+			}
+		}
 		return null;
 	}
 }

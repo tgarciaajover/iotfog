@@ -678,10 +678,17 @@ public final class MeasuredEntityFacade {
 		this.entity.addExecutedEntity(executedEntity);
 	}
 	
+	public void stopExecutedObjects(){
+		this.entity.stopExecuteEntities();
+	}
+	
 	public void removeExecutedObject(Integer id){
 		this.entity.removeExecutedEntity(id);
 	}
-	
+
+	public AttributeValue getExecutedObjectAttribute(String attributeId){
+		return this.entity.getAttributeFromExecutedObject(attributeId);
+	}
 
 	public void setCurrentState(Map<String, ASTNode> symbolMap) {
 

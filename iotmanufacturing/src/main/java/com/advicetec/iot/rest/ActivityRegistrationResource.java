@@ -11,6 +11,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.stax2.ri.typed.ValueEncoderFactory;
 import org.json.JSONObject;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
@@ -20,6 +21,7 @@ import org.restlet.resource.Post;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 
+import com.advicetec.applicationAdapter.ProductionOrder;
 import com.advicetec.applicationAdapter.ProductionOrderFacade;
 import com.advicetec.applicationAdapter.ProductionOrderManager;
 import com.advicetec.configuration.ConfigurationManager;
@@ -89,22 +91,37 @@ public class ActivityRegistrationResource extends ServerResource
 	        	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
 
 	        	// Bring the production order from the container.
+
 	        	
 	        	// Start of the production order
 	        	ProductionOrderFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduccion);
 	        	
-	        	if (measuredEntityFacade.getCurrentState() == MeasuringState.OPERATING){
-		        	// start production
-		        	measuredEntityFacade.startExecutedObject(productionOrderFacade.getProductionOrder());
-		        	
-		        	// This function searches the actual status of the production order 
-		        	// and based on that it creates a previous interval. 
-		        	productionOrderFacade.start();
-		        	
-	        	} else {
-	        		logger.error("The measured entity is not running");
+	        	if (productionOrderFacade == null){
+	        		ProductionOrder oProd = (ProductionOrder) productionOrderManager.getProductionOrderContainer().getObject(idProduccion);
+	        		productionOrderManager.addProductionOrder(oProd);
+	        		productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduccion);
 	        	}
-	        	        	
+
+	        	if (productionOrderFacade == null) {
+	        		logger.error("The production order with number:" + Integer.toString(idProduccion) + " was not found");
+	        	} else {
+	        	
+		        	if (measuredEntityFacade.getCurrentState() == MeasuringState.OPERATING){
+		        		
+		        		// Stop all other executed Objects
+		        		measuredEntityFacade.stopExecutedObjects();
+		        		
+			        	// start production
+			        	measuredEntityFacade.startExecutedObject(productionOrderFacade.getProductionOrder());
+			        	
+			        	// This function searches the actual status of the production order 
+			        	// and based on that it creates a previous interval. 
+			        	productionOrderFacade.start();
+			        	
+		        	} else {
+		        		logger.error("The measured entity is not running");
+		        	}
+	        	}
 	        	
 	        } else if (tipoActividad.compareTo("E") == 0) {
 	        	// End of the production order

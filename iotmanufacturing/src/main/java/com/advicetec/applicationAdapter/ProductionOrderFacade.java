@@ -469,14 +469,6 @@ public final class ProductionOrderFacade {
 	}
 
 	/**
-	 * Commands to the cache to store their attribute values into the database 
-	 * and clean the cache.
-	 */
-	public void storeAllAttributeValues(){
-		attValueCache.bulkCommit(getAllKeysFromAttributeMap());
-	}
-
-	/**
 	 * Returns the list of keys from the map of attributes.
 	 * @return
 	 */

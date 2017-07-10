@@ -295,8 +295,19 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	public ASTNode visitStatus(BehaviorGrammarParser.StatusContext ctx) 
 	{ 
-		String attributeId = ctx.ID().getText(); 
-		AttributeValue value = (AttributeValue) facade.getNewestByAttributeName(attributeId);
+		String attributeId = ctx.ID().getText();
+		
+		AttributeValue value = null;
+		
+		// A possibility is that the attribute value comes from those assigned to the measure entity
+		value = (AttributeValue) facade.getNewestByAttributeName(attributeId);
+		
+		// If the attribute is not defined as an attribute in the measured entity, then it looks for the attribute 
+		// in the executed object being processed.
+		if (value == null)
+			value = (AttributeValue) facade.getExecutedObjectAttribute(attributeId); 
+		
+		
 		Symbol symbol = currentScope.resolve(attributeId);
 		Object valObj = null;
 		if (value == null)
