@@ -1,6 +1,7 @@
 package com.advicetec.measuredentitity;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +22,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import com.advicetec.applicationAdapter.ProductionOrderFacade;
+import com.advicetec.applicationAdapter.ProductionOrderManager;
 import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.Attribute;
@@ -456,26 +459,42 @@ public abstract class MeasuredEntity extends ConfigurationObject
     }
     
     @JsonIgnore
-    public ReasonCode getCurrentReason(){
+    public ReasonCode getCurrentReason()
+    {
     	return this.currentReason;
     }
     
     @JsonIgnore
-    public LocalDateTime getCurrentStatDateTime(){
+    public LocalDateTime getCurrentStatDateTime()
+    {
     	return this.startDateTimeStatus;
     }
 
-    public void addExecutedEntity(ExecutedEntity executedEntity){
+    public void addExecutedEntity(ExecutedEntity executedEntity)
+    {
+    	logger.info("Measure entity Id:" + getId() + " Adding executed Entity:" + executedEntity.getId());
+    	
     	this.executedEntities.put(executedEntity.getId(), executedEntity);
     }
     
     public void stopExecuteEntities()
     {
-		for (Integer id : this.executedEntities.keySet()){
-			ExecutedEntity executedEntity = this.executedEntities.get(id);
-			executedEntity.stop();
-		}
     	
+    	ProductionOrderManager productionOrderManager;
+		try {
+			
+			productionOrderManager = ProductionOrderManager.getInstance();
+    	
+			for (Integer id : this.executedEntities.keySet()){
+				ProductionOrderFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(id);
+				productionOrderFacade.stop();
+			}
+
+		} catch (SQLException e) {
+			logger.error("error obtaining an production order manager instance :" + e.getMessage());
+			e.printStackTrace();
+		}
+		
     }
     
     public ExecutedEntity getExecutedEntity(Integer id){
@@ -506,7 +525,10 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	}
 
 	public AttributeValue getAttributeFromExecutedObject(String attributeId) {
+		logger.info("Starting getAttributeFromExecutedObject - measure entity id:" + getId() + " attribute:" + attributeId + " executed entities:" + this.executedEntities.size());
+		
 		for (Integer id : this.executedEntities.keySet()){
+			logger.info("Executed Object:" + id);
 			ExecutedEntity executedEntity = this.executedEntities.get(id);
 			if (executedEntity.getCurrentState() == MeasuringState.OPERATING){
 				return executedEntity.getAttributeValue(attributeId);

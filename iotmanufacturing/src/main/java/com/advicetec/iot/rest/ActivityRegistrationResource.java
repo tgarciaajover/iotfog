@@ -128,14 +128,13 @@ public class ActivityRegistrationResource extends ServerResource
 		        		
 		        		// Stop all other executed Objects
 		        		measuredEntityFacade.stopExecutedObjects();
-			        		
-			        	// start production
-			        	measuredEntityFacade.startExecutedObject(productionOrderFacade.getProductionOrder());
-				        	
-			        	// This function searches the actual status of the production order 
-			        	// and based on that it creates a previous interval. 
-			        	productionOrderFacade.start();
 			        	
+		        		// put the production order in execution.
+		        		productionOrderFacade.start();
+		        		
+			        	// start production
+			        	measuredEntityFacade.addExecutedObject(productionOrderFacade.getProductionOrder());
+				        				        	
 			        	getResponse().setStatus(Status.SUCCESS_OK);
 				        	
 		        	}

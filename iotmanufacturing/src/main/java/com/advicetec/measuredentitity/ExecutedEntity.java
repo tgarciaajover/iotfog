@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonSubTypes;
@@ -29,6 +31,8 @@ import com.advicetec.core.serialization.LocalDateTimeSerializer;
 public class ExecutedEntity extends ConfigurationObject 
 {
 
+	static final Logger logger = LogManager.getLogger(ExecutedEntity.class.getName()); 
+	
 	@JsonProperty("create_date") 
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
@@ -82,7 +86,9 @@ public class ExecutedEntity extends ConfigurationObject
     }
     
     public AttributeValue getAttributeValue(String name){
-    	  
+    	
+    	logger.info("Starting getAttributeValue - attribute:" + name);  
+    	
 		for (int i = 0; i < this.attributeValues.size(); i++){
 			AttributeValue attr = this.attributeValues.get(i);
 			if ((attr.getAttr().getName()).compareTo(name) == 0){
@@ -90,6 +96,8 @@ public class ExecutedEntity extends ConfigurationObject
 			}
 		}
     	
+		logger.info("ending getAttributeValue with null");
+		
 		return null;
     }
     
@@ -149,16 +157,6 @@ public class ExecutedEntity extends ConfigurationObject
     	currentState = newState;
     	currentReason= rCode;
     	startDateTimeStatus = LocalDateTime.now();
-    }
-    
-    public void stop()
-    {
-    	// By default when stopped goes to unschedule down.
-    	if (currentState != MeasuringState.UNSCHEDULEDOWN){
-    		currentState = MeasuringState.UNSCHEDULEDOWN;
-    		currentReason=null;
-    		startDateTimeStatus = LocalDateTime.now();
-    	}
     }
     
     @JsonIgnore

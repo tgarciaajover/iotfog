@@ -277,7 +277,7 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 	public void defineState()
 	{
-		logger.info("Define state:");
+		logger.debug("Define state:");
 		
 		// Define the symbol in the global scope
 		if (globals.resolve("state") == null){

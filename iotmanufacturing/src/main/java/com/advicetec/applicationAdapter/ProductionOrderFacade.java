@@ -500,12 +500,24 @@ public final class ProductionOrderFacade {
 
 	public void start()
 	{
-		TimeInterval tInterval= new TimeInterval(this.pOrder.getCurrentStatDateTime(), LocalDateTime.now()); 
-		registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), tInterval);
-		this.pOrder.startInterval(MeasuringState.OPERATING, null);
+		if (this.pOrder.getCurrentState() != MeasuringState.OPERATING) {  
+			TimeInterval tInterval= new TimeInterval(this.pOrder.getCurrentStatDateTime(), LocalDateTime.now()); 
+			registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), tInterval);
+			this.pOrder.startInterval(MeasuringState.OPERATING, null);
+		}
 		
 	}
 	
+	public void stop()
+	
+	{
+		if (this.pOrder.getCurrentState() != MeasuringState.UNSCHEDULEDOWN) {
+			TimeInterval tInterval= new TimeInterval(this.pOrder.getCurrentStatDateTime(), LocalDateTime.now()); 
+			registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), tInterval);
+			this.pOrder.startInterval(MeasuringState.UNSCHEDULEDOWN, null);
+		}
+		
+	}
 	
 }
 
