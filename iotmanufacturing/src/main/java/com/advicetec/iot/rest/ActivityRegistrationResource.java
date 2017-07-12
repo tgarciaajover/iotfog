@@ -69,27 +69,33 @@ public class ActivityRegistrationResource extends ServerResource
 		try
 		{
 			// Get the information from the activity registration
-			Integer idCompania = jsonobject.getInt("id_compania");
-			Integer idSede = jsonobject.getInt("id_sede");
-			Integer idPlanta = jsonobject.getInt("id_planta");
-			Integer idGrupoMaquina = jsonobject.getInt("id_grupo_maquina");
-			Integer idMaquina = jsonobject.getInt("id_maquina");
-			Integer ano = jsonobject.getInt("ano");
-			Integer mes = jsonobject.getInt("mes");
+			int idCompania = jsonobject.getInt("id_compania");
+			int idSede = jsonobject.getInt("id_sede");
+			int idPlanta = jsonobject.getInt("id_planta");
+			int idGrupoMaquina = jsonobject.getInt("id_grupo_maquina");
+			int idMaquina = jsonobject.getInt("id_maquina");
+			int ano = jsonobject.getInt("ano");
+			int mes = jsonobject.getInt("mes");
 			String tipoActividad = jsonobject.getString("tipo_actividad");
-			Integer idRazonParada = jsonobject.getInt("id_razon_parada");
-			Integer idProduccion = jsonobject.getInt("id_produccion");
+			int idRazonParada = jsonobject.getInt("id_razon_parada");
+			int idProduccion = jsonobject.getInt("id_produccion");
 
+			logger.debug("idMaquina:" + Integer.toString(idCompania) + 
+						"idSede:" + Integer.toString(idSede) +
+						"idPlanta:" + Integer.toString(idPlanta) +
+						"idGrupoMaquina : " + Integer.toString(idGrupoMaquina) +
+						"idMaquina :" + Integer.toString(idMaquina) );
+			
 			// Bring the measured entity
 		    MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
 		    MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(idMaquina);
 		    
 		    if (measuredEntityFacade == null) {
-		      // The requested contact was not found, so set the Status to indicate this.
-		      logger.error("Meaured Entity requested: " + Integer.toBinaryString(idMaquina) + " was not found");
+		      
+		    	// The requested contact was not found, so set the Status to indicate this.
+		      logger.error("Meaured Entity requested: " + Integer.toString(idMaquina) + " was not found");
 		      getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
-		      result = new JsonRepresentation("");
-		      return result;
+
 		    } 
 		    else {
 	
@@ -102,40 +108,36 @@ public class ActivityRegistrationResource extends ServerResource
 		        	// Start of the production order
 		        	ProductionOrderFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduccion);
 		        	
-		        	if (productionOrderFacade == null){
+		        	if (productionOrderFacade == null)
+		        	{
 		        		ProductionOrder oProd = (ProductionOrder) productionOrderManager.getProductionOrderContainer().getObject(idProduccion);
-		        		productionOrderManager.addProductionOrder(oProd);
-		        		productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduccion);
+		        		if (oProd != null) {
+		        			productionOrderManager.addProductionOrder(oProd);
+		        			productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduccion);
+		        		}
 		        	}
 	
 		        	if (productionOrderFacade == null) {
 		        		getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
-		  		      	result = new JsonRepresentation("");
 		        		logger.error("The production order with number:" + Integer.toString(idProduccion) + " was not found");
-		  		      	return result;
 		        		
 		        	} else {
 		        	
 		        		logger.info("Production Order found, it is going to be put in execution");
 		        		
-			        	if (measuredEntityFacade.getCurrentState() == MeasuringState.OPERATING){
+		        		
+		        		// Stop all other executed Objects
+		        		measuredEntityFacade.stopExecutedObjects();
 			        		
-			        		// Stop all other executed Objects
-			        		measuredEntityFacade.stopExecutedObjects();
-			        		
-				        	// start production
-				        	measuredEntityFacade.startExecutedObject(productionOrderFacade.getProductionOrder());
+			        	// start production
+			        	measuredEntityFacade.startExecutedObject(productionOrderFacade.getProductionOrder());
 				        	
-				        	// This function searches the actual status of the production order 
-				        	// and based on that it creates a previous interval. 
-				        	productionOrderFacade.start();
+			        	// This function searches the actual status of the production order 
+			        	// and based on that it creates a previous interval. 
+			        	productionOrderFacade.start();
+			        	
+			        	getResponse().setStatus(Status.SUCCESS_OK);
 				        	
-			        	} else {
-			        		getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
-			  		      	result = new JsonRepresentation("");
-			        		logger.error("The measured entity is not running");
-			  		      	return result;
-			        	}
 		        	}
 		        	
 		        } else if (tipoActividad.compareTo("E") == 0) {
@@ -152,6 +154,8 @@ public class ActivityRegistrationResource extends ServerResource
 		        	
 		        	// Remove the production order from the measured entity.
 		        	measuredEntityFacade.removeExecutedObject(idProduccion);
+		        	
+		        	getResponse().setStatus(Status.SUCCESS_OK);
 		        		        	
 		        	
 		        } else if (tipoActividad.compareTo("C") == 0) {
@@ -188,6 +192,8 @@ public class ActivityRegistrationResource extends ServerResource
 						Queueable obj = new Queueable(QueueType.EVENT, event);
 						eventManager.getQueue().enqueue(6, obj);
 						
+						getResponse().setStatus(Status.SUCCESS_OK);
+						
 		    		}
 		    		
 		    		// 
@@ -197,20 +203,15 @@ public class ActivityRegistrationResource extends ServerResource
 		    		
 		        } else  {
 	        		getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
-	  		      	result = new JsonRepresentation("");
 		        	logger.error("The activity type received is not valid" + tipoActividad);
-	  		      	return result;
 		        }
 		    
 		    }
 			
-	
-			getResponse().setStatus(Status.SUCCESS_OK);
+			
 		} catch (JSONException e) {
     		getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
-		    result = new JsonRepresentation("");
 			logger.error("The json could not be parsed - Text:" + jsonText );
-			return result;
 		}
 
 		result = new JsonRepresentation("");

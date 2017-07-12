@@ -6,10 +6,13 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.temporal.ChronoUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.advicetec.configuration.Container;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.Storable;
@@ -88,12 +91,19 @@ public final class StateInterval implements Storable
 			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
 			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
 			pstmt.setString(5, getState().getName() );      			// Measuring Status
-			pstmt.setString(6, getReason().getId().toString() );      			// Measuring Status
+			
+			// Reason Code 
+			if (getReason() != null) {
+				pstmt.setString(6, getReason().getId().toString() );      			
+			} else { 
+				pstmt.setString(6, null);
+			}
 			
 			pstmt.addBatch();
 
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			Logger logger = LogManager.getLogger(StateInterval.class.getName());
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}			
 		
@@ -111,22 +121,19 @@ public final class StateInterval implements Storable
 			pstmt.addBatch();
 
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			Logger logger = LogManager.getLogger(StateInterval.class.getName());
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}			
 		
-	}
-
-	public boolean store() {
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 	public void setKey(String newKey) {
 		this.key = newKey;
 	}
 	
-	public String toJson(){
+	public String toJson()
+	{
 		String json = null;
 		try {
 			json = new ObjectMapper().writeValueAsString(this);
@@ -136,7 +143,8 @@ public final class StateInterval implements Storable
 		return json;
 	}
 	
-	public String toString(){
+	public String toString()
+	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("key:").append(key).append(",");
 		sb.append("state:").append(state).append(",");

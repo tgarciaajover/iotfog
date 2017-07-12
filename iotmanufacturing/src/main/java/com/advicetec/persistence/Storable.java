@@ -12,7 +12,5 @@ public interface Storable
 	public void dbInsert(PreparedStatement pstmt);
 	
 	public void dbDelete(PreparedStatement pstmt);
-	
-	public boolean store();
-	
+		
 }

@@ -307,8 +307,15 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		if (value == null)
 			value = (AttributeValue) facade.getExecutedObjectAttribute(attributeId); 
 		
-		
+		// Bring the symbol from the current scope
 		Symbol symbol = currentScope.resolve(attributeId);
+	
+		if (symbol == null) {
+			String error =  "the attribute given: " + attributeId + " is not registered in the current scope";
+			logger.error(error);
+			throw new RuntimeException( error );			
+		}
+		
 		Object valObj = null;
 		if (value == null)
 		{
@@ -643,7 +650,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		String id = ctx.ID().getText();
 		logger.debug("Visit Assign:" + id );
 		ASTNode value = this.visit(ctx.expression());
-
+		
 		Symbol symbol = currentScope.resolve(id) ;
 		MemorySpace space = null;
 

@@ -6,6 +6,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.PreparedStatement;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +23,7 @@ public class ProductionOrderContainer extends Container
 
 	static Logger logger = LogManager.getLogger(ProductionOrderContainer.class.getName());
 	
-	static String sqlSelect = "SELECT id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, ano, mes, id_produccion, id_articulo, descr_articulo, fechahora_inicial, fechahora_final, num_horas, cantidad_producir, tasa_esperada, velocidad_esperada, create_date, last_updttm FROM canonical_ordenproduccionplaneada where id = ";
+	static String sqlSelect = "SELECT id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, ano, mes, id_produccion, id_articulo, descr_articulo, fechahora_inicial, fechahora_final, num_horas, cantidad_producir, tasa_esperada, velocidad_esperada, create_date, last_updttm FROM canonical_ordenproduccionplaneada where id = ?";
 	
 	public ProductionOrderContainer(String driver, String server, String user, String password) {
 		super(driver, server, user, password);
@@ -32,18 +33,21 @@ public class ProductionOrderContainer extends Container
 	{
 		try 
 		{
-			super.connect();
+			super.connect_prepared(sqlSelect);
+			(( PreparedStatement) super.pst).setInt(1, id);
 			
 			ProductionOrder prdOrderTmp = null;
 
-			ResultSet rs1 = super.pst.executeQuery(sqlSelect);
+			ResultSet rs1 = (( PreparedStatement) super.pst).executeQuery();
 			ResultSetMetaData rsmd = rs1.getMetaData();
+			
+			logger.info("it was executed the query for bringing the order production");
 			while (rs1.next())
 			{
 
 				prdOrderTmp =  new ProductionOrder(id);
 
-				for (int i = 0; i < rsmd.getColumnCount(); i++) {
+				for (int i = 1; i <= rsmd.getColumnCount(); i++) {
 					int type = rsmd.getColumnType(i);
 					String name = rsmd.getColumnName(i);
 

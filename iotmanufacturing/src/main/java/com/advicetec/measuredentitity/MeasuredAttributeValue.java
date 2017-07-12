@@ -11,6 +11,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
@@ -152,7 +154,8 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 			pstmt.addBatch();		
 
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			Logger logger = LogManager.getLogger(MeasuredAttributeValue.class.getName());
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}   							// id_owner
 	}
@@ -191,7 +194,8 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 
 			}		
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			Logger logger = LogManager.getLogger(MeasuredAttributeValue.class.getName());
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}   							// id_owner
 
@@ -208,7 +212,8 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 			pstmt.addBatch();
 
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			Logger logger = LogManager.getLogger(MeasuredAttributeValue.class.getName());
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}   							// id_owner		
 	}
@@ -225,11 +230,6 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 		StringBuilder sb = new StringBuilder(super.toString());
 		sb.append(", timestamp: ").append(timeStamp.toString());
 		return sb.toString();
-	}
-
-	public boolean store() {
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 	public String toJson(){

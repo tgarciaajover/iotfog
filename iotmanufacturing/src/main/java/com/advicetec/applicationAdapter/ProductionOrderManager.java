@@ -25,7 +25,7 @@ public class ProductionOrderManager extends Configurable {
 	private Map<Integer, ProductionOrderFacade> pOrders;
 	
 	private ProductionOrderManager() throws SQLException{
-		super("ProductionOrder");
+		super("ProductionOrderManager");
 		
 		pOrders = new HashMap<Integer, ProductionOrderFacade>();
 		
@@ -62,7 +62,11 @@ public class ProductionOrderManager extends Configurable {
 	 * @return TRUE if the entity already exist into the list, FALSE otherwise.
 	 */
 	private boolean pOrderAlreadyExists(final ProductionOrder pOrder){
-		return this.pOrders.containsKey(pOrder.getId());
+		if (pOrder != null) {
+			return this.pOrders.containsKey(pOrder.getId());
+		} else {
+			return false;
+		}
 	}
 	
 	/**

@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import com.advicetec.language.BehaviorGrammarBaseListener;
 import com.advicetec.language.BehaviorGrammarParser;
+import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.ArrayAttributeSymbol;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
@@ -292,12 +293,14 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 			defineVarArray(ctx.type(), ctx.id1, numElem);
 		}
 	}
-	
-	public void exitState(BehaviorGrammarParser.StateContext ctx)
+
+	public void exitState_assign(BehaviorGrammarParser.State_assignContext ctx) 
 	{ 
+		logger.debug("entering entering state assign");
 		defineState();
 	}
 
+	
 	public void defineAttributeArray(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, int numElem, Token unit)
 	{
 		int typeTokenType = typeCtx.start.getType();

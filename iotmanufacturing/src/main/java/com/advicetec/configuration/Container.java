@@ -82,6 +82,23 @@ public abstract class Container
 						
 
 	}
+	
+	protected void connect_prepared(String sqlText) throws SQLException, ClassNotFoundException
+	{
+		if (this.driver == null){
+			String error = "No driver was specified - Error";
+			logger.error(error);
+			throw new SQLException(error);
+		}
+		
+		Class.forName(this.driver);
+		conn = DriverManager.getConnection(this.server, this.user, this.password);
+
+		conn.setAutoCommit(false);
+
+		pst = conn.prepareStatement(sqlText);
+		
+	}
 
 	protected void disconnect()
 	{

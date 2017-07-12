@@ -219,8 +219,10 @@ public class DefPhase extends TransformationGrammarBaseListener
 		defineUnit( ctx.getParent(), ctx.id1, ctx.ID().getText(),ctx.STRING().getText());
 	}
 
-	public void exitState(TransformationGrammarParser.StateContext ctx) 
-	{
+	
+	public void exitState_assign(TransformationGrammarParser.State_assignContext ctx) 
+	{ 
+		logger.debug("entering entering state assign");
 		defineState();
 	}
 	
@@ -275,6 +277,8 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 	public void defineState()
 	{
+		logger.info("Define state:");
+		
 		// Define the symbol in the global scope
 		if (globals.resolve("state") == null){
 			StateSymbol state = new StateSymbol();

@@ -314,6 +314,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			value = (AttributeValue) facade.getExecutedObjectAttribute(attributeId); 
 		
 		Symbol symbol = currentScope.resolve(attributeId);
+		
+		if (symbol == null) {
+			String error =  "the attribute given: " + attributeId + " is not registered in the current scope";
+			logger.error(error);
+			throw new RuntimeException( error );			
+		}
+		
 		Object valObj = null;
 		if (value == null)
 		{
