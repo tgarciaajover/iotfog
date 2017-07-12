@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.stax2.ri.typed.ValueEncoderFactory;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
@@ -64,122 +65,153 @@ public class ActivityRegistrationResource extends ServerResource
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 
-		// Get the information from the activity registration
-		Integer idCompania = jsonobject.getInt("id_compania");
-		Integer idSede = jsonobject.getInt("id_sede");
-		Integer idPlanta = jsonobject.getInt("id_planta");
-		Integer idGrupoMaquina = jsonobject.getInt("id_grupo_maquina");
-		Integer idMaquina = jsonobject.getInt("id_maquina");
-		Integer ano = jsonobject.getInt("ano");
-		Integer mes = jsonobject.getInt("mes");
-		String tipoActividad = jsonobject.getString("tipo_actividad");
-		Integer idRazonParada = jsonobject.getInt("id_razon_parada");
-		Integer idProduccion = jsonobject.getInt("id_produccion");
-		
-		// Bring the measured entity
-	    MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
-	    MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(idMaquina);
-	    
-	    if (measuredEntityFacade == null) {
-	      // The requested contact was not found, so set the Status to indicate this.
-	      getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
-	      result = new JsonRepresentation("");
-	    } 
-	    else {
+		logger.info("json that arrive:" + jsonText);
+		try
+		{
+			// Get the information from the activity registration
+			Integer idCompania = jsonobject.getInt("id_compania");
+			Integer idSede = jsonobject.getInt("id_sede");
+			Integer idPlanta = jsonobject.getInt("id_planta");
+			Integer idGrupoMaquina = jsonobject.getInt("id_grupo_maquina");
+			Integer idMaquina = jsonobject.getInt("id_maquina");
+			Integer ano = jsonobject.getInt("ano");
+			Integer mes = jsonobject.getInt("mes");
+			String tipoActividad = jsonobject.getString("tipo_actividad");
+			Integer idRazonParada = jsonobject.getInt("id_razon_parada");
+			Integer idProduccion = jsonobject.getInt("id_produccion");
 
-	        if (tipoActividad.compareTo("S") == 0){
-	        	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
-
-	        	// Bring the production order from the container.
-
-	        	
-	        	// Start of the production order
-	        	ProductionOrderFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduccion);
-	        	
-	        	if (productionOrderFacade == null){
-	        		ProductionOrder oProd = (ProductionOrder) productionOrderManager.getProductionOrderContainer().getObject(idProduccion);
-	        		productionOrderManager.addProductionOrder(oProd);
-	        		productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduccion);
-	        	}
-
-	        	if (productionOrderFacade == null) {
-	        		logger.error("The production order with number:" + Integer.toString(idProduccion) + " was not found");
-	        	} else {
-	        	
-		        	if (measuredEntityFacade.getCurrentState() == MeasuringState.OPERATING){
-		        		
-		        		// Stop all other executed Objects
-		        		measuredEntityFacade.stopExecutedObjects();
-		        		
-			        	// start production
-			        	measuredEntityFacade.startExecutedObject(productionOrderFacade.getProductionOrder());
+			// Bring the measured entity
+		    MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
+		    MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(idMaquina);
+		    
+		    if (measuredEntityFacade == null) {
+		      // The requested contact was not found, so set the Status to indicate this.
+		      logger.error("Meaured Entity requested: " + Integer.toBinaryString(idMaquina) + " was not found");
+		      getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+		      result = new JsonRepresentation("");
+		      return result;
+		    } 
+		    else {
+	
+		        if (tipoActividad.compareTo("S") == 0)
+		        {
+		        	logger.info("in register production order start");
+		        
+		        	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
 			        	
-			        	// This function searches the actual status of the production order 
-			        	// and based on that it creates a previous interval. 
-			        	productionOrderFacade.start();
-			        	
-		        	} else {
-		        		logger.error("The measured entity is not running");
+		        	// Start of the production order
+		        	ProductionOrderFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduccion);
+		        	
+		        	if (productionOrderFacade == null){
+		        		ProductionOrder oProd = (ProductionOrder) productionOrderManager.getProductionOrderContainer().getObject(idProduccion);
+		        		productionOrderManager.addProductionOrder(oProd);
+		        		productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduccion);
 		        	}
-	        	}
-	        	
-	        } else if (tipoActividad.compareTo("E") == 0) {
-	        	// End of the production order
-	        	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
-	        		        		        	
-	        	// remove the facade from the Manager
-	        	productionOrderManager.removeFacade(idProduccion);
-	        	
-	        	productionOrderManager.getProductionOrderContainer().removeObject(idProduccion);
-	        	
-	        	// Remove the production order from the measured entity.
-	        	measuredEntityFacade.removeExecutedObject(idProduccion);
-	        		        	
-	        	
-	        } else if (tipoActividad.compareTo("C") == 0) {
-	        	
-	    		// Look for it in the Reason Code database.
-	    		ConfigurationManager confManager = ConfigurationManager.getInstance();
-	    		ReasonCodeContainer reasonCodeCon = confManager.getReasonCodeContainer();
-	    		reasonCodeCon.getObject(idRazonParada);
-
-	        	// Start of a new stop, call the behavior.
-	    		
-	    		// Get the current state of the measured entity
-	    		if (measuredEntityFacade.getEntity()== null){
-	    			logger.error("No entity assigned to this measured entity facade");
-	    		} else {
-	    			MeasuringState state =  measuredEntityFacade.getEntity().getCurrentState();
-	    			String behavior = measuredEntityFacade.getEntity().getBehaviorText(state, idRazonParada);
-	    			
-	    			ArrayList<InterpretedSignal> signals = new ArrayList<InterpretedSignal>();
-	    			InterpretedSignal reasonSignal = new InterpretedSignal(AttributeType.INT, new Integer(idRazonParada));
-	    			signals.add(reasonSignal);
-
-					MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuredEntityFacade.getEntity().getId(),0, 0, signals );
-					event.setRepeated(false);
-					event.setMilliseconds(0); // To be executed now.
-					
-					EventManager eventManager = EventManager.getInstance();
-					
-					Queueable obj = new Queueable(QueueType.EVENT, event);
-					eventManager.getQueue().enqueue(6, obj);
-					
-	    		}
-	    		
-	    		// 
-	        	
-	        	// If there is a new stop by the application, the machine should be stopped. In case that it is not stopped, we should 
-	        	// report the error.
-	    		
-	        } else  {
-	        	logger.error("The activity type received is not valid" + tipoActividad);
-	        }
-	    
-	    }
-		
-
-		getResponse().setStatus(Status.SUCCESS_OK);
+	
+		        	if (productionOrderFacade == null) {
+		        		getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+		  		      	result = new JsonRepresentation("");
+		        		logger.error("The production order with number:" + Integer.toString(idProduccion) + " was not found");
+		  		      	return result;
+		        		
+		        	} else {
+		        	
+		        		logger.info("Production Order found, it is going to be put in execution");
+		        		
+			        	if (measuredEntityFacade.getCurrentState() == MeasuringState.OPERATING){
+			        		
+			        		// Stop all other executed Objects
+			        		measuredEntityFacade.stopExecutedObjects();
+			        		
+				        	// start production
+				        	measuredEntityFacade.startExecutedObject(productionOrderFacade.getProductionOrder());
+				        	
+				        	// This function searches the actual status of the production order 
+				        	// and based on that it creates a previous interval. 
+				        	productionOrderFacade.start();
+				        	
+			        	} else {
+			        		getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+			  		      	result = new JsonRepresentation("");
+			        		logger.error("The measured entity is not running");
+			  		      	return result;
+			        	}
+		        	}
+		        	
+		        } else if (tipoActividad.compareTo("E") == 0) {
+		        
+		        	logger.info("in register production order end");
+		        	
+		        	// End of the production order
+		        	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
+		        		        		        	
+		        	// remove the facade from the Manager
+		        	productionOrderManager.removeFacade(idProduccion);
+		        	
+		        	productionOrderManager.getProductionOrderContainer().removeObject(idProduccion);
+		        	
+		        	// Remove the production order from the measured entity.
+		        	measuredEntityFacade.removeExecutedObject(idProduccion);
+		        		        	
+		        	
+		        } else if (tipoActividad.compareTo("C") == 0) {
+		        	
+		        	logger.info("in register measured entity stop");
+		        	
+		        	// Look for it in the Reason Code database.
+		    		ConfigurationManager confManager = ConfigurationManager.getInstance();
+		    		ReasonCodeContainer reasonCodeCon = confManager.getReasonCodeContainer();
+		    		reasonCodeCon.getObject(idRazonParada);
+	
+		        	// Start of a new stop, call the behavior.
+		    		
+		    		// Get the current state of the measured entity
+		    		if (measuredEntityFacade.getEntity()== null){
+		        		getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+		  		      	result = new JsonRepresentation("");
+		    			logger.error("No entity assigned to this measured entity facade");
+		  		      	return result;
+		    		} else {
+		    			MeasuringState state =  measuredEntityFacade.getEntity().getCurrentState();
+		    			String behavior = measuredEntityFacade.getEntity().getBehaviorText(state, idRazonParada);
+		    			
+		    			ArrayList<InterpretedSignal> signals = new ArrayList<InterpretedSignal>();
+		    			InterpretedSignal reasonSignal = new InterpretedSignal(AttributeType.INT, new Integer(idRazonParada));
+		    			signals.add(reasonSignal);
+	
+						MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuredEntityFacade.getEntity().getId(),0, 0, signals );
+						event.setRepeated(false);
+						event.setMilliseconds(0); // To be executed now.
+						
+						EventManager eventManager = EventManager.getInstance();
+						
+						Queueable obj = new Queueable(QueueType.EVENT, event);
+						eventManager.getQueue().enqueue(6, obj);
+						
+		    		}
+		    		
+		    		// 
+		        	
+		        	// If there is a new stop by the application, the machine should be stopped. In case that it is not stopped, we should 
+		        	// report the error.
+		    		
+		        } else  {
+	        		getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+	  		      	result = new JsonRepresentation("");
+		        	logger.error("The activity type received is not valid" + tipoActividad);
+	  		      	return result;
+		        }
+		    
+		    }
+			
+	
+			getResponse().setStatus(Status.SUCCESS_OK);
+		} catch (JSONException e) {
+    		getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+		    result = new JsonRepresentation("");
+			logger.error("The json could not be parsed - Text:" + jsonText );
+			return result;
+		}
 
 		result = new JsonRepresentation("");
 		return result;

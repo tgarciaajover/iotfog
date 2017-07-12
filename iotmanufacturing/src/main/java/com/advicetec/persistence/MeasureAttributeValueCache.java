@@ -104,10 +104,10 @@ public class MeasureAttributeValueCache extends Configurable {
 									int ret[] = pst.executeBatch();
 									conn.commit();
 								} catch (ClassNotFoundException e) {
-									// TODO Auto-generated catch block
+									logger.error(e.getMessage());
 									e.printStackTrace();
 								} catch (SQLException e) {
-									// TODO Auto-generated catch block
+									logger.error(e.getMessage());
 									e.printStackTrace();
 								}
 
@@ -178,8 +178,10 @@ public class MeasureAttributeValueCache extends Configurable {
 			pst.executeBatch();
 			conn.commit();
 		} catch (ClassNotFoundException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (SQLException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 		finally{
@@ -199,6 +201,7 @@ public class MeasureAttributeValueCache extends Configurable {
 				{
 					conn.close();
 				} catch (SQLException e) {
+					logger.error(e.getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -258,8 +261,10 @@ public class MeasureAttributeValueCache extends Configurable {
 			}
 
 		} catch (ClassNotFoundException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (SQLException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 		finally{
@@ -269,6 +274,7 @@ public class MeasureAttributeValueCache extends Configurable {
 				{
 					pst.close();
 				} catch (SQLException e) {
+					logger.error(e.getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -279,6 +285,7 @@ public class MeasureAttributeValueCache extends Configurable {
 				{
 					conn.close();
 				} catch (SQLException e) {
+					logger.error(e.getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -306,8 +313,10 @@ public class MeasureAttributeValueCache extends Configurable {
 			pst.executeBatch();
 			conn.commit();
 		} catch (ClassNotFoundException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (SQLException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 		finally{
@@ -317,6 +326,7 @@ public class MeasureAttributeValueCache extends Configurable {
 				{
 					pst.close();
 				} catch (SQLException e) {
+					logger.error(e.getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -327,6 +337,7 @@ public class MeasureAttributeValueCache extends Configurable {
 				{
 					conn.close();
 				} catch (SQLException e) {
+					logger.error(e.getMessage());
 					e.printStackTrace();
 				}
 			}
