@@ -39,7 +39,7 @@ public class MeasuredEntityEventProcessor implements Processor
 		long milliseconds = this.event.getMilliseconds();
 		boolean repeat = this.event.isRepeated();
 		
-        logger.info("process - behavior:" + behaviorName);
+        logger.debug("process - behavior:" + behaviorName);
 		
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade entityFacade = entityManager.getFacadeOfEntityById(measuringEntity);
@@ -116,7 +116,7 @@ public class MeasuredEntityEventProcessor implements Processor
 			logger.error("Facade not found" + measuringEntity);
 		}
 		
-		logger.info("end process - behavior:" + behaviorName);
+		logger.debug("end process - behavior:" + behaviorName);
 
 		return ret;
 

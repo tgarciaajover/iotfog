@@ -105,7 +105,7 @@ public class EventManager extends Manager
 	private LocalDateTime getActiveModbusConnection(Map.Entry<LocalDateTime,TCPMasterConnection> con) throws Exception
 	{
 		
-		logger.info("in getActiveModbusConnection");
+		logger.debug("in getActiveModbusConnection");
 		
 		LocalDateTime start = con.getKey();
 		if (start.plusNanos(con.getValue().getTimeout()* 1000000).isBefore(LocalDateTime.now())){
@@ -119,7 +119,7 @@ public class EventManager extends Manager
 	
 	public synchronized TCPMasterConnection getModbusConnection(String ipAddress, int port) throws UnknownHostException
 	{
-		logger.info("in getModbusConnection  address: " + ipAddress + " port: " + port  );
+		logger.debug("in getModbusConnection  address: " + ipAddress + " port: " + port  );
 		
 		int usedCon = 0;
 		int avilCon = 0;
@@ -134,7 +134,7 @@ public class EventManager extends Manager
 			if (avilCon > 0)
 			{
 				
-				logger.info("There are avail connections - availCon: " + avilCon + " usedConnection: " + String.valueOf((usedCon)));
+				logger.debug("There are avail connections - availCon: " + avilCon + " usedConnection: " + String.valueOf((usedCon)));
 				
 				// Remove the connection from available connections
 				Map.Entry<LocalDateTime,TCPMasterConnection> ret = availableConnections.get(ipAddress).pop();
@@ -143,7 +143,7 @@ public class EventManager extends Manager
 					// Update the connection (reconnect or maintain the connection).
 					LocalDateTime start = getActiveModbusConnection(ret);
 					
-					logger.info("The available connection stated at:" + start.toString() );
+					logger.debug("The available connection stated at:" + start.toString() );
 					
 					// Create the entry.
 					Map.Entry<LocalDateTime,TCPMasterConnection> newEntry = new AbstractMap.SimpleEntry<LocalDateTime,TCPMasterConnection>(start, ret.getValue()); 
@@ -168,7 +168,7 @@ public class EventManager extends Manager
 				
 			} else {
 				
-				logger.info("There are not avail connections - availCon: " + avilCon);
+				logger.debug("There are not avail connections - availCon: " + avilCon);
 				
 				// Create a new connection and return it.
 	    		TCPMasterConnection con = null; //the connection
@@ -177,7 +177,7 @@ public class EventManager extends Manager
 	    		InetAddress addr =  InetAddress.getByName(ipAddress); //the slave's address
 	    		try {
 	    			
-	    			logger.info("Ipaddress: " + addr.toString());
+	    			logger.debug("Ipaddress: " + addr.toString());
 	    			
 	    			// Creates the connection to modbus slave.
 		    		con = new TCPMasterConnection(addr);
@@ -195,7 +195,7 @@ public class EventManager extends Manager
 					// Insert the connection into the used connections.
 					this.usedConnections.get(ipAddress).push(newEntry);
 					
-					logger.info("connection established");
+					logger.debug("connection established");
 					
 					return newEntry.getValue();
 					
@@ -207,7 +207,7 @@ public class EventManager extends Manager
 				
 			}
 		} else {
-			logger.info("max modbusconnections: " + maxModbusConnections);
+			logger.debug("max modbusconnections: " + maxModbusConnections);
 			return null;
 		}
 	}

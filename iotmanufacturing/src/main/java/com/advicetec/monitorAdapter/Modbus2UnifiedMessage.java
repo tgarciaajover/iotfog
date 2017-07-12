@@ -42,7 +42,7 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	@Override
 	public List<UnifiedMessage> getUnifiedMessage() throws Exception {
 
-		logger.info("entering getUnifiedMessage" + "type: " + this.type + " uid:" + this.uid + " offset: " + this.offSet + "count: " + this.count);
+		logger.debug("entering getUnifiedMessage" + "type: " + this.type + " uid:" + this.uid + " offset: " + this.offSet + "count: " + this.count);
 		
 		ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
 		
@@ -81,7 +81,7 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 				logger.error("The event type given:" + type.getName() + "has not an associated unified message");
 			}
 			
-			logger.info("exit getUnifiedMessage - Nbr Unified Messages:" + theList.size());
+			logger.debug("exit getUnifiedMessage - Nbr Unified Messages:" + theList.size());
 	
 			return theList;
 		}

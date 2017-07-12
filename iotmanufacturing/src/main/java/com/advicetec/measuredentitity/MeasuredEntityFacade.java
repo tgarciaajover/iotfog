@@ -238,7 +238,7 @@ public final class MeasuredEntityFacade {
 		LocalDateTime oldest = attValueCache.getOldestTime();
 
 		
-		logger.info("getByIntervalByAttributeValue from:" + from + " to:" + to);
+		logger.debug("getByIntervalByAttributeValue from:" + from + " to:" + to);
 		if(!attMap.containsKey(attrName)){
 			logger.error("attribute:"+attrName+" is not in facade");
 			return null;

@@ -96,7 +96,7 @@ public class MeasureAttributeValueCache extends Configurable {
 									pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
 
 									entries.forEach((k,v)-> {
-										logger.info( "db write key:" + ((MeasuredAttributeValue)v).getKey() );
+										logger.debug( "db write key:" + ((MeasuredAttributeValue)v).getKey() );
 										((MeasuredAttributeValue)v).dbInsert(pst);
 
 									});
@@ -150,7 +150,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	}
 
 	public void cacheStore(AttributeValue mav){
-		logger.info("storing:" + mav.getKey());
+		logger.debug("storing:" + mav.getKey());
 		cache.put(mav.getKey(), mav);
 	}
 

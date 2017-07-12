@@ -54,7 +54,7 @@ public class ModBusTcpProcessor implements Processor {
 			} else {
 			
 				ModbusTCPTransaction trans = null; //the transaction
-				logger.info("event type to process : " + event.getType().getName());
+				logger.debug("event type to process : " + event.getType().getName());
 				switch (event.getType())
 				{
 					case READ_DISCRETE: 
@@ -122,7 +122,7 @@ public class ModBusTcpProcessor implements Processor {
 						dictionary.put("Type", (Integer) event.getType().getValue());
 						dictionary.put("Read", res2.getMessage());
 						
-						logger.info("UID:" + event.getUid() + " Offset:" + evt2.getOffset() + " Count:" + evt2.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res2.getMessage()));
+						logger.debug("UID:" + event.getUid() + " Offset:" + evt2.getOffset() + " Count:" + evt2.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res2.getMessage()));
 						
 						Queueable obj2 = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
 						adapterManager.getQueue().enqueue(6, obj2);
@@ -130,7 +130,7 @@ public class ModBusTcpProcessor implements Processor {
 						// Insert again in the queue the event
 						if (evt2.isRepeated()){
 							long milliseconds = evt2.getMilliseconds();
-							logger.info("New Read Modbus event to run in:" + milliseconds);
+							logger.debug("New Read Modbus event to run in:" + milliseconds);
 							DelayEvent dEvent = new DelayEvent(event,milliseconds);
 							retEvts.add(dEvent);
 						}
@@ -160,7 +160,7 @@ public class ModBusTcpProcessor implements Processor {
 						dictionary.put("Type", (Integer) event.getType().getValue());
 						dictionary.put("Read", res3.getMessage());
 						
-						logger.info("UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
+						logger.debug("UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
 						
 						Queueable obj3 = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
 						adapterManager.getQueue().enqueue(6, obj3);
@@ -168,7 +168,7 @@ public class ModBusTcpProcessor implements Processor {
 						// Insert again in the queue the event
 						if (evt3.isRepeated()){
 							long milliseconds = evt3.getMilliseconds();
-							logger.info("New Read Modbus event to run in:" + milliseconds);
+							logger.debug("New Read Modbus event to run in:" + milliseconds);
 							DelayEvent dEvent = new DelayEvent(event,milliseconds);
 							retEvts.add(dEvent);
 						}
@@ -194,7 +194,7 @@ public class ModBusTcpProcessor implements Processor {
 			logger.error("Error in modbus slave for ipaddress:" + event.getIpAddress() + " port:" + Integer.toString(event.getPort()) + "error reported:" + e.getMessage());
 		}
 		
-		logger.info("Nbr Events created:" + retEvts.size());
+		logger.debug("Nbr Events created:" + retEvts.size());
 		return retEvts;
 		
 	}

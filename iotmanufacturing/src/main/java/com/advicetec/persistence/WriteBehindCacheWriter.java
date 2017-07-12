@@ -83,7 +83,7 @@ public final class WriteBehindCacheWriter<K, V> implements CacheWriter<K, V>
   @Override
   public void delete(K key, V value, RemovalCause removalCause) 
   {
-	  logger.info("delete:" + key);
+	  logger.debug("delete:" + key);
   }
 
   public static final class Builder<K, V> {
