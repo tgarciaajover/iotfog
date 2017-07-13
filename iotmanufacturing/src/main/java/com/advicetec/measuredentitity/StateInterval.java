@@ -86,7 +86,7 @@ public final class StateInterval implements Storable
 	{
 		try 
 		{
-			pstmt.setInt(1, getParent());
+			pstmt.setString(1, Integer.toString(getParent()));
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
 			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
 			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
@@ -113,7 +113,7 @@ public final class StateInterval implements Storable
 
 		try 
 		{
-			pstmt.setInt(1, getParent());
+			pstmt.setString(1, Integer.toString(getParent()));
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
 			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
 			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp

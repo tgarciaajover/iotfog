@@ -5,7 +5,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +28,8 @@ import com.advicetec.eventprocessor.ModBusTcpInputRegisterEvent;
 import com.advicetec.eventprocessor.ModBusTcpReadHoldingRegisterEvent;
 import com.advicetec.utils.ModBusUtils;
 
-public class MeasuredEntityContainer extends Container {
+public class MeasuredEntityContainer extends Container 
+{
 
 	static Logger logger = LogManager.getLogger(MeasuredEntityContainer.class.getName());
 
@@ -39,11 +42,22 @@ public class MeasuredEntityContainer extends Container {
 	static String sqlMachineSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
 
+	private Map<String, Integer> canonicalMapIndex;
 
 	public MeasuredEntityContainer(String driver, String server, String user, String password) {
 		super(driver, server, user, password);
+		
+		canonicalMapIndex = new HashMap<String, Integer>();
 	}
 
+	private String getCanonicalKey(String company, String location, String plant, String machineId)
+	{
+		if (machineId != null)
+			return company + "-" + location + "-" + plant + "-" + machineId;
+		else
+			return company + "-" + location + "-" + plant;
+	}
+	
 	public void loadContainer() throws SQLException
 	{
 
@@ -152,6 +166,9 @@ public class MeasuredEntityContainer extends Container {
 				plant.setCannonicalCompany(company);
 				plant.setCannonicalLocation(location);
 				plant.setCannonicalPlant(plant_id);
+				
+				logger.info("registering plant " + getCanonicalKey(company, location, plant_id, null));
+				canonicalMapIndex.put(getCanonicalKey(company, location, plant_id, null) , plant.getId());
 			}
 
 			rs.close();
@@ -306,9 +323,12 @@ public class MeasuredEntityContainer extends Container {
 
 				machine.setCannonicalCompany(company);
 				machine.setCannonicalLocation(location);
-				machine.setCannonicalMachineId(machine_id);
 				machine.setCannonicalPlant(plant);
 				machine.setCannonicalGroup(machineGroup);
+				machine.setCannonicalMachineId(machine_id);
+				
+				logger.info("registering machine " + getCanonicalKey(company, location, plant, machine_id) + " Id:" + Integer.toString(machine.getId()) );
+				canonicalMapIndex.put(getCanonicalKey(company, location, plant, machine_id) , machine.getId());
 			}
 
 			rs4.close();
@@ -409,5 +429,12 @@ public class MeasuredEntityContainer extends Container {
 		
 		return events;
 
+	}
+
+	public Integer getCanonicalObject(String company, String location, String plant, String machineId) 
+	{
+		
+		logger.info("Number of measuredEntities registered:" + Integer.toString(this.canonicalMapIndex.size()));
+		return this.canonicalMapIndex.get(getCanonicalKey(company, location, plant, machineId));
 	}
 }

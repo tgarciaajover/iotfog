@@ -5,20 +5,20 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 public class Plant extends ProductionEntity {
 	
-	private String cannonicalCompany;
-	private String cannonicalLocation;
-	private String cannonicalPlantId;
+	private String canonicalCompany;
+	private String canonicalLocation;
+	private String canonicalPlantId;
 	
 	public String getCannonicalCompany() {
-		return cannonicalCompany;
+		return canonicalCompany;
 	}
 
 	public String getCannonicalLocation() {
-		return cannonicalLocation;
+		return canonicalLocation;
 	}
 
 	public String getCannonicalPlantId() {
-		return cannonicalPlantId;
+		return canonicalPlantId;
 	}
 
 	@JsonCreator
@@ -27,14 +27,18 @@ public class Plant extends ProductionEntity {
 	}
 
 	public void setCannonicalCompany(String company) {
-		this.cannonicalCompany = company;
+		this.canonicalCompany = company;
 	}
 	
 	public void setCannonicalLocation(String location){
-		this.cannonicalLocation = location;
+		this.canonicalLocation = location;
 	}
 
 	public void setCannonicalPlant(String plant){
-		this.cannonicalPlantId = plant;
+		this.canonicalPlantId = plant;
+	}
+	
+	public String getCanonicalIdentifier() {
+		return this.canonicalCompany + "-" + this.canonicalLocation + "-" + this.canonicalPlantId;
 	}
 }

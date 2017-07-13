@@ -284,6 +284,9 @@ public class StateIntervalCache extends Configurable {
 	public ArrayList<StateInterval> getFromDatabase(Integer entityId, MeasuredEntityType mType,
 			LocalDateTime from, LocalDateTime to) {
 		
+		logger.info("getFromDatabase:" + Integer.toString(entityId) + " MeasureEntityType:" + mType + " from" + from.toString() + " to:" + to.toString());
+		
+		
 		ArrayList<StateInterval> list = new ArrayList<StateInterval>();
 		
 		try {
@@ -291,7 +294,7 @@ public class StateIntervalCache extends Configurable {
 			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 			conn.setAutoCommit(false);
 			pst = conn.prepareStatement(this.sqlStatusIntervalRangeSelect);
-			pst.setInt(1, entityId);
+			pst.setString(1, Integer.toString(entityId));
 			pst.setInt(2, mType.getValue());
 			pst.setTimestamp(3, Timestamp.valueOf(from));
 			pst.setTimestamp(4, Timestamp.valueOf(to));
@@ -304,6 +307,9 @@ public class StateIntervalCache extends Configurable {
 			
 			while (rs.next())
 			{
+				
+				logger.info("state interval found");
+				
 				// datetime_from, datetime_to, status, reason_code
 				LocalDateTime dTimeFrom = rs.getTimestamp("datetime_from").toLocalDateTime();
 				LocalDateTime dTimeTo = rs.getTimestamp("datetime_to").toLocalDateTime();
@@ -311,7 +317,10 @@ public class StateIntervalCache extends Configurable {
 				String reasonCode = rs.getString("reason_code");
 				
 				MeasuringState measuringState = MeasuringState.getByName(status);
-				ReasonCode rCode = (ReasonCode) reasonCont.getObject(Integer.valueOf(reasonCode));
+				ReasonCode rCode = null;
+				if (reasonCode != null) {
+					rCode = (ReasonCode) reasonCont.getObject(Integer.valueOf(reasonCode));
+				}
 				
 				TimeInterval timeInterval = new TimeInterval(dTimeFrom, dTimeTo); 
 				StateInterval sInt = new StateInterval(measuringState, rCode, timeInterval, entityId, mType);
@@ -367,7 +376,11 @@ public class StateIntervalCache extends Configurable {
 	 * @return
 	 */
 	public Map<Integer,DowntimeReason> getDownTimeReasonsByInterval(MeasuredEntity entity,
-			LocalDateTime from, LocalDateTime to){
+			LocalDateTime from, LocalDateTime to)
+	{
+		
+		logger.info("in getDownTimeReasonsByInterval MeasuredEntity:" + entity.getId() + " from:" + from.toString() + " to:" + to.toString());
+		
 		Map<Integer,DowntimeReason> map = new HashMap<Integer,DowntimeReason>();
 		
 		try{
@@ -375,7 +388,7 @@ public class StateIntervalCache extends Configurable {
 			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 			conn.setAutoCommit(false);
 			pst = conn.prepareStatement(this.sqlDownTimeReasons);
-			pst.setInt(1, entity.getId());
+			pst.setString(1, Integer.toString(entity.getId()));
 			pst.setInt(2, entity.getType().getValue());
 			pst.setTimestamp(3, Timestamp.valueOf(from));
 			pst.setTimestamp(4, Timestamp.valueOf(to));
@@ -392,12 +405,17 @@ public class StateIntervalCache extends Configurable {
 				Integer reasonCode = rs.getInt("reason_code");
 				Integer counter = rs.getInt("counter");
 				Double duration = rs.getDouble("duration");
+				
 				if(entity.getType() == MeasuredEntityType.MACHINE){
-					ReasonCode reason = (ReasonCode) reasonCont.getObject(reasonCode);
+					ReasonCode reason;
+					reason = (ReasonCode) reasonCont.getObject(reasonCode);
 					if(reason != null){
 						map.put(reasonCode,new DowntimeReason(((Machine)entity).getCannonicalMachineId(), 
 							reason.getCannonicalReasonId(), reason.getDescription(), counter, duration) );
-					}	
+					} else {
+						map.put(0, new DowntimeReason(((Machine)entity).getCannonicalMachineId(), 
+								"0", "Desconocida", counter, duration));
+					}
 				}
 			}
 		}catch (ClassNotFoundException e) {

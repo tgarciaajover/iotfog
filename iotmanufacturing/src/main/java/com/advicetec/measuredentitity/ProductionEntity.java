@@ -35,5 +35,8 @@ public abstract class ProductionEntity extends MeasuredEntity
 		return this.expected.get(attribute.getName());
 	}
 	
+	public String getCanonicalIdentifier() {
+		return null;
+	}
 	
 }

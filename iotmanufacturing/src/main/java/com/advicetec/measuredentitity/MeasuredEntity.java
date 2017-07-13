@@ -447,10 +447,10 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	}
 
     @JsonIgnore
-    public void startInterval(MeasuringState newState, ReasonCode rCode) {
+    public void startInterval(LocalDateTime dateTime,  MeasuringState newState, ReasonCode rCode) {
     	currentState = newState;
     	currentReason= rCode;
-    	startDateTimeStatus = LocalDateTime.now();
+    	startDateTimeStatus = dateTime;
     }
     
     @JsonIgnore
@@ -534,6 +534,11 @@ public abstract class MeasuredEntity extends ConfigurationObject
 				return executedEntity.getAttributeValue(attributeId);
 			}
 		}
+		return null;
+	}
+	
+	public String getCanonicalIdentifier()
+	{
 		return null;
 	}
 }

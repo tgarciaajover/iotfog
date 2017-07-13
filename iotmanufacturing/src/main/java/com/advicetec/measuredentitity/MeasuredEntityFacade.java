@@ -100,7 +100,8 @@ public final class MeasuredEntityFacade {
 	 * Sets or updates the attribute value into the status and store.
 	 * @param attrValue
 	 */
-	public synchronized void setAttributeValue(AttributeValue attrValue){
+	public synchronized void setAttributeValue(AttributeValue attrValue)
+	{
 
 		MeasuredAttributeValue mav = new MeasuredAttributeValue(attrValue.getAttr(), attrValue.getValue(),
 				attrValue.getGenerator(), attrValue.getGeneratorType(), LocalDateTime.now());
@@ -445,17 +446,22 @@ public final class MeasuredEntityFacade {
 
 		try {
 			cannonicalMachine = MeasuredEntityManager.getInstance()
-					.getCannonicalById(entity.getId());
+					.getCanonicalById(entity.getId());
 			ArrayList<StateInterval> intervals = getStatesByInterval(from, to);
 			array = new JSONArray();
 			for (StateInterval interval : intervals) {
+				
+				logger.info(interval.toString());
 				// create the json object
 				JSONObject jsob = new JSONObject();
 				jsob.append("machine", cannonicalMachine);
 				jsob.append("status", interval.getState().getName());
 				jsob.append("startDttm", interval.getInterval().getStart().toString());
 				jsob.append("endDttm", interval.getInterval().getEnd().toString());
-				jsob.append("reason", interval.getReason().getDescription());
+				if (interval.getReason() != null)
+					jsob.append("reason", interval.getReason().getDescription());
+				else 
+					jsob.append("reason", null);
 				// adding the jsonObject to array
 				array.put(jsob);
 			}
@@ -481,7 +487,7 @@ public final class MeasuredEntityFacade {
 
 		try {
 			cannonicalMachine = MeasuredEntityManager.getInstance()
-					.getCannonicalById(entity.getId());
+					.getCanonicalById(entity.getId());
 
 
 			ArrayList<AttributeValue> valList = getByIntervalByAttributeName(trendVar, from, to);
@@ -586,7 +592,10 @@ public final class MeasuredEntityFacade {
 	}
 
 
-	public JSONArray getJsonDowntimeReasons(LocalDateTime from,	LocalDateTime to) {
+	public JSONArray getJsonDowntimeReasons(LocalDateTime from,	LocalDateTime to) 
+	{
+		logger.info("In getJsonDowntimeReasons + from:" + from.toString() + " to:" + to.toString());
+		
 		JSONArray array = null;
 		String cannonicalMachine ="";
 		List<DowntimeReason> list = getDowntimeReasons(from, to);
@@ -614,25 +623,33 @@ public final class MeasuredEntityFacade {
 		List<DowntimeReason> reasons = new ArrayList<DowntimeReason>();
 		
 		// all values are in the cache
-		if(oldest.isBefore(from)){
+		if(oldest.isBefore(from))
+		{
+			logger.info("downtime reason cache only");	
 			SortedMap<LocalDateTime, String> subMap = statesMap.subMap(from, to);
 			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
 				list.add(stateCache.getFromCache(entry.getValue()));
 			}
 			reasons.addAll(sumarizeDowntimeReason(list).values());
-		} else if(oldest.isAfter(to)){
+		} 
+		else if(oldest.isAfter(to))
+		{
+			logger.info("downtime reason database only");
 			// all values are in the database 
-			reasons.addAll(stateCache.getDownTimeReasonsByInterval(entity,from,to).values());
-		} else {
-			
+			reasons.addAll(stateCache.getDownTimeReasonsByInterval(this.entity,from,to).values());
+		} 
+		else 
+		{
+			logger.info("downtime reason mixed cache - database");
 		     // get from cache
 			SortedMap<LocalDateTime, String> subMap = statesMap.subMap(oldest, to);
 			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
 				list.add(stateCache.getFromCache(entry.getValue()));
 			}
 			Map<Integer, DowntimeReason> temp = sumarizeDowntimeReason(list);
+			
 			// get from database
-			Map<Integer, DowntimeReason> temp2 = stateCache.getDownTimeReasonsByInterval(entity,from,oldest);
+			Map<Integer, DowntimeReason> temp2 = stateCache.getDownTimeReasonsByInterval(this.entity,from,oldest);
 			for (Integer k : temp.keySet()) {
 				if(temp2.containsKey(k)){
 					DowntimeReason dtr = temp2.remove(k);
@@ -643,6 +660,7 @@ public final class MeasuredEntityFacade {
 			reasons.addAll(temp.values());
 			reasons.addAll(temp2.values());
 		}
+		logger.info("num Reasons:" + reasons.size());
 		return reasons;
 	}
 	
@@ -701,13 +719,32 @@ public final class MeasuredEntityFacade {
 			if(entry.getKey().compareTo("state") == 0 ){
 				ASTNode node = entry.getValue();
 				Integer newState = node.asInterger();
-				
+				 
 				if (newState == 0){
-					this.entity.startInterval(MeasuringState.OPERATING, null);
+					if (this.entity.getCurrentState() != MeasuringState.OPERATING) {
+						LocalDateTime localDateTime = LocalDateTime.now();
+						TimeInterval interval = new TimeInterval(this.entity.getCurrentStatDateTime(), localDateTime);
+						this.registerInterval(this.entity.getCurrentState(), this.entity.getCurrentReason(), interval);
+						this.entity.startInterval(localDateTime, MeasuringState.OPERATING, null);
+					}
 				} else if (newState == 1){
-					this.entity.startInterval(MeasuringState.SCHEDULEDOWN, null);
+					
+					if (this.entity.getCurrentState() != MeasuringState.SCHEDULEDOWN) {
+						LocalDateTime localDateTime = LocalDateTime.now();
+						TimeInterval interval = new TimeInterval(this.entity.getCurrentStatDateTime(), localDateTime);
+						this.registerInterval(this.entity.getCurrentState(), this.entity.getCurrentReason(), interval);
+						this.entity.startInterval(localDateTime, MeasuringState.SCHEDULEDOWN, null);						
+					}
+					
 				} else if (newState == 2){
-					this.entity.startInterval(MeasuringState.UNSCHEDULEDOWN, null);
+					
+					if (this.entity.getCurrentState() != MeasuringState.UNSCHEDULEDOWN) {
+						LocalDateTime localDateTime = LocalDateTime.now();
+						TimeInterval interval = new TimeInterval(this.entity.getCurrentStatDateTime(), localDateTime);
+						this.registerInterval(this.entity.getCurrentState(), this.entity.getCurrentReason(), interval);
+						this.entity.startInterval(localDateTime, MeasuringState.UNSCHEDULEDOWN, null);						
+					}
+					
 				} else {
 					logger.error("The new state is being set to undefined, which is incorrect");
 				}	

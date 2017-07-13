@@ -75,7 +75,7 @@ public class IotRestServer extends Application {
       // POST requent for trend variable
       router.attach("/Trend",TrendResource.class);
       // POST requent for downtime reasons
-      router.attach("/DowntimeReason",DowntimeReasonResource.class);
+      router.attach("/DownTimeReason",DowntimeReasonResource.class);
       
       // Return the root router
       return router;

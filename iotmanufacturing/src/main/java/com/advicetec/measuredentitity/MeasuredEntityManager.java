@@ -148,13 +148,16 @@ public class MeasuredEntityManager extends Configurable {
 	public Integer getMeasuredEntityId(String company, String location,
 			String plant, String machineId) {
 		
-		// TODO Marenetes hacer la consulta del modelo canonico y retornar el ID de la máquina
-		return null;
+		return this.measuredEntities.getCanonicalObject(company, location, plant, machineId);
 	}
 	
-	public String getCannonicalById(Integer id){
-		// TODO Marentes retornal el id canonico dado el measure entity id
-		return null;
+	public String getCanonicalById(Integer id){
+		if (this.measuredEntities.getObject(id) == null) {
+			return null;
+		}
+		else {
+			return ((MeasuredEntity) this.measuredEntities.getObject(id)).getCanonicalIdentifier();
+		}
 	}
 	
 }

@@ -5,11 +5,11 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 public class Machine extends ProductionEntity {
 	
-	String cannonicalMachineId;
-	String cannonicalCompany;
-	String cannonicalLocation;
-	String cannonicalPlant;
-	String cannonicalGroup;
+	String canonicalMachineId;
+	String canonicalCompany;
+	String canonicalLocation;
+	String canonicalPlant;
+	String canonicalGroup;
 	
 	@JsonCreator
 	public Machine(@JsonProperty("id") Integer id){
@@ -17,42 +17,46 @@ public class Machine extends ProductionEntity {
 	}
 
 	public String getCannonicalMachineId() {
-		return cannonicalMachineId;
+		return canonicalMachineId;
 	}
 
 	public void setCannonicalMachineId(String cannonicalMachineId) {
-		this.cannonicalMachineId = cannonicalMachineId;
+		this.canonicalMachineId = cannonicalMachineId;
 	}
 
 	public String getCannonicalCompany() {
-		return cannonicalCompany;
+		return canonicalCompany;
 	}
 
 	public void setCannonicalCompany(String cannonicalCompany) {
-		this.cannonicalCompany = cannonicalCompany;
+		this.canonicalCompany = cannonicalCompany;
 	}
 
 	public String getCannonicalLocation() {
-		return cannonicalLocation;
+		return canonicalLocation;
 	}
 
 	public void setCannonicalLocation(String cannonicalLocation) {
-		this.cannonicalLocation = cannonicalLocation;
+		this.canonicalLocation = cannonicalLocation;
 	}
 
 	public String getCannonicalPlant() {
-		return cannonicalPlant;
+		return canonicalPlant;
 	}
 
 	public void setCannonicalPlant(String cannonicalPlant) {
-		this.cannonicalPlant = cannonicalPlant;
+		this.canonicalPlant = cannonicalPlant;
 	}
 
 	public void setCannonicalGroup(String machineGroup) {
-		this.cannonicalGroup = machineGroup;
+		this.canonicalGroup = machineGroup;
 	}
 	
 	public String getCannonicalGroup(){
-		return cannonicalGroup;
+		return canonicalGroup;
+	}
+	
+	public String getCanonicalIdentifier() {
+		return this.canonicalCompany + "-" + this.canonicalLocation + "-" + this.canonicalPlant + "-" + this.canonicalGroup + "-" + this.canonicalMachineId;  
 	}
 }
