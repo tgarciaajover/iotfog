@@ -118,23 +118,36 @@ public class DefPhase extends TransformationGrammarBaseListener
 	{ 
 		// by default seconds
 		TimeUnit unitTimer = TimeUnit.SECONDS;
-		if (ctx.TIMEUNIT().getText().compareTo("SECOND") == 0){
-			unitTimer = TimeUnit.SECONDS;
-		}
-		if (ctx.TIMEUNIT().getText().compareTo("MINUTE") == 0){
-			unitTimer = TimeUnit.MINUTES;
-		}
-		if (ctx.TIMEUNIT().getText().compareTo("HOUR") == 0){
-			unitTimer = TimeUnit.HOURS;
-		}
-		
-		int tunit = Integer.valueOf(ctx.time.getText());
-		String behaviorName = ctx.pack.getText();
-		
-		TimerSymbol tSymbol = new TimerSymbol(behaviorName,unitTimer,tunit, false);
 
-		// Define the symbol in the current scope
-		currentScope.define(tSymbol);
+		if (ctx.TIMEUNIT() == null){
+			Token nameToken = ctx.start;			
+			this.error(nameToken, ctx, "No time unit was given: " + nameToken.getText());
+		} else {
+
+			if (ctx.TIMEUNIT().getText().compareTo("SECOND") == 0){
+				unitTimer = TimeUnit.SECONDS;
+			}
+			if (ctx.TIMEUNIT().getText().compareTo("MINUTE") == 0){
+				unitTimer = TimeUnit.MINUTES;
+			}
+			if (ctx.TIMEUNIT().getText().compareTo("HOUR") == 0){
+				unitTimer = TimeUnit.HOURS;
+			}
+			try{
+				int tunit = Integer.valueOf(ctx.time.getText());
+				String behaviorName = ctx.pack.getText();
+
+				TimerSymbol tSymbol = new TimerSymbol(behaviorName,unitTimer,tunit, false);
+
+				// Define the symbol in the current scope
+				currentScope.define(tSymbol);
+			} catch (NumberFormatException e){
+				Token nameToken = ctx.start;	
+				this.error(nameToken, ctx, "The second parameter must be an integer" + nameToken.getText());
+			}
+			
+		
+		}
 		
 	}
 
@@ -142,24 +155,39 @@ public class DefPhase extends TransformationGrammarBaseListener
 	{ 
 		// by default seconds
 		TimeUnit unitTimer = TimeUnit.SECONDS;
-		if (ctx.TIMEUNIT().getText().compareTo("SECOND") == 0){
-			unitTimer = TimeUnit.SECONDS;
-		}
-		if (ctx.TIMEUNIT().getText().compareTo("MINUTE") == 0){
-			unitTimer = TimeUnit.MINUTES;
-		}
-		if (ctx.TIMEUNIT().getText().compareTo("HOUR") == 0){
-			unitTimer = TimeUnit.HOURS;
-		}
-		
-		int tunit = Integer.valueOf(ctx.time.getText());
-		String behaviorName = ctx.pack.getText();
-		
-		TimerSymbol tSymbol = new TimerSymbol(behaviorName,unitTimer,tunit, true);
+			
+		if (ctx.TIMEUNIT() == null){
+			Token nameToken = ctx.start;			
+			this.error(nameToken, ctx, "No time unit was given: " + nameToken.getText());
+		} else {
 
-		// Define the symbol in the current scope
-		currentScope.define(tSymbol);
+			if (ctx.TIMEUNIT().getText().compareTo("SECOND") == 0){
+				unitTimer = TimeUnit.SECONDS;
+			}
+			if (ctx.TIMEUNIT().getText().compareTo("MINUTE") == 0){
+				unitTimer = TimeUnit.MINUTES;
+			}
+			if (ctx.TIMEUNIT().getText().compareTo("HOUR") == 0){
+				unitTimer = TimeUnit.HOURS;
+			}
+
+			try
+			{
+				int tunit = Integer.valueOf(ctx.time.getText());
+
+				String behaviorName = ctx.pack.getText();
+
+				TimerSymbol tSymbol = new TimerSymbol(behaviorName,unitTimer,tunit, true);
+
+				// Define the symbol in the current scope
+				currentScope.define(tSymbol);
+			
+			} catch (NumberFormatException e){
+				Token nameToken = ctx.start;	
+				this.error(nameToken, ctx, "The second parameter must be an integer" + nameToken.getText());
+			}
 		
+		}
 	}
 	
 	public void enterDisplay(@NotNull TransformationGrammarParser.DisplayContext ctx) 

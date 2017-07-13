@@ -49,8 +49,14 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 
 	public void error(Token t, ParserRuleContext ctx, String msg) 
 	{
-		String error = new String("line" + t.getLine() + "." + t.getCharPositionInLine() + msg + "\n");
-		SyntaxError e= new SyntaxError(error, t, this.parser, this.parser.getInputStream(), ctx); 
+    	String error;
+		if (t == null){
+    		error = new String(msg + "\n");
+    	}
+    	else {
+    		error = new String("line" + t.getLine() + "." + t.getCharPositionInLine() + msg + "\n");
+    	}
+    	SyntaxError e= new SyntaxError(error, t, this.parser, this.parser.getInputStream(), ctx); 
 		this.compilationErrors.add(e);
 
 	}	
@@ -90,47 +96,56 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 
 	public void enterTimer(BehaviorGrammarParser.TimerContext ctx) 
 	{ 
-		String packageStr = ctx.pack.getText();
-		Symbol var = currentScope.resolve(packageStr);
-
-		if (var instanceof TimerSymbol) {
-
-			Symbol impSymbol = currentScope.getParentScope().resolve(packageStr);
-			if (impSymbol instanceof ImportSymbol)
-			{
-				ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
-				for (String name : names){
-					((TimerSymbol) var).addId(name);
-				}
-
-			} else {
-				this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
-			}
+		if (ctx.pack == null){
+			this.error(ctx.start, ctx, "no Import Symbol was given");
 		} else {
-			this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
+			String packageStr = ctx.pack.getText();
+			Symbol var = currentScope.resolve(packageStr);
+
+			if (var instanceof TimerSymbol) {
+
+				Symbol impSymbol = currentScope.getParentScope().resolve(packageStr);
+				if (impSymbol instanceof ImportSymbol)
+				{
+					ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
+					for (String name : names){
+						((TimerSymbol) var).addId(name);
+					}
+
+				} else {
+					this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
+				}
+			} else {
+				this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
+			}
 		}
 	}
 
 	public void enterRepeat(BehaviorGrammarParser.RepeatContext ctx) 
 	{ 
-		String packageStr = ctx.pack.getText();
-		Symbol var = currentScope.resolve(packageStr);
-
-		if (var instanceof TimerSymbol) {
-
-			Symbol impSymbol = currentScope.getParentScope().resolve(packageStr);
-			if (impSymbol instanceof ImportSymbol)
-			{
-				ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
-				for (String name : names){
-					((TimerSymbol) var).addId(name);
-				}
-
-			} else {
-				this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
-			}
+		if (ctx.pack == null){
+			this.error(ctx.start, ctx, "no Import Symbol was given");
 		} else {
-			this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
+
+			String packageStr = ctx.pack.getText();
+			Symbol var = currentScope.resolve(packageStr);
+
+			if (var instanceof TimerSymbol) {
+
+				Symbol impSymbol = currentScope.getParentScope().resolve(packageStr);
+				if (impSymbol instanceof ImportSymbol)
+				{
+					ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
+					for (String name : names){
+						((TimerSymbol) var).addId(name);
+					}
+
+				} else {
+					this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
+				}
+			} else {
+				this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
+			}
 		}
 	}
 
@@ -167,6 +182,7 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 
 	public void exitVar(BehaviorGrammarParser.VarContext ctx) 
 	{ 
+		
 		String name = ctx.ID().getSymbol().getText();
 		Symbol var = currentScope.resolve(name);
 
@@ -179,6 +195,22 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 		{
 			this.error(ctx.ID().getSymbol(), ctx, name + " is not a variable" );
 		}
+	}
+	
+	public void exitAssign(BehaviorGrammarParser.AssignContext ctx) 
+	{ 
+		String id = ctx.ID().getText();
+		Symbol idSymbol = currentScope.resolve(id);
+		
+		if (idSymbol == null){
+			this.error(ctx.ID().getSymbol(), ctx, "no such symbol defined: " + id);
+		}
+
+		if (idSymbol instanceof FunctionSymbol) 
+		{
+			this.error(ctx.ID().getSymbol(), ctx, id + " is not a attribute or variable" );
+		}
+
 	}
 
 	public void exitCall(BehaviorGrammarParser.CallContext ctx) {

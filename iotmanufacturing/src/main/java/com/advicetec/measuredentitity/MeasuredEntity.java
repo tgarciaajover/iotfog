@@ -268,7 +268,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	
 	public synchronized String getBehaviorText(String name)
 	{
-		logger.debug("behavior:" + name);
+		logger.debug("MeasuredEntity:" + getId() + "behavior:" + name);
 		
 		for (int i = 0; i < this.behaviors.size(); i++){
 			MeasuredEntityBehavior measuredEntityBehavior = this.behaviors.get(i);

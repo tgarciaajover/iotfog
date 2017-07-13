@@ -51,7 +51,7 @@ public class MeasuredEntityEventProcessor implements Processor
 			String program = entityFacade.getEntity().getBehaviorText(behaviorName);
 			
 			if (program == null || program.isEmpty()){
-				logger.error("the program for behavior name:" + behaviorName + " does not exist!!");
+				logger.error("the program for behavior name:" + behaviorName + " does not exist!! for measure entity:" + measuringEntity);
 				return ret;
 			}
 			
@@ -107,7 +107,7 @@ public class MeasuredEntityEventProcessor implements Processor
 					logger.debug("Number of Errors :" + String.valueOf(errorList.size()));
 				}
 			} catch (Exception e) {
-				logger.debug("Error message:" + e.getMessage());
+				logger.error("Error message:" + e.getMessage());
 				e.printStackTrace();
 			}
 			

@@ -69,7 +69,9 @@ public class SyntaxChecking
 
         TransformationGrammarParser parser = new TransformationGrammarParser(tokens);
         parser.setBuildParseTree(true);
-
+        parser.removeErrorListeners();
+        CollectionErrorListener collector = new CollectionErrorListener();
+        parser.addErrorListener(collector);
         ParseTree tree = parser.program();
 
         // show tree in text form
@@ -81,7 +83,7 @@ public class SyntaxChecking
 
         walker.walk(def, tree);
         
-        logger.debug("Defphase finished");
+        logger.debug("Defphase finished - numErrors:" + collector.getErrors().size() );
 
         // create next phase and feed symbol table info from def to ref phase
 
@@ -89,13 +91,13 @@ public class SyntaxChecking
 
         walker.walk(ref, tree);
         
-        listErrors = new ArrayList<SyntaxError>(); // collector.getErrors();
+        listErrors = collector.getErrors();
         
         // Add the custom errors created during the Ref phase. 
         for (SyntaxError e : ref.getErrors())  { 
         	listErrors.add(e);
         }
-        
+                
         logger.debug("num errors:" + listErrors.size());
         
         return listErrors;

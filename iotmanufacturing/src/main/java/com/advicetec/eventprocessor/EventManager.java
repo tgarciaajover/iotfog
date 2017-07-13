@@ -87,17 +87,6 @@ public class EventManager extends Manager
 
 		Thread delayConsumer = new Thread(new DelayQueueConsumer("EventConsumer", this.delayedQueue));
 		delayConsumer.start();
-		/*
-		try {
-			delayConsumer.join();
-			for (Thread t : listThread){
-				t.join();
-			}
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
 		
 		logger.info("Ending Event Manager run");
 	}	
@@ -161,8 +150,7 @@ public class EventManager extends Manager
 					return newEntry.getValue();
 
 				} catch (Exception e) {
-					logger.error("enable to connect with the modbus slave with ipaddress" + ipAddress + " port:" + Integer.toString(port));
-					e.printStackTrace();
+					logger.error("could not connect with the modbus slave with ipaddress" + ipAddress + " port:" + Integer.toString(port));
 					return null;
 				}
 				
@@ -200,7 +188,7 @@ public class EventManager extends Manager
 					return newEntry.getValue();
 					
 				} catch (Exception e) {
-					logger.error("unenable to connect with the modbus slave with ipaddress" + ipAddress + " port:" + Integer.toString(port));
+					logger.error("could not to connect with the modbus slave with ipaddress" + ipAddress + " port:" + Integer.toString(port));
 					e.printStackTrace();
 					return null;
 				}

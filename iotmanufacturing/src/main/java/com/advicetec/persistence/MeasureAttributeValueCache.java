@@ -46,7 +46,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	private static Connection conn  = null; 
 	private static PreparedStatement pst = null;
 
-	final private static String sqlMeasureAttributeValueRangeSelect = "select timestamp, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time from measuredattributevalue where id_owner = ? and attribute_name = ? and timestamp >= ? and timestamp <= ?";  
+	final private static String sqlMeasureAttributeValueRangeSelect = "select timestamp, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time from measuredattributevalue where id_owner = ? and owner_type = ? and attribute_name = ? and timestamp >= ? and timestamp <= ?";  
 
 	private static Cache<String, AttributeValue> cache;
 	PreparedStatement preparedStatement;
@@ -244,9 +244,10 @@ public class MeasureAttributeValueCache extends Configurable {
 			conn.setAutoCommit(false);
 			pst = conn.prepareStatement(this.sqlMeasureAttributeValueRangeSelect);
 			pst.setString(1, String.valueOf(entityId));
-			pst.setString(2, attribute.getName());
-			pst.setTimestamp(3, Timestamp.valueOf(from));
-			pst.setTimestamp(4, Timestamp.valueOf(to));
+			pst.setInt(2, mType.getValue());
+			pst.setString(3, attribute.getName());
+			pst.setTimestamp(4, Timestamp.valueOf(from));
+			pst.setTimestamp(5, Timestamp.valueOf(to));
 			rs =  pst.executeQuery();
 
 			// Bring the attribute 

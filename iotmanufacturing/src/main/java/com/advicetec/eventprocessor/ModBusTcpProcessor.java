@@ -50,6 +50,12 @@ public class ModBusTcpProcessor implements Processor {
 			TCPMasterConnection con = eventManager.getModbusConnection(event.getIpAddress(), event.getPort());
 			
 			if (con == null){
+				// Insert again in the queue the event
+				if (event.isRepeated()){
+					long milliseconds = event.getMilliseconds();
+					DelayEvent dEvent = new DelayEvent(event,milliseconds);
+					retEvts.add(dEvent);
+				}
 				logger.error("could not establish the connection" + " IpAddress:" + event.getIpAddress() + " port:" + event.getPort() );
 			} else {
 			

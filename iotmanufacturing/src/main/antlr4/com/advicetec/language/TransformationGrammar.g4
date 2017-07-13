@@ -37,7 +37,6 @@ sentence : block									# ref_block
 			| RETURN expression SEMICOLON		   	# ref_return
 			| state_assign                          # ref_state_assign
 			| assign								# ref_assign
- 			| round									# ref_round 			
 			| log 									# ref_log
 			| OTHER {System.err.println("unknown char: " + $OTHER.text);} #ref_other
 			;
@@ -79,13 +78,11 @@ condition_block
  : expression block
  	;
 
-round : ROUND PR_OPN expression COMMA INT1 PR_CLS
-	; 
-
 log : LOG expression SEMICOLON
  ;
 
 expression : expression EXPO expression  							# Expon
+ 			| round									# ref_round 			
 			| MINUS expression                     					# unaryMinusExpr
  			| NOT expression                        				# notExpr
 			| token													# ref_split
@@ -107,6 +104,9 @@ token 		: TOKEN PR_OPN ex1=expression ',' ex2=expression PR_CLS
 
 substring   : TOKEN PR_OPN ex1=expression ',' ex2=expression ',' ex3=expression PR_CLS
     ;
+
+round : ROUND PR_OPN expression COMMA INT1 PR_CLS
+	; 
 
 startwith   : STARTWITH  PR_OPN ex1=expression ',' ex2=expression PR_CLS
     ;

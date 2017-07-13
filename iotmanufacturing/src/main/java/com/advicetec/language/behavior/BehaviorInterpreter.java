@@ -666,8 +666,8 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 				space = getGlobalSpace(); // create in global space
 			}
 		} else {
-			logger.debug("It is being assigned to a non variable or attribute - symbol:" + symbol.getName() );
-			throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + symbol.getName());
+			logger.error("It is being assigned to a non variable or attribute - symbol:" + id );
+			throw new RuntimeException("It is being assigned to a non variable or attribute - symbol:" + id);
 		}
 
 		VerifyAssign(symbol, value);
@@ -683,45 +683,45 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		switch (symbol.getType())
 		{
 		case tINT:
-			if (!(value.isInteger())){
-				throw new RuntimeException("The value given is not an integer type");
+			if (!(value.isInteger() || value.isDouble() )){
+				throw new RuntimeException("The value given for symbol:" + symbol.getName() + " is not an integer type");
 			}
 			break;
 		case tDATETIME:
 			if (!(value.isDateTime())){
-				throw new RuntimeException("the value given is not a datetime type");
+				throw new RuntimeException("the value given for symbol:" + symbol.getName() + " is not a datetime type");
 			}
 			break;
 		case tFLOAT:
 			if (!(value.isDouble() || value.isInteger())) {
-				throw new RuntimeException("The value given is not a float type");
+				throw new RuntimeException("The value given for symbol:" + symbol.getName() + " is not a float type");
 			}
 			break;
 		case tSTRING:
 			if (!(value.isString())){
-				throw new RuntimeException("The value given is not a string type");
+				throw new RuntimeException("The value given for symbol:" + symbol.getName() + " is not a string type");
 			}
 			break;
 		case tBOOL:
 			if (!(value.isBoolean())){
-				throw new RuntimeException("The value given is not a boolean type");
+				throw new RuntimeException("The value given for symbol:" + symbol.getName() + " is not a boolean type");
 			}
 			break;
 		case tDATE:
 			if (!(value.isDate())){
-				throw new RuntimeException("The value given is not a date type");
+				throw new RuntimeException("The value given for symbol:" + symbol.getName() + " is not a date type");
 			}
 			break;
 		case tTIME:
 			if (!(value.isTime())){
-				throw new RuntimeException("The value given is not a time type");
+				throw new RuntimeException("The value given for symbol:" + symbol.getName() + " is not a time type");
 			}
 			break;
 		case tVOID:
-			throw new RuntimeException("The value given is of type void");
+			throw new RuntimeException("The value given for symbol:" + symbol.getName() + " is of type void");
 
 		case tINVALID:
-			throw new RuntimeException("The value given is of type invalid");
+			throw new RuntimeException("The value given for symbol:" + symbol.getName() + " is of type invalid");
 		}	
 	}
 
@@ -732,6 +732,16 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		switch (symbol.getType())
 		{
 		case tINT:
+			if (value.isDouble()) {
+				return new ASTNode((value.asDouble()).intValue());
+			}
+			else if (value.isInteger()) {
+				return value;
+			} else {
+				throw new RuntimeException("The value given is of invalid type");
+			}				
+			
+			
 		case tDATETIME:
 		case tBOOL:
 		case tDATE:
@@ -1718,7 +1728,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 			objRet = new Integer(0);
 		}
 
-		logger.debug("Attribute Type:" + type.getName() + "Output" + objRet + "total samples" + values.size());
+		logger.debug("Output" + objRet + "total samples" + values.size());
 
 		return new ASTNode(objRet);
 

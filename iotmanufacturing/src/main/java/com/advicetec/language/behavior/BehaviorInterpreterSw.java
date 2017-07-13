@@ -106,7 +106,6 @@ public class BehaviorInterpreterSw
         walker.walk(defPhase, tree);
        
         logger.debug("Defphase finished globals: " + defPhase.getGlobalScope().toString());
-
         
         // create next phase and feed symbol table info from def to ref phase
         MemorySpace globals = new MemorySpace("globals");  
