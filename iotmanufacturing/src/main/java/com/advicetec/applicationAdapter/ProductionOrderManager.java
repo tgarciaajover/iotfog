@@ -24,6 +24,8 @@ public class ProductionOrderManager extends Configurable {
 	
 	private Map<Integer, ProductionOrderFacade> pOrders;
 	
+	private String productionRateId;
+	
 	private ProductionOrderManager() throws SQLException{
 		super("ProductionOrderManager");
 		
@@ -44,6 +46,7 @@ public class ProductionOrderManager extends Configurable {
 		String server = properties.getProperty("server");
 		String user = properties.getProperty("user");
 		String password = properties.getProperty("password");
+		this.productionRateId = properties.getProperty("productionRateField");
 
 		productionOrders = new ProductionOrderContainer(driver, server, user, password);
 				
@@ -79,7 +82,7 @@ public class ProductionOrderManager extends Configurable {
 			return false;
 		}
 		
-		if (pOrders.put(pOrder.getId(), new ProductionOrderFacade(pOrder)) != null)
+		if (pOrders.put(pOrder.getId(), new ProductionOrderFacade(pOrder, productionRateId)) != null)
 			return true;
 		else
 			return false;

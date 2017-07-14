@@ -64,16 +64,20 @@ public final class ProductionOrderFacade {
 	// A state is created when a stop or ready condition show up.  
 	private SortedMap<LocalDateTime,String> statesMap;
 	private StateIntervalCache stateCache;
+	
+	// Production Field Identifier
+	private String productionRateId;
 
 	
-	public ProductionOrderFacade(ProductionOrder pOrder) 
+	public ProductionOrderFacade(ProductionOrder pOrder, String productionRateId) 
 	{
 		this.pOrder = pOrder;
-		status = new StatusStore();
-		attValueCache= MeasureAttributeValueCache.getInstance();
-		attMap = new HashMap<String,SortedMap<LocalDateTime,String>>();
-		statesMap = new TreeMap<LocalDateTime,String>();
-		stateCache = StateIntervalCache.getInstance();	
+		this.status = new StatusStore();
+		this.attValueCache= MeasureAttributeValueCache.getInstance();
+		this.attMap = new HashMap<String,SortedMap<LocalDateTime,String>>();
+		this.statesMap = new TreeMap<LocalDateTime,String>();
+		this.stateCache = StateIntervalCache.getInstance();
+		this.productionRateId = productionRateId;
 	}
 
 	public ProductionOrder getProductionOrder() {
@@ -376,11 +380,18 @@ public final class ProductionOrderFacade {
 
 	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
-		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType());
+		Double rate = new Double(0.0);
+		if (this.pOrder.getCurrentState() == MeasuringState.OPERATING) {
+			AttributeValue attrValue = this.pOrder.getAttributeValue(this.productionRateId);
+			rate = (Double) attrValue.getValue();
+		}
+		
+		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType(), rate);
 		stateInterval.setKey(this.pOrder.getId()+stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());
 		StateIntervalCache.getInstance().storeToCache(stateInterval);
+		
 	}
 
 

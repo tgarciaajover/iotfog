@@ -30,6 +30,9 @@ public class MeasuredEntityManager extends Configurable {
 	private List<MeasuredEntityFacade> entities;
 	private int modBusPort;
 	
+	// Production rate field identifier. 
+	private String productionRateId;
+	
 	private MeasuredEntityManager() throws SQLException{
 		
 		super("MeasuredEntity");
@@ -54,13 +57,14 @@ public class MeasuredEntityManager extends Configurable {
 		String user = properties.getProperty("user");
 		String password = properties.getProperty("password");
 		this.modBusPort = Integer.valueOf(properties.getProperty("ModBusPort"));
+		this.productionRateId = properties.getProperty("productionRateField");
 
 		measuredEntities = new MeasuredEntityContainer(driver, server, user, password);
 		measuredEntities.loadContainer();
 		
 		for (Integer i : measuredEntities.getKeys()) {
 			MeasuredEntity m = (MeasuredEntity) measuredEntities.getObject(i);
-			MeasuredEntityFacade f = new MeasuredEntityFacade(m);
+			MeasuredEntityFacade f = new MeasuredEntityFacade(m, this.productionRateId);
 			entities.add(f);
 		}
 		
@@ -112,7 +116,7 @@ public class MeasuredEntityManager extends Configurable {
 		if(entityAlreadyExists(entity)){
 			return false;
 		}
-		return entities.add(new MeasuredEntityFacade(entity));
+		return entities.add(new MeasuredEntityFacade(entity, this.productionRateId));
 	}
 	
 	/**

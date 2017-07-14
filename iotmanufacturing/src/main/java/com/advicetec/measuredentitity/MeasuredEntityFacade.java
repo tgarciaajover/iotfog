@@ -61,16 +61,19 @@ public final class MeasuredEntityFacade {
 	// This map stores endTime, startTime,
 	private TreeMap<LocalDateTime,String> statesMap;
 	private StateIntervalCache stateCache;
+	private String productionRateId;
 
 
-	public MeasuredEntityFacade(MeasuredEntity entity) 
+	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId) 
 	{
 		this.entity = entity;
-		status = new StatusStore();
-		attValueCache= MeasureAttributeValueCache.getInstance();
-		attMap = new HashMap<String,SortedMap<LocalDateTime,String>>();
-		statesMap = new TreeMap<LocalDateTime,String>();
-		stateCache = StateIntervalCache.getInstance();	
+		this.status = new StatusStore();
+		this.attValueCache= MeasureAttributeValueCache.getInstance();
+		this.attMap = new HashMap<String,SortedMap<LocalDateTime,String>>();
+		this.statesMap = new TreeMap<LocalDateTime,String>();
+		this.stateCache = StateIntervalCache.getInstance();
+		this.productionRateId = productionRateId;
+		
 	}
 
 	public MeasuredEntity getEntity() {
@@ -395,7 +398,8 @@ public final class MeasuredEntityFacade {
 
 	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
-		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType());
+		Double rate = this.entity.getProductionRate(productionRateId);
+		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType(), rate);
 		stateInterval.setKey(entity.getId()+stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());
@@ -752,6 +756,21 @@ public final class MeasuredEntityFacade {
 			}
 		}
 
+	}
+
+	public JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo) {
+		
+        // Bring different predefined periods required
+		List<> 
+		
+		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
+		
+		// Calculate the total schedule downtime
+		
+		// Calculate total availability loss
+		
+		// 
+		
 	}
 }
 

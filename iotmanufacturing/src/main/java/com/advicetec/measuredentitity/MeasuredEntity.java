@@ -504,6 +504,19 @@ public abstract class MeasuredEntity extends ConfigurationObject
     public void removeExecutedEntity(Integer id){
     	this.executedEntities.remove(id);
     }
+    
+    public Double getProductionRate(String productionRateId) 
+    {
+		for (Integer id : this.executedEntities.keySet()){
+			ExecutedEntity executedEntity = this.executedEntities.get(id);
+			if (executedEntity.getCurrentState() == MeasuringState.OPERATING){
+				AttributeValue value = executedEntity.getAttributeValue(productionRateId);
+				return (Double) value.getValue();
+			}
+		}
+		
+		return new Double(0.0);
+    }
 
 
 	public String getBehaviorText(MeasuringState state, Integer idRazonParada) {

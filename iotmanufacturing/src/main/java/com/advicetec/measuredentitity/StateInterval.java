@@ -28,8 +28,9 @@ public final class StateInterval implements Storable
 	// information about the parent.
 	private Integer parent;
 	private MeasuredEntityType parentType;
+	private Double productionRate; 
 	
-	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code)" + "VALUES(?,?,?,?,?,?)";
+	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code, production_rate)" + "VALUES(?,?,?,?,?,?,?)";
 	public static final String SQL_Delete = "DELETE FROM measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to)" + "VALUES(?,?,?,?)";
 			
 	
@@ -38,7 +39,8 @@ public final class StateInterval implements Storable
 			@JsonProperty("reason")ReasonCode reason,
 			@JsonProperty("interval")TimeInterval timeInterval,
 			@JsonProperty("origin")Integer parent, 
-			@JsonProperty("originType")MeasuredEntityType parentType 
+			@JsonProperty("originType")MeasuredEntityType parentType,
+			@JsonProperty("productionRate")Double productionRate
 			) {
 		super();
 		
@@ -48,6 +50,15 @@ public final class StateInterval implements Storable
 		this.interval = timeInterval;
 		this.parent = parent;
 		this.parentType = parentType;
+		this.productionRate = productionRate;
+	}
+
+	public Double getProductionRate() {
+		return productionRate;
+	}
+
+	public void setProductionRate(Double productionRate) {
+		this.productionRate = productionRate;
 	}
 
 	public MeasuringState getState() {
@@ -86,7 +97,7 @@ public final class StateInterval implements Storable
 	{
 		try 
 		{
-			pstmt.setString(1, Integer.toString(getParent()));
+			pstmt.setInt(1, getParent());
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
 			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
 			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
@@ -98,6 +109,9 @@ public final class StateInterval implements Storable
 			} else { 
 				pstmt.setString(6, null);
 			}
+			
+			// Production rate
+			pstmt.setDouble(7, getProductionRate());
 			
 			pstmt.addBatch();
 
@@ -113,7 +127,7 @@ public final class StateInterval implements Storable
 
 		try 
 		{
-			pstmt.setString(1, Integer.toString(getParent()));
+			pstmt.setInt(1, getParent());
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
 			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
 			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
@@ -151,7 +165,8 @@ public final class StateInterval implements Storable
 		sb.append("reason:").append(reason).append(",");
 		sb.append("interval:").append(interval).append(",");
 		sb.append("origin:").append(parent).append(",");
-		sb.append("originType:").append(parentType);
+		sb.append("originType:").append(parentType).append(",");
+		sb.append("productionRate:").append(productionRate);
 		return sb.toString();
 	}
 	
