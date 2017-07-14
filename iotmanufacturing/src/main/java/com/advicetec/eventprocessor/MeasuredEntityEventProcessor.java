@@ -55,6 +55,8 @@ public class MeasuredEntityEventProcessor implements Processor
 				return ret;
 			}
 			
+			logger.info("it is going to execute behavior:" + behaviorName);
+			
 			BehaviorSyntaxChecking sintaxChecking = new BehaviorSyntaxChecking();
 			try 
 			{
@@ -72,6 +74,9 @@ public class MeasuredEntityEventProcessor implements Processor
 						logger.error("The behavior intepreter fails !!! for behavior:" + behaviorName);
 						return ret;
 					}
+					
+					logger.info("Finish executing behavior" + behaviorName);
+					
 					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap(), AttributeOrigin.BEHAVIOR);
 					
 					// Import symbols' values and state
@@ -104,7 +109,7 @@ public class MeasuredEntityEventProcessor implements Processor
 					entityFacade.getStatus();
 				}
 				else {
-					logger.debug("Number of Errors :" + String.valueOf(errorList.size()));
+					logger.error("behavior" + behaviorName+ " has errors #(errors):" + String.valueOf(errorList.size()));
 				}
 			} catch (Exception e) {
 				logger.error("Error message:" + e.getMessage());

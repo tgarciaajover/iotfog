@@ -401,12 +401,22 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	
 	public void defineVar(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken)
 	{
-		int typeTokenType = typeCtx.start.getType();
 		
+		logger.debug("it is going to define var:" + nameToken.getText());
+		
+		if (currentScope.resolve(nameToken.getText())!= null){
+			if (currentScope.resolve(nameToken.getText()) instanceof AttributeSymbol){
+				String error = "The variable:" + nameToken.getText()+ " has been defined before as AttributeSymbol";
+				logger.debug(error);
+				this.error(nameToken, typeCtx, error);
+				return;
+			}
+		}
+		
+		int typeTokenType = typeCtx.start.getType();		
 		Symbol.Type type = BehaviorSyntaxChecking.getType(typeTokenType);
-		
 		VariableSymbol var = new VariableSymbol(nameToken.getText(), type);
-		
+
 		// Define the symbol in the current scope
 		currentScope.define(var);
 		

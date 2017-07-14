@@ -219,17 +219,24 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		logger.debug("visitAtrib_dec:" + id );
 		
-        getGlobalSpace().put(id, new ASTNode(new Object()));         // store with an initial value		
-        AttributeSymbol toAssign = (AttributeSymbol) currentScope.resolve(id);
-		// the declaration includes an assignment
-		if (ctx.ASG() != null){
-			return AssignAttribute(toAssign, ctx);
-		}
-		else {
-			ASTNode node = initializeAttribute(toAssign);
-			getGlobalSpace().put(id, node);
-			return node;
-		}
+        getGlobalSpace().put(id, new ASTNode(new Object()));         // store with an initial value
+        Symbol symbol = currentScope.resolve(id);
+        if (symbol instanceof AttributeSymbol){
+	        AttributeSymbol toAssign = (AttributeSymbol) currentScope.resolve(id);
+			// the declaration includes an assignment
+			if (ctx.ASG() != null){
+				return AssignAttribute(toAssign, ctx);
+			}
+			else {
+				ASTNode node = initializeAttribute(toAssign);
+				getGlobalSpace().put(id, node);
+				return node;
+			}
+		} else {
+			String error = "The symbol to assign:" + id + " is of type:" + symbol.getClass().getName() + " we are expecting an AttributeSymbol";  
+			logger.error( error );
+			throw new RuntimeException( error );
+		}			
 	}	
 	
 	public ASTNode AssignAttribute(AttributeSymbol toAssign, TransformationGrammarParser.Atrib_decContext ctx)
