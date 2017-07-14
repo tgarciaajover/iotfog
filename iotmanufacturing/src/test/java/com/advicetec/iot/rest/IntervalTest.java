@@ -79,8 +79,9 @@ public class IntervalTest {
 		
 		MeasuringState state = MeasuringState.OPERATING;
 		ReasonCode reason = new ReasonCode(1, "Reason 001");
+		Double rate = new Double(0.0);
 		
-		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE);
+		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate);
 		
 		String json = interval.toJson();
 		System.out.println(json);
