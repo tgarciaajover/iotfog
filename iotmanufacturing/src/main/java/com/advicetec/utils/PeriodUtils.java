@@ -58,7 +58,7 @@ public class PeriodUtils
 		return temp.minusSeconds(1);
 	}
 	
-	static private List<PredefinedPeriod> getPredefinedPeriodHours( LocalDateTime from, LocalDateTime to )
+	static public List<PredefinedPeriod> getPredefinedPeriodHours( LocalDateTime from, LocalDateTime to )
 	{
 		
 		logger.info("from:" + from + " to:" + to);

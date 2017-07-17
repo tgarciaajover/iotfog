@@ -37,6 +37,8 @@ import com.advicetec.persistence.DowntimeReason;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
 import com.advicetec.persistence.StatusStore;
+import com.advicetec.utils.PeriodUtils;
+import com.advicetec.utils.PredefinedPeriod;
 
 
 /**
@@ -760,10 +762,40 @@ public final class MeasuredEntityFacade {
 
 	public JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo) {
 		
+		// TODO: preguntar que granularidad se desea?
+		
         // Bring different predefined periods required
-		List<> 
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriodHours( dttmFrom, dttmTo ); 
 		
 		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
+		for (int i = 0; i < periods.size(); i++) {
+			PredefinedPeriod period = periods.get(i);
+			
+			switch (period.getType())
+			{
+			
+			case INT_LT_HOUR:
+				
+				break;
+			
+			case HOUR:
+				
+				break;
+			
+			case DAY:
+				break;
+			
+			case MONTH:
+				break;
+			
+			case YEAR:
+				break;
+			
+			default:
+				logger.error("Invalid predefined period");
+				
+			}
+		}
 		
 		// Calculate the total schedule downtime
 		
