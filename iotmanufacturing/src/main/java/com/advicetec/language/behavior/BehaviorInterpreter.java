@@ -183,7 +183,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		// the declaration includes an assignment
 		if (ctx.ASG() != null)
 		{
-			ASTNode value = this.visit(ctx.expression());	        
+			ASTNode value = this.visit(ctx.expression());
+			
+			if (value == null)
+				value = initializeSymbol(s);
+			
 			VerifyAssign(s, value);
 			currentSpace.put(id, castAssign(s, value));         // store	        
 			return value;
@@ -258,6 +262,9 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 				ASTNode value = this.visit(ctx.expression());
 
+				if (value == null)
+					value = initializeSymbol(toAssign);
+
 				MemorySpace space = null;
 
 				space = getSpaceWithSymbol(toAssign.getName());
@@ -285,6 +292,9 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		{
 			ASTNode value = this.visit(ctx.expression());
 
+			if (value == null)
+				value = initializeSymbol(toAssign);
+			
 			MemorySpace space = null;
 
 			space = getSpaceWithSymbol(toAssign.getName());
@@ -314,81 +324,10 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		if (value == null)
 			value = (AttributeValue) facade.getExecutedObjectAttribute(attributeId); 
 		
-		// Bring the symbol from the current scope
-		Symbol symbol = currentScope.resolve(attributeId);
-	
-		if (symbol == null) {
-			String error =  "the attribute given: " + attributeId + " is not registered in the current scope";
-			logger.error(error);
-			throw new RuntimeException( error );			
-		}
-		
-		Object valObj = null;
 		if (value == null)
-		{
-			return initializeSymbol(symbol);
-		} else {
-			valObj = value.getValue();
-		}
-
-		switch (value.getAttr().getType()){
-		case INT:
-			if (symbol.getType() != Symbol.Type.tINT){
-				String error =  "the attribute given: " + attributeId + " is not registered in the status as type int";
-				logger.error(error);
-				throw new RuntimeException( error );
-			}
-			break;
-		case DATETIME:
-			if (symbol.getType() != Symbol.Type.tDATETIME){
-				String error = "the attribute given: " + attributeId + " is not registered in the status as type datetime";
-				logger.error(error);
-				throw new RuntimeException( error );
-			}
-			break;
-		case DOUBLE:
-			if (symbol.getType() != Symbol.Type.tFLOAT){
-				String error = "the attribute given: " + attributeId + " is not registered in the status as type float"; 
-				logger.error(error);
-				throw new RuntimeException( error );
-			}
-			break;
-		case STRING:
-			if (symbol.getType() != Symbol.Type.tSTRING){
-				String error = "the attribute given: " + attributeId + " is not registered in the status as type string";
-				logger.error(error);
-				throw new RuntimeException( error );
-			}
-			break;
-		case BOOLEAN:
-			if (symbol.getType() != Symbol.Type.tBOOL){
-				String error = "the attribute given: " + attributeId + " is not registered in the status as type boolean";
-				logger.error(error);
-				throw new RuntimeException( error );
-			}
-			break;
-		case DATE:
-			if (symbol.getType() != Symbol.Type.tDATE){
-				String error = "the attribute given: " + attributeId + " is not registered in the status as type date";
-				logger.error(error);
-				throw new RuntimeException( error );
-			}
-			break;
-		case TIME:
-			if (symbol.getType() != Symbol.Type.tTIME){
-				String error = "the attribute given: " + attributeId + " is not registered in the status as type time";
-				logger.error(error);
-				throw new RuntimeException( error );
-			}
-			break;
-		case VOID:
-			String error = "the attribute given: " + attributeId + " is registered in the status as type void";
-			logger.error(error);			
-			throw new RuntimeException( error );
-		}
-
-		return new ASTNode(valObj); 
-
+			return null;
+		else 
+			return new ASTNode(value.getValue());
 	}
 
 	public ASTNode visitState(BehaviorGrammarParser.StateContext ctx) 
@@ -652,8 +591,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override 
 	public ASTNode visitAssign(BehaviorGrammarParser.AssignContext ctx) 
 	{ 
-
-
 		String id = ctx.ID().getText();
 		logger.debug("Visit Assign:" + id );
 		ASTNode value = this.visit(ctx.expression());
@@ -1560,6 +1497,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	public ASTNode visitNotExpr(BehaviorGrammarParser.NotExprContext ctx) 
 	{ 
 		ASTNode value = this.visit(ctx.expression());
+		
+		// The expression corresponds to an attribute in the status, which was not found.
+		// we assume false
+		if (value == null)
+			value = new ASTNode(new Boolean(false));
 
 		if (value.isBoolean()){
 			return new ASTNode(!value.asBoolean());
