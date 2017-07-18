@@ -29,8 +29,10 @@ public final class StateInterval implements Storable
 	private Integer parent;
 	private MeasuredEntityType parentType;
 	private Double productionRate; 
+	private Double actualProductionRate;
+	private Double qtyDefective;
 	
-	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code, production_rate)" + "VALUES(?,?,?,?,?,?,?)";
+	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code, production_rate, actual_production_rate, qty_defective)" + "VALUES(?,?,?,?,?,?,?,?,?)";
 	public static final String SQL_Delete = "DELETE FROM measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to)" + "VALUES(?,?,?,?)";
 			
 	
@@ -40,7 +42,9 @@ public final class StateInterval implements Storable
 			@JsonProperty("interval")TimeInterval timeInterval,
 			@JsonProperty("origin")Integer parent, 
 			@JsonProperty("originType")MeasuredEntityType parentType,
-			@JsonProperty("productionRate")Double productionRate
+			@JsonProperty("productionRate")Double productionRate,
+			@JsonProperty("actualProductionRate")Double actualProductionRate,
+			@JsonProperty("qtyDefective")Double qtyDefective
 			) {
 		super();
 		
@@ -51,6 +55,8 @@ public final class StateInterval implements Storable
 		this.parent = parent;
 		this.parentType = parentType;
 		this.productionRate = productionRate;
+		this.actualProductionRate = actualProductionRate;
+		this.qtyDefective = qtyDefective;
 	}
 
 	public Double getProductionRate() {
@@ -59,6 +65,10 @@ public final class StateInterval implements Storable
 
 	public void setProductionRate(Double productionRate) {
 		this.productionRate = productionRate;
+	}
+    
+	public void setActualProductionRate(Double actualProductionRate) {
+		this.actualProductionRate = actualProductionRate;
 	}
 
 	public MeasuringState getState() {
@@ -112,6 +122,12 @@ public final class StateInterval implements Storable
 			
 			// Production rate
 			pstmt.setDouble(7, getProductionRate());
+			
+			// actual production rate
+			pstmt.setDouble(8, getActualProductionRate());
+	
+			// qty defective
+			pstmt.setDouble(9, getQtyDefective());
 			
 			pstmt.addBatch();
 
@@ -178,4 +194,15 @@ public final class StateInterval implements Storable
 	public Double getDurationMin() {
 		return (double) ChronoUnit.MINUTES.between(interval.getStart(),interval.getEnd());
 	}
+
+	
+	public Double getActualProductionRate() {
+		return this.actualProductionRate;
+	}
+
+	public double getQtyDefective() {
+		return this.qtyDefective;
+	}	
+	
+
 }

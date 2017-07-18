@@ -27,7 +27,7 @@ public class OEEAggregationContainer extends Container
 		super(driverStr, server, user, password);
 	}
 
-	public OverallEquipmentEffectiveness calculateDateRangeOEE(Integer owner, MeasuredEntityType ownerType, List<StateInterval> listStateIntervals, LocalDateTime from, LocalDateTime to)
+	public synchronized OverallEquipmentEffectiveness calculateDateRangeOEE(Integer owner, MeasuredEntityType ownerType, List<StateInterval> listStateIntervals, LocalDateTime from, LocalDateTime to)
 	{
 
 		double availTime = 0.0;
@@ -87,39 +87,32 @@ public class OEEAggregationContainer extends Container
 	}
 
 
-	public List<OverallEquipmentEffectiveness> getPeriodOEESubtotals(Integer owner, MeasuredEntityType ownerType, List<PredefinedPeriod> periods)
+	public synchronized OverallEquipmentEffectiveness getPeriodOEESubtotals(Integer owner, MeasuredEntityType ownerType, PredefinedPeriod period)
 	{
 		logger.info("in getPeriodOEESubtotals:");
 
-		List<OverallEquipmentEffectiveness> ret = new ArrayList<OverallEquipmentEffectiveness>();
+		OverallEquipmentEffectiveness ret = null;
 
-		for (int i = 0; i < periods.size(); i++) {
-			PredefinedPeriod period = periods.get(i);
+	
+		if ((period.getType() == PredefinedPeriodType.HOUR ) || (period.getType() == PredefinedPeriodType.DAY) 
+				|| (period.getType() == PredefinedPeriodType.MONTH) || (period.getType() == PredefinedPeriodType.YEAR))   
+		{								
 
-			if ((period.getType() == PredefinedPeriodType.HOUR ) || (period.getType() == PredefinedPeriodType.DAY) 
-					|| (period.getType() == PredefinedPeriodType.MONTH) || (period.getType() == PredefinedPeriodType.YEAR))   
-			{								
+			try 
+			{
 
-				try 
-				{
-
-					super.connect_prepared(OverallEquipmentEffectiveness.SQL_Select);
-					OverallEquipmentEffectiveness eff = OverallEquipmentEffectiveness.getPeriodOEE((PreparedStatement) super.pst, owner, ownerType, period);
-					if (eff != null) {
-						ret.add(eff);
-					}
-					super.disconnect();
-
-				} catch (ClassNotFoundException e){
-					String error = "Could not find the driver class - Error" + e.getMessage(); 
-					logger.error(error);
-					e.printStackTrace();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
+				super.connect_prepared(OverallEquipmentEffectiveness.SQL_Select);
+				ret = OverallEquipmentEffectiveness.getPeriodOEE((PreparedStatement) super.pst, owner, ownerType, period);
+				super.disconnect();
+				
+			} catch (ClassNotFoundException e){
+				String error = "Could not find the driver class - Error" + e.getMessage(); 
+				logger.error(error);
+				e.printStackTrace();
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
 			}
-
 		}
 
 		return ret;

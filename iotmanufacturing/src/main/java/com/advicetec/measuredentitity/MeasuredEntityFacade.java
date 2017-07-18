@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -64,10 +66,15 @@ public final class MeasuredEntityFacade {
 	// This map stores endTime, startTime,
 	private TreeMap<LocalDateTime,String> statesMap;
 	private StateIntervalCache stateCache;
+	
+	// This field is the attribute name for the expected production rate in minutes.
 	private String productionRateId;
+	
+	// This field is the attribute name for the production counter.
+	private String actualProductionCountId;
 
 
-	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId) 
+	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId, String actualProductionCountId) 
 	{
 		this.entity = entity;
 		this.status = new StatusStore();
@@ -76,6 +83,7 @@ public final class MeasuredEntityFacade {
 		this.statesMap = new TreeMap<LocalDateTime,String>();
 		this.stateCache = StateIntervalCache.getInstance();
 		this.productionRateId = productionRateId;
+		this.actualProductionCountId = actualProductionCountId; 
 		
 	}
 
@@ -83,11 +91,11 @@ public final class MeasuredEntityFacade {
 		return entity;
 	}
 
-	public void setEntity(MeasuredEntity entity) {
+	public synchronized void setEntity(MeasuredEntity entity) {
 		this.entity = entity;
 	}
 
-	public MeasuredEntityType getType(){
+	public synchronized MeasuredEntityType getType(){
 		return entity.getType();
 	}
 
@@ -133,7 +141,7 @@ public final class MeasuredEntityFacade {
 	 * @param attName
 	 * @return
 	 */
-	public AttributeValue getNewestByAttributeName(String attName){
+	public synchronized AttributeValue getNewestByAttributeName(String attName){
 		return status.getAttributeValueByName(attName);
 	}
 
@@ -141,7 +149,7 @@ public final class MeasuredEntityFacade {
 	 * Returns the current state of the measured entity. 
 	 * @return  If there is not entity assigned return undefined.
 	 */    
-	public MeasuringState getCurrentState(){
+	public synchronized MeasuringState getCurrentState(){
     	 if (this.entity == null){
     		 return MeasuringState.UNDEFINED;
     	 } else {
@@ -155,7 +163,7 @@ public final class MeasuredEntityFacade {
 	 * @param parent Identificator from the MeasuredEntity
 	 * @param parentType Type of the Measured Entity.
 	 */
-	public void importAttributeValues(Map<String, ASTNode> valueMap, Integer parent, MeasuredEntityType parentType) {
+	public synchronized void importAttributeValues(Map<String, ASTNode> valueMap, Integer parent, MeasuredEntityType parentType) {
 
 		logger.debug("entering importAttributeValues" + valueMap.size() + " attribute status count:" + status.getAttributeSize()); 
 
@@ -224,7 +232,7 @@ public final class MeasuredEntityFacade {
 	 * @param parent Id of the measured entity
 	 * @param parentType Type of measured entity.
 	 */
-	public void setAttributeValue(Attribute att, Object value,Integer parent, MeasuredEntityType parentType) {
+	public synchronized void setAttributeValue(Attribute att, Object value,Integer parent, MeasuredEntityType parentType) {
 
 		logger.debug("inserting attribute value -attr:" + att.getName() + " value:" + value.toString() );
 		setAttributeValue(new AttributeValue(att.getName(), att, value, parent, parentType));
@@ -239,7 +247,7 @@ public final class MeasuredEntityFacade {
 	 * @param to Time to.
 	 * @return
 	 */
-	public ArrayList<AttributeValue> getByIntervalByAttributeName(
+	public synchronized ArrayList<AttributeValue> getByIntervalByAttributeName(
 			String attrName, LocalDateTime from, LocalDateTime to){
 
 		LocalDateTime oldest = attValueCache.getOldestTime();
@@ -285,7 +293,7 @@ public final class MeasuredEntityFacade {
 	 * Deletes old values from attribute value map.
 	 * @param oldest
 	 */
-	public void deleteOldValues(LocalDateTime oldest){
+	public synchronized void deleteOldValues(LocalDateTime oldest){
 		for(SortedMap<LocalDateTime, String> internalMap : attMap.values()){
 			// replace the map with the last entries. 
 			internalMap = internalMap.tailMap(oldest);
@@ -293,11 +301,11 @@ public final class MeasuredEntityFacade {
 	}
 
 
-	public void deleteOldStates(LocalDateTime oldest){
+	public synchronized void deleteOldStates(LocalDateTime oldest){
 		statesMap = (TreeMap<LocalDateTime, String>) statesMap.tailMap(oldest, true);
 	}
 
-	public String getByIntervalByAttributeNameJSON(String attrName, LocalDateTime from, LocalDateTime to){
+	public synchronized String getByIntervalByAttributeNameJSON(String attrName, LocalDateTime from, LocalDateTime to){
 
 		ArrayList<AttributeValue> ret = getByIntervalByAttributeName(attrName, from, to);
 
@@ -331,7 +339,7 @@ public final class MeasuredEntityFacade {
 	 * values for the given attribute name.
 	 * 
 	 */
-	public List<AttributeValue> getLastNbyAttributeName(String attrName, int n){
+	public synchronized List<AttributeValue> getLastNbyAttributeName(String attrName, int n){
 		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
 
 		if(!attMap.containsKey(attrName)){
@@ -357,7 +365,7 @@ public final class MeasuredEntityFacade {
 	 * @param keyArray
 	 * @return
 	 */
-	private ArrayList<AttributeValue> getFromCache(String[] keyArray){
+	private synchronized ArrayList<AttributeValue> getFromCache(String[] keyArray){
 		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
 		for (String key : keyArray) {
 			AttributeValue value = attValueCache.getFromCache(key);
@@ -372,11 +380,11 @@ public final class MeasuredEntityFacade {
 		return maValues;
 	}
 
-	public void importSymbols(Map<String, Symbol> symbolMap, AttributeOrigin origin) throws Exception {
+	public synchronized void importSymbols(Map<String, Symbol> symbolMap, AttributeOrigin origin) throws Exception {
 		status.importSymbols(symbolMap, origin);
 	}
 
-	public Collection<Attribute> getStatus(){
+	public synchronized Collection<Attribute> getStatus(){
 		return status.getStatus();
 	}
 
@@ -384,31 +392,73 @@ public final class MeasuredEntityFacade {
 	 * Returns the measured Entity status. 
 	 * @return json array
 	 */
-	public JSONArray getStatusJSON(){
+	public synchronized JSONArray getStatusJSON(){
 		return new JSONArray(getStatusValues());
 	}
 
 
-	public void importAttributeValues(Map<String, ASTNode> valueMap) {
+	public synchronized void importAttributeValues(Map<String, ASTNode> valueMap) {
 		importAttributeValues(valueMap,entity.getId(),entity.getType());
 
 	}
 
-	public Collection<AttributeValue> getStatusValues(){
+	public synchronized Collection<AttributeValue> getStatusValues(){
 		return status.getAttributeValues();
 	}
 
 
-	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
+	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
 		Double rate = this.entity.getProductionRate(productionRateId);
-		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType(), rate);
+		Double actualRate = null; 
+		
+		// Verifies that the actual production count id field is an attribute in the measuring entity
+		if (!isAttribute(actualProductionCountId)) {
+			logger.error("The given attribute: " + this.actualProductionCountId + " does not exists as attribute in the measuring entity");
+			actualRate = new Double(0.0);
+		} else {
+		
+			ArrayList<AttributeValue> list = getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
+			
+			double sum = 0;
+			// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
+			for (AttributeValue attributeValue : list) 
+			{
+				
+				MeasuredAttributeValue measvalue = (MeasuredAttributeValue) attributeValue;
+				
+				if ((measvalue.getValue() instanceof Double) || (measvalue.getValue() instanceof Integer)){
+					if (measvalue.getValue() instanceof Double)
+						sum = sum + (Double) measvalue.getValue();
+					else
+						sum = sum + (Integer) measvalue.getValue();
+				} else {
+					logger.error("The production count attribute: " + actualProductionCountId + " parametrized is not of type Double or Integer");
+					break;
+				}
+			}
+			LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
+			long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
+			actualRate = new Double(sum * 60 / seconds); 
+		}
+			
+		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType(), rate, actualRate, new Double(0));
 		stateInterval.setKey(entity.getId()+stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());
 		StateIntervalCache.getInstance().storeToCache(stateInterval);
 	}
 
+	// Verifies if a particular attribute belongs to the measure entity status.  
+	private  boolean isAttribute(String attrName) {
+
+		Attribute att = status.getAttribute(attrName);
+
+		if( att != null )
+			return true;
+		else
+			return false;
+	}
 
 	/**
 	 * Returns array of States of this MeasuredEntity for the given dates.
@@ -416,7 +466,7 @@ public final class MeasuredEntityFacade {
 	 * @param to End date.
 	 * @return String with the json information.
 	 */
-	public String getJsonStatesByInterval(LocalDateTime from, LocalDateTime to){
+	public synchronized String getJsonStatesByInterval(LocalDateTime from, LocalDateTime to){
 
 		List<StateInterval> intervals = getStatesByInterval(from, to);
 
@@ -447,7 +497,7 @@ public final class MeasuredEntityFacade {
 	 * @param to End date.
 	 * @return Json Array of states.
 	 */
-	public JSONArray getJsonStates(LocalDateTime from, LocalDateTime to){
+	public synchronized JSONArray getJsonStates(LocalDateTime from, LocalDateTime to){
 		JSONArray array = null;
 		String cannonicalMachine = "";
 
@@ -488,7 +538,7 @@ public final class MeasuredEntityFacade {
 	 * @param to
 	 * @return
 	 */
-	public JSONArray getJsonTrend(String trendVar,LocalDateTime from, LocalDateTime to){
+	public synchronized JSONArray getJsonTrend(String trendVar,LocalDateTime from, LocalDateTime to){
 		JSONArray array = null;
 		String cannonicalMachine ="";
 
@@ -524,7 +574,7 @@ public final class MeasuredEntityFacade {
 	 * @param interval
 	 * @return
 	 */
-	public String statesByInterval(TimeInterval interval){
+	public synchronized String statesByInterval(TimeInterval interval){
 		List<StateInterval> intervals = getStatesByInterval(interval.getStart(), interval.getEnd());
 
 		ObjectMapper mapper = new ObjectMapper();
@@ -552,7 +602,7 @@ public final class MeasuredEntityFacade {
 	 * @param to Ending time.
 	 * @return List of intervals.
 	 */
-	public List<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
+	public synchronized List<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
 
 		List<StateInterval> list = new ArrayList<StateInterval>();
 		LocalDateTime oldest = stateCache.getOldestTime();
@@ -584,7 +634,7 @@ public final class MeasuredEntityFacade {
 	 * Commands to the cache to store all intervals into the database 
 	 * and clean the cache.
 	 */
-	public void storeAllStateIntervals(){
+	public synchronized void storeAllStateIntervals(){
 		stateCache.bulkCommit(new ArrayList<String>(statesMap.values()));
 	}
 
@@ -599,7 +649,7 @@ public final class MeasuredEntityFacade {
 	}
 
 
-	public JSONArray getJsonDowntimeReasons(LocalDateTime from,	LocalDateTime to) 
+	public synchronized JSONArray getJsonDowntimeReasons(LocalDateTime from,	LocalDateTime to) 
 	{
 		logger.info("In getJsonDowntimeReasons + from:" + from.toString() + " to:" + to.toString());
 		
@@ -728,7 +778,7 @@ public final class MeasuredEntityFacade {
 				Integer newState = node.asInterger();
 				 
 				if (newState == 0){
-					if (this.entity.getCurrentState() != MeasuringState.OPERATING) {
+					if ((this.entity.getCurrentState() != MeasuringState.OPERATING) || (this.entity.startNewInterval())) {
 						LocalDateTime localDateTime = LocalDateTime.now();
 						TimeInterval interval = new TimeInterval(this.entity.getCurrentStatDateTime(), localDateTime);
 						this.registerInterval(this.entity.getCurrentState(), this.entity.getCurrentReason(), interval);
@@ -736,7 +786,7 @@ public final class MeasuredEntityFacade {
 					}
 				} else if (newState == 1){
 					
-					if (this.entity.getCurrentState() != MeasuringState.SCHEDULEDOWN) {
+					if ((this.entity.getCurrentState() != MeasuringState.SCHEDULEDOWN) || (this.entity.startNewInterval())) {
 						LocalDateTime localDateTime = LocalDateTime.now();
 						TimeInterval interval = new TimeInterval(this.entity.getCurrentStatDateTime(), localDateTime);
 						this.registerInterval(this.entity.getCurrentState(), this.entity.getCurrentReason(), interval);
@@ -745,7 +795,7 @@ public final class MeasuredEntityFacade {
 					
 				} else if (newState == 2){
 					
-					if (this.entity.getCurrentState() != MeasuringState.UNSCHEDULEDOWN) {
+					if ((this.entity.getCurrentState() != MeasuringState.UNSCHEDULEDOWN) || (this.entity.startNewInterval())) {
 						LocalDateTime localDateTime = LocalDateTime.now();
 						TimeInterval interval = new TimeInterval(this.entity.getCurrentStatDateTime(), localDateTime);
 						this.registerInterval(this.entity.getCurrentState(), this.entity.getCurrentReason(), interval);
@@ -762,33 +812,63 @@ public final class MeasuredEntityFacade {
 	}
 
 	
-	public JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo) {
+	public synchronized JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo) {
 				
         // Bring different predefined periods required
 		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriodHours( dttmFrom, dttmTo ); 
 		
+		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
+		List<OverallEquipmentEffectiveness> oees = new ArrayList<OverallEquipmentEffectiveness>();
+		
 		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
 		for (int i = 0; i < periods.size(); i++) 
 		{
+			PredefinedPeriod period = periods.get(i);
 			switch (period.getType())
 			{
 			
 			case INT_LT_HOUR:
 				// Search for intervals in the requested hour.
 				List<StateInterval> intervals = this.getStatesByInterval(dttmFrom, dttmTo);
+				OverallEquipmentEffectiveness oee = oeeAggregation.getOeeAggregationContainer().calculateDateRangeOEE(
+															this.getEntity().getId(), this.getEntity().getType(), intervals, dttmFrom, dttmTo);
+				oees.add(oee);
+				
+			case HOUR:
+			case DAY:
+			case MONTH:
+			case YEAR:
+				
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().getPeriodOEESubtotals(
+															this.getEntity().getId(), this.getEntity().getType(), period);
+				oees.add(oee2);
+				
+			default:
+				logger.error("Invalid Predefined Period type");
 			
-			case 
+			}			
+		}
 			
+
+		JSONArray array = null;
+		array = new JSONArray();
+		for (OverallEquipmentEffectiveness oee : oees) {
+			// create the json object
+			JSONObject jsob = new JSONObject();
+			jsob.append("available_time",oee.getAvailableTime());
+			jsob.append("productive_time",oee.getProductiveTime());
+			jsob.append("qty_sched_to_produce",oee.getQtySchedToProduce());
+			jsob.append("qty_produced",oee.getQtyProduced());
+			jsob.append("qty_defective",oee.getQtyDefective());
+			double oeeValue = (oee.getProductiveTime() / oee.getAvailableTime()) * (oee.getQtyProduced() / oee.getQtySchedToProduce() ) * (oee.getQtyDefective() / oee.getQtyProduced() );
+			oeeValue = oeeValue * 100; 
+			jsob.append("oee", new Double(oeeValue));
 			
-			
+			// adding jsonObject to JsonArray
+			array.put(jsob);
 		}
 		
-		// Calculate the total schedule downtime
-		
-		// Calculate total availability loss
-		
-		// 
-		
+		return array;
 	}
 }
 

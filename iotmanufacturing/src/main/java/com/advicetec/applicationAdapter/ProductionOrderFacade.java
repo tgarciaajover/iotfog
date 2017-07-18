@@ -2,6 +2,7 @@ package com.advicetec.applicationAdapter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -67,9 +68,12 @@ public final class ProductionOrderFacade {
 	
 	// Production Field Identifier
 	private String productionRateId;
+	
+	// This field is the attribute name for the production counter.
+	private String actualProductionCountId;
 
 	
-	public ProductionOrderFacade(ProductionOrder pOrder, String productionRateId) 
+	public ProductionOrderFacade(ProductionOrder pOrder, String productionRateId, String actualProductionCountId) 
 	{
 		this.pOrder = pOrder;
 		this.status = new StatusStore();
@@ -78,6 +82,7 @@ public final class ProductionOrderFacade {
 		this.statesMap = new TreeMap<LocalDateTime,String>();
 		this.stateCache = StateIntervalCache.getInstance();
 		this.productionRateId = productionRateId;
+		this.actualProductionCountId = actualProductionCountId;
 	}
 
 	public ProductionOrder getProductionOrder() {
@@ -381,12 +386,45 @@ public final class ProductionOrderFacade {
 	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
 		Double rate = new Double(0.0);
+		Double actualRate = null; 
+		
 		if (this.pOrder.getCurrentState() == MeasuringState.OPERATING) {
 			AttributeValue attrValue = this.pOrder.getAttributeValue(this.productionRateId);
 			rate = (Double) attrValue.getValue();
 		}
 		
-		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType(), rate);
+		// Verifies that the actual production count id field is an attribute in the measuring entity
+		if (!isAttribute(actualProductionCountId)) {
+			logger.error("The given attribute: " + this.actualProductionCountId + " does not exists as attribute in the measuring entity");
+			actualRate = new Double(0.0);
+		} else {
+		
+			ArrayList<AttributeValue> list = getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
+			
+			double sum = 0;
+			// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
+			for (AttributeValue attributeValue : list) 
+			{
+				
+				MeasuredAttributeValue measvalue = (MeasuredAttributeValue) attributeValue;
+				
+				if ((measvalue.getValue() instanceof Double) || (measvalue.getValue() instanceof Integer)){
+					if (measvalue.getValue() instanceof Double)
+						sum = sum + (Double) measvalue.getValue();
+					else
+						sum = sum + (Integer) measvalue.getValue();
+				} else {
+					logger.error("The production count attribute: " + actualProductionCountId + " parametrized is not of type Double or Integer");
+					break;
+				}
+			}
+			LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
+			long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
+			actualRate = new Double(sum * 60 / seconds); 
+		}
+		
+		
+		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType(), rate, actualRate, new Double(0));
 		stateInterval.setKey(this.pOrder.getId()+stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());
@@ -394,6 +432,16 @@ public final class ProductionOrderFacade {
 		
 	}
 
+
+	private boolean isAttribute(String attrName) {
+		
+		Attribute att = status.getAttribute(attrName);
+
+		if( att != null )
+			return true;
+		else
+			return false;
+	}
 
 	/**
 	 * Returns a

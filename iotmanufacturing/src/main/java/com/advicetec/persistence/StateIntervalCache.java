@@ -59,7 +59,7 @@ public class StateIntervalCache extends Configurable {
 
 	private String sqlDownTimeReasons;
 	
-	final private static String sqlStatusIntervalRangeSelect = "SELECT datetime_from, datetime_to, status, reason_code, production_rate FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? and ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? and datetime_to <= ?))";
+	final private static String sqlStatusIntervalRangeSelect = "SELECT datetime_from, datetime_to, status, reason_code, production_rate, actual_production_rate, qty_defective FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? and ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? and datetime_to <= ?))";
 			
 	private static Cache<String, StateInterval> cache;
 	PreparedStatement preparedStatement;
@@ -316,6 +316,9 @@ public class StateIntervalCache extends Configurable {
 				String status = rs.getString("status");
 				String reasonCode = rs.getString("reason_code");
 				Double productionRate = rs.getDouble("production_rate");
+				Double actualProductionRate = rs.getDouble("actual_production_rate");
+				Double qtyDefective = rs.getDouble("qty_defective");
+				
 				
 				MeasuringState measuringState = MeasuringState.getByName(status);
 				ReasonCode rCode = null;
@@ -324,7 +327,7 @@ public class StateIntervalCache extends Configurable {
 				}
 				
 				TimeInterval timeInterval = new TimeInterval(dTimeFrom, dTimeTo); 
-				StateInterval sInt = new StateInterval(measuringState, rCode, timeInterval, entityId, mType, productionRate);
+				StateInterval sInt = new StateInterval(measuringState, rCode, timeInterval, entityId, mType, productionRate, actualProductionRate, qtyDefective);
 				
 				list.add(sInt);
 						      

@@ -115,7 +115,7 @@ public class OverallEquipmentEffectiveness implements Storable
 			pstmt.setInt(1, getParent());
 			pstmt.setInt(2, getParentType().getValue());          			// owner_type
 			pstmt.setString(3, this.predefinedPeriod.getKey() );   			// period key
-			pstmt.setInt(4, this.getProductiveTime());						// productive time
+			pstmt.setDouble(4, this.getProductiveTime());						// productive time
 			pstmt.setDouble(5, this.getQtySchedToProduce());				// Quantity scheduled to produce
 			pstmt.setDouble(6, this.getQtyProduced());						// Quantity produced
 			pstmt.setDouble(7, this.getQtyDefective());						// Quantity with rework or considered defective. 

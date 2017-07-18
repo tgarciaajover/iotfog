@@ -50,7 +50,8 @@ import com.advicetec.core.serialization.LocalDateTimeSerializer;
 public abstract class MeasuredEntity extends ConfigurationObject 
 {
 	
-	static final Logger logger = LogManager.getLogger(MeasuredEntity.class.getName()); 
+	static final Logger logger = LogManager.getLogger(MeasuredEntity.class.getName());
+	static Integer MAX_INTERVAL_TIME = 300; // Value measured in seconds. 
 	
 	@JsonProperty("code")
 	protected String code;
@@ -90,6 +91,9 @@ public abstract class MeasuredEntity extends ConfigurationObject
     @JsonIgnore
     protected List<AttributeMeasuredEntity> attributes;
     
+    @JsonIgnore
+    protected Integer maxTimeForInterval;
+    
     
     public MeasuredEntity(@JsonProperty("id") Integer id, MeasuredEntityType type) 
     {
@@ -100,6 +104,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		startDateTimeStatus = LocalDateTime.now();
 		currentState = MeasuringState.SCHEDULEDOWN;
 		currentReason = null;
+		maxTimeForInterval = MAX_INTERVAL_TIME; 
 
 		attributes = new ArrayList<AttributeMeasuredEntity>();
 		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
@@ -108,23 +113,26 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		
 	}
 
-    public String getCode() {
+    public synchronized String getCode() {
 		return code;
 	}
 
-	public void setCode(String code) {
+	public synchronized void setCode(String code) {
 		this.code = code;
 	}
 
-	public MeasuredEntityType getType()
+	public synchronized MeasuredEntityType getType()
     {
     	return this.type;
     }
-    
-	public void getTimePerStatus(MeasuringState status, TimeInterval interval)
-    {
     	
-    }
+	public synchronized Integer getMaxTimeForInterval() {
+		return maxTimeForInterval;
+	}
+
+	public synchronized void setMaxTimeForInterval(Integer maxTimeForInterval) {
+		this.maxTimeForInterval = maxTimeForInterval;
+	}
     
 	/**
 	 * Creates and returns a MessageAttributeValue 
@@ -133,46 +141,46 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	 * @param timeStamp 
 	 * @return 
 	 */
-    public MeasuredAttributeValue getMeasureAttributeValue(Attribute attribute, Object value, LocalDateTime timeStamp)
+    public synchronized MeasuredAttributeValue getMeasureAttributeValue(Attribute attribute, Object value, LocalDateTime timeStamp)
     {
     	return new MeasuredAttributeValue(attribute, value, getId(), getType(), timeStamp);
     }
     
     @JsonIgnore
-    public List<AttributeMeasuredEntity> getAttributeList(){
+    public synchronized List<AttributeMeasuredEntity> getAttributeList(){
     	return attributes;
     }
     
-    public boolean registerMeasureEntityAttibute(AttributeMeasuredEntity attrMeasureEntity){
+    public synchronized boolean registerMeasureEntityAttibute(AttributeMeasuredEntity attrMeasureEntity){
     	return attributes.add(attrMeasureEntity);
     }
     
-    public boolean equals(MeasuredEntity other){
+    public synchronized boolean equals(MeasuredEntity other){
     	return getId() == other.getId();
     }
 
-	public void getStateByInterval(TimeInterval timeInterval) {
+	public synchronized void getStateByInterval(TimeInterval timeInterval) {
 		// TODO Auto-generated method stub
 		
 	}
 	
-	public LocalDateTime getCreateDate() {
+	public synchronized LocalDateTime getCreateDate() {
 		return createDate;
 	}
 	
-	public void setCreateDate(LocalDateTime create_date) {
+	public synchronized void setCreateDate(LocalDateTime create_date) {
 		this.createDate = create_date;
 	}
 
-	public String getDescr() {
+	public synchronized String getDescr() {
 		return descr;
 	}
 	
-	public void setDescr(String descr) {
+	public synchronized void setDescr(String descr) {
 		this.descr = descr;
 	}	
 	
-	public String toJson()
+	public synchronized String toJson()
 	{
 		ObjectMapper mapper = new ObjectMapper();
 			
@@ -553,5 +561,14 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	public String getCanonicalIdentifier()
 	{
 		return null;
+	}
+
+	// This function verifies if the current interval state should be calculated and saved 
+	public boolean startNewInterval() {
+		
+		if (getCurrentStatDateTime().plusSeconds(getMaxTimeForInterval()).isBefore(LocalDateTime.now()))
+			return true;
+		
+		return false;
 	}
 }
