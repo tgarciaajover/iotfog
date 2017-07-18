@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayEvent;
+import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
 import com.advicetec.language.ast.Symbol;
@@ -36,8 +37,6 @@ public class MeasuredEntityEventProcessor implements Processor
 		
 		Integer measuringEntity = this.event.getEntity();
 		String behaviorName = this.event.getBehaviorTransformation();
-		long milliseconds = this.event.getMilliseconds();
-		boolean repeat = this.event.isRepeated();
 		
         logger.debug("process - behavior:" + behaviorName);
 		
@@ -55,7 +54,7 @@ public class MeasuredEntityEventProcessor implements Processor
 				return ret;
 			}
 			
-			logger.info("it is going to execute behavior:" + behaviorName);
+			logger.debug("it is going to execute behavior:" + behaviorName);
 			
 			BehaviorSyntaxChecking sintaxChecking = new BehaviorSyntaxChecking();
 			try 
@@ -100,12 +99,7 @@ public class MeasuredEntityEventProcessor implements Processor
 							ret.add(dEvent);
 						}
 					}
-					
-					if (repeat){
-						DelayEvent dEvent = new DelayEvent(this.event,milliseconds);
-						ret.add(dEvent);
-					}
-					
+										
 					entityFacade.getStatus();
 				}
 				else {

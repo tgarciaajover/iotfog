@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayEvent;
+import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.language.behavior.BehaviorInterpreter;
 import com.advicetec.mpmcqueue.PriorityQueue;
 import com.advicetec.mpmcqueue.QueueType;
@@ -94,6 +95,16 @@ public class EventHandler implements Runnable
 					logger.debug("The Num delayed enqueued elements is:" + this.delayQueue.size());
 				} else {
 					logger.error("This event cannot be processed" + evnt.getEvntType().getName());
+				}
+
+				// Insert again in the queue the event
+				if (evnt.isRepeated()){
+					long milliseconds = evnt.getMilliseconds();
+					DelayEvent dEvent = new DelayEvent(evnt,milliseconds);
+					this.delayQueue.put(dEvent);
+				} else {
+					// remove the event from the delay event list.
+					MessageManager.getInstance().removeDelayEventType(evnt.getKey());
 				}
 				
 				logger.debug("finish processing event" + evnt.getId());

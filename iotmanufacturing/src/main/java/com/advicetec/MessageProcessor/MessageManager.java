@@ -63,7 +63,7 @@ public class MessageManager extends Manager
 		if (this.delayedTypeEvents.get(type) == null)
 			return false;
 		else 
-			return this.delayedTypeEvents.get(type);
+			return true;
 	}
 	
 	public void removeDelayEventType(String type){

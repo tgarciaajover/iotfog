@@ -154,9 +154,9 @@ public class MeasuredEntityManager extends Configurable {
 
 	
 	public Integer getMeasuredEntityId(String company, String location,
-			String plant, String machineId) {
+			String plant, String machineGroup, String machineId) {
 		
-		return this.measuredEntities.getCanonicalObject(company, location, plant, machineId);
+		return this.measuredEntities.getCanonicalObject(company, location, plant, machineGroup, machineId);
 	}
 	
 	public String getCanonicalById(Integer id){

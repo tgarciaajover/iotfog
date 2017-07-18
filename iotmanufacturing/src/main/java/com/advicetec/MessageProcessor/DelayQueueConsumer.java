@@ -35,7 +35,6 @@ public class DelayQueueConsumer implements Runnable
 				// Take elements out from the DelayQueue object.
 				DelayEvent object = (DelayEvent) queue.take();
 				logger.debug("passing event:" + object.getId() + " startdttm:" + object.getStartTime() +  " event type:" + object.getEvent().getEvntType().getName() + " event info:" + object.getEvent().toString());
-				MessageManager.getInstance().removeDelayEventType(object.getKey());
 				Queueable obj = new Queueable(QueueType.EVENT, object.getEvent());
 				// TODO : define the priority
 				eventManager.getQueue().enqueue(6,obj);

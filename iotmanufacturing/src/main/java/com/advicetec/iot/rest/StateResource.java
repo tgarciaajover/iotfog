@@ -27,6 +27,7 @@ public class StateResource extends ServerResource {
 	private String canCompany;
 	private String canLocation;
 	private String canPlant;
+	private String canMachineGroup;
 	private String reqStartDateTime;
 	private String reqEndDateTime;
 	
@@ -47,6 +48,7 @@ public class StateResource extends ServerResource {
 			this.canCompany = jsonobject.getString("company");
 			this.canLocation = jsonobject.getString("location");
 			this.canPlant = jsonobject.getString("plant");
+			this.canMachineGroup = jsonobject.getString("machineGroup");
 			this.reqStartDateTime = jsonobject.getString("startDttm");
 			this.reqEndDateTime = jsonobject.getString("endDttm");
 
@@ -77,6 +79,7 @@ public class StateResource extends ServerResource {
 		this.canCompany = getQueryValue("company");
 		this.canLocation = getQueryValue("location");
 		this.canPlant = getQueryValue("plant");
+		this.canMachineGroup = getQueryValue("machineGroup");
 		this.reqStartDateTime = getQueryValue("startDttm");
 		this.reqEndDateTime = getQueryValue("endDttm");
 		
@@ -87,13 +90,14 @@ public class StateResource extends ServerResource {
 		
 		try {
 			Integer uniqueID = MeasuredEntityManager.getInstance()
-					.getMeasuredEntityId(this.canCompany,this.canLocation,this.canPlant,this.canMachineId);
+					.getMeasuredEntityId(this.canCompany,this.canLocation,this.canPlant,this.canMachineGroup, this.canMachineId);
 			// Look for it in the database.
 			
 			if (uniqueID == null) {
 				logger.error("Measured Entity for company:" + this.canCompany +
 							 " location:" + this.canLocation + " Plant:" + this.canPlant +
-							 " machineId:" + this.canMachineId + " was not found");
+							 "machineGroup" + this.canMachineGroup + " machineId:" + 
+							 this.canMachineId + " was not found");
 				result = new JsonRepresentation("");
 			}
 			MeasuredEntityFacade facade = MeasuredEntityManager.getInstance()

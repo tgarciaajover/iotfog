@@ -281,26 +281,28 @@ public class StateIntervalCache extends Configurable {
 	}
 	
 	
-	public ArrayList<StateInterval> getFromDatabase(Integer entityId, MeasuredEntityType mType,
+	public synchronized ArrayList<StateInterval> getFromDatabase(Integer entityId, MeasuredEntityType mType,
 			LocalDateTime from, LocalDateTime to) {
 		
 		logger.info("getFromDatabase:" + Integer.toString(entityId) + " MeasureEntityType:" + mType + " from" + from.toString() + " to:" + to.toString());
 		
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
 		
 		ArrayList<StateInterval> list = new ArrayList<StateInterval>();
 		
 		try {
 			Class.forName(DB_DRIVER);
-			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-			conn.setAutoCommit(false);
-			pst = conn.prepareStatement(this.sqlStatusIntervalRangeSelect);
-			pst.setString(1, Integer.toString(entityId));
-			pst.setInt(2, mType.getValue());
-			pst.setTimestamp(3, Timestamp.valueOf(from));
-			pst.setTimestamp(4, Timestamp.valueOf(to));
-			pst.setTimestamp(5, Timestamp.valueOf(from));
-			pst.setTimestamp(6, Timestamp.valueOf(to));
-			ResultSet rs =  pst.executeQuery();
+			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			connDB.setAutoCommit(false);
+			pstDB = connDB.prepareStatement(this.sqlStatusIntervalRangeSelect);
+			pstDB.setString(1, Integer.toString(entityId));
+			pstDB.setInt(2, mType.getValue());
+			pstDB.setTimestamp(3, Timestamp.valueOf(from));
+			pstDB.setTimestamp(4, Timestamp.valueOf(to));
+			pstDB.setTimestamp(5, Timestamp.valueOf(from));
+			pstDB.setTimestamp(6, Timestamp.valueOf(to));
+			ResultSet rs =  pstDB.executeQuery();
 
 			ConfigurationManager manager = ConfigurationManager.getInstance();
 			ReasonCodeContainer reasonCont =  manager.getReasonCodeContainer();
@@ -342,21 +344,21 @@ public class StateIntervalCache extends Configurable {
 			e.printStackTrace();
 		}
 		finally{
-			if(pst!=null)
+			if(pstDB!=null)
 			{
 				try
 				{
-					pst.close();
+					pstDB.close();
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
 			}
 
-			if(conn!=null) 
+			if(connDB!=null) 
 			{
 				try
 				{
-					conn.close();
+					connDB.close();
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
@@ -367,11 +369,6 @@ public class StateIntervalCache extends Configurable {
 	}
 	
 	
-	private DowntimeReason getDowntimeReasonFromDataBase(){
-		return null;
-	}
-	
-	
 	/**
 	 * Returns a list of Downtime Reasons from database.
 	 * @param entity
@@ -379,26 +376,29 @@ public class StateIntervalCache extends Configurable {
 	 * @param to
 	 * @return
 	 */
-	public Map<Integer,DowntimeReason> getDownTimeReasonsByInterval(MeasuredEntity entity,
+	public synchronized Map<Integer,DowntimeReason> getDownTimeReasonsByInterval(MeasuredEntity entity,
 			LocalDateTime from, LocalDateTime to)
 	{
-		
+
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+
 		logger.info("in getDownTimeReasonsByInterval MeasuredEntity:" + entity.getId() + " from:" + from.toString() + " to:" + to.toString());
 		
 		Map<Integer,DowntimeReason> map = new HashMap<Integer,DowntimeReason>();
 		
 		try{
 			Class.forName(DB_DRIVER);
-			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-			conn.setAutoCommit(false);
-			pst = conn.prepareStatement(this.sqlDownTimeReasons);
-			pst.setString(1, Integer.toString(entity.getId()));
-			pst.setInt(2, entity.getType().getValue());
-			pst.setTimestamp(3, Timestamp.valueOf(from));
-			pst.setTimestamp(4, Timestamp.valueOf(to));
-			pst.setTimestamp(5, Timestamp.valueOf(from));
-			pst.setTimestamp(6, Timestamp.valueOf(to));
-			ResultSet rs =  pst.executeQuery();
+			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			connDB.setAutoCommit(false);
+			pstDB = connDB.prepareStatement(this.sqlDownTimeReasons);
+			pstDB.setString(1, Integer.toString(entity.getId()));
+			pstDB.setInt(2, entity.getType().getValue());
+			pstDB.setTimestamp(3, Timestamp.valueOf(from));
+			pstDB.setTimestamp(4, Timestamp.valueOf(to));
+			pstDB.setTimestamp(5, Timestamp.valueOf(from));
+			pstDB.setTimestamp(6, Timestamp.valueOf(to));
+			ResultSet rs = pstDB.executeQuery();
 			
 			ConfigurationManager manager = ConfigurationManager.getInstance();
 			ReasonCodeContainer reasonCont =  manager.getReasonCodeContainer();
@@ -428,21 +428,21 @@ public class StateIntervalCache extends Configurable {
 			e.printStackTrace();
 		}
 		finally{
-			if(pst!=null)
+			if(pstDB!=null)
 			{
 				try
 				{
-					pst.close();
+					pstDB.close();
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
 			}
 
-			if(conn!=null) 
+			if(connDB!=null) 
 			{
 				try
 				{
-					conn.close();
+					connDB.close();
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}

@@ -27,8 +27,6 @@ public abstract class ModBusTcpEvent extends Event
 		this.port = port;
 		this.Uid = uid;
 		this.type = type;
-		this.milliseconds = 0;
-		this.repeated = false;
 	}
 
 	public String getIpAddress() {
@@ -57,22 +55,6 @@ public abstract class ModBusTcpEvent extends Event
 
 	public ModBusTcpEventType getType() {
 		return type;
-	}
-
-	public long getMilliseconds() {
-		return milliseconds;
-	}
-
-	public void setMilliseconds(long milliseconds) {
-		this.milliseconds = milliseconds;
-	}
-
-	public boolean isRepeated() {
-		return repeated;
-	}
-
-	public void setRepeated(boolean repeated) {
-		this.repeated = repeated;
 	}
 
 	public String getKey(){

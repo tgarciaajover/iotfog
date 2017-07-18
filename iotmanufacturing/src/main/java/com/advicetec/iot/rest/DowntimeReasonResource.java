@@ -30,6 +30,7 @@ public class DowntimeReasonResource extends ServerResource {
 	private String canCompany;
 	private String canLocation;
 	private String canPlant;
+	private String canMachineGroup;
 	private String reqStartDateTime;
 	private String reqEndDateTime;
 
@@ -45,10 +46,11 @@ public class DowntimeReasonResource extends ServerResource {
 			JSONObject jsonobject = jsonRepresentation.getJsonObject();
 			String jsonText = jsonobject.toString();
 			
-			this.canMachineId = jsonobject.getString("machineId");
 			this.canCompany = jsonobject.getString("company");
 			this.canLocation = jsonobject.getString("location");
 			this.canPlant = jsonobject.getString("plant");
+			this.canMachineGroup = jsonobject.getString("machineGroup");
+			this.canMachineId = jsonobject.getString("machineId");
 			this.reqStartDateTime = jsonobject.getString("startDttm");
 			this.reqEndDateTime = jsonobject.getString("endDttm");
 
@@ -73,14 +75,15 @@ public class DowntimeReasonResource extends ServerResource {
 	@Get("json")
 	public Representation getDowntimeReasonsInterval(Representation representation) throws ResourceException, IOException{
 		Representation result = null;
-
-		this.canMachineId = getQueryValue("machineId");
+		logger.info("in getDowntimeReasonsInterval");
 		this.canCompany = getQueryValue("company");
 		this.canLocation = getQueryValue("location");
 		this.canPlant = getQueryValue("plant");
+		this.canMachineGroup = getQueryValue("machineGroup");
+		this.canMachineId = getQueryValue("machineId");
 		this.reqStartDateTime = getQueryValue("startDttm");
 		this.reqEndDateTime = getQueryValue("endDttm");
-
+		
 		if (canMachineId == null) {
 			getParamsFromJson(representation);
 		}		
@@ -88,8 +91,13 @@ public class DowntimeReasonResource extends ServerResource {
 		try {
 			// Get the contact's uniqueID from the URL.
 			Integer uniqueID = MeasuredEntityManager.getInstance()
-					.getMeasuredEntityId(canCompany,canLocation,canPlant,canMachineId);
+					.getMeasuredEntityId(canCompany,canLocation,canPlant,canMachineGroup,canMachineId);
 
+			logger.info("Measured Entity for company:" + this.canCompany +
+					 " location:" + this.canLocation + " Plant:" + this.canPlant +
+					 " machineId:" + this.canMachineId);
+
+			
 			if (uniqueID == null) {
 				logger.error("Measured Entity for company:" + this.canCompany +
 						 " location:" + this.canLocation + " Plant:" + this.canPlant +

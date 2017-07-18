@@ -23,14 +23,7 @@ public class MeasuredEntityEvent extends Event
 	
 	// List of attributes given to the event.
 	private List<InterpretedSignal> parameters; 
-	
-	// Milliseconds when it has to be repeated
-	private long milliseconds; 
-	
-	// it says if it has to be repeated or not.
-	private boolean repeated;
-	
-	
+		
 	public MeasuredEntityEvent(String behavior, Integer entity, Integer device, Integer port, List<InterpretedSignal> parameters) 
 	{
 		super(EventType.MEASURING_ENTITY_EVENT);
@@ -39,8 +32,6 @@ public class MeasuredEntityEvent extends Event
 		this.device = device;
 		this.port = port;
 		this.parameters = parameters;
-		this.repeated = false;
-		this.milliseconds = 0;
 	}
 
 	public Integer getDevice() {
@@ -63,24 +54,6 @@ public class MeasuredEntityEvent extends Event
 		return parameters;
 	}
 	
-	
-	
-	public long getMilliseconds() {
-		return milliseconds;
-	}
-
-	public void setMilliseconds(long milliseconds) {
-		this.milliseconds = milliseconds;
-	}
-
-	public boolean isRepeated() {
-		return repeated;
-	}
-
-	public void setRepeated(boolean repeated) {
-		this.repeated = repeated;
-	}
-
 	@Override
 	public String toString() {
 		return "entity=" + entity + "-" + "device=" + this.device + "-" + "Port=" + this.port + "-" + "behavior=" + behaviorTransformation;

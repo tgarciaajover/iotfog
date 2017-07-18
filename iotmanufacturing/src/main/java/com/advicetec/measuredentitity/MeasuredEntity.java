@@ -546,10 +546,10 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	}
 
 	public AttributeValue getAttributeFromExecutedObject(String attributeId) {
-		logger.info("Starting getAttributeFromExecutedObject - measure entity id:" + getId() + " attribute:" + attributeId + " executed entities:" + this.executedEntities.size());
+		logger.debug("Starting getAttributeFromExecutedObject - measure entity id:" + getId() + " attribute:" + attributeId + " executed entities:" + this.executedEntities.size());
 		
 		for (Integer id : this.executedEntities.keySet()){
-			logger.info("Executed Object:" + id);
+			logger.debug("Executed Object:" + id);
 			ExecutedEntity executedEntity = this.executedEntities.get(id);
 			if (executedEntity.getCurrentState() == MeasuringState.OPERATING){
 				return executedEntity.getAttributeValue(attributeId);

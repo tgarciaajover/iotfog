@@ -80,7 +80,7 @@ public class BehaviorSyntaxChecking
 
         walker.walk(def, tree);
         
-        logger.info("Defphase finished - numErrors:" + collector.getErrors().size() );
+        logger.debug("Defphase finished - numErrors:" + collector.getErrors().size() );
         
         // listErrors = collector.getErrors();
         
@@ -96,7 +96,7 @@ public class BehaviorSyntaxChecking
         	listErrors.add(e);
         }
         
-        logger.info("num errors:" + listErrors.size());
+        logger.debug("num errors:" + listErrors.size());
         
         return listErrors;    
 

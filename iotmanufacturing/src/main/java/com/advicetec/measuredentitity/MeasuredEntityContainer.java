@@ -50,10 +50,10 @@ public class MeasuredEntityContainer extends Container
 		canonicalMapIndex = new HashMap<String, Integer>();
 	}
 
-	private String getCanonicalKey(String company, String location, String plant, String machineId)
+	private String getCanonicalKey(String company, String location, String plant, String machineGroup, String machineId)
 	{
 		if (machineId != null)
-			return company + "-" + location + "-" + plant + "-" + machineId;
+			return company + "-" + location + "-" + plant + "-" + machineGroup + "-" + machineId;
 		else
 			return company + "-" + location + "-" + plant;
 	}
@@ -163,12 +163,13 @@ public class MeasuredEntityContainer extends Container
 				String company 		= rs.getString("id_compania");
 				String location     = rs.getString("id_sede");
 				String plant_id 	= rs.getString("id_planta");
+				String machineGroup =  rs.getString("id_grupo_maquina");
 				plant.setCannonicalCompany(company);
 				plant.setCannonicalLocation(location);
 				plant.setCannonicalPlant(plant_id);
 				
-				logger.info("registering plant " + getCanonicalKey(company, location, plant_id, null));
-				canonicalMapIndex.put(getCanonicalKey(company, location, plant_id, null) , plant.getId());
+				logger.info("registering plant " + getCanonicalKey(company, location, plant_id, null, null));
+				canonicalMapIndex.put(getCanonicalKey(company, location, plant_id, null, null) , plant.getId());
 			}
 
 			rs.close();
@@ -327,8 +328,8 @@ public class MeasuredEntityContainer extends Container
 				machine.setCannonicalGroup(machineGroup);
 				machine.setCannonicalMachineId(machine_id);
 				
-				logger.info("registering machine " + getCanonicalKey(company, location, plant, machine_id) + " Id:" + Integer.toString(machine.getId()) );
-				canonicalMapIndex.put(getCanonicalKey(company, location, plant, machine_id) , machine.getId());
+				logger.info("registering machine " + getCanonicalKey(company, location, plant, machineGroup, machine_id) + " Id:" + Integer.toString(machine.getId()) );
+				canonicalMapIndex.put(getCanonicalKey(company, location, plant, machineGroup,  machine_id) , machine.getId());
 			}
 
 			rs4.close();
@@ -431,10 +432,10 @@ public class MeasuredEntityContainer extends Container
 
 	}
 
-	public Integer getCanonicalObject(String company, String location, String plant, String machineId) 
+	public Integer getCanonicalObject(String company, String location, String plant, String machineGroup, String machineId) 
 	{
 		
 		logger.info("Number of measuredEntities registered:" + Integer.toString(this.canonicalMapIndex.size()));
-		return this.canonicalMapIndex.get(getCanonicalKey(company, location, plant, machineId));
+		return this.canonicalMapIndex.get(getCanonicalKey(company, location, plant, machineGroup, machineId));
 	}
 }

@@ -235,20 +235,22 @@ public class MeasureAttributeValueCache extends Configurable {
 	public synchronized ArrayList<AttributeValue> getFromDatabase(Integer entityId, MeasuredEntityType mType,
 			Attribute attribute, LocalDateTime from, LocalDateTime to) {
 
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
 
 		ArrayList<AttributeValue> list = new ArrayList<AttributeValue>();
 		ResultSet rs = null;
 		try {
 			Class.forName(DB_DRIVER);
-			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-			conn.setAutoCommit(false);
-			pst = conn.prepareStatement(this.sqlMeasureAttributeValueRangeSelect);
-			pst.setString(1, String.valueOf(entityId));
-			pst.setInt(2, mType.getValue());
-			pst.setString(3, attribute.getName());
-			pst.setTimestamp(4, Timestamp.valueOf(from));
-			pst.setTimestamp(5, Timestamp.valueOf(to));
-			rs =  pst.executeQuery();
+			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			connDB.setAutoCommit(false);
+			pstDB = connDB.prepareStatement(this.sqlMeasureAttributeValueRangeSelect);
+			pstDB.setString(1, String.valueOf(entityId));
+			pstDB.setInt(2, mType.getValue());
+			pstDB.setString(3, attribute.getName());
+			pstDB.setTimestamp(4, Timestamp.valueOf(from));
+			pstDB.setTimestamp(5, Timestamp.valueOf(to));
+			rs =  pstDB.executeQuery();
 
 			// Bring the attribute 
 			while (rs.next())
@@ -269,22 +271,22 @@ public class MeasureAttributeValueCache extends Configurable {
 			e.printStackTrace();
 		}
 		finally{
-			if(pst!=null)
+			if(pstDB!=null)
 			{
 				try
 				{
-					pst.close();
+					pstDB.close();
 				} catch (SQLException e) {
 					logger.error(e.getMessage());
 					e.printStackTrace();
 				}
 			}
 
-			if(conn!=null) 
+			if(connDB!=null) 
 			{
 				try
 				{
-					conn.close();
+					connDB.close();
 				} catch (SQLException e) {
 					logger.error(e.getMessage());
 					e.printStackTrace();

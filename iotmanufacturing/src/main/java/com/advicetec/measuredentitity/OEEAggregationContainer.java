@@ -27,6 +27,30 @@ public class OEEAggregationContainer extends Container
 		super(driverStr, server, user, password);
 	}
 
+	public void dbInsert(List<OverallEquipmentEffectiveness> list)
+	{
+		try{
+			super.connect_prepared(OverallEquipmentEffectiveness.SQL_Insert);
+			
+			for (OverallEquipmentEffectiveness oee : list){
+				oee.dbInsert((PreparedStatement) this.pst);
+			}
+	
+	    	int ret[] = pst.executeBatch();
+	    	logger.debug("Number of commands executed:" + ret.length);
+			super.disconnect();
+
+		} catch (ClassNotFoundException e){
+			String error = "Could not find the driver class - Error" + e.getMessage(); 
+			logger.error(error);
+			e.printStackTrace();
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	
 	public synchronized OverallEquipmentEffectiveness calculateDateRangeOEE(Integer owner, MeasuredEntityType ownerType, List<StateInterval> listStateIntervals, LocalDateTime from, LocalDateTime to)
 	{
 
@@ -92,7 +116,6 @@ public class OEEAggregationContainer extends Container
 		logger.info("in getPeriodOEESubtotals:");
 
 		OverallEquipmentEffectiveness ret = null;
-
 	
 		if ((period.getType() == PredefinedPeriodType.HOUR ) || (period.getType() == PredefinedPeriodType.DAY) 
 				|| (period.getType() == PredefinedPeriodType.MONTH) || (period.getType() == PredefinedPeriodType.YEAR))   

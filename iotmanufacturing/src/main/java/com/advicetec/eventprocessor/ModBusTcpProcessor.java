@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayEvent;
+import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.core.Processor;
 import com.advicetec.monitorAdapter.AdapterManager;
 import com.advicetec.mpmcqueue.QueueType;
@@ -50,12 +51,6 @@ public class ModBusTcpProcessor implements Processor {
 			TCPMasterConnection con = eventManager.getModbusConnection(event.getIpAddress(), event.getPort());
 			
 			if (con == null){
-				// Insert again in the queue the event
-				if (event.isRepeated()){
-					long milliseconds = event.getMilliseconds();
-					DelayEvent dEvent = new DelayEvent(event,milliseconds);
-					retEvts.add(dEvent);
-				}
 				logger.error("could not establish the connection" + " IpAddress:" + event.getIpAddress() + " port:" + event.getPort() );
 			} else {
 			
@@ -95,15 +90,8 @@ public class ModBusTcpProcessor implements Processor {
 						
 						Queueable obj = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
 						adapterManager.getQueue().enqueue(6, obj);
-						
-						// Insert again in the queue the event
-						if (evt.isRepeated()){
-							long milliseconds = evt.getMilliseconds();
-							DelayEvent dEvent = new DelayEvent(event,milliseconds);
-							retEvts.add(dEvent);
-						}
-						
 						break;
+						
 					case READ_REGISTER:
 						ModBusTcpInputRegisterEvent evt2 = (ModBusTcpInputRegisterEvent) event;
 						adapterManager = AdapterManager.getInstance(); 				
@@ -132,16 +120,9 @@ public class ModBusTcpProcessor implements Processor {
 						
 						Queueable obj2 = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
 						adapterManager.getQueue().enqueue(6, obj2);
-						
-						// Insert again in the queue the event
-						if (evt2.isRepeated()){
-							long milliseconds = evt2.getMilliseconds();
-							logger.debug("New Read Modbus event to run in:" + milliseconds);
-							DelayEvent dEvent = new DelayEvent(event,milliseconds);
-							retEvts.add(dEvent);
-						}
-						
 						break;
+						
+						
 					case READ_HOLDING_REGISTER:
 						ModBusTcpReadHoldingRegisterEvent evt3 = (ModBusTcpReadHoldingRegisterEvent) event;
 						adapterManager = AdapterManager.getInstance(); 				
@@ -169,17 +150,9 @@ public class ModBusTcpProcessor implements Processor {
 						logger.debug("UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
 						
 						Queueable obj3 = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
-						adapterManager.getQueue().enqueue(6, obj3);
-						
-						// Insert again in the queue the event
-						if (evt3.isRepeated()){
-							long milliseconds = evt3.getMilliseconds();
-							logger.debug("New Read Modbus event to run in:" + milliseconds);
-							DelayEvent dEvent = new DelayEvent(event,milliseconds);
-							retEvts.add(dEvent);
-						}
-						
+						adapterManager.getQueue().enqueue(6, obj3);						
 						break;
+						
 					case WRITE_DISCRETE:
 							// TODO: we are not writing anything.
 						break;

@@ -247,7 +247,7 @@ public final class MeasuredEntityFacade {
 	 * @param to Time to.
 	 * @return
 	 */
-	public synchronized ArrayList<AttributeValue> getByIntervalByAttributeName(
+	public synchronized List<AttributeValue> getByIntervalByAttributeName(
 			String attrName, LocalDateTime from, LocalDateTime to){
 
 		LocalDateTime oldest = attValueCache.getOldestTime();
@@ -256,7 +256,7 @@ public final class MeasuredEntityFacade {
 		logger.debug("getByIntervalByAttributeValue from:" + from + " to:" + to);
 		if(!attMap.containsKey(attrName)){
 			logger.error("attribute:"+attrName+" is not in facade");
-			return null;
+			return new ArrayList<AttributeValue>();
 		}
 		SortedMap<LocalDateTime,String> internalMap = attMap.get(attrName);
 
@@ -307,7 +307,7 @@ public final class MeasuredEntityFacade {
 
 	public synchronized String getByIntervalByAttributeNameJSON(String attrName, LocalDateTime from, LocalDateTime to){
 
-		ArrayList<AttributeValue> ret = getByIntervalByAttributeName(attrName, from, to);
+		List<AttributeValue> ret = getByIntervalByAttributeName(attrName, from, to);
 
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonText=null;
@@ -418,7 +418,7 @@ public final class MeasuredEntityFacade {
 			actualRate = new Double(0.0);
 		} else {
 		
-			ArrayList<AttributeValue> list = getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
+			List<AttributeValue> list = getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
 			
 			double sum = 0;
 			// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
@@ -547,7 +547,7 @@ public final class MeasuredEntityFacade {
 					.getCanonicalById(entity.getId());
 
 
-			ArrayList<AttributeValue> valList = getByIntervalByAttributeName(trendVar, from, to);
+			List<AttributeValue> valList = getByIntervalByAttributeName(trendVar, from, to);
 			array = new JSONArray();
 			for (AttributeValue attValue : valList) {
 				if(attValue instanceof MeasuredAttributeValue){

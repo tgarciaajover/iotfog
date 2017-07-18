@@ -27,6 +27,7 @@ public class TrendResource extends ServerResource
 	private String canCompany;
 	private String canLocation;
 	private String canPlant;
+	private String canMachineGroup; 
 	private String reqStartDateTime;
 	private String reqEndDateTime;
 	private String trendVar;
@@ -48,6 +49,7 @@ public class TrendResource extends ServerResource
 			this.canCompany = jsonobject.getString("company");
 			this.canLocation = jsonobject.getString("location");
 			this.canPlant = jsonobject.getString("plant");
+			this.canMachineGroup = jsonobject.getString("machineGroup");
 			this.reqStartDateTime = jsonobject.getString("startDttm");
 			this.reqEndDateTime = jsonobject.getString("endDttm");
 			this.trendVar = jsonobject.getString("variable");
@@ -73,6 +75,7 @@ public class TrendResource extends ServerResource
 		this.canCompany = getQueryValue("company");
 		this.canLocation = getQueryValue("location");
 		this.canPlant = getQueryValue("plant");
+		this.canMachineGroup = getQueryValue("machineGroup");
 		this.reqStartDateTime = getQueryValue("startDttm");
 		this.reqEndDateTime = getQueryValue("endDttm");
 		this.trendVar = getQueryValue("variable");
@@ -84,12 +87,14 @@ public class TrendResource extends ServerResource
 		
 		try {
 			Integer uniqueID = MeasuredEntityManager.getInstance()
-					.getMeasuredEntityId(this.canCompany,this.canLocation,this.canPlant,this.canMachineId);
+					.getMeasuredEntityId(this.canCompany,this.canLocation,this.canPlant, 
+													this.canMachineGroup,this.canMachineId);
 			// Look for it in the database.
 			
 			if (uniqueID == null) {
 				logger.error("Measured Entity for company:" + this.canCompany +
-						 " location:" + this.canLocation + " Plant:" + this.canPlant +
+						 " location:" + this.canLocation + " Plant:" + this.canPlant + 
+						 "Machine Group:"  + this.canMachineGroup + 
 						 " machineId:" + this.canMachineId + " was not found");
 				result = new JsonRepresentation("");
 			}
