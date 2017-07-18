@@ -1,6 +1,7 @@
 package com.advicetec.measuredentitity;
 
 import java.io.IOException;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -417,7 +418,7 @@ public final class MeasuredEntityFacade {
 	 */
 	public String getJsonStatesByInterval(LocalDateTime from, LocalDateTime to){
 
-		ArrayList<StateInterval> intervals = getStatesByInterval(from, to);
+		List<StateInterval> intervals = getStatesByInterval(from, to);
 
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonText=null;
@@ -453,7 +454,7 @@ public final class MeasuredEntityFacade {
 		try {
 			cannonicalMachine = MeasuredEntityManager.getInstance()
 					.getCanonicalById(entity.getId());
-			ArrayList<StateInterval> intervals = getStatesByInterval(from, to);
+			List<StateInterval> intervals = getStatesByInterval(from, to);
 			array = new JSONArray();
 			for (StateInterval interval : intervals) {
 				
@@ -524,7 +525,7 @@ public final class MeasuredEntityFacade {
 	 * @return
 	 */
 	public String statesByInterval(TimeInterval interval){
-		ArrayList<StateInterval> intervals = getStatesByInterval(interval.getStart(), interval.getEnd());
+		List<StateInterval> intervals = getStatesByInterval(interval.getStart(), interval.getEnd());
 
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonText=null;
@@ -551,9 +552,9 @@ public final class MeasuredEntityFacade {
 	 * @param to Ending time.
 	 * @return List of intervals.
 	 */
-	public ArrayList<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
+	public List<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
 
-		ArrayList<StateInterval> list = new ArrayList<StateInterval>();
+		List<StateInterval> list = new ArrayList<StateInterval>();
 		LocalDateTime oldest = stateCache.getOldestTime();
 
 		// all values are in the cache
@@ -760,41 +761,26 @@ public final class MeasuredEntityFacade {
 
 	}
 
+	
 	public JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo) {
-		
-		// TODO: preguntar que granularidad se desea?
-		
+				
         // Bring different predefined periods required
 		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriodHours( dttmFrom, dttmTo ); 
 		
 		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
-		for (int i = 0; i < periods.size(); i++) {
-			PredefinedPeriod period = periods.get(i);
-			
+		for (int i = 0; i < periods.size(); i++) 
+		{
 			switch (period.getType())
 			{
 			
 			case INT_LT_HOUR:
-				
-				break;
+				// Search for intervals in the requested hour.
+				List<StateInterval> intervals = this.getStatesByInterval(dttmFrom, dttmTo);
 			
-			case HOUR:
-				
-				break;
+			case 
 			
-			case DAY:
-				break;
 			
-			case MONTH:
-				break;
 			
-			case YEAR:
-				break;
-			
-			default:
-				logger.error("Invalid predefined period");
-				
-			}
 		}
 		
 		// Calculate the total schedule downtime
