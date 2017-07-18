@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -33,7 +34,7 @@ public final class StateInterval implements Storable
 	private Double qtyDefective;
 	
 	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code, production_rate, actual_production_rate, qty_defective)" + "VALUES(?,?,?,?,?,?,?,?,?)";
-	public static final String SQL_Delete = "DELETE FROM measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to)" + "VALUES(?,?,?,?)";
+	public static final String SQL_Delete = "DELETE FROM measuringentitystatusinterval WHERE id_owner = ? AND owner_type = ? AND datetime_from = ? AND datetime_to =?";
 			
 	
 	public StateInterval(
@@ -103,6 +104,7 @@ public final class StateInterval implements Storable
 		return SQL_Delete;
 	}
 
+	
 	public void dbInsert(PreparedStatement pstmt) 
 	{
 		try 
@@ -191,6 +193,7 @@ public final class StateInterval implements Storable
 		return this.toString().compareTo(a.toString());
 	}
 
+	@JsonIgnore
 	public Double getDurationMin() {
 		return (double) ChronoUnit.MINUTES.between(interval.getStart(),interval.getEnd());
 	}

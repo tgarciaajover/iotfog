@@ -3,6 +3,7 @@ package com.advicetec.configuration;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
@@ -67,10 +68,15 @@ public class ReasonCode extends ConfigurationObject
 		this.classification = classification;
 	}
 
+	@JsonIgnore
 	public boolean isIdleDown() {
 		return idleDown;
 	}
 
+	public boolean getIdleDown() {
+		return this.idleDown;
+	}
+	
 	public void setIdleDown(boolean idleDown) {
 		this.idleDown = idleDown;
 	}
