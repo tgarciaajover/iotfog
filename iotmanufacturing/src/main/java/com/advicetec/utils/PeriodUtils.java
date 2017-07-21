@@ -28,6 +28,11 @@ public class PeriodUtils
 		return temp.minusHours(1);
 	}
 	
+	static public LocalDateTime getPreviousFinalDay(LocalDateTime date){
+		LocalDateTime temp  = LocalDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), 1, 1, 1, 0 );
+		return temp = temp.minusSeconds(1);		
+	}
+	
 	static public LocalDateTime getStartNextDay(LocalDateTime date) {
 		LocalDateTime startNextDay = date.with(LocalTime.MAX);
 		return startNextDay.plusNanos(1);
@@ -245,4 +250,5 @@ public class PeriodUtils
 		return ret; 
 		
 	}
+
 }

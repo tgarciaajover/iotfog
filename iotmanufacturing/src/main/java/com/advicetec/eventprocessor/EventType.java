@@ -11,7 +11,8 @@ public enum EventType
 	   DISPLAY_EVENT(5,"Display Event"),
 	   MODBUS_READ_EVENT(6,"Modbus Read Event"),
 	   MODBUS_WRITE_EVENT(7,"Modbus Write Event"),
-	   INVALID(8,"Invalid Event");
+	   AGGREGATION_EVENT(8,"Aggregation Event"),
+	   INVALID(9,"Invalid Event");
 	  
 	   private int code;
 	   private String name;

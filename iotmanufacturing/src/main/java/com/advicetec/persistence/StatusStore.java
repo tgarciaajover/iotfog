@@ -17,18 +17,14 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import com.advicetec.configuration.DeviceTypeContainer;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.MeasuringUnit;
-import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
-import com.advicetec.measuredentitity.MeasuredAttributeValue;
-import com.advicetec.measuredentitity.MeasuredEntityType;
 
 /**
  * This class stores the measured entity status which comprises

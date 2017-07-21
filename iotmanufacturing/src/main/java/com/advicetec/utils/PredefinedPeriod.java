@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class PredefinedPeriod 
 {
     PredefinedPeriodType type;
@@ -58,6 +61,25 @@ public class PredefinedPeriod
 											  	  	to.getMinute(), 0);		
 	}
 	
+	
+	public static PredefinedPeriod getInstanceFrom(String periodKey) {
+		String[] tokens = periodKey.split("-");
+		if(tokens.length == 1){ // it is only the year
+			return new PredefinedPeriod(Integer.parseInt(tokens[0]));
+		} else if(tokens.length == 2){ // it is the year and month 
+			return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]));
+		} else if(tokens.length == 3){ // it is the year, month, day
+			return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]) );
+		} else if (tokens.length == 4){ // it is the year, month, day, hour
+			return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]) );
+		} else{
+			Logger logger = LogManager.getLogger(PredefinedPeriod.class.getName());
+			logger.error("error creating a predefined period from String key numParts:" + tokens.length + " key given:" + periodKey);
+		}
+		return null;
+	}
+	
+
 	public PredefinedPeriodType getType() {
 		return type;
 	}
@@ -76,38 +98,38 @@ public class PredefinedPeriod
 		switch (this.type)
 		{
 			case YEAR:
-				ret = Integer.toString(this.calendarFrom.get(Calendar.YEAR));
+				ret = String.format("%04d", this.calendarFrom.get(Calendar.YEAR));
 				break;
 			
 			case MONTH:
-				ret = Integer.toString(this.calendarFrom.get(Calendar.YEAR)) + 
-					   "-" + Integer.toString(this.calendarFrom.get(Calendar.MONTH) + 1);
+				ret = String.format("%04d", this.calendarFrom.get(Calendar.YEAR)) + 
+					   "-" + String.format("%02d", this.calendarFrom.get(Calendar.MONTH) + 1) ;
 				break;
 			
 			case DAY:
-				ret = Integer.toString(this.calendarFrom.get(Calendar.YEAR)) + 
-						"-" + Integer.toString(this.calendarFrom.get(Calendar.MONTH) + 1) +
-						  "-" + Integer.toString(this.calendarFrom.get(Calendar.DAY_OF_MONTH));
+				ret = String.format("%04d", this.calendarFrom.get(Calendar.YEAR)) + 
+						"-" + String.format("%02d", this.calendarFrom.get(Calendar.MONTH) + 1) +
+						  "-" + String.format("%02d", this.calendarFrom.get(Calendar.DAY_OF_MONTH));
 				break;
 			case HOUR:
-				ret = Integer.toString(this.calendarFrom.get(Calendar.YEAR)) + 
-						"-" + Integer.toString(this.calendarFrom.get(Calendar.MONTH) + 1 ) +
-							"-" + Integer.toString(this.calendarFrom.get(Calendar.DAY_OF_MONTH)) +
-								"-" + Integer.toString(this.calendarFrom.get(Calendar.HOUR_OF_DAY)); 
+				ret = String.format("%04d", this.calendarFrom.get(Calendar.YEAR)) + 
+						"-" + String.format("%02d", this.calendarFrom.get(Calendar.MONTH) + 1 ) +
+							"-" + String.format("%02d", this.calendarFrom.get(Calendar.DAY_OF_MONTH)) +
+								"-" + String.format("%02d", this.calendarFrom.get(Calendar.HOUR_OF_DAY)); 
 				break;
 			
 			case INT_LT_HOUR:
-				ret = "From-" + Integer.toString(this.calendarFrom.get(Calendar.YEAR)) + 
-						"-" + Integer.toString(this.calendarFrom.get(Calendar.MONTH) + 1 ) +
-						"-" + Integer.toString(this.calendarFrom.get(Calendar.DAY_OF_MONTH)) +
-							"-" + Integer.toString(this.calendarFrom.get(Calendar.HOUR_OF_DAY)) + 
-							  "-" + Integer.toString(this.calendarFrom.get(Calendar.MINUTE)) + 
+				ret = "From-" + String.format("%04d", this.calendarFrom.get(Calendar.YEAR)) + 
+						"-" + String.format("%02d", this.calendarFrom.get(Calendar.MONTH) + 1 ) +
+						"-" + String.format("%02d", this.calendarFrom.get(Calendar.DAY_OF_MONTH)) +
+							"-" + String.format("%02d", this.calendarFrom.get(Calendar.HOUR_OF_DAY)) + 
+							  "-" + String.format("%02d", this.calendarFrom.get(Calendar.MINUTE)) + 
 					   "To-" +
-							  Integer.toString(this.calendarTo.get(Calendar.YEAR)) + 
-								"-" + Integer.toString(this.calendarTo.get(Calendar.MONTH) + 1 ) +
-								"-" + Integer.toString(this.calendarTo.get(Calendar.DAY_OF_MONTH)) +
-									"-" + Integer.toString(this.calendarTo.get(Calendar.HOUR_OF_DAY)) +
-									  "-" + Integer.toString(this.calendarTo.get(Calendar.MINUTE));
+					   String.format("%04d", this.calendarTo.get(Calendar.YEAR)) + 
+								"-" + String.format("%02d", this.calendarTo.get(Calendar.MONTH) + 1 ) +
+								"-" + String.format("%02d", this.calendarTo.get(Calendar.DAY_OF_MONTH)) +
+									"-" + String.format("%02d", this.calendarTo.get(Calendar.HOUR_OF_DAY)) +
+									  "-" + String.format("%02d", this.calendarTo.get(Calendar.MINUTE));
 				break;
 			
 			default:
@@ -116,6 +138,11 @@ public class PredefinedPeriod
 		
 		return ret; 
 				
+	}
+	
+	
+	public boolean equals(PredefinedPeriod another){
+		return(getKey().equalsIgnoreCase(another.getKey()));
 	}
 	
 }

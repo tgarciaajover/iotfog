@@ -1,10 +1,7 @@
 package com.advicetec.measuredentitity;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -14,31 +11,50 @@ import com.advicetec.utils.PredefinedPeriod;
 
 public class OverallEquipmentEffectiveness implements Storable
 {
-	
+
+	static Logger logger = LogManager.getLogger(OverallEquipmentEffectiveness.class.getName());
+
 	// information about the parent.
 	private Integer parent;
 	private MeasuredEntityType parentType;
-	
+
 	// Calculated Predefined Period
-	PredefinedPeriod predefinedPeriod;
-	
+	private PredefinedPeriod predefinedPeriod;
+
 	double availableTime; 
-	
+
 	// The productive time is measured in seconds. 
 	double productiveTime;
-	
+
 	// Total quantity possible to produce.
 	double qtySchedToProduce; 
 
 	// Total quantity produced
 	double qtyProduced;
-	
+
 	// Total reproduced or unusefull parts produced.
 	double qtyDefective;
-	
+
 	public static final String SQL_Insert = "insert into measuringentityoee (id_owner, owner_type, period_key, productive_time, qty_sched_to_produce, qty_produced, qty_defective) values (?, ?, ?, ?, ?, ?, ? )";
 	public static final String SQL_Delete =	"delete from measuringentityoee where id_owner = ? and owner_type = ? and period_key = ?";
 	public static final String SQL_Select = "select productive_time, qty_sched_to_produce, qty_produced, qty_defective from measuringentityoee where id_owner = ? and owner_type = ? and period_key = ?";
+	public static final String SQL_EXISTS = "select 'x' as found from measuringentityoee where id_owner = ? and owner_type = ? and period_key = ?";
+	
+	public static final String SQL_LT_HOUR = "SELECT datetime_from,datetime_to,"
+			+ "status,reason_code,production_rate, actual_production_rate, qty_defective FROM measuringentitystatusinterval "
+			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from >= ? AND datetime_to <= ? " 
+			+ "UNION " 
+			+ "SELECT datetime_from,datetime_to,status,reason_code,production_rate, "
+			+ "actual_production_rate,qty_defective FROM measuringentitystatusinterval "
+			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from >= ? AND datetime_from <= ? AND datetime_to >= ? "   
+			+ "UNION " 
+			+ "SELECT datetime_from,datetime_to,status,reason_code,production_rate, "
+			+ "actual_production_rate,qty_defective FROM measuringentitystatusinterval "
+			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from <= ? AND datetime_to <= ? ORDER BY datetime_from ";
+
+	public static final String SQL_LIKE = "SELECT id_owner, owner_type,period_key,productive_time,qty_sched_to_produce,qty_produced,qty_defective  FROM measuringentityoee " 
+			+ " WHERE id_owner = ? AND owner_type = ? AND period_key like ?";
+
 
 	public OverallEquipmentEffectiveness(@JsonProperty("predefinedPeriod") PredefinedPeriod predefinedPeriod, 
 			@JsonProperty("origin")Integer parent, 
@@ -56,7 +72,7 @@ public class OverallEquipmentEffectiveness implements Storable
 	public MeasuredEntityType getParentType() {
 		return parentType;
 	}
-	
+
 
 	public double getAvailableTime() {
 		return availableTime;
@@ -97,6 +113,10 @@ public class OverallEquipmentEffectiveness implements Storable
 	public void setQtyDefective(double qtyDefective) {
 		this.qtyDefective = qtyDefective;
 	}
+	
+	public PredefinedPeriod getPredefinedPeriod(){
+		return predefinedPeriod;
+	}
 
 	@Override
 	public String getPreparedInsertText() {
@@ -119,7 +139,7 @@ public class OverallEquipmentEffectiveness implements Storable
 			pstmt.setDouble(5, this.getQtySchedToProduce());				// Quantity scheduled to produce
 			pstmt.setDouble(6, this.getQtyProduced());						// Quantity produced
 			pstmt.setDouble(7, this.getQtyDefective());						// Quantity with rework or considered defective. 
-			
+
 			pstmt.addBatch();
 
 		} catch (SQLException e) {
@@ -127,18 +147,18 @@ public class OverallEquipmentEffectiveness implements Storable
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}		
-		
+
 	}
 
 	@Override
 	public void dbDelete(PreparedStatement pstmt) {
-		
+
 		try 
 		{
 			pstmt.setInt(1, getParent());
 			pstmt.setInt(2, getParentType().getValue());          			// owner_type
 			pstmt.setString(3, this.predefinedPeriod.getKey() );   			// period key
-			
+
 			pstmt.addBatch();
 
 		} catch (SQLException e) {
@@ -148,43 +168,6 @@ public class OverallEquipmentEffectiveness implements Storable
 		}			
 
 	}
+
 	
-	public static OverallEquipmentEffectiveness getPeriodOEE(PreparedStatement pstmt, Integer owner, MeasuredEntityType ownerType, PredefinedPeriod predefinedPeriod) 
-	{
-		
-		try 
-		{
-			pstmt.setInt(1, owner);
-			pstmt.setInt(2, ownerType.getValue());          		// owner_type
-			pstmt.setString(3, predefinedPeriod.getKey() );   			// period key
-			
-			ResultSet rs = pstmt.executeQuery();
-			
-			while (rs.next()) {
-				
-				Integer productiveTime	= rs.getInt("productive_time");
-				Double qtySchedToProduce = rs.getDouble("qty_sched_to_produce");
-				Double qtyProduced = rs.getDouble("qty_produced");  
-				Double qtyDefective = rs.getDouble("qty_defective");
-				
-				OverallEquipmentEffectiveness eff = new OverallEquipmentEffectiveness(predefinedPeriod, owner, ownerType);
-				eff.setProductiveTime(productiveTime);
-				eff.setQtySchedToProduce(qtySchedToProduce);
-				eff.setQtyProduced(qtyProduced);
-				eff.setQtyDefective(qtyDefective);
-				
-				return eff;
-				
-			}
-			
-			
-		} catch (SQLException e) {
-			Logger logger = LogManager.getLogger(StateInterval.class.getName());
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}			
-		
-		return null;
-	}
-		
 }

@@ -406,7 +406,9 @@ public final class MeasuredEntityFacade {
 		return status.getAttributeValues();
 	}
 
-
+    /**
+     * Actual rate and rate are assumed in minutes. 
+     */
 	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
 		Double rate = this.entity.getProductionRate(productionRateId);
@@ -439,7 +441,7 @@ public final class MeasuredEntityFacade {
 			}
 			LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
 			long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
-			actualRate = new Double(sum * 60 / seconds); 
+			actualRate = new Double(sum * 60 / seconds);    // 
 		}
 			
 		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType(), rate, actualRate, new Double(0));

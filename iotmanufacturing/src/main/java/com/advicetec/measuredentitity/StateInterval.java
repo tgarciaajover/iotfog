@@ -13,7 +13,6 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import com.advicetec.configuration.Container;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.Storable;

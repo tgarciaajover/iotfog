@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
@@ -19,13 +18,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.configuration.ConfigurationManager;
-import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.configuration.ReasonCodeContainer;
 import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.core.TimeInterval;
-import com.advicetec.iot.rest.MonitoringDeviceResource;
 import com.advicetec.measuredentitity.Machine;
 import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuringState;

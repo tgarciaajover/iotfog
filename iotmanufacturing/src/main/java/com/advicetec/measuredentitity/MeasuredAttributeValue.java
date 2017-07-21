@@ -148,6 +148,9 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 				pstmt.setNull(10, java.sql.Types.DATE);          // value_date
 				pstmt.setTime(11, Time.valueOf((LocalTime) getValue()));          // value_time
 				break;
+			default:
+				// TODO: Error case
+				break;
 				
 			}
 
@@ -190,6 +193,9 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 
 			case TIME:  // Time
 				setValue(rs.getTime("value_time").toLocalTime());
+				break;
+			default:
+				// TODO error case.
 				break;
 
 			}		

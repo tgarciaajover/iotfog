@@ -81,6 +81,7 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 		this.reqStartDateTime = getQueryValue("startDttm");
 		this.reqEndDateTime = getQueryValue("endDttm");
 
+		// json request
 		if (canMachineId == null) {
 			getParamsFromJson(representation);
 		}		

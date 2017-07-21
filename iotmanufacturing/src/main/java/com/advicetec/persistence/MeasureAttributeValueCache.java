@@ -244,7 +244,7 @@ public class MeasureAttributeValueCache extends Configurable {
 			Class.forName(DB_DRIVER);
 			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 			connDB.setAutoCommit(false);
-			pstDB = connDB.prepareStatement(this.sqlMeasureAttributeValueRangeSelect);
+			pstDB = connDB.prepareStatement(MeasureAttributeValueCache.sqlMeasureAttributeValueRangeSelect);
 			pstDB.setString(1, String.valueOf(entityId));
 			pstDB.setInt(2, mType.getValue());
 			pstDB.setString(3, attribute.getName());

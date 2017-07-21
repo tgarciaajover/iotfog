@@ -99,6 +99,10 @@ public abstract class Container
 		pst = conn.prepareStatement(sqlText);
 		
 	}
+	
+	protected void commit() throws SQLException{
+		conn.commit();
+	}
 
 	protected void disconnect()
 	{

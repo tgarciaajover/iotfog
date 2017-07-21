@@ -36,14 +36,17 @@ public enum MeasuringState
    }
    
    static public MeasuringState getByName(String name){
-	   if (name.compareTo("Operating") == 0){
+	   name = name.trim();
+
+	   if (name.equalsIgnoreCase("Operating")){
 		   return OPERATING;
-	   } else if ( name.compareTo("ScheduleDown") == 0 ) {
+	   } else if ( name.equalsIgnoreCase("ScheduleDown") ) {
 		   return SCHEDULEDOWN;
-	   } else {
+	   } else if(name.equalsIgnoreCase("UnScheduleDown")){
 		   return UNSCHEDULEDOWN;
+	   } else {
+		   return UNDEFINED;
 	   }
-		   
    }
 
    public String toJson(){
