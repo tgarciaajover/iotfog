@@ -12,8 +12,10 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.Container;
 import com.advicetec.configuration.ReasonCode;
+import com.advicetec.configuration.ReasonCodeContainer;
 import com.advicetec.utils.PredefinedPeriod;
 import com.advicetec.utils.PredefinedPeriodType;
 
@@ -79,103 +81,14 @@ public class OEEAggregationContainer extends Container
 		}
 	}
 	
-	public synchronized OverallEquipmentEffectiveness calculateDateRangeOEE(Integer owner, MeasuredEntityType ownerType, List<StateInterval> listStateIntervals, LocalDateTime from, LocalDateTime to)
-	{
-
-		double availTime = 0.0;
-		double downTime = 0.0;
-		double productiveTime = 0.0;
-		double qtySchedToProduce = 0.0;
-		double qtyProduced = 0.0;
-		double qtyDefective = 0.0;
-		for (int i= 0; i < listStateIntervals.size(); i++ ) 
-		{
-			StateInterval state = listStateIntervals.get(i);
-			Double prodRate = state.getProductionRate();
-			Double actualProdRate = state.getActualProductionRate();
-			Double duration = state.getDurationMin();
-			if (state.getState() != MeasuringState.OPERATING) 
-			{
-				// The machine is not working 	
-				ReasonCode reasonCd = state.getReason();	
-				if (reasonCd != null) {
-					// The user gave a reason code
-					if (!reasonCd.isIdleDown()) {
-						// This reason code does not deplete the avail time
-						availTime =availTime + duration;
-						downTime = downTime + duration;
-					}
-					else {
-						availTime =availTime + duration;
-						downTime = downTime + duration;					
-					}
-				} else {
-					// The reason is null
-					availTime =availTime + duration;
-					downTime = downTime + duration;
-				}
-
-			} 
-			else {
-				// The machine is working 
-
-				qtySchedToProduce = qtySchedToProduce + ( duration * prodRate);
-				qtyProduced = qtyProduced + ( duration * actualProdRate ); 
-				availTime =availTime + duration;
-				productiveTime = productiveTime + duration;
-				qtyDefective = qtyDefective + state.getQtyDefective(); 
-			}
-		}
-		
-		OverallEquipmentEffectiveness oee = new OverallEquipmentEffectiveness(new PredefinedPeriod(from, to), owner, ownerType);
-		oee.setAvailableTime(availTime);
-		oee.setProductiveTime(productiveTime);
-		oee.setQtySchedToProduce(qtySchedToProduce);
-		oee.setQtyProduced(qtyProduced);
-		oee.setQtyDefective(qtyDefective);
-		
-		return oee;
-
-	}
-
-
-	public synchronized OverallEquipmentEffectiveness getPeriodOEESubtotals(Integer owner, MeasuredEntityType ownerType, PredefinedPeriod period)
-	{
-		logger.info("in getPeriodOEESubtotals:");
-
-		OverallEquipmentEffectiveness ret = null;
-	
-		if ((period.getType() == PredefinedPeriodType.HOUR ) || (period.getType() == PredefinedPeriodType.DAY) 
-				|| (period.getType() == PredefinedPeriodType.MONTH) || (period.getType() == PredefinedPeriodType.YEAR))   
-		{								
-
-			try 
-			{
-
-				super.connect_prepared(OverallEquipmentEffectiveness.SQL_Select);
-				ret = getPeriodOEE(owner, ownerType, period);
-				super.disconnect();
-				
-			} catch (ClassNotFoundException e){
-				String error = "Could not find the driver class - Error" + e.getMessage(); 
-				logger.error(error);
-				e.printStackTrace();
-			} catch (SQLException e) {
-				logger.error(e.getMessage());
-				e.printStackTrace();
-			}
-		}
-
-		return ret;
-
-	}
-
-
 	public synchronized List<OverallEquipmentEffectiveness> intervalsByHour(
 			Integer owner,MeasuredEntityType ownerType, 
 			String periodKey, String parQueryFrom, String parQueryTo) {
 		
 		List<OverallEquipmentEffectiveness> list = new ArrayList<OverallEquipmentEffectiveness>();
+		
+		logger.info("MeasuredEntity:" + owner + "Measured Entity Type:" + ownerType + "intervalsByHour periodKey:" 
+						+ periodKey + " parQueryFrom:" + parQueryFrom + " parQueryTo:" + parQueryTo );
 		
 		double productiveTime = 0;
 		double qtySchedToProduce = 0;
@@ -184,16 +97,16 @@ public class OEEAggregationContainer extends Container
 				
 		try 
 		{
+			
 			super.connect_prepared(OverallEquipmentEffectiveness.SQL_LT_HOUR);
 
-			System.out.println("before:"+parQueryFrom);
 			int lineIndx = parQueryFrom.lastIndexOf("-");
 			parQueryFrom = parQueryFrom.substring(0, lineIndx)+" "+parQueryFrom.substring(lineIndx + 1);
 			
 			lineIndx = parQueryTo.lastIndexOf("-");
 			parQueryTo = parQueryTo.substring(0, lineIndx)+" "+parQueryTo.substring(lineIndx + 1);
 			
-			System.out.println("timestamp:"+parQueryFrom);
+			logger.info(" from:" + parQueryFrom + " to:" + parQueryTo);
 			
 			((PreparedStatement)super.pst).setInt(1, owner);
 			((PreparedStatement)super.pst).setInt(2, ownerType.getValue());      // owner_type
@@ -208,24 +121,84 @@ public class OEEAggregationContainer extends Container
 			((PreparedStatement)super.pst).setInt(10, owner);
 			((PreparedStatement)super.pst).setInt(11, ownerType.getValue());
 			((PreparedStatement)super.pst).setTimestamp(12, Timestamp.valueOf(parQueryFrom));   		
-			((PreparedStatement)super.pst).setTimestamp(13, Timestamp.valueOf(parQueryTo));
+			((PreparedStatement)super.pst).setTimestamp(13, Timestamp.valueOf(parQueryFrom));
+			((PreparedStatement)super.pst).setTimestamp(14, Timestamp.valueOf(parQueryTo));
+			
+			ConfigurationManager manager = ConfigurationManager.getInstance();
+			ReasonCodeContainer reasonCont =  manager.getReasonCodeContainer();
 
 			ResultSet rs = ((PreparedStatement)super.pst).executeQuery();
 
 			while (rs.next()) {
-				
+								
 				LocalDateTime fromDatetime = rs.getTimestamp("datetime_from").toLocalDateTime();
 				LocalDateTime toDatetime = rs.getTimestamp("datetime_to").toLocalDateTime();
+				long reducedTime = 0;
+				long periodProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.SECONDS);
+				long actualProductiveTime = 0;
+				
+				if (fromDatetime.isBefore(Timestamp.valueOf(parQueryFrom).toLocalDateTime())) {
+
+					reducedTime = fromDatetime.until(Timestamp.valueOf(parQueryFrom).toLocalDateTime(), ChronoUnit.SECONDS);		
+					fromDatetime = Timestamp.valueOf(parQueryFrom).toLocalDateTime();
+					
+				}
+				
+				if (Timestamp.valueOf(parQueryTo).toLocalDateTime().isBefore(toDatetime)) {
+					reducedTime = reducedTime + Timestamp.valueOf(parQueryTo).toLocalDateTime().until(toDatetime, ChronoUnit.SECONDS);
+					toDatetime = Timestamp.valueOf(parQueryTo).toLocalDateTime();
+				}
+								
 				Double rowProductionRate = rs.getDouble("production_rate");
 				Double rowActualProductionRate = rs.getDouble("actual_production_rate");  
 				Double rowQtyDefective = rs.getDouble("qty_defective");
+				String rowStatus = rs.getString("status");
+				String rowReasonCode = rs.getString("reason_code");
+								
+				MeasuringState state = MeasuringState.getByName(rowStatus);
+				if (state == MeasuringState.OPERATING) {
+					
+					actualProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.SECONDS);
+				
+				} else if (state == MeasuringState.SCHEDULEDOWN)  {
+					
+					ReasonCode rCode = null;
+					
+					logger.info("ReasonCode: " + rowReasonCode);
+					if (rowReasonCode != null) {
+						rCode = (ReasonCode) reasonCont.getObject(Integer.valueOf(rowReasonCode.trim()));
+						
+						if (rCode.includeProductiveTime())
+							actualProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.SECONDS);
+					}
 
-				productiveTime += fromDatetime.until(toDatetime, ChronoUnit.SECONDS);
-				qtySchedToProduce += rowProductionRate*
-						fromDatetime.until(toDatetime, ChronoUnit.SECONDS) / 60;
-				qtyProduced += rowActualProductionRate *
-						fromDatetime.until(toDatetime, ChronoUnit.SECONDS) / 60;
-				qtyDefective += rowQtyDefective;
+					
+				} else if (state == MeasuringState.UNSCHEDULEDOWN) {
+					actualProductiveTime = 0;
+				}
+				else {
+					logger.error("Invalid measuring state" + state.getName());
+				}
+				
+				
+
+				logger.info("PeriodProductiveTime:" + periodProductiveTime + " actualproductivetime:" + 
+								actualProductiveTime +" productiveTime:" + productiveTime + " reducedTime:" + reducedTime);
+
+				productiveTime += actualProductiveTime; 
+				
+				qtySchedToProduce += rowProductionRate* (actualProductiveTime / 60);
+				
+				qtyProduced += rowActualProductionRate * (actualProductiveTime / 60);
+				
+				if (reducedTime == 0) {
+					qtyDefective += rowQtyDefective;
+				}
+				else {
+					double effectiveTime = (double) periodProductiveTime - reducedTime;
+					double percentage = effectiveTime / periodProductiveTime;
+					qtyDefective += (rowQtyDefective * percentage);
+				}
 			}
 
 			super.disconnect();
@@ -267,11 +240,23 @@ public class OEEAggregationContainer extends Container
 	public List<OverallEquipmentEffectiveness> intervalsByPredefinedPeriod(
 			Integer owner,MeasuredEntityType ownerType, String parQueryFrom) {
 
+		logger.info("in intervalsByPredefinedPeriod Parameters:" + "Owner:" + owner + " OwnerType:" + ownerType.getName() + " parQueryFrom:" + parQueryFrom);
+		
 		List<OverallEquipmentEffectiveness> list = new ArrayList<OverallEquipmentEffectiveness>();
 
 		try 
 		{
-			super.connect_prepared(OverallEquipmentEffectiveness.SQL_LIKE);
+			if (getDriver().compareTo("org.postgresql.Driver") == 0){
+				super.connect_prepared(OverallEquipmentEffectiveness.SQL_LIKE_POSTGRES);
+				
+			} else if (getDriver().compareTo("com.microsoft.sqlserver.jdbc.SQLServerDriver") == 0){
+				super.connect_prepared(OverallEquipmentEffectiveness.SQL_LIKE_SQLSERVER);
+				
+			} else {
+				logger.error("Unrecognized driver, we cannot decide the appropiate SQL Statment for driver given");
+				return list;
+			}
+			
 			
 			((PreparedStatement)super.pst).setInt(1, owner);
 			((PreparedStatement)super.pst).setInt(2, ownerType.getValue());      // owner_type
@@ -357,10 +342,15 @@ public class OEEAggregationContainer extends Container
 			return intervalsByHour(owner, ownerType,predefinedPeriod.getKey(), 
 					parQueryFrom,parQueryTo);
 
-		}else if(predefinedPeriod.getType() == PredefinedPeriodType.DAY || 
+		} else if(predefinedPeriod.getType() == PredefinedPeriodType.DAY || 
 				predefinedPeriod.getType() == PredefinedPeriodType.MONTH ||
 				predefinedPeriod.getType() == PredefinedPeriodType.YEAR){
-			parQueryFrom = predefinedPeriod.getKey()+"-[0-9][0-9]"; //2010-01-05
+			
+			if (getDriver().compareTo("org.postgresql.Driver") == 0){
+				parQueryFrom = predefinedPeriod.getKey()+"-__"; //2010-01-05
+			} else if (getDriver().compareTo("com.microsoft.sqlserver.jdbc.SQLServerDriver") == 0){
+				parQueryFrom = predefinedPeriod.getKey()+"-[0-9][0-9]"; //2010-01-05
+			}
 			return intervalsByPredefinedPeriod(owner, ownerType, parQueryFrom);
 		}else{
 			logger.error("Invalid predefined time period:" + predefinedPeriod.getType().getName());
@@ -375,6 +365,9 @@ public class OEEAggregationContainer extends Container
 		OverallEquipmentEffectiveness eff = null;
 		try 
 		{
+			
+			super.connect_prepared(OverallEquipmentEffectiveness.SQL_Select);
+			
 			((PreparedStatement)super.pst).setInt(1, owner);
 			((PreparedStatement)super.pst).setInt(2, ownerType.getValue());          		// owner_type
 			((PreparedStatement)super.pst).setString(3, predefinedPeriod.getKey() );   		// period key
@@ -397,11 +390,16 @@ public class OEEAggregationContainer extends Container
 				break;
 			}
 			super.disconnect();
+			
 		} catch (SQLException e) {
 			Logger logger = LogManager.getLogger(StateInterval.class.getName());
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		}			
+		} catch (ClassNotFoundException e) {
+			Logger logger = LogManager.getLogger(StateInterval.class.getName());
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
 		return eff;
 	}
 }

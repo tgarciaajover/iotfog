@@ -77,6 +77,12 @@ public class ReasonCode extends ConfigurationObject
 		return this.idleDown;
 	}
 	
+	@JsonIgnore
+	public boolean includeProductiveTime()
+	{
+		return !(this.idleDown); 
+	}
+	
 	public void setIdleDown(boolean idleDown) {
 		this.idleDown = idleDown;
 	}

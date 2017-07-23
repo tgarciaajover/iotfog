@@ -51,14 +51,12 @@ public class OverallEquipmentEffectivenessTest {
 		MeasuredEntityType parentType;
 
 		OverallEquipmentEffectiveness oeeyear = new OverallEquipmentEffectiveness(predefinedPeriodYear1, owner, MeasuredEntityType.MACHINE);
-		oeeyear.setAvailableTime(10000);
 		oeeyear.setProductiveTime(9997);
 		oeeyear.setQtySchedToProduce(3000);
 		oeeyear.setQtyProduced(2000);
 		oeeyear.setQtyDefective(1000);
 
 		OverallEquipmentEffectiveness oee = new OverallEquipmentEffectiveness(predefinedPeriodYear2, owner, MeasuredEntityType.MACHINE);
-		oee.setAvailableTime(36000);
 		oee.setProductiveTime(30000);
 		oee.setQtySchedToProduce(36000);
 		oee.setQtyProduced(30000);
@@ -75,7 +73,6 @@ public class OverallEquipmentEffectivenessTest {
 
 		// month
 		OverallEquipmentEffectiveness oeemonth1 = new OverallEquipmentEffectiveness(predefinedPeriodMonth1, owner, MeasuredEntityType.MACHINE);
-		oeemonth1.setAvailableTime(10000);
 		oeemonth1.setProductiveTime(9997);
 		oeemonth1.setQtySchedToProduce(3000);
 		oeemonth1.setQtyProduced(2000);
@@ -83,7 +80,6 @@ public class OverallEquipmentEffectivenessTest {
 
 
 		OverallEquipmentEffectiveness oeemonth2 = new OverallEquipmentEffectiveness(predefinedPeriodMonth2, owner, MeasuredEntityType.MACHINE);
-		oeemonth2.setAvailableTime(10000);
 		oeemonth2.setProductiveTime(9997);
 		oeemonth2.setQtySchedToProduce(3000);
 		oeemonth2.setQtyProduced(2000);
@@ -97,7 +93,6 @@ public class OverallEquipmentEffectivenessTest {
 
 		// day
 		OverallEquipmentEffectiveness oeeDay1 = new OverallEquipmentEffectiveness(predefinedPeriodDay1, owner, MeasuredEntityType.MACHINE);
-		oeeDay1.setAvailableTime(10000);
 		oeeDay1.setProductiveTime(9997);
 		oeeDay1.setQtySchedToProduce(3000);
 		oeeDay1.setQtyProduced(2000);
@@ -105,7 +100,6 @@ public class OverallEquipmentEffectivenessTest {
 
 
 		OverallEquipmentEffectiveness oeeDay2 = new OverallEquipmentEffectiveness(predefinedPeriodDay2, owner, MeasuredEntityType.MACHINE);
-		oeeDay2.setAvailableTime(10000);
 		oeeDay2.setProductiveTime(9997);
 		oeeDay2.setQtySchedToProduce(3000);
 		oeeDay2.setQtyProduced(2000);
@@ -144,14 +138,12 @@ public class OverallEquipmentEffectivenessTest {
 		PredefinedPeriod predefinedPeriodHour2 = new PredefinedPeriod(year2, month3, day2, hour2);
 		
 		OverallEquipmentEffectiveness oeeHour1 = new OverallEquipmentEffectiveness(predefinedPeriodHour1, owner, MeasuredEntityType.MACHINE);
-		oeeHour1.setAvailableTime(10000);
 		oeeHour1.setProductiveTime(9997);
 		oeeHour1.setQtySchedToProduce(3000);
 		oeeHour1.setQtyProduced(2000);
 		oeeHour1.setQtyDefective(1000);
 
 		OverallEquipmentEffectiveness oeehour2 = new OverallEquipmentEffectiveness(predefinedPeriodHour2, owner, MeasuredEntityType.MACHINE);
-		oeehour2.setAvailableTime(36000);
 		oeehour2.setProductiveTime(30000);
 		oeehour2.setQtySchedToProduce(36000);
 		oeehour2.setQtyProduced(30000);

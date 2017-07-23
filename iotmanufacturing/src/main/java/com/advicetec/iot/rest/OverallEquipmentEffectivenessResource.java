@@ -28,8 +28,9 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 
 	private String canMachineId;
 	private String canCompany;
-	private String canLocation;
+	private String canLocation;	
 	private String canPlant;
+	private String canMachineGroup;	
 	private String reqStartDateTime;
 	private String reqEndDateTime;
 
@@ -49,6 +50,7 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 			this.canCompany = jsonobject.getString("company");
 			this.canLocation = jsonobject.getString("location");
 			this.canPlant = jsonobject.getString("plant");
+			this.canMachineGroup = jsonobject.getString("machineGroup");			
 			this.reqStartDateTime = jsonobject.getString("startDttm");
 			this.reqEndDateTime = jsonobject.getString("endDttm");
 
@@ -77,6 +79,7 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 		this.canMachineId = getQueryValue("machineId");
 		this.canCompany = getQueryValue("company");
 		this.canLocation = getQueryValue("location");
+		this.canMachineGroup = getQueryValue("machineGroup");
 		this.canPlant = getQueryValue("plant");
 		this.reqStartDateTime = getQueryValue("startDttm");
 		this.reqEndDateTime = getQueryValue("endDttm");
@@ -89,11 +92,12 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 		try {
 			// Get the contact's uniqueID from the URL.
 			Integer uniqueID = MeasuredEntityManager.getInstance()
-					.getMeasuredEntityId(canCompany,canLocation,canPlant,canMachineId);
+					.getMeasuredEntityId(this.canCompany, this.canLocation, this.canPlant,this.canMachineGroup, this.canMachineId);
 
 			if (uniqueID == null) {
 				logger.error("Measured Entity for company:" + this.canCompany +
 						 " location:" + this.canLocation + " Plant:" + this.canPlant +
+						 "machineGroup" + this.canMachineGroup + 
 						 " machineId:" + this.canMachineId + " was not found");
 				result = new JsonRepresentation("");
 			}

@@ -152,4 +152,9 @@ public abstract class Container
 	{
 		return configuationObjects.size();
 	}
+	
+	public synchronized String getDriver()
+	{
+		return this.driver;
+	}
 }

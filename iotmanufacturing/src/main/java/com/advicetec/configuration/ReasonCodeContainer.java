@@ -46,7 +46,7 @@ public class ReasonCodeContainer extends Container
 		        reasonCode.setClassification(classification);
 		        reasonCode.setGroup(group_cd);
 		        
-		        if (down == "Y"){
+		        if (down.trim().equals("Y")){
 		        	reasonCode.setIdleDown(true);
 		        } else {
 		        	reasonCode.setIdleDown(false);

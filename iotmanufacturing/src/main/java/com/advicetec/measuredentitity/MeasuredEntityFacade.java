@@ -3,9 +3,12 @@ package com.advicetec.measuredentitity;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,6 +45,7 @@ import com.advicetec.persistence.StateIntervalCache;
 import com.advicetec.persistence.StatusStore;
 import com.advicetec.utils.PeriodUtils;
 import com.advicetec.utils.PredefinedPeriod;
+import com.advicetec.utils.PredefinedPeriodType;
 
 
 /**
@@ -813,7 +817,6 @@ public final class MeasuredEntityFacade {
 
 	}
 
-	
 	public synchronized JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo) {
 				
         // Bring different predefined periods required
@@ -822,48 +825,94 @@ public final class MeasuredEntityFacade {
 		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
 		List<OverallEquipmentEffectiveness> oees = new ArrayList<OverallEquipmentEffectiveness>();
 		
+		logger.info("Number of elements to calculate in the final list:" + periods.size());
+		
 		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
 		for (int i = 0; i < periods.size(); i++) 
 		{
 			PredefinedPeriod period = periods.get(i);
-			switch (period.getType())
+			if (period.getType() == PredefinedPeriodType.INT_LT_HOUR)
 			{
 			
-			case INT_LT_HOUR:
 				// Search for intervals in the requested hour.
-				List<StateInterval> intervals = this.getStatesByInterval(dttmFrom, dttmTo);
-				OverallEquipmentEffectiveness oee = oeeAggregation.getOeeAggregationContainer().calculateDateRangeOEE(
-															this.getEntity().getId(), this.getEntity().getType(), intervals, dttmFrom, dttmTo);
-				oees.add(oee);
+				DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
+				String parQueryFrom = formatter.format(period.getCalendar().getTime());
+				String parQueryTo = formatter.format(period.getCalendarTo().getTime());
 				
-			case HOUR:
-			case DAY:
-			case MONTH:
-			case YEAR:
+				PredefinedPeriod periodTmp = new PredefinedPeriod(period.getCalendar().get(Calendar.YEAR), 
+						period.getCalendar().get(Calendar.MONTH) +1,
+						period.getCalendar().get(Calendar.DAY_OF_MONTH),
+						period.getCalendar().get(Calendar.HOUR_OF_DAY)); 
 				
-				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().getPeriodOEESubtotals(
-															this.getEntity().getId(), this.getEntity().getType(), period);
-				oees.add(oee2);
+				List<OverallEquipmentEffectiveness> oeesHour = oeeAggregation.getOeeAggregationContainer().intervalsByHour(
+															this.getEntity().getId(), this.getEntity().getType(), periodTmp.getKey(), parQueryFrom, parQueryTo);
 				
-			default:
-				logger.error("Invalid Predefined Period type");
-			
+				if (oeesHour.size() == 0) {
+					logger.error("The aggregation interval could not be calculated predefined Period:" + parQueryFrom );
+				} else {
+					oees.addAll(oeesHour);
+				}
+				
+			} else if ( ( period.getType() == PredefinedPeriodType.HOUR ) || 
+						( period.getType() == PredefinedPeriodType.DAY ) ||
+						( period.getType() == PredefinedPeriodType.MONTH ) ||
+						( period.getType() == PredefinedPeriodType.YEAR ) ) {
+				
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+															getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					logger.error("The aggregation interval could not be calculated predefined Period:" + period.getKey() );
+				}
+				
+			} else {
+				logger.error("Invalid Predefined Period type:" + period.getType().getName());			
 			}			
 		}
 			
+		logger.info("Number of elements in the final list:" + oees.size());
 
 		JSONArray array = null;
 		array = new JSONArray();
 		for (OverallEquipmentEffectiveness oee : oees) {
 			// create the json object
 			JSONObject jsob = new JSONObject();
+			jsob.append("start_dttm", oee.getStartDttm());
+			jsob.append("end_dttm", oee.endDttm());
 			jsob.append("available_time",oee.getAvailableTime());
 			jsob.append("productive_time",oee.getProductiveTime());
 			jsob.append("qty_sched_to_produce",oee.getQtySchedToProduce());
 			jsob.append("qty_produced",oee.getQtyProduced());
 			jsob.append("qty_defective",oee.getQtyDefective());
-			double oeeValue = (oee.getProductiveTime() / oee.getAvailableTime()) * (oee.getQtyProduced() / oee.getQtySchedToProduce() ) * (oee.getQtyDefective() / oee.getQtyProduced() );
+			
+			double part1 = 0;
+			double part2 = 0;
+			double part3 = 0;
+			
+			if (oee.getAvailableTime() != 0) {
+				part1 = (oee.getProductiveTime() / oee.getAvailableTime());
+			} else {
+				part1 = 1;
+			}
+			
+			if (oee.getQtySchedToProduce() != 0) {
+				part2 = (oee.getQtyProduced() / oee.getQtySchedToProduce() );
+			} else {
+				part2 = 1;
+			}
+			
+			if (oee.getQtyProduced() != 0) {
+				part3 = (oee.getQtyDefective() / oee.getQtyProduced() );
+			} else {
+				part3 = 1;
+			}
+			
+			double oeeValue =  part1 * part2 * part3;   
 			oeeValue = oeeValue * 100; 
+			
+			logger.info("oee" + Double.toString(oeeValue));
+			
 			jsob.append("oee", new Double(oeeValue));
 			
 			// adding jsonObject to JsonArray

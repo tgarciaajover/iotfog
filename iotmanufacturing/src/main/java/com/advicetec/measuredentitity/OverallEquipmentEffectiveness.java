@@ -2,17 +2,30 @@ package com.advicetec.measuredentitity;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
+import java.util.Date;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.advicetec.persistence.Storable;
 import com.advicetec.utils.PredefinedPeriod;
+import com.advicetec.utils.PredefinedPeriodType;
 
 public class OverallEquipmentEffectiveness implements Storable
 {
 
 	static Logger logger = LogManager.getLogger(OverallEquipmentEffectiveness.class.getName());
+	static int SECONDS_HOUR = 3600;
+	static int SECONDS_DAY = 86400;
+	static int DAYS_LEAP_YEAR = 366;
+	static int DAYS_NON_LEAP_YEAR = 365;
+    	
 
 	// information about the parent.
 	private Integer parent;
@@ -20,8 +33,6 @@ public class OverallEquipmentEffectiveness implements Storable
 
 	// Calculated Predefined Period
 	private PredefinedPeriod predefinedPeriod;
-
-	double availableTime; 
 
 	// The productive time is measured in seconds. 
 	double productiveTime;
@@ -50,10 +61,14 @@ public class OverallEquipmentEffectiveness implements Storable
 			+ "UNION " 
 			+ "SELECT datetime_from,datetime_to,status,reason_code,production_rate, "
 			+ "actual_production_rate,qty_defective FROM measuringentitystatusinterval "
-			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from <= ? AND datetime_to <= ? ORDER BY datetime_from ";
+			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from <= ? AND datetime_to >= ? AND datetime_to <= ? "
+			+ "ORDER BY datetime_from ";
 
-	public static final String SQL_LIKE = "SELECT id_owner, owner_type,period_key,productive_time,qty_sched_to_produce,qty_produced,qty_defective  FROM measuringentityoee " 
-			+ " WHERE id_owner = ? AND owner_type = ? AND period_key like ?";
+	public static final String SQL_LIKE_POSTGRES = "SELECT id_owner, owner_type,period_key,productive_time,qty_sched_to_produce,qty_produced,qty_defective  FROM measuringentityoee " 
+			+ " WHERE id_owner = ? AND owner_type = ? AND TRIM(period_key) like ?";
+
+	public static final String SQL_LIKE_SQLSERVER = "SELECT id_owner, owner_type,period_key,productive_time,qty_sched_to_produce,qty_produced,qty_defective  FROM measuringentityoee " 
+			+ " WHERE id_owner = ? AND owner_type = ? AND RTRIM(period_key) like ?";
 
 
 	public OverallEquipmentEffectiveness(@JsonProperty("predefinedPeriod") PredefinedPeriod predefinedPeriod, 
@@ -63,6 +78,10 @@ public class OverallEquipmentEffectiveness implements Storable
 		this.predefinedPeriod = predefinedPeriod;
 		this.parent = parent;
 		this.parentType = parentType;
+		this.productiveTime = 0;
+		this.qtySchedToProduce = 0;
+		this.qtyProduced = 0;
+		this.qtyDefective = 0;
 	}
 
 	public Integer getParent() {
@@ -75,12 +94,55 @@ public class OverallEquipmentEffectiveness implements Storable
 
 
 	public double getAvailableTime() {
-		return availableTime;
+		
+		double ret = 0.0;
+		
+		if (this.predefinedPeriod.getType() == PredefinedPeriodType.INT_LT_HOUR) {
+			Date dateFrom = this.predefinedPeriod.getCalendar().getTime();
+			Date dateTo =  this.predefinedPeriod.getCalendarTo().getTime();
+
+			// TODO: Verify this with timezone.
+			LocalDateTime lDateTimeFrom = LocalDateTime.ofInstant(dateFrom.toInstant(), ZoneId.systemDefault());
+			LocalDateTime lDateTimeTo = LocalDateTime.ofInstant(dateTo.toInstant(), ZoneId.systemDefault());
+
+			return (double) lDateTimeFrom.until(lDateTimeTo,  ChronoUnit.SECONDS);
+
+		}	else if (this.predefinedPeriod.getType() == PredefinedPeriodType.HOUR) {
+			return SECONDS_HOUR;
+
+		}	else if (this.predefinedPeriod.getType() == PredefinedPeriodType.DAY) {
+			return SECONDS_DAY;
+
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.MONTH) {
+			int year = this.predefinedPeriod.getCalendar().get(Calendar.YEAR);
+			int month = this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1;
+
+			// Get the number of days in that month
+			YearMonth yearMonthObject = YearMonth.of(year, month);
+			int daysInMonth = yearMonthObject.lengthOfMonth();
+
+			return (double)  daysInMonth * SECONDS_DAY;
+
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.YEAR) {
+			int year = this.predefinedPeriod.getCalendar().get(Calendar.YEAR);
+
+			// Get the number of days in that month
+			YearMonth yearMonthObject = YearMonth.of(year, Calendar.FEBRUARY + 1);
+			int daysInMonth = yearMonthObject.lengthOfMonth();
+			
+			if (daysInMonth >= 29)
+				return (double) DAYS_LEAP_YEAR * SECONDS_DAY;
+			else
+				return (double) DAYS_NON_LEAP_YEAR * SECONDS_DAY;
+		
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.UNDEFINED) {
+			logger.error("Undefined predefined period type");
+			return ret; 
+		}
+		
+		return ret;
 	}
 
-	public void setAvailableTime(double availableTime) {
-		this.availableTime = availableTime;
-	}
 
 	public double getProductiveTime() {
 		return productiveTime;
@@ -169,5 +231,74 @@ public class OverallEquipmentEffectiveness implements Storable
 
 	}
 
+	public String getStartDttm() {
+		
+		if (this.predefinedPeriod.getType() == PredefinedPeriodType.YEAR) {
+			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-01-01 00:00:00.000"; 
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.MONTH) {
+			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) + "-01 00:00:00.000";
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.DAY) {
+			return  String.format("%04d", this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d", this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1)  + 
+					 String.format("%02d", this.predefinedPeriod.getCalendar().get(Calendar.DAY_OF_MONTH)) + " 00:00:00.000";
+			
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.HOUR) {
+			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) + "-" +
+					  String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.DAY_OF_MONTH)) + " " + 
+					   String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.HOUR_OF_DAY)) + ":00:00.000";
+			
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.INT_LT_HOUR) {
+			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) + "-" + 
+					  String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.DAY_OF_MONTH)) + " " + 
+					   String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.HOUR_OF_DAY)) + ":" + 
+					    String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MINUTE)) + ":" +
+					     String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.SECOND)) + ".000";
+
+		} 
+		
+		return null;
+	}
+
+	public Object endDttm() {
+		
+		if (this.predefinedPeriod.getType() == PredefinedPeriodType.YEAR) {
+			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-12-31 59:59:59.999"; 
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.MONTH) {
+			
+			int year = this.predefinedPeriod.getCalendar().get(Calendar.YEAR);
+			int month = this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1;
+			
+			YearMonth yearMonthObject = YearMonth.of(year, month);
+			int daysInMonth = yearMonthObject.lengthOfMonth();
+			
+			return  String.format("%04d", this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
+			 		 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) + "-" +
+			 		 String.format("%02d",daysInMonth) + " " + "23:59:59.999";
+			
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.DAY) {
+			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) +  "-" +
+					  String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.DAY_OF_MONTH)) + " "+ "23:59:59.999";
+			
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.HOUR) {
+			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) + "-" + 
+					  String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.DAY_OF_MONTH)) + " " + 
+					   String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.HOUR_OF_DAY)) + ":59:59.999";
+			
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.INT_LT_HOUR) {
+			return  String.format("%04d",this.predefinedPeriod.getCalendarTo().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendarTo().get(Calendar.MONTH) + 1) + "-" + 
+					  String.format("%02d",this.predefinedPeriod.getCalendarTo().get(Calendar.DAY_OF_MONTH)) + " " +  
+					   String.format("%02d",this.predefinedPeriod.getCalendarTo().get(Calendar.HOUR_OF_DAY)) + ":" +
+					    String.format("%02d",this.predefinedPeriod.getCalendarTo().get(Calendar.MINUTE)) + ":" + 
+					     String.format("%02d",this.predefinedPeriod.getCalendarTo().get(Calendar.SECOND)) + ".000";
+
+		} 
+		return null;
+	}
 	
 }
