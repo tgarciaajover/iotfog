@@ -217,6 +217,13 @@
        	<artifactId>mssql-jdbc</artifactId>
        	<version>6.2.0.jre8</version>
        </dependency>
+
+	   <!-- https://mvnrepository.com/artifact/org.scala-saddle/google-rfc-2445 -->
+	   <dependency>
+    	  <groupId>org.scala-saddle</groupId>
+    	  <artifactId>google-rfc-2445</artifactId>
+    	  <version>20110304</version>
+	   </dependency>
        
 	</dependencies>
 

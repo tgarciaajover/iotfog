@@ -38,8 +38,9 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
 	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
 	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
+	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm, measure_entity_id FROM setup_measureentityscheduleevent measure_entity_id =";
 
-	static String sqlMachineSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
+	static String sqlMachineSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, descripcion_sin_trabajo, factor_conversion_emp_ciclo, factor_conversion_kg_ciclo, factor_conversion_mil_ciclo, tasa_vel_esperada, tiempo_esperado_config FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
 
 	private Map<String, Integer> canonicalMapIndex;
@@ -160,10 +161,16 @@ public class MeasuredEntityContainer extends Container
 
 			while (rs.next()) 
 			{
-				String company 		= rs.getString("id_compania");
-				String location     = rs.getString("id_sede");
-				String plant_id 	= rs.getString("id_planta");
-				String machineGroup =  rs.getString("id_grupo_maquina");
+				String company 		 = rs.getString("id_compania");
+				String location      = rs.getString("id_sede");
+				String plant_id 	 = rs.getString("id_planta");
+				String machineGroup  = rs.getString("id_grupo_maquina");
+				String DescrEmptyJob = rs.getString("descripcion_sin_trabajo"); 
+				Double convFactorEmpCycle = rs.getDouble("factor_conversion_emp_ciclo"); 
+			    Double convFactorKgCycle = rs.getDouble("factor_conversion_kg_ciclo"); 
+			    Double convFactorMllCycle = rs.getDouble("factor_conversion_mil_ciclo"); 
+			    Double speedRateExpected = rs.getDouble("tasa_vel_esperada");
+			    Double setupTimeExpected = rs.getDouble("tiempo_esperado_config");
 				plant.setCannonicalCompany(company);
 				plant.setCannonicalLocation(location);
 				plant.setCannonicalPlant(plant_id);
@@ -268,9 +275,47 @@ public class MeasuredEntityContainer extends Container
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
-
 	}
 
+	public void loadStateTransitions(MeasuredEntity entity)
+	{
+		try 
+		{
+			String sqlSelect = sqlSelect4 + String.valueOf(entity.getId());  
+			ResultSet rs4 = super.pst.executeQuery(sqlSelect);
+
+			while (rs4.next()) 
+			{
+
+				Integer id   		     = rs4.getInt("id");
+				String  stateFromTxt     = rs4.getString("state_from");
+				Integer reasonCodeFrom   = rs4.getInt("reason_code_id");
+				Integer behavior 		 = rs4.getInt("behavior_id");
+				Timestamp timestamp 	 = rs4.getTimestamp("create_date");
+
+				MeasuringState stateFrom = MeasuringState.UNDEFINED;
+
+				if (stateFromTxt.compareTo("O") == 0){
+					stateFrom = MeasuringState.OPERATING;
+				} else if (stateFromTxt.compareTo("S") == 0){
+					stateFrom = MeasuringState.SCHEDULEDOWN;
+				} else if (stateFromTxt.compareTo("U") == 0){
+					stateFrom = MeasuringState.UNSCHEDULEDOWN;
+				} else {
+					stateFrom = MeasuringState.UNDEFINED;
+				}
+
+				entity.putStateTransition(id, stateFrom, reasonCodeFrom, behavior, timestamp.toLocalDateTime());
+			}
+
+			rs4.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
 	public MeasuredEntity fromJSON(String json) {
 
 		ObjectMapper mapper = new ObjectMapper();
