@@ -1,11 +1,16 @@
 package com.advicetec.measuredentitity;
 
 import java.io.IOException;
+import java.sql.Date;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +25,13 @@ import com.advicetec.configuration.DeviceType;
 import com.advicetec.configuration.IOSignalDeviceType;
 import com.advicetec.configuration.Signal;
 import com.advicetec.configuration.SignalUnitContainer;
+import com.advicetec.core.Attribute;
+import com.advicetec.core.AttributeOrigin;
+import com.advicetec.core.AttributeType;
+import com.advicetec.core.AttributeValue;
+import com.advicetec.eventprocessor.AggregationEvent;
+import com.advicetec.eventprocessor.AggregationEventType;
+import com.advicetec.eventprocessor.Event;
 import com.advicetec.eventprocessor.ModBusTcpDiscreteDataInputEvent;
 import com.advicetec.eventprocessor.ModBusTcpDiscreteDataOutputEvent;
 import com.advicetec.eventprocessor.ModBusTcpEvent;
@@ -38,7 +50,7 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
 	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
 	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
-	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm, measure_entity_id FROM setup_measureentityscheduleevent measure_entity_id =";
+	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm FROM setup_measureentityscheduleevent measure_entity_id =";
 
 	static String sqlMachineSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, descripcion_sin_trabajo, factor_conversion_emp_ciclo, factor_conversion_kg_ciclo, factor_conversion_mil_ciclo, tasa_vel_esperada, tiempo_esperado_config FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
@@ -96,8 +108,7 @@ public class MeasuredEntityContainer extends Container
 				measuredEntity.setDescr(descr);
 				measuredEntity.setCode(code);
 				measuredEntity.setCreateDate(timestamp.toLocalDateTime());
-
-
+			    				
 				super.configuationObjects.put(id, measuredEntity);
 
 			}
@@ -156,7 +167,7 @@ public class MeasuredEntityContainer extends Container
 		
 		try 
 		{
-			String sqlSelect = sqlMachineSelect + String.valueOf(plant.getId());  
+			String sqlSelect = sqlPlantSelect + String.valueOf(plant.getId());  
 			ResultSet rs = super.pst.executeQuery(sqlSelect);
 
 			while (rs.next()) 
@@ -164,13 +175,8 @@ public class MeasuredEntityContainer extends Container
 				String company 		 = rs.getString("id_compania");
 				String location      = rs.getString("id_sede");
 				String plant_id 	 = rs.getString("id_planta");
-				String machineGroup  = rs.getString("id_grupo_maquina");
-				String DescrEmptyJob = rs.getString("descripcion_sin_trabajo"); 
-				Double convFactorEmpCycle = rs.getDouble("factor_conversion_emp_ciclo"); 
-			    Double convFactorKgCycle = rs.getDouble("factor_conversion_kg_ciclo"); 
-			    Double convFactorMllCycle = rs.getDouble("factor_conversion_mil_ciclo"); 
-			    Double speedRateExpected = rs.getDouble("tasa_vel_esperada");
-			    Double setupTimeExpected = rs.getDouble("tiempo_esperado_config");
+				
+				
 				plant.setCannonicalCompany(company);
 				plant.setCannonicalLocation(location);
 				plant.setCannonicalPlant(plant_id);
@@ -276,36 +282,174 @@ public class MeasuredEntityContainer extends Container
 			e.printStackTrace();
 		}
 	}
-
-	public void loadStateTransitions(MeasuredEntity entity)
-	{
+		
+	private void loadMachineInformation(Machine machine){
 		try 
 		{
-			String sqlSelect = sqlSelect4 + String.valueOf(entity.getId());  
+			String sqlSelect = sqlMachineSelect + String.valueOf(machine.getId());  
 			ResultSet rs4 = super.pst.executeQuery(sqlSelect);
+			ResultSetMetaData rsmd = rs4.getMetaData();
 
 			while (rs4.next()) 
 			{
+				String company 		= rs4.getString("id_compania");
+				String location     = rs4.getString("id_sede");
+				String plant   		= rs4.getString("id_planta");
+				String machineGroup = rs4.getString("id_grupo_maquina");
+				String machine_id 	= rs4.getString("id_maquina");
 
-				Integer id   		     = rs4.getInt("id");
-				String  stateFromTxt     = rs4.getString("state_from");
-				Integer reasonCodeFrom   = rs4.getInt("reason_code_id");
-				Integer behavior 		 = rs4.getInt("behavior_id");
-				Timestamp timestamp 	 = rs4.getTimestamp("create_date");
+				machine.setCannonicalCompany(company);
+				machine.setCannonicalLocation(location);
+				machine.setCannonicalPlant(plant);
+				machine.setCannonicalGroup(machineGroup);
+				machine.setCannonicalMachineId(machine_id);
 
-				MeasuringState stateFrom = MeasuringState.UNDEFINED;
+				String[] fixedFieldNames = {"id_compania", "id_sede", "id_planta", "id_grupo_maquina", "id_maquina"};  
+				
+				logger.info("registering machine " + getCanonicalKey(company, location, plant, machineGroup, machine_id) + " Id:" + Integer.toString(machine.getId()) );
 
-				if (stateFromTxt.compareTo("O") == 0){
-					stateFrom = MeasuringState.OPERATING;
-				} else if (stateFromTxt.compareTo("S") == 0){
-					stateFrom = MeasuringState.SCHEDULEDOWN;
-				} else if (stateFromTxt.compareTo("U") == 0){
-					stateFrom = MeasuringState.UNSCHEDULEDOWN;
-				} else {
-					stateFrom = MeasuringState.UNDEFINED;
+				for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+					int type = rsmd.getColumnType(i);
+					String name = rsmd.getColumnName(i);
+					
+					if (!(Arrays.asList(fixedFieldNames).contains(name))) {
+						
+						
+						switch (type) {
+
+						case java.sql.Types.TINYINT:
+						case java.sql.Types.SMALLINT:
+						case java.sql.Types.INTEGER:
+						{	
+							Integer valueInteger = rs4.getInt(i);
+							Attribute attrInt = new Attribute(name, AttributeType.INT);
+							attrInt.setTrend(false);
+							attrInt.setOrigin(AttributeOrigin.ERP);
+							machine.registerAttribute(attrInt);
+							AttributeValue valueAttrInt = new AttributeValue(name, attrInt, valueInteger, i, MeasuredEntityType.JOB );
+							machine.registerAttributeValue(valueAttrInt);
+							break;
+						}
+
+						case java.sql.Types.FLOAT:
+						case java.sql.Types.REAL:
+						{
+							Double valueDouble = 0.0 + rs4.getFloat(i);
+							Attribute attrFloat = new Attribute(name, AttributeType.DOUBLE);
+							attrFloat.setTrend(false);
+							attrFloat.setOrigin(AttributeOrigin.ERP);
+							machine.registerAttribute(attrFloat);
+							AttributeValue valueAttrFloat = new AttributeValue(name, attrFloat, valueDouble, i, MeasuredEntityType.JOB );
+							machine.registerAttributeValue(valueAttrFloat);
+							break;
+						}	
+						case java.sql.Types.DOUBLE:
+						case java.sql.Types.NUMERIC:
+						case java.sql.Types.DECIMAL:
+						{
+							Double valueDouble2 = rs4.getDouble(i);
+							Attribute attrDouble = new Attribute(name, AttributeType.DOUBLE);
+							attrDouble.setTrend(false);
+							attrDouble.setOrigin(AttributeOrigin.ERP);
+							machine.registerAttribute(attrDouble);
+							AttributeValue valueAttrDouble = new AttributeValue(name, attrDouble, valueDouble2, i, MeasuredEntityType.JOB );
+							machine.registerAttributeValue(valueAttrDouble);
+							break;
+						}
+
+						case java.sql.Types.CHAR:
+						case java.sql.Types.VARCHAR:
+						case java.sql.Types.NCHAR:
+						case java.sql.Types.NVARCHAR:
+						{
+							String valueString = rs4.getString(i);
+							Attribute attrString = new Attribute(name, AttributeType.STRING);
+							attrString.setTrend(false);
+							attrString.setOrigin(AttributeOrigin.ERP);
+							machine.registerAttribute(attrString);
+							AttributeValue valueAttrString = new AttributeValue(name, attrString, valueString, i, MeasuredEntityType.JOB );
+							machine.registerAttributeValue(valueAttrString);
+							break;
+						}
+
+						case java.sql.Types.DATE:
+						{
+							Date valueDate = rs4.getDate(i);
+							Attribute attrDate = new Attribute(name, AttributeType.DATE);
+							attrDate.setTrend(false);
+							attrDate.setOrigin(AttributeOrigin.ERP);
+							machine.registerAttribute(attrDate);
+							AttributeValue valueAttrDate = new AttributeValue(name, attrDate, valueDate.toLocalDate(), i, MeasuredEntityType.JOB );
+							machine.registerAttributeValue(valueAttrDate);
+							break;
+						}
+						case java.sql.Types.TIME:
+						{
+							Time valueTime = rs4.getTime(i);
+							Attribute attrTime = new Attribute(name, AttributeType.TIME);
+							attrTime.setTrend(false);
+							attrTime.setOrigin(AttributeOrigin.ERP);
+							machine.registerAttribute(attrTime);
+							AttributeValue valueAttrTime = new AttributeValue(name, attrTime, valueTime.toLocalTime(), i, MeasuredEntityType.JOB );
+							machine.registerAttributeValue(valueAttrTime);
+							break;					    	
+						}
+						case java.sql.Types.TIMESTAMP:
+						{
+							Timestamp valueDateTime = rs4.getTimestamp(i);
+							Attribute attrDateTime = new Attribute(name, AttributeType.DATETIME);
+							attrDateTime.setTrend(false);
+							attrDateTime.setOrigin(AttributeOrigin.ERP);
+							machine.registerAttribute(attrDateTime);
+							AttributeValue valueAttrDateTime = new AttributeValue(name, attrDateTime, valueDateTime.toLocalDateTime(), i, MeasuredEntityType.JOB );
+							machine.registerAttributeValue(valueAttrDateTime);
+							break;					    						    
+						}
+
+						case java.sql.Types.BINARY:
+						case java.sql.Types.BOOLEAN:
+						{
+							Boolean valueBool = rs4.getBoolean(i);
+							Attribute attrBool = new Attribute(name, AttributeType.BOOLEAN);
+							attrBool.setTrend(false);
+							attrBool.setOrigin(AttributeOrigin.ERP);
+							machine.registerAttribute(attrBool);
+							AttributeValue valueAttrBool = new AttributeValue(name, attrBool, valueBool, i, MeasuredEntityType.JOB );
+							machine.registerAttributeValue(valueAttrBool);
+							break;					    						    					    	
+						}
+
+						case java.sql.Types.ROWID:
+							// This is the id of the production in the database, which is the id of the object. 
+							// So we don't have to do anything.
+							break;
+
+						case java.sql.Types.BIT:
+						case java.sql.Types.BIGINT:
+						case java.sql.Types.LONGVARCHAR:
+						case java.sql.Types.VARBINARY:
+						case java.sql.Types.LONGVARBINARY:
+						case java.sql.Types.NULL:
+						case java.sql.Types.OTHER:
+						case java.sql.Types.JAVA_OBJECT:
+						case java.sql.Types.DISTINCT:
+						case java.sql.Types.STRUCT:
+						case java.sql.Types.ARRAY:
+						case java.sql.Types.BLOB:
+						case java.sql.Types.CLOB:
+						case java.sql.Types.REF:
+						case java.sql.Types.DATALINK:
+						case java.sql.Types.LONGNVARCHAR:
+						case java.sql.Types.NCLOB:
+						case java.sql.Types.SQLXML:
+							logger.error("Type is not translatable to attribute");
+							break;
+						}
+
+					}
 				}
-
-				entity.putStateTransition(id, stateFrom, reasonCodeFrom, behavior, timestamp.toLocalDateTime());
+								
+				canonicalMapIndex.put(getCanonicalKey(company, location, plant, machineGroup,  machine_id) , machine.getId());
 			}
 
 			rs4.close();
@@ -315,7 +459,7 @@ public class MeasuredEntityContainer extends Container
 			e.printStackTrace();
 		}
 	}
-	
+
 	public MeasuredEntity fromJSON(String json) {
 
 		ObjectMapper mapper = new ObjectMapper();
@@ -352,39 +496,6 @@ public class MeasuredEntityContainer extends Container
 		return null;
 	}	
 	
-	
-	private void loadMachineInformation(Machine machine){
-		try 
-		{
-			String sqlSelect = sqlMachineSelect + String.valueOf(machine.getId());  
-			ResultSet rs4 = super.pst.executeQuery(sqlSelect);
-
-			while (rs4.next()) 
-			{
-				String company 		= rs4.getString("id_compania");
-				String location     = rs4.getString("id_sede");
-				String plant   		= rs4.getString("id_planta");
-				String machineGroup = rs4.getString("id_grupo_maquina");
-				String machine_id 	= rs4.getString("id_maquina");
-
-				machine.setCannonicalCompany(company);
-				machine.setCannonicalLocation(location);
-				machine.setCannonicalPlant(plant);
-				machine.setCannonicalGroup(machineGroup);
-				machine.setCannonicalMachineId(machine_id);
-				
-				logger.info("registering machine " + getCanonicalKey(company, location, plant, machineGroup, machine_id) + " Id:" + Integer.toString(machine.getId()) );
-				canonicalMapIndex.put(getCanonicalKey(company, location, plant, machineGroup,  machine_id) , machine.getId());
-			}
-
-			rs4.close();
-
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}
-	}
-
 	public List<ModBusTcpEvent> getModBusEvents( int port ) throws SQLException {
 
 		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
@@ -477,6 +588,61 @@ public class MeasuredEntityContainer extends Container
 
 	}
 
+	public List<Event> getScheduledEvents(MeasuredEntity entity){
+		List<Event> events = new ArrayList<Event>();
+
+		try 
+		{
+
+			super.connect();
+
+			logger.info("in get Scheduled Events:" );
+			
+			String sqlSelect = sqlSelect6;  
+			ResultSet rs6 = super.pst.executeQuery(sqlSelect);
+
+			while (rs6.next()) 
+			{
+				
+				String scheduleEventType   	= rs6.getString("scheduled_event_type");
+				String descr  				= rs6.getString("descr");  
+				String recurrences        	= rs6.getString("recurrences");
+				Timestamp createDate 		= rs6.getTimestamp("create_date");
+				Timestamp lastUpdttm 		= rs6.getTimestamp("last_updttm");
+				
+				// According to the type of event, we create the instance class.
+				
+				if (scheduleEventType.compareTo("AG") == 0) {
+					
+					String lines[] = recurrences.split("\\r?\\n");
+					
+					for (String recurrence : lines) {
+						AggregationEvent aggEvent = new AggregationEvent(entity.getId(), entity.getType(), AggregationEventType.OEE, recurrence);
+						events.add(aggEvent);
+					}
+				} else {
+					logger.error("The Schedule event given is not being handled - Type given:" +  scheduleEventType );
+				}
+				
+			}
+
+			rs6.close();
+
+			super.disconnect();
+
+		} catch (ClassNotFoundException e){
+			String error = "Could not find the driver class - Error" + e.getMessage(); 
+			logger.error(error);
+			e.printStackTrace();
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		return events;
+		
+	}
+	
 	public Integer getCanonicalObject(String company, String location, String plant, String machineGroup, String machineId) 
 	{
 		

@@ -200,6 +200,10 @@ public class EventManager extends Manager
 		}
 	}
 
+	public BlockingQueue getDelayedQueue() {
+		return this.delayedQueue;
+	}
+	
     public synchronized void releaseModbusConnection(String ipAddress, TCPMasterConnection con) throws Exception
     {
     	if (this.usedConnections.containsKey(ipAddress))

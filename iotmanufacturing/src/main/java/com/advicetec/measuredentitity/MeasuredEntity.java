@@ -89,7 +89,10 @@ public abstract class MeasuredEntity extends ConfigurationObject
     protected Map<Integer, ExecutedEntity> executedEntities;
     
     @JsonIgnore
-    protected List<AttributeMeasuredEntity> attributes;
+    protected List<Attribute> attributes;
+
+    @JsonIgnore
+    protected List<AttributeValue> attributeValues;
     
     @JsonIgnore
     protected Integer maxTimeForInterval;
@@ -106,7 +109,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		currentReason = null;
 		maxTimeForInterval = MAX_INTERVAL_TIME; 
 
-		attributes = new ArrayList<AttributeMeasuredEntity>();
+		attributes = new ArrayList<Attribute>();
 		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
 		stateTransitions = new ArrayList<MeasuredEntityStateTransition>();
 		executedEntities = new HashMap<Integer, ExecutedEntity>();
@@ -147,11 +150,11 @@ public abstract class MeasuredEntity extends ConfigurationObject
     }
     
     @JsonIgnore
-    public synchronized List<AttributeMeasuredEntity> getAttributeList(){
+    public synchronized List<Attribute> getAttributeList(){
     	return attributes;
     }
     
-    public synchronized boolean registerMeasureEntityAttibute(AttributeMeasuredEntity attrMeasureEntity){
+    public synchronized boolean registerAttribute(Attribute attrMeasureEntity){
     	return attributes.add(attrMeasureEntity);
     }
     
@@ -571,4 +574,15 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		
 		return false;
 	}
+	
+    @JsonIgnore
+    public List<AttributeValue> getAttributeValueList(){
+    	return attributeValues;
+    }
+
+    @JsonIgnore
+    public boolean registerAttributeValue(AttributeValue value){
+    	return attributeValues.add(value);
+    }
+	
 }

@@ -6,7 +6,11 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.core.Configurable;
+import com.advicetec.eventprocessor.AggregationEvent;
+import com.advicetec.eventprocessor.Event;
 import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.eventprocessor.ModBusTcpEvent;
 import com.advicetec.measuredentitity.MeasuredEntity;
@@ -87,6 +91,34 @@ public class MeasuredEntityManager extends Configurable {
 				e.printStackTrace();
 			}
 		}
+		
+		// Collect scheduled events for all measured entities.
+		List<Event> scheduledEvents = new ArrayList<Event>();
+		for (Integer i : measuredEntities.getKeys()) {
+			MeasuredEntity m = (MeasuredEntity) measuredEntities.getObject(i);
+			scheduledEvents.addAll(measuredEntities.getScheduledEvents(m));
+		}
+
+		// Put to execute all scheduled events.
+		int numEvent = 0;
+		for (Event evt : scheduledEvents){
+			long seconds = ((AggregationEvent) evt).getSecondsToNextExecution();
+			
+			DelayEvent dEvent = new DelayEvent(evt,seconds*1000);
+			
+			try {
+				
+				EventManager.getInstance().getDelayedQueue().put(dEvent);
+				
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+			
+			numEvent = numEvent + 1;
+		}
+		
+		logger.info("Number of scheduled events that have been read:" + numEvent );
 		
 	}
 

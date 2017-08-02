@@ -44,23 +44,18 @@ public class OEEAggregationEventProcessor implements Processor
 
 		if (entityFacade != null){
 
-			// Obtains the previous hour
+			// Obtains the current day
 			LocalDateTime current = LocalDateTime.now();
-			LocalDateTime formerHour = PeriodUtils.getPreviousFinalHour(current);
-			calculateHour(measuringEntity, measuredEntityType, formerHour);
-
-
-			// Obtains the previous day
-			LocalDateTime formerDay = PeriodUtils.getPreviousFinalHour( current);
+			LocalDateTime formerDay = PeriodUtils.getStartOfDay(current);
 			calculateDay(measuringEntity, measuredEntityType,formerDay);
 
-			// Obtains the previous month
-			LocalDateTime formerMonth = PeriodUtils.getPreviousFinalMonth(current);
-			calculateMonth(measuringEntity, measuredEntityType,formerMonth);
+			// Obtains the current month
+			LocalDateTime month = LocalDateTime.of(current.getYear(), current.getMonthValue(), 1, 0, 0, 0 );
+			calculateMonth(measuringEntity, measuredEntityType,month);
 
-			// Obtains the previous year
-			LocalDateTime formerYear = PeriodUtils.getPreviousFinalYear(current);
-			calculateYear(measuringEntity, measuredEntityType,formerYear);
+			// Obtains the current year
+			LocalDateTime year = LocalDateTime.of(current.getYear(), 1, 1, 0, 0, 0 );
+			calculateYear(measuringEntity, measuredEntityType,year);
 
 
 		} else {
