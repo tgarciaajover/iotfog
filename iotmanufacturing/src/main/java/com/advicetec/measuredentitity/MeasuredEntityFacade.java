@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -415,7 +416,12 @@ public final class MeasuredEntityFacade {
      */
 	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
+		
+		// search the production rate in the actual production job, if not defined then search on the measured entity. 
 		Double rate = this.entity.getProductionRate(productionRateId);
+		
+		
+		
 		Double actualRate = null; 
 		
 		// Verifies that the actual production count id field is an attribute in the measuring entity
@@ -551,8 +557,7 @@ public final class MeasuredEntityFacade {
 		try {
 			cannonicalMachine = MeasuredEntityManager.getInstance()
 					.getCanonicalById(entity.getId());
-
-
+			
 			List<AttributeValue> valList = getByIntervalByAttributeName(trendVar, from, to);
 			array = new JSONArray();
 			for (AttributeValue attValue : valList) {
@@ -610,6 +615,11 @@ public final class MeasuredEntityFacade {
 	 */
 	public synchronized List<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
 
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+		String formattedFrom = from.format(formatter);
+		String formattedTo = to.format(formatter);
+		logger.info("getStatesByInterval from:" + formattedFrom + " to:" + formattedTo );
+		
 		List<StateInterval> list = new ArrayList<StateInterval>();
 		LocalDateTime oldest = stateCache.getOldestTime();
 

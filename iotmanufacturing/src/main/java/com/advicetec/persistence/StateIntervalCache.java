@@ -7,10 +7,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
@@ -281,21 +284,26 @@ public class StateIntervalCache extends Configurable {
 	public synchronized ArrayList<StateInterval> getFromDatabase(Integer entityId, MeasuredEntityType mType,
 			LocalDateTime from, LocalDateTime to) {
 		
-		logger.info("getFromDatabase:" + Integer.toString(entityId) + " MeasureEntityType:" + mType + " from" + from.toString() + " to:" + to.toString());
+		logger.info("getFromDatabase:" + Integer.toString(entityId) + " MeasureEntityType:" + mType + " from:" + from.toString() + " to:" + to.toString());
 		
 		Connection connDB  = null; 
 		PreparedStatement pstDB = null;
-		
+						
 		ArrayList<StateInterval> list = new ArrayList<StateInterval>();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        Calendar cal = Calendar.getInstance();
+        TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+        cal.setTimeZone(utcTimeZone);
 		
 		try {
+						
 			Class.forName(DB_DRIVER);
 			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 			connDB.setAutoCommit(false);
 			pstDB = connDB.prepareStatement(this.sqlStatusIntervalRangeSelect);
 			pstDB.setString(1, Integer.toString(entityId));
 			pstDB.setInt(2, mType.getValue());
-			pstDB.setTimestamp(3, Timestamp.valueOf(from));
+			pstDB.setTimestamp(3, Timestamp. valueOf(from));
 			pstDB.setTimestamp(4, Timestamp.valueOf(to));
 			pstDB.setTimestamp(5, Timestamp.valueOf(from));
 			pstDB.setTimestamp(6, Timestamp.valueOf(to));
@@ -303,15 +311,33 @@ public class StateIntervalCache extends Configurable {
 
 			ConfigurationManager manager = ConfigurationManager.getInstance();
 			ReasonCodeContainer reasonCont =  manager.getReasonCodeContainer();
-			
+
 			while (rs.next())
 			{
-				
-				logger.info("state interval found");
-				
+				 
 				// datetime_from, datetime_to, status, reason_code
-				LocalDateTime dTimeFrom = rs.getTimestamp("datetime_from").toLocalDateTime();
-				LocalDateTime dTimeTo = rs.getTimestamp("datetime_to").toLocalDateTime();
+				Timestamp dsTimeFrom = rs.getTimestamp("datetime_from", cal);
+				long timestampTimeFrom = dsTimeFrom.getTime();
+				cal.setTimeInMillis(timestampTimeFrom);
+				LocalDateTime dTimeFrom = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+															cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+															 cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+															  cal.get(Calendar.MILLISECOND));
+				
+				Timestamp dsTimeTo = rs.getTimestamp("datetime_to", cal);
+				long timestampTimeTo = dsTimeTo.getTime();
+				cal.setTimeInMillis(timestampTimeTo);
+				LocalDateTime dTimeTo = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+						cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+						 cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+						  cal.get(Calendar.MILLISECOND));
+				
+				String formatteddTimeFrom = dTimeFrom.format(formatter);
+				String formatteddTimeTo = dTimeTo.format(formatter);
+				
+				logger.info("state interval found from:" + formatteddTimeFrom + " to:" + formatteddTimeTo);
+
+				
 				String status = rs.getString("status");
 				String reasonCode = rs.getString("reason_code");
 				Double productionRate = rs.getDouble("production_rate");

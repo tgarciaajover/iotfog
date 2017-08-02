@@ -84,6 +84,7 @@ public class TrendResource extends ServerResource
 			getParamsFromJson(rep);
 		}
 		
+		logger.info("here we are 01");
 		
 		try {
 			Integer uniqueID = MeasuredEntityManager.getInstance()
@@ -111,7 +112,7 @@ public class TrendResource extends ServerResource
 				DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s.n");
 				LocalDateTime dttmFrom = LocalDateTime.parse(reqStartDateTime,format); 
 				LocalDateTime dttmTo = LocalDateTime.parse(reqEndDateTime,format);
-
+								
 				// get the array from the facade.
 				JSONArray jsonArray = facade.getJsonTrend(trendVar,dttmFrom, dttmTo);
 				result = new JsonRepresentation(jsonArray);

@@ -10,6 +10,8 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,10 +73,11 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 
 
 	public void dbInsert(PreparedStatement pstmt) {
+				
 		try 
 		{
 			pstmt.setInt(1, getGenerator());							// Set the parent
-			pstmt.setTimestamp(2, Timestamp.valueOf(getTimeStamp()));   // timestamp
+			pstmt.setTimestamp(2, Timestamp.valueOf(getTimeStamp()));   // stores datetime in the default timezone.
 			pstmt.setInt(3, getGeneratorType().getValue());          		// owner_type
 			pstmt.setString(4, getAttr().getName());      			// Attribute Name
 			switch ( getAttr().getType() )

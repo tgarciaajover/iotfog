@@ -50,7 +50,7 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
 	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
 	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
-	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm FROM setup_measureentityscheduleevent measure_entity_id =";
+	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm FROM setup_measureentityscheduleevent WHERE measure_entity_id =";
 
 	static String sqlMachineSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, descripcion_sin_trabajo, factor_conversion_emp_ciclo, factor_conversion_kg_ciclo, factor_conversion_mil_ciclo, tasa_vel_esperada, tiempo_esperado_config FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
@@ -92,7 +92,7 @@ public class MeasuredEntityContainer extends Container
 
 				MeasuredEntity measuredEntity = null;
 
-				logger.info("measured Entity id:" + id.toString() +  " Entity Category:" + entityCategory);
+				logger.debug("measured Entity id:" + id.toString() +  " Entity Category:" + entityCategory);
 				switch (entityCategory)
 				{
 				case "M":
@@ -181,7 +181,7 @@ public class MeasuredEntityContainer extends Container
 				plant.setCannonicalLocation(location);
 				plant.setCannonicalPlant(plant_id);
 				
-				logger.info("registering plant " + getCanonicalKey(company, location, plant_id, null, null));
+				logger.debug("registering plant " + getCanonicalKey(company, location, plant_id, null, null));
 				canonicalMapIndex.put(getCanonicalKey(company, location, plant_id, null, null) , plant.getId());
 			}
 
@@ -304,16 +304,16 @@ public class MeasuredEntityContainer extends Container
 				machine.setCannonicalGroup(machineGroup);
 				machine.setCannonicalMachineId(machine_id);
 
-				String[] fixedFieldNames = {"id_compania", "id_sede", "id_planta", "id_grupo_maquina", "id_maquina"};  
+				String[] fixedFieldNames = {"measuredentity_ptr_id", "id_compania", "id_sede", "id_planta", "id_grupo_maquina", "id_maquina"};  
 				
-				logger.info("registering machine " + getCanonicalKey(company, location, plant, machineGroup, machine_id) + " Id:" + Integer.toString(machine.getId()) );
+				logger.debug("registering machine " + getCanonicalKey(company, location, plant, machineGroup, machine_id) + " Id:" + Integer.toString(machine.getId()) );
 
 				for (int i = 1; i <= rsmd.getColumnCount(); i++) {
 					int type = rsmd.getColumnType(i);
 					String name = rsmd.getColumnName(i);
-					
 					if (!(Arrays.asList(fixedFieldNames).contains(name))) {
 						
+						logger.debug("Registering attribute: " + name + " in machine:" + String.valueOf(machine.getId()) );
 						
 						switch (type) {
 
@@ -326,7 +326,7 @@ public class MeasuredEntityContainer extends Container
 							attrInt.setTrend(false);
 							attrInt.setOrigin(AttributeOrigin.ERP);
 							machine.registerAttribute(attrInt);
-							AttributeValue valueAttrInt = new AttributeValue(name, attrInt, valueInteger, i, MeasuredEntityType.JOB );
+							AttributeValue valueAttrInt = new AttributeValue(name, attrInt, valueInteger, i, MeasuredEntityType.MACHINE );
 							machine.registerAttributeValue(valueAttrInt);
 							break;
 						}
@@ -339,7 +339,7 @@ public class MeasuredEntityContainer extends Container
 							attrFloat.setTrend(false);
 							attrFloat.setOrigin(AttributeOrigin.ERP);
 							machine.registerAttribute(attrFloat);
-							AttributeValue valueAttrFloat = new AttributeValue(name, attrFloat, valueDouble, i, MeasuredEntityType.JOB );
+							AttributeValue valueAttrFloat = new AttributeValue(name, attrFloat, valueDouble, i, MeasuredEntityType.MACHINE );
 							machine.registerAttributeValue(valueAttrFloat);
 							break;
 						}	
@@ -352,7 +352,7 @@ public class MeasuredEntityContainer extends Container
 							attrDouble.setTrend(false);
 							attrDouble.setOrigin(AttributeOrigin.ERP);
 							machine.registerAttribute(attrDouble);
-							AttributeValue valueAttrDouble = new AttributeValue(name, attrDouble, valueDouble2, i, MeasuredEntityType.JOB );
+							AttributeValue valueAttrDouble = new AttributeValue(name, attrDouble, valueDouble2, i, MeasuredEntityType.MACHINE );
 							machine.registerAttributeValue(valueAttrDouble);
 							break;
 						}
@@ -367,7 +367,7 @@ public class MeasuredEntityContainer extends Container
 							attrString.setTrend(false);
 							attrString.setOrigin(AttributeOrigin.ERP);
 							machine.registerAttribute(attrString);
-							AttributeValue valueAttrString = new AttributeValue(name, attrString, valueString, i, MeasuredEntityType.JOB );
+							AttributeValue valueAttrString = new AttributeValue(name, attrString, valueString, i, MeasuredEntityType.MACHINE );
 							machine.registerAttributeValue(valueAttrString);
 							break;
 						}
@@ -379,7 +379,7 @@ public class MeasuredEntityContainer extends Container
 							attrDate.setTrend(false);
 							attrDate.setOrigin(AttributeOrigin.ERP);
 							machine.registerAttribute(attrDate);
-							AttributeValue valueAttrDate = new AttributeValue(name, attrDate, valueDate.toLocalDate(), i, MeasuredEntityType.JOB );
+							AttributeValue valueAttrDate = new AttributeValue(name, attrDate, valueDate.toLocalDate(), i, MeasuredEntityType.MACHINE );
 							machine.registerAttributeValue(valueAttrDate);
 							break;
 						}
@@ -390,7 +390,7 @@ public class MeasuredEntityContainer extends Container
 							attrTime.setTrend(false);
 							attrTime.setOrigin(AttributeOrigin.ERP);
 							machine.registerAttribute(attrTime);
-							AttributeValue valueAttrTime = new AttributeValue(name, attrTime, valueTime.toLocalTime(), i, MeasuredEntityType.JOB );
+							AttributeValue valueAttrTime = new AttributeValue(name, attrTime, valueTime.toLocalTime(), i, MeasuredEntityType.MACHINE );
 							machine.registerAttributeValue(valueAttrTime);
 							break;					    	
 						}
@@ -401,7 +401,7 @@ public class MeasuredEntityContainer extends Container
 							attrDateTime.setTrend(false);
 							attrDateTime.setOrigin(AttributeOrigin.ERP);
 							machine.registerAttribute(attrDateTime);
-							AttributeValue valueAttrDateTime = new AttributeValue(name, attrDateTime, valueDateTime.toLocalDateTime(), i, MeasuredEntityType.JOB );
+							AttributeValue valueAttrDateTime = new AttributeValue(name, attrDateTime, valueDateTime.toLocalDateTime(), i, MeasuredEntityType.MACHINE );
 							machine.registerAttributeValue(valueAttrDateTime);
 							break;					    						    
 						}
@@ -414,7 +414,7 @@ public class MeasuredEntityContainer extends Container
 							attrBool.setTrend(false);
 							attrBool.setOrigin(AttributeOrigin.ERP);
 							machine.registerAttribute(attrBool);
-							AttributeValue valueAttrBool = new AttributeValue(name, attrBool, valueBool, i, MeasuredEntityType.JOB );
+							AttributeValue valueAttrBool = new AttributeValue(name, attrBool, valueBool, i, MeasuredEntityType.MACHINE );
 							machine.registerAttributeValue(valueAttrBool);
 							break;					    						    					    	
 						}
@@ -596,9 +596,10 @@ public class MeasuredEntityContainer extends Container
 
 			super.connect();
 
-			logger.info("in get Scheduled Events:" );
+			logger.debug("in get Scheduled Events:" );
 			
-			String sqlSelect = sqlSelect6;  
+			String sqlSelect = sqlSelect6 + String.valueOf(entity.getId());
+			logger.debug("sqlSelect machines :" + sqlSelect);
 			ResultSet rs6 = super.pst.executeQuery(sqlSelect);
 
 			while (rs6.next()) 

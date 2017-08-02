@@ -3,6 +3,7 @@ package com.advicetec.eventprocessor;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,8 +32,10 @@ public class AggregationEvent extends Event
 	MeasuredEntityType ownerType;
 	
 	// Recurrence Rule
-	private String recurrence; 
-
+	private String recurrence;
+	
+	static Logger logger = LogManager.getLogger(AggregationEvent.class.getName());
+	
 	public AggregationEvent(int measuredEntity, MeasuredEntityType ownerType,
 			AggregationEventType type, String recurrence) {
 		super(EventType.AGGREGATION_EVENT);
@@ -64,6 +67,8 @@ public class AggregationEvent extends Event
 
 	public long getSecondsToNextExecution() {
 		
+		logger.info("In getSecondsToNextExecution");
+		
 		long seconds = 0;
 				
 		try {
@@ -72,22 +77,31 @@ public class AggregationEvent extends Event
 			
 			Date start =  new Date();
 			
-			for (Date date : DateIteratorFactory.createDateIterable(recurrence, start, tz, true)) {
+			for (Date nextRecurrenceDate : DateIteratorFactory.createDateIterable(recurrence, start, tz, true)) {
 			  
-			  Instant instant = date.toInstant();
+			  Instant instant = nextRecurrenceDate.toInstant();
 			  ZonedDateTime zdt = instant.atZone(ZoneId.systemDefault());
-			  LocalDate localDate = zdt.toLocalDate();
-			  LocalDate today = LocalDate.now();
+			  LocalDate localNextRecurrDate = zdt.toLocalDate();
 			  
-			  seconds = ChronoUnit.SECONDS.between(today, localDate);
+			  LocalDateTime localDateTimeNextRecurrDate = localNextRecurrDate.plusDays(1).atStartOfDay();
+			  LocalDateTime today = LocalDateTime.now();
+			  
+			  seconds = today.until( localDateTimeNextRecurrDate, ChronoUnit.SECONDS);
+
+			  DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+			  String formattedFrom = localDateTimeNextRecurrDate.format(formatter);			  
+			  logger.info("Next Recurrence Date:" + formattedFrom + " getSecondsToNextExecution seconds:" + seconds);
+
+			  break;
 			  
 			}
 			
 		} catch (ParseException e) {
-			Logger logger = LogManager.getLogger(AggregationEvent.class.getName());
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
+		
+		logger.info("getSecondsToNextExecution seconds:" + seconds);
 		
 		return seconds;
 	}

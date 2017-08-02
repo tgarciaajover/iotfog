@@ -98,11 +98,15 @@ public class MeasuredEntityManager extends Configurable {
 			MeasuredEntity m = (MeasuredEntity) measuredEntities.getObject(i);
 			scheduledEvents.addAll(measuredEntities.getScheduledEvents(m));
 		}
+		
+		logger.info("num scheduled events:" + scheduledEvents.size());
 
 		// Put to execute all scheduled events.
 		int numEvent = 0;
 		for (Event evt : scheduledEvents){
 			long seconds = ((AggregationEvent) evt).getSecondsToNextExecution();
+			
+			logger.info("Next Recurrence to occur in: " + seconds + " seconds");
 			
 			DelayEvent dEvent = new DelayEvent(evt,seconds*1000);
 			

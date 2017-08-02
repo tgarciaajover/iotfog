@@ -8,8 +8,10 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
@@ -240,6 +242,12 @@ public class MeasureAttributeValueCache extends Configurable {
 
 		ArrayList<AttributeValue> list = new ArrayList<AttributeValue>();
 		ResultSet rs = null;
+
+        Calendar cal = Calendar.getInstance();
+        TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+        cal.setTimeZone(utcTimeZone);
+
+		
 		try {
 			Class.forName(DB_DRIVER);
 			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
@@ -256,8 +264,17 @@ public class MeasureAttributeValueCache extends Configurable {
 			while (rs.next())
 			{
 
-				LocalDateTime dtime = rs.getTimestamp("timestamp").toLocalDateTime();
-				MeasuredAttributeValue mav = new MeasuredAttributeValue(attribute,new Object(), entityId, mType, dtime); 
+				Timestamp dtstime = rs.getTimestamp("timestamp", cal);
+
+				long timestampTime = dtstime.getTime();
+				cal.setTimeInMillis(timestampTime);
+				LocalDateTime dTime = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+															cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+															 cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+															  cal.get(Calendar.MILLISECOND));
+
+						
+				MeasuredAttributeValue mav = new MeasuredAttributeValue(attribute,new Object(), entityId, mType, dTime); 
 				mav.setValueFromDatabase(rs);
 				list.add(mav);
 

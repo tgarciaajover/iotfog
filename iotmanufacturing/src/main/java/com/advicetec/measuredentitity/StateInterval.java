@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -106,6 +108,8 @@ public final class StateInterval implements Storable
 	
 	public void dbInsert(PreparedStatement pstmt) 
 	{
+		        
+
 		try 
 		{
 			pstmt.setInt(1, getParent());
@@ -142,12 +146,16 @@ public final class StateInterval implements Storable
 
 	public void dbDelete(PreparedStatement pstmt) {
 
+        Calendar cal = Calendar.getInstance();
+        TimeZone timeZone1 = TimeZone.getDefault();
+        cal.setTimeZone(timeZone1);
+
 		try 
 		{
 			pstmt.setInt(1, getParent());
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
-			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
-			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
+			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()), cal );   // timestamp
+			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()), cal );   // timestamp
 			
 			pstmt.addBatch();
 

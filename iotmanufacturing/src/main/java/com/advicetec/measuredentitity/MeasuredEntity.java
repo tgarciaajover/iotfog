@@ -110,6 +110,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		maxTimeForInterval = MAX_INTERVAL_TIME; 
 
 		attributes = new ArrayList<Attribute>();
+		attributeValues = new ArrayList<AttributeValue>();
 		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
 		stateTransitions = new ArrayList<MeasuredEntityStateTransition>();
 		executedEntities = new HashMap<Integer, ExecutedEntity>();
