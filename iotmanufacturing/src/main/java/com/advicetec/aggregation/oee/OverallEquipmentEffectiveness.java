@@ -1,4 +1,4 @@
-package com.advicetec.measuredentitity;
+package com.advicetec.aggregation.oee;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -13,6 +13,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonProperty;
 
+import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.advicetec.measuredentitity.StateInterval;
 import com.advicetec.persistence.Storable;
 import com.advicetec.utils.PredefinedPeriod;
 import com.advicetec.utils.PredefinedPeriodType;
@@ -52,7 +54,7 @@ public class OverallEquipmentEffectiveness implements Storable
 	public static final String SQL_EXISTS = "select 'x' as found from measuringentityoee where id_owner = ? and owner_type = ? and period_key = ?";
 	
 	public static final String SQL_LT_HOUR = "SELECT datetime_from,datetime_to,"
-			+ "status,reason_code,production_rate, actual_production_rate, qty_defective FROM measuringentitystatusinterval "
+			+ "status,reason_code,production_rate, conversion1, conversion2, actual_production_rate, qty_defective FROM measuringentitystatusinterval "
 			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from >= ? AND datetime_to <= ? " 
 			+ "UNION " 
 			+ "SELECT datetime_from,datetime_to,status,reason_code,production_rate, "

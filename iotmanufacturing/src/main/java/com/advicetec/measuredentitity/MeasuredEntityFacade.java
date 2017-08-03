@@ -30,6 +30,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 
+import com.advicetec.aggregation.oee.OEEAggregationCalculator;
+import com.advicetec.aggregation.oee.OEEAggregationManager;
+import com.advicetec.aggregation.oee.OverallEquipmentEffectiveness;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.Attribute;
@@ -75,11 +78,17 @@ public final class MeasuredEntityFacade {
 	// This field is the attribute name for the expected production rate in minutes.
 	private String productionRateId;
 	
+	// This field establishes the conversion Product Unit 1 / Cycle
+	private String unit1PerCycles;
+	
+	// This field establishes the conversion Product Unit 2 / Cycle
+	private String unit2PerCycles;
+	
 	// This field is the attribute name for the production counter.
 	private String actualProductionCountId;
 
-
-	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId, String actualProductionCountId) 
+	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId, 
+								 String unit1PerCycles, String unit2PerCycles,  String actualProductionCountId) 
 	{
 		this.entity = entity;
 		this.status = new StatusStore();
@@ -88,8 +97,9 @@ public final class MeasuredEntityFacade {
 		this.statesMap = new TreeMap<LocalDateTime,String>();
 		this.stateCache = StateIntervalCache.getInstance();
 		this.productionRateId = productionRateId;
-		this.actualProductionCountId = actualProductionCountId; 
-		
+		this.unit1PerCycles = unit1PerCycles;
+		this.unit2PerCycles = unit2PerCycles;
+		this.actualProductionCountId = actualProductionCountId;
 	}
 
 	public MeasuredEntity getEntity() {
@@ -321,13 +331,13 @@ public final class MeasuredEntityFacade {
 			jsonText = mapper. writeValueAsString(ret);
 
 		} catch (JsonGenerationException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 
@@ -418,9 +428,12 @@ public final class MeasuredEntityFacade {
 	{
 		
 		// search the production rate in the actual production job, if not defined then search on the measured entity. 
-		Double rate = this.entity.getProductionRate(productionRateId);
+		Double rate = this.entity.getProductionRate(this.productionRateId);
+		Double conversion1 = this.entity.getConversion1(this.unit1PerCycles);
+		Double conversion2 = this.entity.getConversion2(this.unit2PerCycles);
 		
-		
+		if (rate == null)
+			rate = new Double(0.0); // No rate defined. 
 		
 		Double actualRate = null; 
 		
@@ -451,10 +464,10 @@ public final class MeasuredEntityFacade {
 			}
 			LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
 			long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
-			actualRate = new Double(sum * 60 / seconds);    // 
+			actualRate = new Double(sum * 60 / seconds);    // The actual rate is in cycle over minutes. 
 		}
 			
-		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType(), rate, actualRate, new Double(0));
+		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType(), rate, conversion1, conversion2, actualRate, new Double(0));
 		stateInterval.setKey(entity.getId()+stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());
@@ -838,7 +851,7 @@ public final class MeasuredEntityFacade {
 		logger.info("Number of elements to calculate in the final list:" + periods.size());
 		
 		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
-		for (int i = 0; i < periods.size(); i++) 
+		for (int i = 0; i < periods.size(); i++)
 		{
 			PredefinedPeriod period = periods.get(i);
 			if (period.getType() == PredefinedPeriodType.INT_LT_HOUR)
@@ -863,19 +876,46 @@ public final class MeasuredEntityFacade {
 					oees.addAll(oeesHour);
 				}
 				
-			} else if ( ( period.getType() == PredefinedPeriodType.HOUR ) || 
-						( period.getType() == PredefinedPeriodType.DAY ) ||
-						( period.getType() == PredefinedPeriodType.MONTH ) ||
-						( period.getType() == PredefinedPeriodType.YEAR ) ) {
-				
+			} else if ( period.getType() == PredefinedPeriodType.HOUR ){
 				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
-															getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
 				if (oee2 !=null) {
 					oees.add(oee2);
 				} else {
-					logger.error("The aggregation interval could not be calculated predefined Period:" + period.getKey() );
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
+				}
+			} else if ( period.getType() == PredefinedPeriodType.DAY ) {
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
 				}
 				
+			} else if ( period.getType() == PredefinedPeriodType.MONTH ) {
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
+				}
+				
+			} else if ( period.getType() == PredefinedPeriodType.YEAR )  {
+				
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
+				}
+									
 			} else {
 				logger.error("Invalid Predefined Period type:" + period.getType().getName());			
 			}			

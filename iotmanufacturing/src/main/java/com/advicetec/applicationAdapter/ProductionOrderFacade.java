@@ -69,11 +69,16 @@ public final class ProductionOrderFacade {
 	// Production Field Identifier
 	private String productionRateId;
 	
-	// This field is the attribute name for the production counter.
-	private String actualProductionCountId;
-
+	// Field that establishes the conversion Product Unit 1 / Cycle
+	private String unit1PerCycles;
 	
-	public ProductionOrderFacade(ProductionOrder pOrder, String productionRateId, String actualProductionCountId) 
+	// Field that establishes the conversion Product Unit 2 / Cycle
+	private String unit2PerCycles;
+	
+
+	private String actualProductionCountId;
+	
+	public ProductionOrderFacade(ProductionOrder pOrder, String productionRateId, String unit1PerCycles, String unit2PerCycles, String actualProductionCountId) 
 	{
 		this.pOrder = pOrder;
 		this.status = new StatusStore();
@@ -82,6 +87,8 @@ public final class ProductionOrderFacade {
 		this.statesMap = new TreeMap<LocalDateTime,String>();
 		this.stateCache = StateIntervalCache.getInstance();
 		this.productionRateId = productionRateId;
+		this.unit1PerCycles = unit1PerCycles; 
+		this.unit2PerCycles = unit2PerCycles;
 		this.actualProductionCountId = actualProductionCountId;
 	}
 
@@ -132,6 +139,30 @@ public final class ProductionOrderFacade {
 		internalMap.put(mav.getTimeStamp(), mav.getKey());
 	}
 
+	public String getProductionRateId() {
+		return productionRateId;
+	}
+
+	public void setProductionRateId(String productionRateId) {
+		this.productionRateId = productionRateId;
+	}
+
+	public String getConversion1() {
+		return unit1PerCycles;
+	}
+
+	public void setConversion1(String unit1PerCycles) {
+		this.unit1PerCycles = unit1PerCycles;
+	}
+
+	public String getConversion2() {
+		return unit2PerCycles;
+	}
+
+	public void setConversion2(String unit2PerCycles) {
+		this.unit2PerCycles = unit2PerCycles;
+	}
+		
 	/**
 	 * Returns the newest Measured Attribute Value for a given Attribute name.
 	 * @param attName
@@ -386,13 +417,25 @@ public final class ProductionOrderFacade {
 	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
 		Double rate = new Double(0.0);
+		Double conversion1 = new Double(0.0);
+		Double conversion2 = new Double(0.0);
 		Double actualRate = null; 
 		
 		if (this.pOrder.getCurrentState() == MeasuringState.OPERATING) {
 			AttributeValue attrValue = this.pOrder.getAttributeValue(this.productionRateId);
 			rate = (Double) attrValue.getValue();
 		}
-		
+
+		if (this.pOrder.getCurrentState() == MeasuringState.OPERATING) {
+			AttributeValue attrValue = this.pOrder.getAttributeValue(this.unit1PerCycles);
+			conversion1 = (Double) attrValue.getValue();
+		}
+
+		if (this.pOrder.getCurrentState() == MeasuringState.OPERATING) {
+			AttributeValue attrValue = this.pOrder.getAttributeValue(this.unit2PerCycles);
+			conversion2 = (Double) attrValue.getValue();
+		}
+
 		// Verifies that the actual production count id field is an attribute in the measuring entity
 		if (!isAttribute(actualProductionCountId)) {
 			logger.error("The given attribute: " + this.actualProductionCountId + " does not exists as attribute in the measuring entity");
@@ -424,7 +467,7 @@ public final class ProductionOrderFacade {
 		}
 		
 		
-		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType(), rate, actualRate, new Double(0));
+		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType(), rate, conversion1, conversion2, actualRate, new Double(0));
 		stateInterval.setKey(this.pOrder.getId()+stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());

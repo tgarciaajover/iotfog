@@ -34,8 +34,14 @@ public class MeasuredEntityManager extends Configurable {
 	private List<MeasuredEntityFacade> entities;
 	private int modBusPort;
 	
-	// Production rate field identifier. 
+	// Field that maintains the machine speed in case of no job on the machine. 
 	private String productionRateId;
+	
+	// Field that establishes the conversion Product Unit 1 / Cycle
+	private String unit1PerCycles;
+	
+	// Field that establishes the conversion Product Unit 2 / Cycle
+	private String unit2PerCycles;
 	
 	// This field is the attribute name for the production counter.
 	private String actualProductionCountId;
@@ -64,7 +70,9 @@ public class MeasuredEntityManager extends Configurable {
 		String user = properties.getProperty("user");
 		String password = properties.getProperty("password");
 		this.modBusPort = Integer.valueOf(properties.getProperty("ModBusPort"));
-		this.productionRateId = properties.getProperty("productionRateField");
+		this.productionRateId = properties.getProperty("machineRateField");
+		this.unit1PerCycles = properties.getProperty("machineUnit1PerCycles");
+		this.unit2PerCycles = properties.getProperty("machineUnit2PerCycles");
 		this.actualProductionCountId = properties.getProperty("actualProductionCountField");
 
 		measuredEntities = new MeasuredEntityContainer(driver, server, user, password);
@@ -72,7 +80,9 @@ public class MeasuredEntityManager extends Configurable {
 		
 		for (Integer i : measuredEntities.getKeys()) {
 			MeasuredEntity m = (MeasuredEntity) measuredEntities.getObject(i);
-			MeasuredEntityFacade f = new MeasuredEntityFacade(m, this.productionRateId, this.actualProductionCountId);
+			MeasuredEntityFacade f = new MeasuredEntityFacade(m, this.productionRateId, 
+																this.unit1PerCycles, this.unit2PerCycles, 
+																this.actualProductionCountId);
 			entities.add(f);
 		}
 		
@@ -156,7 +166,9 @@ public class MeasuredEntityManager extends Configurable {
 		if(entityAlreadyExists(entity)){
 			return false;
 		}
-		return entities.add(new MeasuredEntityFacade(entity, this.productionRateId, this.actualProductionCountId));
+		return entities.add(new MeasuredEntityFacade(entity, this.productionRateId, 
+							this.unit1PerCycles, this.unit2PerCycles, 
+							this.actualProductionCountId));
 	}
 	
 	/**

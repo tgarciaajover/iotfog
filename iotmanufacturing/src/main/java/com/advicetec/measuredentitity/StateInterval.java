@@ -30,11 +30,13 @@ public final class StateInterval implements Storable
 	// information about the parent.
 	private Integer parent;
 	private MeasuredEntityType parentType;
-	private Double productionRate; 
+	private Double productionRate;
+	private Double conversion1;  // This field maintains the conversion from cycles to product units (unit of measure 1)
+	private Double conversion2;  // This field maintains the conversion from cycles to product units (unit of measure 2)
 	private Double actualProductionRate;
 	private Double qtyDefective;
 	
-	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code, production_rate, actual_production_rate, qty_defective)" + "VALUES(?,?,?,?,?,?,?,?,?)";
+	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code, production_rate, conversion1, conversion2, actual_production_rate, qty_defective)" + "VALUES(?,?,?,?,?,?,?,?,?,?,?)";
 	public static final String SQL_Delete = "DELETE FROM measuringentitystatusinterval WHERE id_owner = ? AND owner_type = ? AND datetime_from = ? AND datetime_to =?";
 			
 	
@@ -45,6 +47,8 @@ public final class StateInterval implements Storable
 			@JsonProperty("origin")Integer parent, 
 			@JsonProperty("originType")MeasuredEntityType parentType,
 			@JsonProperty("productionRate")Double productionRate,
+			@JsonProperty("conversion1")Double conversion1,
+			@JsonProperty("conversion2")Double conversion2,
 			@JsonProperty("actualProductionRate")Double actualProductionRate,
 			@JsonProperty("qtyDefective")Double qtyDefective
 			) {
@@ -57,6 +61,8 @@ public final class StateInterval implements Storable
 		this.parent = parent;
 		this.parentType = parentType;
 		this.productionRate = productionRate;
+		this.conversion1 = conversion1;
+		this.conversion2 = conversion2;
 		this.actualProductionRate = actualProductionRate;
 		this.qtyDefective = qtyDefective;
 	}
@@ -71,6 +77,22 @@ public final class StateInterval implements Storable
     
 	public void setActualProductionRate(Double actualProductionRate) {
 		this.actualProductionRate = actualProductionRate;
+	}
+
+	public Double getConversion1() {
+		return conversion1;
+	}
+
+	public void setConversion1(Double conversion1) {
+		this.conversion1 = conversion1;
+	}
+
+	public Double getConversion2() {
+		return conversion2;
+	}
+
+	public void setConversion2(Double conversion2) {
+		this.conversion2 = conversion2;
 	}
 
 	public MeasuringState getState() {
@@ -128,11 +150,17 @@ public final class StateInterval implements Storable
 			// Production rate
 			pstmt.setDouble(7, getProductionRate());
 			
+			// Conversion 1
+			pstmt.setDouble(8, getConversion1());
+
+			// Conversion 2
+			pstmt.setDouble(9, getConversion2());
+
 			// actual production rate
-			pstmt.setDouble(8, getActualProductionRate());
+			pstmt.setDouble(10, getActualProductionRate());
 	
 			// qty defective
-			pstmt.setDouble(9, getQtyDefective());
+			pstmt.setDouble(11, getQtyDefective());
 			
 			pstmt.addBatch();
 
@@ -192,6 +220,11 @@ public final class StateInterval implements Storable
 		sb.append("origin:").append(parent).append(",");
 		sb.append("originType:").append(parentType).append(",");
 		sb.append("productionRate:").append(productionRate);
+		sb.append("conversion1:").append(conversion1);
+		sb.append("conversion2:").append(conversion2);
+		sb.append("actualProductionRate:").append(actualProductionRate);
+		sb.append("qtyDefective:").append(qtyDefective);
+		
 		return sb.toString();
 	}
 	
@@ -214,5 +247,4 @@ public final class StateInterval implements Storable
 		return this.qtyDefective;
 	}	
 	
-
 }

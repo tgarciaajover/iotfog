@@ -162,11 +162,6 @@ public abstract class MeasuredEntity extends ConfigurationObject
     public synchronized boolean equals(MeasuredEntity other){
     	return getId() == other.getId();
     }
-
-	public synchronized void getStateByInterval(TimeInterval timeInterval) {
-		// TODO Auto-generated method stub
-		
-	}
 	
 	public synchronized LocalDateTime getCreateDate() {
 		return createDate;
@@ -517,20 +512,59 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	this.executedEntities.remove(id);
     }
     
-    public Double getProductionRate(String productionRateId) 
+    public Double getProductionRate(String productionRateId)
     {
-		for (Integer id : this.executedEntities.keySet()){
-			ExecutedEntity executedEntity = this.executedEntities.get(id);
-			if (executedEntity.getCurrentState() == MeasuringState.OPERATING){
-				AttributeValue value = executedEntity.getAttributeValue(productionRateId);
-				return (Double) value.getValue();
+    	
+    	// First, it obtains the production rate from the executed entities (production order). 
+		try {
+			for (Integer id : this.executedEntities.keySet()){
+				ExecutedEntity executedEntity = this.executedEntities.get(id);  
+				if (executedEntity.getCurrentState() == MeasuringState.OPERATING)
+				{
+					ProductionOrderManager pOrderManager;
+					pOrderManager = ProductionOrderManager.getInstance();
+					productionRateId = pOrderManager.getFacadeOfPOrderById(id).getProductionRateId();
+					AttributeValue value = executedEntity.getAttributeValue(productionRateId);
+					if (value == null){
+						logger.error(" The attribute: " + productionRateId + "does not exist in the executed entitity:" + id);
+						return null;
+					} else {
+						return (Double) value.getValue();
+					}
+				}
 			}
+		} catch (SQLException e) {
+			// For this case, we assume that there is no executed entities on the machine.
+			logger.error(e.getMessage());
+			e.printStackTrace();
 		}
-		
-		return new Double(0.0);
+    	
+    	// Second, If not found in the executed entities, then it gets the data from the measured entity.
+    	AttributeValue value = getAttributeValue(productionRateId);
+    	if (value == null){
+			logger.error(" The attribute: " + productionRateId + "does not exist in the measured entitity:" + getId());
+			return null;
+    	} else {
+    		return (Double) value.getValue();
+    	}
     }
 
-
+    public AttributeValue getAttributeValue(String name){
+    	
+    	logger.info("Starting getAttributeValue - attribute:" + name);  
+    	
+		for (int i = 0; i < this.attributeValues.size(); i++){
+			AttributeValue attr = this.attributeValues.get(i);
+			if ((attr.getAttr().getName()).compareTo(name) == 0){
+				return attr;
+			}
+		}
+    	
+		logger.info("ending getAttributeValue with null");
+		
+		return null;
+    }
+    
 	public String getBehaviorText(MeasuringState state, Integer idRazonParada) {
 		int behaviorId = 0; 
 		for (int i = 0; i < this.stateTransitions.size(); i++){
@@ -585,5 +619,79 @@ public abstract class MeasuredEntity extends ConfigurationObject
     public boolean registerAttributeValue(AttributeValue value){
     	return attributeValues.add(value);
     }
-	
+
+    @JsonIgnore
+	public Double getConversion1(String conversion1) {
+    	// First, it obtains the production rate from the executed entities (production order). 
+		try {
+			for (Integer id : this.executedEntities.keySet()){
+				ExecutedEntity executedEntity = this.executedEntities.get(id);  
+				if (executedEntity.getCurrentState() == MeasuringState.OPERATING)
+				{
+					ProductionOrderManager pOrderManager;
+					pOrderManager = ProductionOrderManager.getInstance();
+					conversion1 = pOrderManager.getFacadeOfPOrderById(id).getConversion1();
+					AttributeValue value = executedEntity.getAttributeValue(conversion1);
+					if (value == null){
+						logger.error(" The attribute: " + conversion1 + "does not exist in the executed entitity:" + id);
+						return null;
+					} else {
+						return (Double) value.getValue();
+					}
+				}
+			}
+		} catch (SQLException e) {
+			// For this case, we assume that there is no executed entities on the machine.
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+    	
+    	// Second, If not found in the executed entities, then it gets the data from the measured entity.
+    	AttributeValue value = getAttributeValue(conversion1);
+    	if (value == null){
+			logger.error(" The attribute: " + conversion1 + "does not exist in the measured entitity:" + getId());
+			return null;
+    	} else {
+    		return (Double) value.getValue();
+    	}
+
+	}
+
+    @JsonIgnore
+	public Double getConversion2(String conversion2) {
+    	// First, it obtains the production rate from the executed entities (production order). 
+		try {
+			for (Integer id : this.executedEntities.keySet()){
+				ExecutedEntity executedEntity = this.executedEntities.get(id);  
+				if (executedEntity.getCurrentState() == MeasuringState.OPERATING)
+				{
+					ProductionOrderManager pOrderManager;
+					pOrderManager = ProductionOrderManager.getInstance();
+					conversion2 = pOrderManager.getFacadeOfPOrderById(id).getConversion2();
+					AttributeValue value = executedEntity.getAttributeValue(conversion2);
+					if (value == null){
+						logger.error(" The attribute: " + conversion2 + "does not exist in the executed entitity:" + id);
+						return null;
+					} else {
+						return (Double) value.getValue();
+					}
+				}
+			}
+		} catch (SQLException e) {
+			// For this case, we assume that there is no executed entities on the machine.
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+    	
+    	// Second, If not found in the executed entities, then it gets the data from the measured entity.
+    	AttributeValue value = getAttributeValue(conversion2);
+    	if (value == null){
+			logger.error(" The attribute: " + conversion2 + "does not exist in the measured entitity:" + getId());
+			return null;
+    	} else {
+    		return (Double) value.getValue();
+    	}
+
+	}
+
 }

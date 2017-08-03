@@ -1,4 +1,4 @@
-package com.advicetec.measuredentitity;
+package com.advicetec.aggregation.oee;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,6 +16,8 @@ import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.Container;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.configuration.ReasonCodeContainer;
+import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.advicetec.measuredentitity.MeasuringState;
 import com.advicetec.utils.PredefinedPeriod;
 import com.advicetec.utils.PredefinedPeriodType;
 
@@ -34,7 +36,7 @@ public class OEEAggregationContainer extends Container
 	}
 
 	/**
-	 * Inserts into database the list of oee values.
+	 * Inserts into database the list of OEE values.
 	 * @param list
 	 */
 	public void dbInsert(List<OverallEquipmentEffectiveness> list)
@@ -150,6 +152,8 @@ public class OEEAggregationContainer extends Container
 				}
 								
 				Double rowProductionRate = rs.getDouble("production_rate");
+				Double rowConversion1 = rs.getDouble("conversion1");
+				Double rowConversion2 = rs.getDouble("conversion2");
 				Double rowActualProductionRate = rs.getDouble("actual_production_rate");  
 				Double rowQtyDefective = rs.getDouble("qty_defective");
 				String rowStatus = rs.getString("status");
@@ -187,9 +191,9 @@ public class OEEAggregationContainer extends Container
 
 				productiveTime += actualProductiveTime; 
 				
-				qtySchedToProduce += rowProductionRate* (actualProductiveTime / 60);
+				qtySchedToProduce += rowConversion1 * rowProductionRate* (actualProductiveTime / 60);
 				
-				qtyProduced += rowActualProductionRate * (actualProductiveTime / 60);
+				qtyProduced += rowConversion1 * rowActualProductionRate * (actualProductiveTime / 60);
 				
 				if (reducedTime == 0) {
 					qtyDefective += rowQtyDefective;
@@ -204,11 +208,9 @@ public class OEEAggregationContainer extends Container
 			super.disconnect();
 			
 		} catch (SQLException e) {
-			Logger logger = LogManager.getLogger(StateInterval.class.getName());
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			Logger logger = LogManager.getLogger(StateInterval.class.getName());
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}			
@@ -289,11 +291,10 @@ public class OEEAggregationContainer extends Container
 			super.disconnect();
 			
 		} catch (SQLException e) {
-			Logger logger = LogManager.getLogger(StateInterval.class.getName());
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}			
 
@@ -392,11 +393,9 @@ public class OEEAggregationContainer extends Container
 			super.disconnect();
 			
 		} catch (SQLException e) {
-			Logger logger = LogManager.getLogger(StateInterval.class.getName());
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			Logger logger = LogManager.getLogger(StateInterval.class.getName());
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}

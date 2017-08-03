@@ -140,6 +140,38 @@ public class PredefinedPeriod
 				
 	}
 	
+	public LocalDateTime getLocalDateTime(){
+
+		switch (this.type)
+		{
+			case YEAR:
+				return LocalDateTime.of(this.calendarFrom.get(Calendar.YEAR), 1, 1, 0, 0);
+			
+			case MONTH:
+				return LocalDateTime.of(this.calendarFrom.get(Calendar.YEAR), this.calendarFrom.get(Calendar.MONTH) + 1, 1, 0, 0);
+			
+			case DAY:
+				return LocalDateTime.of(this.calendarFrom.get(Calendar.YEAR), 
+										 this.calendarFrom.get(Calendar.MONTH), 
+										  this.calendarFrom.get(Calendar.DAY_OF_MONTH), 0, 0);				
+			case HOUR:
+				return LocalDateTime.of(this.calendarFrom.get(Calendar.YEAR), 
+						 this.calendarFrom.get(Calendar.MONTH), 
+						  this.calendarFrom.get(Calendar.DAY_OF_MONTH), 
+						  	this.calendarFrom.get(Calendar.HOUR_OF_DAY), 0);				
+			
+			case INT_LT_HOUR:
+				return LocalDateTime.of(this.calendarFrom.get(Calendar.YEAR), 
+						 this.calendarFrom.get(Calendar.MONTH), 
+						  this.calendarFrom.get(Calendar.DAY_OF_MONTH), 
+						  	this.calendarFrom.get(Calendar.HOUR_OF_DAY), 
+						  	 this.calendarFrom.get(Calendar.MINUTE));				
+			
+			default:
+				return null;
+		}
+
+	}
 	
 	public boolean equals(PredefinedPeriod another){
 		return(getKey().equalsIgnoreCase(another.getKey()));
