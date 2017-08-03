@@ -187,7 +187,7 @@ public class MeasuredEntityManager extends Configurable {
 			else{ 
 				logger.debug("facade:" + Integer.toString(facade.getEntity().getId()));
 				
-				if(facade.getEntity().getId() == entityId){
+				if(facade.getEntity().getId().equals(entityId)){
 					return facade;
 				}
 			}
