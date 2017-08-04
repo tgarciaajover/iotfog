@@ -60,7 +60,7 @@ public class DeviceType extends ConfigurationObject
 	public IOSignalDeviceType getIOSignal(Integer signalId)
 	{
 		for (int i = 0; i < this.signals.size(); i++){
-			if (this.signals.get(i).getId() == signalId){
+			if (this.signals.get(i).getId().equals(signalId)){
 				return this.signals.get(i);
 			}
 		}

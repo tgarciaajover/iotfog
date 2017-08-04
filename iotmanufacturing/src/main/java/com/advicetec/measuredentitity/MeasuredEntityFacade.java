@@ -853,10 +853,14 @@ public final class MeasuredEntityFacade {
 		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
 		for (int i = 0; i < periods.size(); i++)
 		{
+					
 			PredefinedPeriod period = periods.get(i);
+			
+			logger.info("Period Type:" + period.getType().getName());
+			
 			if (period.getType() == PredefinedPeriodType.INT_LT_HOUR)
 			{
-			
+				
 				// Search for intervals in the requested hour.
 				DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
 				String parQueryFrom = formatter.format(period.getCalendar().getTime());

@@ -923,7 +923,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         switch (ctx.op.getType()) {
             case TransformationGrammarParser.EQ:
             	if (left.isInteger() && right.isInteger()){
-            		return new ASTNode((Boolean) (left.asInterger() == right.asInterger()));
+            		return new ASTNode((Boolean) (left.asInterger().equals(right.asInterger())));
             	} else if (left.isDouble() && right.isInteger()){
             		return new ASTNode((Boolean) (Math.abs( left.asDouble() - right.asInterger()) < SMALL_VALUE) );
             	} else if (left.isInteger() && right.isDouble()){

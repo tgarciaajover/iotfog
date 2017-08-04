@@ -160,7 +160,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     }
     
     public synchronized boolean equals(MeasuredEntity other){
-    	return getId() == other.getId();
+    	return getId().equals( other.getId());
     }
 	
 	public synchronized LocalDateTime getCreateDate() {
@@ -235,7 +235,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 		for (int i = 0; i < this.stateBehaviors.size(); i++){
 			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
-			if (measuredEntityStateBehavior.getId() == id){
+			if (measuredEntityStateBehavior.getId().equals(id)){
 				logger.debug("removed element");
 				this.stateBehaviors.remove(i);
 				break;
@@ -263,7 +263,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 		for (int i = 0; i < this.stateTransitions.size(); i++){
 			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
-			if (measuredEntityStateTransition.getId() == id ){
+			if (measuredEntityStateTransition.getId().equals(id) ){
 				this.stateTransitions.remove(i);
 				break;
 			}
@@ -305,7 +305,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		
 		for (int i = 0; i < this.stateBehaviors.size(); i++){
 			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
-			if (measuredEntityStateBehavior.getId() == id ){
+			if (measuredEntityStateBehavior.getId().equals(id) ){
 				logger.debug("stateBehavior" + measuredEntityStateBehavior.toString());
 				return this.stateBehaviors.get(i);
 			}
@@ -320,7 +320,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	{
 		for (int i = 0; i < this.stateTransitions.size(); i++){
 			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
-			if (measuredEntityStateTransition.getId() == id ){
+			if (measuredEntityStateTransition.getId().equals(id) ){
 				return this.stateTransitions.get(i);
 			}
 		}
@@ -569,7 +569,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		int behaviorId = 0; 
 		for (int i = 0; i < this.stateTransitions.size(); i++){
 			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
-			if ((measuredEntityStateTransition.getStateFrom() == state ) && (measuredEntityStateTransition.getResonCode() == idRazonParada)) {
+			if ((measuredEntityStateTransition.getStateFrom() == state ) && (measuredEntityStateTransition.getResonCode() == idRazonParada.intValue() ) ) {
 				behaviorId = this.stateTransitions.get(i).getBehavior();
 				break;
 			}

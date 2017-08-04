@@ -5,9 +5,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,6 +91,10 @@ public class OEEAggregationContainer extends Container
 			String periodKey, String parQueryFrom, String parQueryTo) {
 		
 		List<OverallEquipmentEffectiveness> list = new ArrayList<OverallEquipmentEffectiveness>();
+        Calendar cal = Calendar.getInstance();
+        TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+        cal.setTimeZone(utcTimeZone);
+
 		
 		logger.info("MeasuredEntity:" + owner + "Measured Entity Type:" + ownerType + "intervalsByHour periodKey:" 
 						+ periodKey + " parQueryFrom:" + parQueryFrom + " parQueryTo:" + parQueryTo );
@@ -96,6 +103,8 @@ public class OEEAggregationContainer extends Container
 		double qtySchedToProduce = 0;
 		double qtyProduced = 0;
 		double qtyDefective = 0;
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 				
 		try 
 		{
@@ -133,8 +142,26 @@ public class OEEAggregationContainer extends Container
 
 			while (rs.next()) {
 								
-				LocalDateTime fromDatetime = rs.getTimestamp("datetime_from").toLocalDateTime();
-				LocalDateTime toDatetime = rs.getTimestamp("datetime_to").toLocalDateTime();
+				Timestamp dsTimeFrom = rs.getTimestamp("datetime_from", cal);
+
+				long timestampTimeFrom = dsTimeFrom.getTime();
+				cal.setTimeInMillis(timestampTimeFrom);
+				LocalDateTime fromDatetime = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+																cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+																 cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+																  cal.get(Calendar.MILLISECOND));
+
+						
+				Timestamp dsTimeTo = rs.getTimestamp("datetime_to", cal);
+				
+				long timestampTimeTo = dsTimeTo.getTime();
+				cal.setTimeInMillis(timestampTimeTo);
+				LocalDateTime toDatetime = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+																cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+																 cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+																  cal.get(Calendar.MILLISECOND));
+				
+				
 				long reducedTime = 0;
 				long periodProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.SECONDS);
 				long actualProductiveTime = 0;
@@ -163,6 +190,7 @@ public class OEEAggregationContainer extends Container
 				if (state == MeasuringState.OPERATING) {
 					
 					actualProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.SECONDS);
+					logger.info("from date:" + fromDatetime.format(formatter) + " to date:" + toDatetime.format(formatter) + " act_prod_time:" + actualProductiveTime);
 				
 				} else if (state == MeasuringState.SCHEDULEDOWN)  {
 					
@@ -184,14 +212,13 @@ public class OEEAggregationContainer extends Container
 					logger.error("Invalid measuring state" + state.getName());
 				}
 				
-				
-
 				logger.info("PeriodProductiveTime:" + periodProductiveTime + " actualproductivetime:" + 
-								actualProductiveTime +" productiveTime:" + productiveTime + " reducedTime:" + reducedTime);
+						actualProductiveTime +" productiveTime:" + productiveTime + " reducedTime:" + reducedTime);
 
+				
 				productiveTime += actualProductiveTime; 
 				
-				qtySchedToProduce += rowConversion1 * rowProductionRate* (actualProductiveTime / 60);
+				qtySchedToProduce += rowConversion1 * rowProductionRate * (actualProductiveTime / 60);
 				
 				qtyProduced += rowConversion1 * rowActualProductionRate * (actualProductiveTime / 60);
 				

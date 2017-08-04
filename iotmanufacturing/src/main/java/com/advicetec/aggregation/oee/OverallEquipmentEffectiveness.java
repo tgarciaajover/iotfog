@@ -58,11 +58,11 @@ public class OverallEquipmentEffectiveness implements Storable
 			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from >= ? AND datetime_to <= ? " 
 			+ "UNION " 
 			+ "SELECT datetime_from,datetime_to,status,reason_code,production_rate, "
-			+ "actual_production_rate,qty_defective FROM measuringentitystatusinterval "
+			+ "conversion1, conversion2, actual_production_rate,qty_defective FROM measuringentitystatusinterval "
 			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from >= ? AND datetime_from <= ? AND datetime_to >= ? "   
 			+ "UNION " 
 			+ "SELECT datetime_from,datetime_to,status,reason_code,production_rate, "
-			+ "actual_production_rate,qty_defective FROM measuringentitystatusinterval "
+			+ "conversion1, conversion2, actual_production_rate,qty_defective FROM measuringentitystatusinterval "
 			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from <= ? AND datetime_to >= ? AND datetime_to <= ? "
 			+ "ORDER BY datetime_from ";
 
@@ -99,7 +99,10 @@ public class OverallEquipmentEffectiveness implements Storable
 		
 		double ret = 0.0;
 		
+		logger.info("Predefined period:" + this.predefinedPeriod.getType().getName());
+		
 		if (this.predefinedPeriod.getType() == PredefinedPeriodType.INT_LT_HOUR) {
+			
 			Date dateFrom = this.predefinedPeriod.getCalendar().getTime();
 			Date dateTo =  this.predefinedPeriod.getCalendarTo().getTime();
 

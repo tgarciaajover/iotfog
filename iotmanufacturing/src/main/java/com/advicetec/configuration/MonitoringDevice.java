@@ -111,7 +111,7 @@ public class MonitoringDevice extends ConfigurationObject
 	public InputOutputPort getInputOutputPort(Integer id){
 
 		for (int i = 0; i < this.inputOutputPorts.size(); i++){
-			if (this.inputOutputPorts.get(i).getId() == id){
+			if (this.inputOutputPorts.get(i).getId().equals(id)){
 				return this.inputOutputPorts.get(i);
 			}
 		}

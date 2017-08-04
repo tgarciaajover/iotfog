@@ -63,7 +63,7 @@ public class SampleProcessor implements Processor
 		ArrayList<DelayEvent> ret = new ArrayList<DelayEvent>();
 		
 		if (entityFacade == null){
-			logger.error("the measured Entity was not found - id:"+ measuringEntity );
+			logger.error("Measured Entity not found - id:"+ measuringEntity );
 		} else {
 		  
 			SyntaxChecking sintaxChecking = new SyntaxChecking();
