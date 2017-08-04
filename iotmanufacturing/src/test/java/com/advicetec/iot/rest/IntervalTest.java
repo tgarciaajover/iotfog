@@ -96,10 +96,12 @@ public class IntervalTest {
 		reason.setIdleDown(false);
 		
 		Double rate = new Double(0.0);
+		Double conversion1 = new Double(0.0);
+		Double conversion2 = new Double(0.0);
 		Double actualRate = new Double(0.0);
 		Double qtyDefective = new Double(0.0);
 		
-		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, actualRate, qtyDefective);
+		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, conversion1, conversion2, actualRate, qtyDefective);
 		
 		String json = interval.toJson();
 		System.out.println(json);
@@ -125,10 +127,12 @@ public class IntervalTest {
 		reason.setIdleDown(false);
 		
 		Double rate = new Double(0.0);
+		Double conversion1 = new Double(0.0);
+		Double conversion2 = new Double(0.0);
 		Double actualRate = new Double(0.0);
 		Double qtyDefective = new Double(0.0);
 		
-		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, actualRate, qtyDefective);
+		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, conversion1, conversion2, actualRate, qtyDefective);
 		
 		return interval;
 		
@@ -144,10 +148,12 @@ public class IntervalTest {
 		reason.setIdleDown(true);
 		
 		Double rate = new Double(0.0);
+		Double conversion1 = new Double(0.0);
+		Double conversion2 = new Double(0.0);
 		Double actualRate = new Double(0.0);
 		Double qtyDefective = new Double(0.0);
 		
-		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, actualRate, qtyDefective);
+		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, conversion1, conversion2, actualRate, qtyDefective);
 		
 		return interval;
 		
@@ -160,10 +166,12 @@ public class IntervalTest {
 		ReasonCode reason = null;
 		
 		Double rate = new Double(0.0);
+		Double conversion1 = new Double(0.0);
+		Double conversion2 = new Double(0.0);
 		Double actualRate = new Double(0.0);
 		Double qtyDefective = new Double(0.0);
 		
-		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, actualRate, qtyDefective);
+		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, conversion1, conversion2, actualRate, qtyDefective);
 		
 		return interval;
 		
@@ -205,7 +213,6 @@ public class IntervalTest {
 			SInt3.dbDelete(pst);
 			
 			pst.executeBatch();
-
         	
         	String insertSQL = StateInterval.SQL_Insert;
 			

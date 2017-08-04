@@ -38,6 +38,7 @@ public class AggregationEvent extends Event
 	
 	public AggregationEvent(int measuredEntity, MeasuredEntityType ownerType,
 			AggregationEventType type, String recurrence) {
+		
 		super(EventType.AGGREGATION_EVENT);
 		this.measuredEntity = measuredEntity;
 		this.type = type;

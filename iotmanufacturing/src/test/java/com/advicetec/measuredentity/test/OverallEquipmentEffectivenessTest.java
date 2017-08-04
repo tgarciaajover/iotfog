@@ -6,8 +6,8 @@ import java.util.List;
 import org.junit.Test;
 
 import com.advicetec.aggregation.oee.OEEAggregationManager;
+import com.advicetec.aggregation.oee.OverallEquipmentEffectiveness;
 import com.advicetec.measuredentitity.MeasuredEntityType;
-import com.advicetec.measuredentitity.OverallEquipmentEffectiveness;
 import com.advicetec.utils.PredefinedPeriod;
 
 public class OverallEquipmentEffectivenessTest {
