@@ -957,7 +957,7 @@ public final class MeasuredEntityFacade {
 			}
 			
 			if (oee.getQtyProduced() != 0) {
-				part3 = (oee.getQtyDefective() / oee.getQtyProduced() );
+				part3 = ((oee.getQtyProduced() - oee.getQtyDefective()) / oee.getQtyProduced() );
 			} else {
 				part3 = 1;
 			}
