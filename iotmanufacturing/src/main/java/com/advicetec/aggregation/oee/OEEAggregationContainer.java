@@ -242,17 +242,16 @@ public class OEEAggregationContainer extends Container
 			e.printStackTrace();
 		}			
 
-		PredefinedPeriod pPeriod = PredefinedPeriod.getInstanceFrom(periodKey);
-		if(pPeriod != null){
-			OverallEquipmentEffectiveness eff = new OverallEquipmentEffectiveness(pPeriod, owner, ownerType);
-			eff.setProductiveTime(productiveTime);
-			eff.setQtySchedToProduce(qtySchedToProduce);
-			eff.setQtyProduced(qtyProduced);
-			eff.setQtyDefective(qtyDefective);
-			list.add(eff);
-		} else{
-			logger.error("Cannot create the period with key:"+periodKey);
-		}
+		
+		LocalDateTime from = Timestamp.valueOf(parQueryFrom).toLocalDateTime();
+		LocalDateTime to = Timestamp.valueOf(parQueryTo).toLocalDateTime();
+		PredefinedPeriod pPeriod = new PredefinedPeriod (from, to);
+		OverallEquipmentEffectiveness eff = new OverallEquipmentEffectiveness(pPeriod, owner, ownerType);
+		eff.setProductiveTime(productiveTime);
+		eff.setQtySchedToProduce(qtySchedToProduce);
+		eff.setQtyProduced(qtyProduced);
+		eff.setQtyDefective(qtyDefective);
+		list.add(eff);
 
 		return list;
 	}
