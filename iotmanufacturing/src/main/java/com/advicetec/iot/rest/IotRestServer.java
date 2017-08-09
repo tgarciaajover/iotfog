@@ -65,7 +65,7 @@ public class IotRestServer extends Application {
       router.attach("/MeasuredEntity/{uniqueID}/Behavior/{BehaviorID}", MeasuredEntityBehaviorResource.class);
       router.attach("/MeasuredEntity/{uniqueID}/StateBehavior/{BehaviorID}", MeasuredEntityStateBehaviorResource.class);
       router.attach("/MeasuredEntity/{uniqueID}/StateTransition/{TransitionID}", MeasuredEntityStateTransitionResource.class);
-      router.attach("/Status/{uniqueID}", StatusResource.class);
+      router.attach("/Status", StatusResource.class);
       router.attach("/AttributeValue/{uniqueID}", AttributeValueResource.class);
       router.attach("/StateInterval/{uniqueID}", IntervalResource.class);
       router.attach("/TranslationClasses", TranslationClassesResource.class);  
@@ -77,6 +77,7 @@ public class IotRestServer extends Application {
       // POST requent for downtime reasons
       router.attach("/DownTimeReason",DowntimeReasonResource.class);
       router.attach("/OverallEquipmentEffectiveness", OverallEquipmentEffectivenessResource.class);
+      router.attach("/MeasuredEntityAtttributes", MeasuredEntityAttributesResource.class);
       // Return the root router
       return router;
   }

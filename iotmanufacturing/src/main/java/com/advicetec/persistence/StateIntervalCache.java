@@ -335,7 +335,7 @@ public class StateIntervalCache extends Configurable {
 				String formatteddTimeFrom = dTimeFrom.format(formatter);
 				String formatteddTimeTo = dTimeTo.format(formatter);
 				
-				logger.info("state interval found from:" + formatteddTimeFrom + " to:" + formatteddTimeTo);
+				//logger.info("state interval found from:" + formatteddTimeFrom + " to:" + formatteddTimeTo);
 
 				
 				String status = rs.getString("status");

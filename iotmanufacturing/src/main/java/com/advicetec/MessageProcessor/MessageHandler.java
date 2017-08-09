@@ -56,12 +56,12 @@ public class MessageHandler implements Runnable
 							List<DelayEvent> eventsToCreate = processor.process();	
 							for ( int i=0; i < eventsToCreate.size(); i++){
 								DelayEvent event = eventsToCreate.get(i);
-								logger.info("Event key to search:" + event.getKey());
+								logger.debug("Event key to search:" + event.getKey());
 								if (MessageManager.getInstance().existDelayEventType(event.getKey()) == false){
 									this.toQueue.put(event);
 									MessageManager.getInstance().addDelayEventType(event.getKey());
 								} else {
-									logger.info("event of type: "+ event.getEvent().getEvntType().getName() + " already exists in the delayed queue - key:" + event.getKey() );
+									logger.debug("event of type: "+ event.getEvent().getEvntType().getName() + " already exists in the delayed queue - key:" + event.getKey() );
 								}
 							}							
 							break;

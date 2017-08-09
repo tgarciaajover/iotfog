@@ -62,12 +62,12 @@ public class PeriodUtilsTest
 	
 	
 	@Test
-	public void PeriodUtilsHoursTest()
+	public void PeriodUtilsDefaultHoursTest()
 	{
 		LocalDateTime from = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 1);
 		LocalDateTime to = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 35);
 		
-		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods(from, to);
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriodsDefault(from, to);
 		assertTrue(periods.size()==1);
 		
 		for (int i = 0; i < periods.size(); i++) {
@@ -75,7 +75,7 @@ public class PeriodUtilsTest
 		}
 		
 		LocalDateTime to2 = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 12, 35);
-		periods = PeriodUtils.getPredefinedPeriods(from, to2);
+		periods = PeriodUtils.getPredefinedPeriodsDefault(from, to2);
 		assertTrue(periods.size()==3);
 
 		// for (int i = 0; i < periods.size(); i++) {
@@ -85,18 +85,18 @@ public class PeriodUtilsTest
 	}
 	
 	@Test
-	public void PeriodUtilsDayTest()
+	public void PeriodUtilsDefaultDayTest()
 	{
 		LocalDateTime from = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 1);
 		LocalDateTime to = LocalDateTime.of(2014, Month.JANUARY.getValue(), 11, 10, 35);
 		
-		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods(from, to);
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriodsDefault(from, to);
 		System.out.println("Number of periods:" + periods.size());
 		assertTrue(periods.size()==25);
 
 		LocalDateTime to2 = LocalDateTime.of(2014, Month.JANUARY.getValue(), 12, 10, 35);
 		
-		periods = PeriodUtils.getPredefinedPeriods(from, to);
+		periods = PeriodUtils.getPredefinedPeriodsDefault(from, to);
 		System.out.println("Number of periods:" + periods.size());
 		
 		for (int i = 0; i < periods.size(); i++) {
@@ -109,12 +109,12 @@ public class PeriodUtilsTest
 	
 	
 	@Test
-	public void PeriodUtilsMonthTest()
+	public void PeriodUtilsDefaultMonthTest()
 	{
 		LocalDateTime from = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 1);
 		LocalDateTime to = LocalDateTime.of(2014, Month.FEBRUARY.getValue(), 11, 10, 35);
 		
-		List<PredefinedPeriod> periodsMonths = PeriodUtils.getPredefinedPeriods(from, to);
+		List<PredefinedPeriod> periodsMonths = PeriodUtils.getPredefinedPeriodsDefault(from, to);
 		
 		System.out.println("Number of periods:" + periodsMonths.size());
 
@@ -128,12 +128,12 @@ public class PeriodUtilsTest
 	}
 
 	@Test
-	public void PeriodUtilsYearTest()
+	public void PeriodUtilsDefaultYearTest()
 	{
 		LocalDateTime from = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 1);
 		LocalDateTime to = LocalDateTime.of(2015, Month.FEBRUARY.getValue(), 11, 10, 35);
 		
-		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods(from, to);
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriodsDefault(from, to);
 		
 		System.out.println("Number of periods:" + periods.size());
 
@@ -146,12 +146,12 @@ public class PeriodUtilsTest
 	}
 
 	@Test
-	public void PeriodUtilsYearsTest()
+	public void PeriodUtilsDefaultYearsTest()
 	{
 		LocalDateTime from = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 1);
 		LocalDateTime to = LocalDateTime.of(2016, Month.FEBRUARY.getValue(), 11, 10, 35);
 		
-		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods(from, to);
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriodsDefault(from, to);
 		
 		System.out.println("Number of periods:" + periods.size());
 
@@ -162,5 +162,93 @@ public class PeriodUtilsTest
 		assertTrue(periods.size()==69);
 		
 	}
+	
+	@Test
+	public void PeriodUtilsHourTest()
+	{
+		LocalDateTime from = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 1);
+		LocalDateTime to = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 35);
+		String reqInterval = "H";
+		
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods(from, to, reqInterval);
+		assertTrue(periods.size()==1);
+		
+		for (int i = 0; i < periods.size(); i++) {
+			System.out.println(periods.get(i).getKey());
+		}
+		
+		LocalDateTime to2 = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 12, 35);
+		periods = PeriodUtils.getPredefinedPeriodsDefault(from, to2);
+		assertTrue(periods.size()==3);
+		
+	}
+
+	@Test
+	public void PeriodUtilsDayTest()
+	{
+		LocalDateTime from = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 1);
+		LocalDateTime to = LocalDateTime.of(2014, Month.JANUARY.getValue(), 11, 10, 35);
+		String reqInterval = "D";
+		
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods(from, to, reqInterval);
+		for (int i = 0; i < periods.size(); i++) {
+			PredefinedPeriod  period = periods.get(i);
+			System.out.println("period:" + period.getKey());
+		}
+		System.out.println("PeriodUtilsDayTest Number of periods:" + periods.size());
+		assertTrue(periods.size()==2);
+
+		LocalDateTime to2 = LocalDateTime.of(2014, Month.JANUARY.getValue(), 12, 10, 35);
+		
+		periods = PeriodUtils.getPredefinedPeriods(from, to2, reqInterval);
+		System.out.println("PeriodUtilsDayTest Number of periods:" + periods.size());
+		
+		for (int i = 0; i < periods.size(); i++) {
+			System.out.println(periods.get(i).getKey());
+		}
+		
+		assertTrue(periods.size()==3);
+
+	}
+
+	@Test
+	public void PeriodUtilsMonthTest()
+	{
+		LocalDateTime from = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 1);
+		LocalDateTime to = LocalDateTime.of(2014, Month.FEBRUARY.getValue(), 11, 10, 35);
+		String reqInterval = "M";
+		
+		List<PredefinedPeriod> periodsMonths = PeriodUtils.getPredefinedPeriods(from, to, reqInterval);
+		
+		System.out.println("PeriodUtilsMonthTest Number of periods:" + periodsMonths.size());
+
+		for (int i = 0; i < periodsMonths.size(); i++) {
+			System.out.println(periodsMonths.get(i).getKey());
+		}
+
+		
+		assertTrue(periodsMonths.size()==2);
+		
+	}
+
+	@Test
+	public void PeriodUtilsYearTest()
+	{
+		LocalDateTime from = LocalDateTime.of(2014, Month.JANUARY.getValue(), 10, 10, 1);
+		LocalDateTime to = LocalDateTime.of(2015, Month.FEBRUARY.getValue(), 11, 10, 35);
+		String reqInterval = "Y";
+		
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods(from, to, reqInterval);
+		
+		System.out.println("PeriodUtilsYearTest Number of periods:" + periods.size());
+
+		for (int i = 0; i < periods.size(); i++) {
+			System.out.println(periods.get(i).getKey());
+		}
+		
+		assertTrue(periods.size()==2);
+		
+	}
+
 	
 }

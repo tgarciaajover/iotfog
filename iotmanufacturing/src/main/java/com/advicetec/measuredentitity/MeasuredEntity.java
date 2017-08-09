@@ -479,7 +479,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
     public void addExecutedEntity(ExecutedEntity executedEntity)
     {
-    	logger.info("Measure entity Id:" + getId() + " Adding executed Entity:" + executedEntity.getId());
+    	logger.debug("Measure entity Id:" + getId() + " Adding executed Entity:" + executedEntity.getId());
     	
     	this.executedEntities.put(executedEntity.getId(), executedEntity);
     }
@@ -551,7 +551,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
     public AttributeValue getAttributeValue(String name){
     	
-    	logger.info("Starting getAttributeValue - attribute:" + name);  
+    	logger.debug("Starting getAttributeValue - attribute:" + name);  
     	
 		for (int i = 0; i < this.attributeValues.size(); i++){
 			AttributeValue attr = this.attributeValues.get(i);
@@ -560,7 +560,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 			}
 		}
     	
-		logger.info("ending getAttributeValue with null");
+		logger.debug("ending getAttributeValue with null");
 		
 		return null;
     }

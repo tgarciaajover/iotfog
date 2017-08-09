@@ -1,7 +1,9 @@
 package com.advicetec.persistence;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
@@ -170,6 +172,7 @@ public class StatusStore {
 				// finally creates the attribute.
 				Attribute newAttr = new Attribute(attrName, attributeType, measurinUnit);
 				newAttr.setOrigin(origin);
+				newAttr.setTrend(attSymbol.getTrend());
 				setAttribute(newAttr);
 			}
 		}		
@@ -234,5 +237,20 @@ public class StatusStore {
 	 */
 	public AttributeValue getAttributeValueByName(String attrName){
 		return values.get(attrName);
+	}
+
+	public List<Attribute> getTrendAttributes() {
+		
+		List<Attribute> ret = new ArrayList<Attribute>();
+		for (Map.Entry<String, Attribute> pair : attributes.entrySet()) {
+			logger.info("Attribute:" + pair.getKey() + " trend:" + pair.getValue().getTrend());
+			if (pair.getValue().getTrend()){
+				logger.info("inserting in the return list");
+				ret.add(pair.getValue());
+			}
+		}
+		
+		logger.info("Nbr Attributes returned:" + ret.size());
+		return ret;
 	}
 }

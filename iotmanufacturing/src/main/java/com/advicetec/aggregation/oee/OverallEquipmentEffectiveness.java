@@ -94,7 +94,6 @@ public class OverallEquipmentEffectiveness implements Storable
 		return parentType;
 	}
 
-
 	public double getAvailableTime() {
 		
 		double ret = 0.0;
@@ -305,5 +304,12 @@ public class OverallEquipmentEffectiveness implements Storable
 		} 
 		return null;
 	}
-	
+
+	public String toString(){
+		return "predefinedPeriod:" + getPredefinedPeriod().getType().getName() + 
+				"productiveTime:" + getProductiveTime() + "qtySchedToProduce:" + 
+				   getQtySchedToProduce() + "qtyProduced:" + getQtyProduced() 
+				     + "qtyDefective:" + getQtyDefective();  
+ 		
+	}
 }

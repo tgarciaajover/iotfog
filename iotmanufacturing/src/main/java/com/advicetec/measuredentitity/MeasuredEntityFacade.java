@@ -1,7 +1,6 @@
 package com.advicetec.measuredentitity;
 
 import java.io.IOException;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -12,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -33,16 +31,13 @@ import org.w3c.dom.Document;
 import com.advicetec.aggregation.oee.OEEAggregationCalculator;
 import com.advicetec.aggregation.oee.OEEAggregationManager;
 import com.advicetec.aggregation.oee.OverallEquipmentEffectiveness;
-import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
+import com.advicetec.core.AttributeValue;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.language.ast.ASTNode;
-import com.advicetec.language.ast.AttributeSymbol;
-import com.advicetec.language.ast.StateSymbol;
 import com.advicetec.language.ast.Symbol;
-import com.advicetec.core.AttributeValue;
 import com.advicetec.persistence.DowntimeReason;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
@@ -525,27 +520,29 @@ public final class MeasuredEntityFacade {
 	public synchronized JSONArray getJsonStates(LocalDateTime from, LocalDateTime to){
 		JSONArray array = null;
 		String cannonicalMachine = "";
-
+		logger.info("from: "+from.toString()+" to: "+to.toString());
 		try {
 			cannonicalMachine = MeasuredEntityManager.getInstance()
 					.getCanonicalById(entity.getId());
 			List<StateInterval> intervals = getStatesByInterval(from, to);
 			array = new JSONArray();
 			for (StateInterval interval : intervals) {
-				
-				logger.info(interval.toString());
-				// create the json object
-				JSONObject jsob = new JSONObject();
-				jsob.append("machine", cannonicalMachine);
-				jsob.append("status", interval.getState().getName());
-				jsob.append("startDttm", interval.getInterval().getStart().toString());
-				jsob.append("endDttm", interval.getInterval().getEnd().toString());
-				if (interval.getReason() != null)
-					jsob.append("reason", interval.getReason().getDescription());
-				else 
-					jsob.append("reason", null);
-				// adding the jsonObject to array
-				array.put(jsob);
+				if (interval != null)
+				{
+					//logger.info(interval.toString());
+					// create the json object
+					JSONObject jsob = new JSONObject();
+					jsob.append("machine", cannonicalMachine);
+					jsob.append("status", interval.getState().getName());
+					jsob.append("startDttm", interval.getInterval().getStart().toString());
+					jsob.append("endDttm", interval.getInterval().getEnd().toString());
+					if (interval.getReason() != null)
+						jsob.append("reason", interval.getReason().getDescription());
+					else 
+						jsob.append("reason", null);
+					// adding the jsonObject to array
+					array.put(jsob);
+				}
 			}
 		} catch (SQLException e) {
 			logger.error("Cannot get the cannonical machine:"+entity.getId());
@@ -756,22 +753,25 @@ public final class MeasuredEntityFacade {
 		DowntimeReason reason = null;
 		for (StateInterval interval : list) {
 			// all operatives have null
-			if(interval.getReason() != null){
-				if(map.containsKey(interval.getReason().getId())){
-					reason = map.get(interval.getReason().getId());
-					reason.setMinDuration(reason.getDurationMinutos() + interval.getDurationMin());
-					reason.setOccurrences(reason.getOccurrences() + 1);
-				}else{
-					if(getEntity().getType() == MeasuredEntityType.MACHINE){
-						Machine machine = (Machine) getEntity();
-						reason = new DowntimeReason(machine.getCannonicalMachineId(), 
-								interval.getReason().getCannonicalReasonId(), 
-								interval.getReason().getDescription(), 
-								1, 
-								interval.getDurationMin());
-						map.put(interval.getReason().getId(), reason);
+			if (interval == null){
+				logger.error("the interval in the downtime reason is null" );
+			} else {
+				if(interval.getReason() != null){
+					if(map.containsKey(interval.getReason().getId())){
+						reason = map.get(interval.getReason().getId());
+						reason.setMinDuration(reason.getDurationMinutos() + interval.getDurationMin());
+						reason.setOccurrences(reason.getOccurrences() + 1);
+					}else{
+						if(getEntity().getType() == MeasuredEntityType.MACHINE){
+							Machine machine = (Machine) getEntity();
+							reason = new DowntimeReason(machine.getCannonicalMachineId(), 
+									interval.getReason().getCannonicalReasonId(), 
+									interval.getReason().getDescription(), 
+									1, 
+									interval.getDurationMin());
+							map.put(interval.getReason().getId(), reason);
+						}
 					}
-					
 				}
 			}
 		}
@@ -840,10 +840,10 @@ public final class MeasuredEntityFacade {
 
 	}
 
-	public synchronized JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo) {
+	public synchronized JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo, String reqInterval) {
 				
         // Bring different predefined periods required
-		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriodHours( dttmFrom, dttmTo ); 
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods( dttmFrom, dttmTo, reqInterval ); 
 		
 		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
 		List<OverallEquipmentEffectiveness> oees = new ArrayList<OverallEquipmentEffectiveness>();
@@ -886,6 +886,7 @@ public final class MeasuredEntityFacade {
 				if (oee2 !=null) {
 					oees.add(oee2);
 				} else {
+					logger.info("calculating oee for hour");
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
 					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
 				}
@@ -896,7 +897,7 @@ public final class MeasuredEntityFacade {
 					oees.add(oee2);
 				} else {
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
+					oees.addAll(oeeCalculator.calculateDay(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
 				}
 				
 			} else if ( period.getType() == PredefinedPeriodType.MONTH ) {
@@ -906,7 +907,7 @@ public final class MeasuredEntityFacade {
 					oees.add(oee2);
 				} else {
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
+					oees.addAll(oeeCalculator.calculateMonth(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
 				}
 				
 			} else if ( period.getType() == PredefinedPeriodType.YEAR )  {
@@ -917,7 +918,7 @@ public final class MeasuredEntityFacade {
 					oees.add(oee2);
 				} else {
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
+					oees.addAll(oeeCalculator.calculateYear(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
 				}
 									
 			} else {
@@ -973,6 +974,28 @@ public final class MeasuredEntityFacade {
 			array.put(jsob);
 		}
 		
+		return array;
+	}
+
+	/**
+	 * This method returns a JSON Array with those attributes marked as trend in the language.
+	 */
+	public synchronized JSONArray getJsonAttributeTrend() {
+		
+		logger.info("In getJsonAttributeTrend");
+		
+		List<Attribute> trendAttributes = status.getTrendAttributes();
+		JSONArray array = null;
+		array = new JSONArray();
+		for (Attribute attribute : trendAttributes) {
+			JSONObject jsob = new JSONObject();
+			jsob.append("name", attribute.getName());
+			jsob.append("type", attribute.getType());
+			jsob.append("unit", attribute.getUnit());
+			jsob.append("origin", attribute.getOrigin());
+			// adding jsonObject to JsonArray
+			array.put(jsob);			
+		}
 		return array;
 	}
 }

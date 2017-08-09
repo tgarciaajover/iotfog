@@ -214,7 +214,7 @@ public class OEEAggregationCalculator {
 							  LocalDateTime formerHour,
 							  boolean insert) {
 
-		logger.info("In calculateHour params measuredEntity:" + measuringEntity + "entityType" + measuredEntityType.getName() + 
+		logger.info("In calculateHour params measuredEntity:" + measuringEntity + "entityType:" + measuredEntityType.getName() + 
 					" hour: " + formerHour.toString());
 		
 		OEEAggregationManager manager = OEEAggregationManager.getInstance();
@@ -231,7 +231,7 @@ public class OEEAggregationCalculator {
 				String parQueryTo =  period.getKey()+":59:59.999";
 				List<OverallEquipmentEffectiveness> list = OEEContainer.intervalsByHour(
 						measuringEntity,measuredEntityType, period.getKey(), parQueryFrom,parQueryTo);
-
+				logger.info("number of oees calculated for the hour:" + list.size());
 				ret = aggregateList(measuringEntity, measuredEntityType, period,  list);
 				
 				if (insert)

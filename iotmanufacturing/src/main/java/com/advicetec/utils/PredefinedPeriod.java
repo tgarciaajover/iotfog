@@ -152,17 +152,17 @@ public class PredefinedPeriod
 			
 			case DAY:
 				return LocalDateTime.of(this.calendarFrom.get(Calendar.YEAR), 
-										 this.calendarFrom.get(Calendar.MONTH), 
+										 this.calendarFrom.get(Calendar.MONTH) + 1, 
 										  this.calendarFrom.get(Calendar.DAY_OF_MONTH), 0, 0);				
 			case HOUR:
 				return LocalDateTime.of(this.calendarFrom.get(Calendar.YEAR), 
-						 this.calendarFrom.get(Calendar.MONTH), 
+						 this.calendarFrom.get(Calendar.MONTH) + 1, 
 						  this.calendarFrom.get(Calendar.DAY_OF_MONTH), 
 						  	this.calendarFrom.get(Calendar.HOUR_OF_DAY), 0);				
 			
 			case INT_LT_HOUR:
 				return LocalDateTime.of(this.calendarFrom.get(Calendar.YEAR), 
-						 this.calendarFrom.get(Calendar.MONTH), 
+						 this.calendarFrom.get(Calendar.MONTH) + 1, 
 						  this.calendarFrom.get(Calendar.DAY_OF_MONTH), 
 						  	this.calendarFrom.get(Calendar.HOUR_OF_DAY), 
 						  	 this.calendarFrom.get(Calendar.MINUTE));				

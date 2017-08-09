@@ -252,7 +252,7 @@ public class OEEAggregationContainer extends Container
 		eff.setQtyProduced(qtyProduced);
 		eff.setQtyDefective(qtyDefective);
 		list.add(eff);
-
+		logger.info("The oee calculated is: " +  eff.toString());
 		return list;
 	}
 

@@ -11,12 +11,14 @@ import org.apache.logging.log4j.Logger;
 
 public class PeriodUtils 
 {
-	static int HOURSPERDAY = 24;
 	static int MAX_MINUTES = 59;
 	static int MAX_SECONDS = 59;
-	static int HOURSPERMONTH = HOURSPERDAY * 30;
-	static int HOURSPERYEAR = HOURSPERMONTH * 12;
-	static Logger logger = LogManager.getLogger(PeriodUtils.class.getName()); 
+	static Logger logger = LogManager.getLogger(PeriodUtils.class.getName());
+	
+	public static int HOURSPERDAY = 24;
+	public static int HOURSPERMONTH = HOURSPERDAY * 30;
+	public static int HOURSPERYEAR = HOURSPERMONTH * 12;
+	 
 	
 	static public LocalDateTime getStartNextHour(LocalDateTime date) {
 		LocalDateTime startNextHour = LocalDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), date.getHour(), MAX_MINUTES, MAX_SECONDS );
@@ -66,7 +68,7 @@ public class PeriodUtils
 	static public List<PredefinedPeriod> getPredefinedPeriodHours( LocalDateTime from, LocalDateTime to )
 	{
 		
-		logger.info("from:" + from + " to:" + to);
+		logger.info("getPredefinedPeriodHours from:" + from + " to:" + to);
 		
 		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
 
@@ -90,7 +92,7 @@ public class PeriodUtils
 			ret.add(predefinedPeriod);
 			
 			for (int i = 0; i < hours; i++) { 
-				predefinedPeriod = new PredefinedPeriod((int)startNext.getYear(), (int) startNext.getMonth().getValue(), 
+				predefinedPeriod = new PredefinedPeriod((int)startNext.getYear(), (int) startNext.getMonthValue(), 
 																		(int)startNext.getDayOfMonth(), startNext.getHour() + i);
 				ret.add(predefinedPeriod);
 			}
@@ -163,10 +165,8 @@ public class PeriodUtils
 		return ret;		
 	}
 
+	public static List<PredefinedPeriod> getPredefinedPeriodsDefault(LocalDateTime from, LocalDateTime to){
 
-	static List<PredefinedPeriod> getPredefinedPeriods(LocalDateTime from, LocalDateTime to )
-	{
-		
 		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
 		
 		long hours = ChronoUnit.HOURS.between(from, to);
@@ -248,7 +248,20 @@ public class PeriodUtils
 		}
 		
 		return ret; 
-		
+	}
+
+	public static List<PredefinedPeriod> getPredefinedPeriods(LocalDateTime from, LocalDateTime to, String reqInterval )
+	{
+				
+		if (reqInterval.compareTo("H") == 0){
+			return getPredefinedPeriodHours( from , to );
+		} else if(reqInterval.compareTo("D") == 0) { 
+			return getPredefinedPeriodDays( from , to );
+		} else if (reqInterval.compareTo("M") == 0) {
+			return getPredefinedPeriodMonths( from , to );
+		} else {
+			return getPredefinedPeriodYears( from , to );
+		}
 	}
 
 }

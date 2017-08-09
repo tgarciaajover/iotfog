@@ -1,12 +1,19 @@
 package com.advicetec.iot.rest;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.stax2.ri.typed.ValueEncoderFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,23 +21,36 @@ import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
+import org.restlet.resource.Post;
+import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 
+import com.advicetec.applicationAdapter.ProductionOrder;
+import com.advicetec.applicationAdapter.ProductionOrderFacade;
+import com.advicetec.applicationAdapter.ProductionOrderManager;
+import com.advicetec.configuration.ConfigurationManager;
+import com.advicetec.configuration.ReasonCodeContainer;
+import com.advicetec.core.AttributeType;
+import com.advicetec.eventprocessor.EventManager;
+import com.advicetec.eventprocessor.MeasuredEntityEvent;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
+import com.advicetec.measuredentitity.MeasuringState;
+import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
+import com.advicetec.monitorAdapter.protocolconverter.MqttDigital;
+import com.advicetec.mpmcqueue.QueueType;
+import com.advicetec.mpmcqueue.Queueable;
 
-public class TrendResource extends ServerResource
+public class MeasuredEntityAttributesResource extends ServerResource  
 {
-	static final Logger logger = LogManager.getLogger(TrendResource.class.getName());
+	
+	static Logger logger = LogManager.getLogger(MeasuredEntityAttributesResource.class.getName());
 
-	private String canMachineId;
 	private String canCompany;
 	private String canLocation;
 	private String canPlant;
 	private String canMachineGroup; 
-	private String reqStartDateTime;
-	private String reqEndDateTime;
-	private String trendVar;
+	private String canMachineId;
 	
 	
 	private void getParamsFromJson(Representation representation) {
@@ -45,15 +65,12 @@ public class TrendResource extends ServerResource
 			JSONObject jsonobject = jsonRepresentation.getJsonObject();
 			String jsonText = jsonobject.toString();
 			
-			this.canMachineId = jsonobject.getString("machineId");
 			this.canCompany = jsonobject.getString("company");
 			this.canLocation = jsonobject.getString("location");
 			this.canPlant = jsonobject.getString("plant");
 			this.canMachineGroup = jsonobject.getString("machineGroup");
-			this.reqStartDateTime = jsonobject.getString("startDttm");
-			this.reqEndDateTime = jsonobject.getString("endDttm");
-			this.trendVar = jsonobject.getString("variable");
-
+			this.canMachineId = jsonobject.getString("machineId");
+			
 		} catch (JSONException e) {
 			logger.error("Error:" + e.getMessage() );
 			e.printStackTrace();
@@ -65,25 +82,32 @@ public class TrendResource extends ServerResource
 	}
 
 	
-	
+	/**
+	 * Gets the attributes marked as trend in the measured entity.
+	 * @param representation The Json representation of the measured entity.
+	 * 
+	 * @return null.
+	 * 
+	 * @throws Exception If problems occur unpacking the representation.
+	*/
 	@Get("json")
-	public Representation getTrendVariable(Representation rep){
+	public Representation getMeasuredAttributes(Representation representation) throws Exception {
+ 
 		Representation result = null;
 
+		
 		// get the parameters
-		this.canMachineId = getQueryValue("machineId");
 		this.canCompany = getQueryValue("company");
 		this.canLocation = getQueryValue("location");
 		this.canPlant = getQueryValue("plant");
 		this.canMachineGroup = getQueryValue("machineGroup");
-		this.reqStartDateTime = getQueryValue("startDttm");
-		this.reqEndDateTime = getQueryValue("endDttm");
-		this.trendVar = getQueryValue("variable");
+		this.canMachineId = getQueryValue("machineId");
 
 		if (canMachineId == null) {
-			getParamsFromJson(rep);
+			getParamsFromJson(representation);
 		}
-				
+
+		
 		try {
 			Integer uniqueID = MeasuredEntityManager.getInstance()
 					.getMeasuredEntityId(this.canCompany,this.canLocation,this.canPlant, 
@@ -107,12 +131,9 @@ public class TrendResource extends ServerResource
 				logger.error("Facade does not found:"+uniqueID);
 				result = new JsonRepresentation("");
 			}else{
-				DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s.n");
-				LocalDateTime dttmFrom = LocalDateTime.parse(reqStartDateTime,format); 
-				LocalDateTime dttmTo = LocalDateTime.parse(reqEndDateTime,format);
 								
 				// get the array from the facade.
-				JSONArray jsonArray = facade.getJsonTrend(trendVar,dttmFrom, dttmTo);
+				JSONArray jsonArray = facade.getJsonAttributeTrend();
 				result = new JsonRepresentation(jsonArray);
 			}
 		} catch (SQLException e) {
@@ -120,5 +141,7 @@ public class TrendResource extends ServerResource
 			e.printStackTrace();
 		}
 		return result;
+		
 	}
+	
 }

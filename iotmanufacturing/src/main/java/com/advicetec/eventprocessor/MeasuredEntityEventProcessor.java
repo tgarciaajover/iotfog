@@ -74,7 +74,7 @@ public class MeasuredEntityEventProcessor implements Processor
 						return ret;
 					}
 					
-					logger.info("Finish executing behavior" + behaviorName);
+					logger.debug("Finish executing behavior" + behaviorName);
 					
 					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap(), AttributeOrigin.BEHAVIOR);
 					

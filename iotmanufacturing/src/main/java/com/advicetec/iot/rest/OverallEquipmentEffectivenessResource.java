@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +22,7 @@ import org.restlet.resource.ServerResource;
 
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
+import com.advicetec.utils.PeriodUtils;
 
 public class OverallEquipmentEffectivenessResource extends ServerResource {
 
@@ -33,6 +35,7 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 	private String canMachineGroup;	
 	private String reqStartDateTime;
 	private String reqEndDateTime;
+	private String reqInterval;
 
 	private void getParamsFromJson(Representation representation) {
 		
@@ -53,6 +56,7 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 			this.canMachineGroup = jsonobject.getString("machineGroup");			
 			this.reqStartDateTime = jsonobject.getString("startDttm");
 			this.reqEndDateTime = jsonobject.getString("endDttm");
+			this.reqInterval = jsonobject.getString("reqInterval");
 
 		} catch (JSONException e) {
 			logger.error("Error:" + e.getMessage() );
@@ -83,53 +87,110 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 		this.canPlant = getQueryValue("plant");
 		this.reqStartDateTime = getQueryValue("startDttm");
 		this.reqEndDateTime = getQueryValue("endDttm");
-
+		this.reqInterval = getQueryValue("reqInterval");
+		
 		// json request
 		if (canMachineId == null) {
 			getParamsFromJson(representation);
 		}		
 		
-		try {
-			// Get the contact's uniqueID from the URL.
-			Integer uniqueID = MeasuredEntityManager.getInstance()
-					.getMeasuredEntityId(this.canCompany, this.canLocation, this.canPlant,this.canMachineGroup, this.canMachineId);
-
-			if (uniqueID == null) {
-				logger.error("Measured Entity for company:" + this.canCompany +
-						 " location:" + this.canLocation + " Plant:" + this.canPlant +
-						 "machineGroup" + this.canMachineGroup + 
-						 " machineId:" + this.canMachineId + " was not found");
-				result = new JsonRepresentation("");
+		// Verifies that the reqInterval given is valid.
+		if (!validReqInterval()){
+			logger.error("Invalid request interval - valid values (H Hours ,D Days, M months, Y Years)");
+			result = new JsonRepresentation("");
+		} else {
+		
+			try {
+				// Get the contact's uniqueID from the URL.
+				Integer uniqueID = MeasuredEntityManager.getInstance()
+						.getMeasuredEntityId(this.canCompany, this.canLocation, this.canPlant,this.canMachineGroup, this.canMachineId);
+	
+				if (uniqueID == null) {
+					logger.error("Measured Entity for company:" + this.canCompany +
+							 " location:" + this.canLocation + " Plant:" + this.canPlant +
+							 "machineGroup" + this.canMachineGroup + 
+							 " machineId:" + this.canMachineId + " was not found");
+					result = new JsonRepresentation("");
+				}
+				
+				// Look for it in the database.
+				MeasuredEntityFacade facade = MeasuredEntityManager.getInstance()
+						.getFacadeOfEntityById(uniqueID);
+	
+				if(facade == null){
+					result = new JsonRepresentation("");
+					getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+					logger.error("Facade:"+uniqueID+" is not found");
+					result = new JsonRepresentation("");
+				}
+				else
+				{
+					DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s.n");
+					LocalDateTime dttmFrom = LocalDateTime.parse(this.reqStartDateTime,format); 
+					LocalDateTime dttmTo = LocalDateTime.parse(this.reqEndDateTime,format);
+					// get the array from the facade.
+					JSONArray jsonArray = facade.getOverallEquipmentEffectiveness(dttmFrom, dttmTo, this.reqInterval);
+					// from jsonarray to Representation
+					result = new JsonRepresentation(jsonArray);
+				}
+	
+			} catch (JSONException e) {
+				logger.error("Parsing json object failure:"+e.getMessage());
+				e.printStackTrace();
+			} catch (SQLException e) {
+				logger.error("SQL failure."+e.getMessage());
+				e.printStackTrace();
 			}
-			
-			// Look for it in the database.
-			MeasuredEntityFacade facade = MeasuredEntityManager.getInstance()
-					.getFacadeOfEntityById(uniqueID);
-
-			if(facade == null){
-				result = new JsonRepresentation("");
-				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
-				logger.error("Facade:"+uniqueID+" is not found");
-				result = new JsonRepresentation("");
-			}
-			else
-			{
-				DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s.n");
-				LocalDateTime dttmFrom = LocalDateTime.parse(this.reqStartDateTime,format); 
-				LocalDateTime dttmTo = LocalDateTime.parse(this.reqEndDateTime,format);
-				// get the array from the facade.
-				JSONArray jsonArray = facade.getOverallEquipmentEffectiveness(dttmFrom, dttmTo);
-				// from jsonarray to Representation
-				result = new JsonRepresentation(jsonArray);
-			}
-
-		} catch (JSONException e) {
-			logger.error("Parsing json object failure:"+e.getMessage());
-			e.printStackTrace();
-		} catch (SQLException e) {
-			logger.error("SQL failure."+e.getMessage());
-			e.printStackTrace();
 		}
 		return result;
+	}
+
+
+	private boolean validReqInterval() {
+		
+		if (this.reqInterval == null)
+			return true;
+		
+		if ((this.reqInterval.compareTo("H") == 0) || 
+			 (this.reqInterval.compareTo("D") == 0) || 
+			   (this.reqInterval.compareTo("M") == 0) || 
+			   (this.reqInterval.compareTo("Y") == 0)){
+			
+			// Verifies the coherence of the request time interval and the interval 
+			DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s.n");
+			LocalDateTime dttmFrom = LocalDateTime.parse(this.reqStartDateTime,format); 
+			LocalDateTime dttmTo = LocalDateTime.parse(this.reqEndDateTime,format);
+
+			long hours = ChronoUnit.HOURS.between(dttmFrom, dttmTo);
+			
+			if ( hours < PeriodUtils.HOURSPERDAY) {
+				if (reqInterval.compareTo("H") != 0){
+					logger.error("The time interval given should be expressed in hours and not in" + this.reqInterval);
+					return false;
+				} else {
+					return true;
+				}
+			
+			} else if ((hours >= PeriodUtils.HOURSPERDAY) && (hours <= PeriodUtils.HOURSPERMONTH )) {
+				if ((reqInterval.compareTo("M") == 0) || (reqInterval.compareTo("Y") == 0)) {
+					logger.error("The time interval given should be expressed in days or hours and not in" + this.reqInterval);
+					return false;
+				} else {
+					return true;
+				}
+			} else if ((hours > PeriodUtils.HOURSPERMONTH) && (hours <= PeriodUtils.HOURSPERYEAR )) {
+				if (reqInterval.compareTo("Y") == 0) {
+					logger.error("The time interval given should not be expressed in years");
+					return false;
+				} else {
+					return true;
+				}
+
+			} else {
+				return true;
+			}			
+		}
+		
+		return false;
 	}
 }
