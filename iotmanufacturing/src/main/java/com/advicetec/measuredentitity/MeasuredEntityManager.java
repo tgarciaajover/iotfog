@@ -17,6 +17,7 @@ import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
 import com.advicetec.persistence.MeasureAttributeValueCache;
+import com.advicetec.utils.MqttSubscriber;
 
 /**
  * This class manages the list of entities.
@@ -101,6 +102,13 @@ public class MeasuredEntityManager extends Configurable {
 				e.printStackTrace();
 			}
 		}
+		
+		// Start the MQQ subscriber if there is a MQTT connection configured.
+		if (measuredEntities.requireMQTT()){
+			MqttSubscriber mqttSubscriber = new MqttSubscriber();
+			mqttSubscriber.run();
+		}
+
 		
 		// Collect scheduled events for all measured entities.
 		List<Event> scheduledEvents = new ArrayList<Event>();

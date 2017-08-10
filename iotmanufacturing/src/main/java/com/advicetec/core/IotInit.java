@@ -76,10 +76,7 @@ public class IotInit extends Configurable
 			String rest_port = iotInit.properties.getProperty("rest_port");
 			
 			IotRestServer.runServer(Integer.valueOf(rest_port));
-			
-			MqttSubscriber mqttSubscriber = new MqttSubscriber();
-			mqttSubscriber.run();
-			
+						
 			
 		} catch (NumberFormatException e) {
 			logger.error(e.getMessage());

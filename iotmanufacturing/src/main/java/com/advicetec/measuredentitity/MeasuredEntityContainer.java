@@ -51,6 +51,7 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
 	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
 	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm FROM setup_measureentityscheduleevent WHERE measure_entity_id =";
+	static String sqlSelect7 = "SELECT count(*) from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'Q' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
 
 	static String sqlMachineSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, descripcion_sin_trabajo, factor_conversion_emp_ciclo, factor_conversion_kg_ciclo, factor_conversion_mil_ciclo, tasa_vel_esperada, tiempo_esperado_config FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
@@ -649,5 +650,43 @@ public class MeasuredEntityContainer extends Container
 		
 		logger.info("Number of measuredEntities registered:" + Integer.toString(this.canonicalMapIndex.size()));
 		return this.canonicalMapIndex.get(getCanonicalKey(company, location, plant, machineGroup, machineId));
+	}
+
+	public boolean requireMQTT() {
+		
+		boolean ret = false;
+		try 
+		{
+
+			super.connect();
+
+			logger.info("in requireMQTT:");
+			
+			String sqlSelect = sqlSelect7;  
+			ResultSet rs7 = super.pst.executeQuery(sqlSelect);
+
+			while (rs7.next()) 
+			{
+				// The number of ports configured with MQTT is greater than 0.
+				Integer count   	= rs7.getInt(1);
+				if (count > 0){
+					ret = true;
+					logger.info("MQTT is required");
+				}
+			}
+			rs7.close();
+
+			super.disconnect();
+
+		} catch (ClassNotFoundException e){
+			String error = "Could not find the driver class - Error" + e.getMessage(); 
+			logger.error(error);
+			e.printStackTrace();
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+
+		return ret;
 	}
 }

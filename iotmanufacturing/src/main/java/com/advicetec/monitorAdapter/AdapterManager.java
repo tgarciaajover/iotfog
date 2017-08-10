@@ -40,14 +40,6 @@ public class AdapterManager extends Manager implements Runnable
 		{
 			Thread t = new Thread(new AdapterHandler(instance.getQueue(),messManager.getQueue()));
 			t.start();
-			/*
-			try {
-				t.join();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			*/
 		}
 		
 		logger.debug("Ending Adapter Manager run");

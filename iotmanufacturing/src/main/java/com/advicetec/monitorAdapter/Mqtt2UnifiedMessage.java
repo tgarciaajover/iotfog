@@ -70,13 +70,11 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 				 theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), measuringEntityId, values, transformation));
 				 return theList;
 			 } else {
-				 // TODO: register the error in the log file. 
 				 logger.error("No Measuring Entity Registered for the device:" + deviceID + " port:" + portLabel);
 				 return null;
 			 }
 
 		} catch (MqttException e) {
-			// TODO Auto-generated catch block
 			logger.error("Error in mqtt message" + e.getMessage());
 			e.printStackTrace();
 		}  catch (ClassNotFoundException e){
