@@ -834,6 +834,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	public ASTNode visitRound(BehaviorGrammarParser.RoundContext ctx) 
 	{ 
 		ASTNode value = this.visit(ctx.expression());
+		
+		if (value == null){
+			throw new RuntimeException("The operator is null");
+		}
+		
 		long numdecimals = Integer.valueOf(ctx.INT1().getText());
 
 		if (value.isDouble() || value.isInteger()){
@@ -914,6 +919,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
 
+		if (left == null){
+			throw new RuntimeException("The left operator is null");
+		}
+
+		if (right == null){
+			throw new RuntimeException("The right operator is null");
+		}
+		
 		switch (ctx.op.getType()) {
 		case BehaviorGrammarParser.MULT:
 			if (left.isInteger() && right.isInteger()){
@@ -966,6 +979,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
 
+		if (left == null){
+			throw new RuntimeException("The left operator is null");
+		}
+
+		if (right == null){
+			throw new RuntimeException("The right operator is null");
+		}
+		
 		switch (ctx.op.getType()) {
 		case BehaviorGrammarParser.PLUS:
 			if (left.isInteger() && right.isInteger()){
@@ -1008,6 +1029,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
 
+		if (left == null){
+			throw new RuntimeException("The base operator is null");
+		}
+
+		if (right == null){
+			throw new RuntimeException("The exponent operator is null");
+		}
+		
 		if (left.isInteger() && right.isInteger()){
 			return new ASTNode((Double) Math.pow(left.asInterger(), right.asInterger()));
 		} else if (left.isDouble() && right.isInteger()){
@@ -1028,6 +1057,61 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
+		
+		if ((left == null) && (right == null)){
+			switch (ctx.op.getType()) {
+			case BehaviorGrammarParser.LT:
+			case BehaviorGrammarParser.GT:
+				return new ASTNode(new Boolean(false));
+			
+			case BehaviorGrammarParser.GTEQ:
+			case BehaviorGrammarParser.LTEQ:
+				return new ASTNode(new Boolean(true));
+
+			default:
+				throw new RuntimeException("unknown operator: " + BehaviorGrammarParser.tokenNames[ctx.op.getType()]);
+			}
+		}
+		
+		if ((left != null) && (right == null)){
+			switch (ctx.op.getType()) {
+			case BehaviorGrammarParser.LT:
+				return new ASTNode(new Boolean(false));
+				
+			case BehaviorGrammarParser.GT:
+				return new ASTNode(new Boolean(true));
+			
+			case BehaviorGrammarParser.GTEQ:
+				return new ASTNode(new Boolean(true));
+				
+			case BehaviorGrammarParser.LTEQ:
+				return new ASTNode(new Boolean(false));
+
+			default:
+				throw new RuntimeException("unknown operator: " + BehaviorGrammarParser.tokenNames[ctx.op.getType()]);
+			}
+		}
+			
+		if ((left == null) && (right != null)){
+			switch (ctx.op.getType()) {
+			case BehaviorGrammarParser.LT:
+				return new ASTNode(new Boolean(true));
+				
+			case BehaviorGrammarParser.GT:
+				return new ASTNode(new Boolean(false));
+			
+			case BehaviorGrammarParser.GTEQ:
+				return new ASTNode(new Boolean(false));
+				
+			case BehaviorGrammarParser.LTEQ:
+				return new ASTNode(new Boolean(true));
+
+			default:
+				throw new RuntimeException("unknown operator: " + BehaviorGrammarParser.tokenNames[ctx.op.getType()]);
+			}
+		}
+		
+		// Both values are different than null. 
 
 		switch (ctx.op.getType()) {
 		case BehaviorGrammarParser.LT:
@@ -1094,6 +1178,18 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
 
+		if ((left == null) && (right == null)){
+			return new ASTNode(new Boolean(true));
+		}
+		
+		if ((left != null) && (right == null)){
+			return new ASTNode(new Boolean(false));
+		}
+
+		if ((left == null) && (right != null)){
+			return new ASTNode(new Boolean(false));
+		}
+		
 		switch (ctx.op.getType()) {
 		case BehaviorGrammarParser.EQ:
 			if (left.isInteger() && right.isInteger()){
@@ -1153,6 +1249,19 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
+		
+		if ((left == null) && (right == null)){
+			throw new RuntimeException("operators are not of boolean type");
+		}
+
+		if ((left != null) && (right == null)){
+			throw new RuntimeException("operators are not of boolean type");
+		}
+
+		if ((left == null) && (right != null)){
+			throw new RuntimeException("operators are not of boolean type");
+		}
+		
 		if (left.isBoolean() && right.isBoolean()){
 
 			Boolean ret = left.asBoolean() && right.asBoolean();
@@ -1171,6 +1280,19 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 		ASTNode left = this.visit(ctx.expression(0));
 		ASTNode right = this.visit(ctx.expression(1));
+
+		if ((left == null) && (right == null)){
+			throw new RuntimeException("operators are not of boolean type");
+		}
+
+		if ((left != null) && (right == null)){
+			throw new RuntimeException("operators are not of boolean type");
+		}
+
+		if ((left == null) && (right != null)){
+			throw new RuntimeException("operators are not of boolean type");
+		}
+		
 		if (left.isBoolean() && right.isBoolean()){
 			return new ASTNode(left.asBoolean() || right.asBoolean());
 		} else {
@@ -1223,15 +1345,31 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		BehaviorGrammarParser.ExpressionContext numberFrom = ctx.ex2;
 		BehaviorGrammarParser.ExpressionContext numberTo = ctx.ex3;
 
-		String ret =  (this.visit(stringEq1)).asString();
+		ASTNode stringFrom = this.visit(stringEq1);
+
+		if (stringFrom == null){
+			throw new RuntimeException("param String is null which is not valid");
+		}
+		
+		String ret = stringFrom.asString();
 
 		ASTNode numberFr = this.visit(numberFrom); 
+		
+		if (numberFr == null){
+			throw new RuntimeException("param number_from is null which is not valid");
+		}
+		
 		if (numberFr.isInteger() == false) 
 		{
 			throw new RuntimeException("param number_from is not valid: " + numberFr.toString());
 		}
 
 		ASTNode numberT = this.visit(numberTo);
+
+		if (numberT == null){
+			throw new RuntimeException("param number_to is null which is not valid");
+		}
+		
 		if ( numberT.isInteger() == false) 
 		{
 			throw new RuntimeException("param number_to is not valid: " + numberT.toString());
@@ -1250,8 +1388,19 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		BehaviorGrammarParser.ExpressionContext stringParamCtx1 =  ctx.ex1;
 		BehaviorGrammarParser.ExpressionContext StringParamCtx2 = ctx.ex2;
 
-		String stringParam1 =  (this.visit(stringParamCtx1)).asString();
-		String stringParam2 =  (this.visit(StringParamCtx2)).asString();
+		ASTNode strNode1 = this.visit(stringParamCtx1);
+		ASTNode strNode2 = this.visit(StringParamCtx2);		
+		
+		if (strNode1 == null){
+			throw new RuntimeException("param string from is null which is not valid");
+		}
+
+		if (strNode2 == null){
+			throw new RuntimeException("param the string to compare is null which is not valid");			
+		}
+
+		String stringParam1 =  strNode1.asString();
+		String stringParam2 =  strNode2.asString();
 
 		logger.debug("visitStartWith - Param1:"+ stringParam1 + " Param2:" + stringParam2 );
 
@@ -1457,6 +1606,10 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 			ASTNode evaluated = this.visit(condition.expression());
 
+			if (evaluated == null){
+				throw new RuntimeException("The comparisson expression inside the if is null");
+			}
+			
 			if(evaluated.asBoolean()) {
 				evaluatedBlock = true;
 				// evaluate this block whose expr==true
@@ -1484,6 +1637,12 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	public ASTNode visitUnaryMinusExpr(BehaviorGrammarParser.UnaryMinusExprContext ctx) 
 	{ 
 		ASTNode value = this.visit(ctx.expression());
+		
+		// The expression corresponds to an attribute in the status, which was not found.
+		// we assume an integer 0
+		if (value == null)
+			value = new ASTNode(new Integer(0));
+		
 		if (value.isInteger()){
 			return new ASTNode(value.asInterger() * -1);
 		} else if (value.isDouble()) {
