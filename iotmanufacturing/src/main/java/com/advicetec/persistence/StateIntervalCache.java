@@ -59,7 +59,8 @@ public class StateIntervalCache extends Configurable {
 
 	private String sqlDownTimeReasons;
 	
-	final private static String sqlStatusIntervalRangeSelect = "SELECT datetime_from, datetime_to, status, reason_code, production_rate, conversion1, conversion2, actual_production_rate, qty_defective FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? and ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? and datetime_to <= ?))";
+	final private static String sqlStatusIntervalRangeSelect = "SELECT datetime_from, datetime_to, status, reason_code, executed_object, executed_object_type, executed_object_canonical, production_rate, conversion1, conversion2, actual_production_rate, qty_defective FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? and ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? and datetime_to <= ?))";
+	final private static String sqlUpdateInterval = "UPDATE measuringentitystatusinterval SET reason_code = ? WHERE id_owner = ? and owner_type = ? and datetime_from =?";
 			
 	private static Cache<String, StateInterval> cache;
 	PreparedStatement preparedStatement;
@@ -77,9 +78,9 @@ public class StateIntervalCache extends Configurable {
 		WRITE_TIME = Integer.valueOf(properties.getProperty("write_time"));
 		DELETE_TIME = Integer.valueOf(properties.getProperty("delete_time"));
 
-		if (this.DB_DRIVER.compareTo("org.postgresql.Driver") == 0){
+		if (StateIntervalCache.DB_DRIVER.compareTo("org.postgresql.Driver") == 0){
 			sqlDownTimeReasons = "SELECT reason_code, COUNT(*) AS counter, SUM(DATE_PART('minute',datetime_to - datetime_from)) AS duration FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? AND ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? AND datetime_to <= ?)) GROUP BY reason_code";
-		} else if (this.DB_DRIVER.compareTo("com.microsoft.sqlserver.jdbc.SQLServerDriver") == 0){
+		} else if (StateIntervalCache.DB_DRIVER.compareTo("com.microsoft.sqlserver.jdbc.SQLServerDriver") == 0){
 			sqlDownTimeReasons = "SELECT reason_code, COUNT(*) AS counter, SUM(DATEDIFF(minute,datetime_from,datetime_to)) AS duration FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? AND ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? AND datetime_to <= ?)) GROUP BY reason_code";
 		}
 
@@ -300,7 +301,7 @@ public class StateIntervalCache extends Configurable {
 			Class.forName(DB_DRIVER);
 			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 			connDB.setAutoCommit(false);
-			pstDB = connDB.prepareStatement(this.sqlStatusIntervalRangeSelect);
+			pstDB = connDB.prepareStatement(StateIntervalCache.sqlStatusIntervalRangeSelect);
 			pstDB.setString(1, Integer.toString(entityId));
 			pstDB.setInt(2, mType.getValue());
 			pstDB.setTimestamp(3, Timestamp. valueOf(from));
@@ -340,12 +341,14 @@ public class StateIntervalCache extends Configurable {
 				
 				String status = rs.getString("status");
 				String reasonCode = rs.getString("reason_code");
+				Integer executedObject = rs.getInt("executed_object");
+				Integer executedObjectType = rs.getInt("executed_object_type");
+				String executedObjectCanonicalKey = rs.getString("executed_object_canonical");
 				Double productionRate = rs.getDouble("production_rate");
 				Double conversion1 = rs.getDouble("conversion1");
 				Double conversion2 = rs.getDouble("conversion2");
 				Double actualProductionRate = rs.getDouble("actual_production_rate");
 				Double qtyDefective = rs.getDouble("qty_defective");
-				
 				
 				MeasuringState measuringState = MeasuringState.getByName(status);
 				ReasonCode rCode = null;
@@ -354,7 +357,7 @@ public class StateIntervalCache extends Configurable {
 				}
 				
 				TimeInterval timeInterval = new TimeInterval(dTimeFrom, dTimeTo); 
-				StateInterval sInt = new StateInterval(measuringState, rCode, timeInterval, entityId, mType, productionRate, conversion1, conversion2, actualProductionRate, qtyDefective);
+				StateInterval sInt = new StateInterval(measuringState, rCode, timeInterval, entityId, mType, executedObject, executedObjectType, executedObjectCanonicalKey, productionRate, conversion1, conversion2, actualProductionRate, qtyDefective);
 				
 				list.add(sInt);
 						      
@@ -476,9 +479,59 @@ public class StateIntervalCache extends Configurable {
 		return map;
 	}
 
-	public synchronized void updateStateInterval(LocalDateTime startDttm, ReasonCode reasonCode) {
+	public synchronized boolean updateStateInterval(Integer entityId, MeasuredEntityType mType, 
+												  LocalDateTime startDttm, ReasonCode reasonCode) {
 		
+		boolean ret = false;
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+		try{
+			Class.forName(DB_DRIVER);
+			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			connDB.setAutoCommit(false);
+			pstDB = connDB.prepareStatement(StateIntervalCache.sqlUpdateInterval);
+			
+			// Reason Code 
+			if (reasonCode != null) {
+				pstDB.setString(1, reasonCode.getId().toString() );      			
+			} else { 
+				pstDB.setString(1, null);
+			}
+			
+			pstDB.setString(2, Integer.toString(entityId));
+			pstDB.setInt(3, mType.getValue());
+			pstDB.setTimestamp(4, Timestamp.valueOf(startDttm));
+			if (pstDB.executeUpdate() > 0){
+				ret = true;
+			}
+
+		}catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally{
+			if(pstDB!=null)
+			{
+				try
+				{
+					pstDB.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null) 
+			{
+				try
+				{
+					connDB.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}			
 		
+		return ret;
 	}
 
 

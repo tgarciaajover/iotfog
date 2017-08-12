@@ -28,6 +28,7 @@ public class ProductionOrderContainer extends Container
 	
 	static String sqlSelect = "SELECT id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, ano, mes, id_produccion, id_articulo, descr_articulo, fechahora_inicial, fechahora_final, num_horas, cantidad_producir, tasa_esperada, velocidad_esperada, create_date, last_updttm FROM canonical_ordenproduccionplaneada where id = ?";
 	static String sqlProductionOrderSelect = "SELECT id FROM canonical_ordenproduccionplaneada where id_compania = ? and id_sede = ? and id_planta = ? and id_grupo_maquina = ? and id_maquina =? and ano = ? and mes = ? and id_produccion = ? ";
+	static String sqlCanonicalSelect = "SELECT id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, ano, mes, id_produccion FROM canonical_ordenproduccionplaneada WHERE id = ? ";
 	
 	public ProductionOrderContainer(String driver, String server, String user, String password) {
 		super(driver, server, user, password);
@@ -188,23 +189,27 @@ public class ProductionOrderContainer extends Container
 					    	
 					}
 		        }
-			    
-				// Load the object previously held on the container 
-				super.configuationObjects.get(id);
+			    				
+			}
 
-				if (super.configuationObjects.get(id) != null){
-					if (!(super.configuationObjects.get(id).equals(prdOrderTmp))){
-						// The host system changed the the production, so we need to update it
-						super.configuationObjects.put(id, prdOrderTmp);
-					}
-				} else {    		        		        		        
+			rs1.close();			
+
+			// set the canonical key for the object.
+			String canonicalKey = getCanonicalInformation(prdOrderTmp);
+			prdOrderTmp.setCanonicalKey(canonicalKey);
+			
+			// Load the object previously held on the container 
+			super.configuationObjects.get(id);
+
+			if (super.configuationObjects.get(id) != null){
+				if (!(super.configuationObjects.get(id).equals(prdOrderTmp))){
+					// The host system changed the the production, so we need to update it
 					super.configuationObjects.put(id, prdOrderTmp);
 				}
-				
+			} else {    		        		        		        
+				super.configuationObjects.put(id, prdOrderTmp);
 			}
-		    
-			rs1.close();			
-						
+									
 			super.disconnect();
 			
 			return prdOrderTmp; 
@@ -264,6 +269,41 @@ public class ProductionOrderContainer extends Container
 		return id;
 
 		
+	}
+
+	private String getCanonicalInformation(ProductionOrder prodOrder) {
+		
+		String canonicalKey = "";
+		
+		try 
+		{
+			String sqlSelect = sqlCanonicalSelect + String.valueOf(prodOrder.getId());  
+			ResultSet rs = super.pst.executeQuery(sqlSelect);
+
+			while (rs.next()) 
+			{
+				
+				String company 		 	= rs.getString("id_compania");
+				String location      	= rs.getString("id_sede");
+				String plan 	 	 	= rs.getString("id_planta");
+				String machineGroup  	= rs.getString("id_grupo_maquina");
+				Integer ano 		 	= rs.getInt("ano");
+				Integer month        	= rs.getInt("month");
+				String productionOrder = rs.getString("id_produccion");
+				
+				canonicalKey = company + "-" + location + "-" + plan + "-" + machineGroup + "-" + 
+								Integer.toString(ano) + "-" + Integer.toString(month) + "-" + productionOrder;  
+				
+			}
+
+			rs.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		return canonicalKey;
 	}
 	
 }

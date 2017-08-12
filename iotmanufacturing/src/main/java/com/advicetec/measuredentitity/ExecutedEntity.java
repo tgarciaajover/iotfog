@@ -60,7 +60,9 @@ public class ExecutedEntity extends ConfigurationObject
     @JsonIgnore
     protected List<AttributeValue> attributeValues;
 
+    protected String canonicalKey;
 	
+
 	public ExecutedEntity(@JsonProperty("id") Integer id, MeasuredEntityType type) {
 		super(id);
 		startDateTimeStatus = LocalDateTime.now();
@@ -173,5 +175,13 @@ public class ExecutedEntity extends ConfigurationObject
     public LocalDateTime getCurrentStatDateTime(){
     	return this.startDateTimeStatus;
     }
-	
+
+	public void setCanonicalKey(String canonicalKey) {
+		this.canonicalKey = canonicalKey;
+	}
+
+    
+    public String getCanonicalKey(){
+    	return this.canonicalKey;
+    }
 }

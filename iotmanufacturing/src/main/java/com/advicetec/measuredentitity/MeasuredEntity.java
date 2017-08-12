@@ -190,11 +190,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 			
 			
 		} catch (JsonGenerationException e) {
-			// TODO: log the error
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 		
@@ -313,8 +315,6 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		
 		return null;
 	}
-	
-	
 	
 	public synchronized MeasuredEntityStateTransition getStateTransition(Integer id)
 	{
@@ -514,6 +514,18 @@ public abstract class MeasuredEntity extends ConfigurationObject
     
     public void removeExecutedEntity(Integer id){
     	this.executedEntities.remove(id);
+    }
+
+    public ExecutedEntity getCurrentExecutedEntity()
+    {
+    	
+    	for (Integer id : this.executedEntities.keySet()){
+    		ExecutedEntity executedEntity = this.executedEntities.get(id);  
+    		if (executedEntity.getCurrentState() == MeasuringState.OPERATING)
+    			return executedEntity;
+    	}
+    	
+    	return null;
     }
     
     public Double getProductionRate(String productionRateId)

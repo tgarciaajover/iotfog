@@ -467,7 +467,7 @@ public final class ProductionOrderFacade {
 		}
 		
 		
-		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType(), rate, conversion1, conversion2, actualRate, new Double(0));
+		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType(), this.pOrder.getId(), this.pOrder.getType().getValue(), this.pOrder.getCanonicalKey(), rate, conversion1, conversion2, actualRate, new Double(0));
 		stateInterval.setKey(this.pOrder.getId()+stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());

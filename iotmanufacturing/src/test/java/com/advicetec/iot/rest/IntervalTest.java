@@ -101,7 +101,9 @@ public class IntervalTest {
 		Double actualRate = new Double(0.0);
 		Double qtyDefective = new Double(0.0);
 		
-		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, conversion1, conversion2, actualRate, qtyDefective);
+		
+		
+		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, 1, MeasuredEntityType.JOB.getValue(), "key1", rate, conversion1, conversion2, actualRate, qtyDefective);
 		
 		String json = interval.toJson();
 		System.out.println(json);
@@ -132,7 +134,7 @@ public class IntervalTest {
 		Double actualRate = new Double(0.0);
 		Double qtyDefective = new Double(0.0);
 		
-		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, conversion1, conversion2, actualRate, qtyDefective);
+		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, 1, MeasuredEntityType.JOB.getValue(), "key1", rate, conversion1, conversion2, actualRate, qtyDefective);
 		
 		return interval;
 		
@@ -153,7 +155,7 @@ public class IntervalTest {
 		Double actualRate = new Double(0.0);
 		Double qtyDefective = new Double(0.0);
 		
-		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, conversion1, conversion2, actualRate, qtyDefective);
+		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, 1, MeasuredEntityType.JOB.getValue(), "key1", rate, conversion1, conversion2, actualRate, qtyDefective);
 		
 		return interval;
 		
@@ -171,7 +173,7 @@ public class IntervalTest {
 		Double actualRate = new Double(0.0);
 		Double qtyDefective = new Double(0.0);
 		
-		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, rate, conversion1, conversion2, actualRate, qtyDefective);
+		StateInterval interval = new StateInterval(state, reason, int1, 2,MeasuredEntityType.MACHINE, 1, MeasuredEntityType.JOB.getValue(), "key1", rate, conversion1, conversion2, actualRate, qtyDefective);
 		
 		return interval;
 		

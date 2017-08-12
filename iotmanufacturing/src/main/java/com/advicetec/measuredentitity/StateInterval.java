@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -27,17 +28,21 @@ public final class StateInterval implements Storable
 	private MeasuringState state;
 	private ReasonCode reason;
 	private TimeInterval interval;
+	private LocalDateTime lastUpdttm;
 	
 	// information about the parent.
 	private Integer parent;
 	private MeasuredEntityType parentType;
+	private Integer executedObject;
+	private Integer executedObjectType;
+	private String executedObjectCanonical;
 	private Double productionRate;
 	private Double conversion1;  // This field maintains the conversion from cycles to product units (unit of measure 1)
 	private Double conversion2;  // This field maintains the conversion from cycles to product units (unit of measure 2)
 	private Double actualProductionRate;
 	private Double qtyDefective;
-	
-	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code, production_rate, conversion1, conversion2, actual_production_rate, qty_defective)" + "VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+	 
+	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code, executed_object, executed_object_type, executed_object_canonical, production_rate, conversion1, conversion2, actual_production_rate, qty_defective)" + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 	public static final String SQL_Delete = "DELETE FROM measuringentitystatusinterval WHERE id_owner = ? AND owner_type = ? AND datetime_from = ? AND datetime_to =?";
 			
 	
@@ -47,6 +52,9 @@ public final class StateInterval implements Storable
 			@JsonProperty("interval")TimeInterval timeInterval,
 			@JsonProperty("origin")Integer parent, 
 			@JsonProperty("originType")MeasuredEntityType parentType,
+			@JsonProperty("executedObject")Integer executedObject,
+			@JsonProperty("executedObjectType")Integer executedObjectType,
+			@JsonProperty("executedObjectCanonical")String executedObjectCanonical,
 			@JsonProperty("productionRate")Double productionRate,
 			@JsonProperty("conversion1")Double conversion1,
 			@JsonProperty("conversion2")Double conversion2,
@@ -61,11 +69,45 @@ public final class StateInterval implements Storable
 		this.interval = timeInterval;
 		this.parent = parent;
 		this.parentType = parentType;
+		this.executedObject = executedObject;
+		this.executedObjectType = executedObjectType;
+		this.executedObjectCanonical = executedObjectCanonical;
 		this.productionRate = productionRate;
 		this.conversion1 = conversion1;
 		this.conversion2 = conversion2;
 		this.actualProductionRate = actualProductionRate;
 		this.qtyDefective = qtyDefective;
+		this.lastUpdttm = LocalDateTime.now();
+	}
+
+	public LocalDateTime getLastUpdttm(){
+		return this.lastUpdttm;
+	}
+	
+	public Integer getExecutedObject() {
+		return executedObject;
+	}
+
+	public void setExecutedObject(Integer executedObject) {
+		this.executedObject = executedObject;
+		this.lastUpdttm = LocalDateTime.now();
+	}
+
+	public Integer getExecutedObjectType() {
+		return executedObjectType;
+	}
+	
+	public void setExecutedObjectType(Integer executedObjectType) {
+		this.executedObjectType = executedObjectType;
+		this.lastUpdttm = LocalDateTime.now();
+	}
+	
+	public String getExecutedObjectCanonical() {
+		return executedObjectCanonical;
+	}
+
+	public void setExecutedObjectCanonical(String executedObjectCanonical) {
+		this.executedObjectCanonical = executedObjectCanonical;
 	}
 
 	public Double getProductionRate() {
@@ -74,10 +116,12 @@ public final class StateInterval implements Storable
 
 	public void setProductionRate(Double productionRate) {
 		this.productionRate = productionRate;
+		this.lastUpdttm = LocalDateTime.now();
 	}
     
 	public void setActualProductionRate(Double actualProductionRate) {
 		this.actualProductionRate = actualProductionRate;
+		this.lastUpdttm = LocalDateTime.now();
 	}
 
 	public Double getConversion1() {
@@ -86,6 +130,7 @@ public final class StateInterval implements Storable
 
 	public void setConversion1(Double conversion1) {
 		this.conversion1 = conversion1;
+		this.lastUpdttm = LocalDateTime.now();
 	}
 
 	public Double getConversion2() {
@@ -94,10 +139,12 @@ public final class StateInterval implements Storable
 
 	public void setConversion2(Double conversion2) {
 		this.conversion2 = conversion2;
+		this.lastUpdttm = LocalDateTime.now();
 	}
 
 	public void setReason(ReasonCode reason) {
 		this.reason = reason;
+		this.lastUpdttm = LocalDateTime.now();
 	}
 	
 	public MeasuringState getState() {
@@ -141,8 +188,8 @@ public final class StateInterval implements Storable
 		{
 			pstmt.setInt(1, getParent());
 			pstmt.setInt(2, getParentType().getValue());          					// owner_type
-			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // timestamp
-			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // timestamp
+			pstmt.setTimestamp(3, Timestamp.valueOf(getInterval().getStart()) );   // Timestamp
+			pstmt.setTimestamp(4, Timestamp.valueOf(getInterval().getEnd()) );   // Timestamp
 			pstmt.setString(5, getState().getName() );      			// Measuring Status
 			
 			// Reason Code 
@@ -152,20 +199,29 @@ public final class StateInterval implements Storable
 				pstmt.setString(6, null);
 			}
 			
+			// Executed Object
+			pstmt.setInt(7, getExecutedObject());
+			
+			// Executed Object Type
+			pstmt.setInt(8, getExecutedObjectType());
+
+			// Executed Object Canonical
+			pstmt.setString(9, getExecutedObjectCanonical());
+
 			// Production rate
-			pstmt.setDouble(7, getProductionRate());
+			pstmt.setDouble(10, getProductionRate());
 			
 			// Conversion 1
-			pstmt.setDouble(8, getConversion1());
+			pstmt.setDouble(11, getConversion1());
 
 			// Conversion 2
-			pstmt.setDouble(9, getConversion2());
+			pstmt.setDouble(12, getConversion2());
 
 			// actual production rate
-			pstmt.setDouble(10, getActualProductionRate());
+			pstmt.setDouble(13, getActualProductionRate());
 	
 			// qty defective
-			pstmt.setDouble(11, getQtyDefective());
+			pstmt.setDouble(14, getQtyDefective());
 			
 			pstmt.addBatch();
 
@@ -202,6 +258,7 @@ public final class StateInterval implements Storable
 
 	public void setKey(String newKey) {
 		this.key = newKey;
+		this.lastUpdttm = LocalDateTime.now();
 	}
 	
 	public String toJson()
@@ -224,6 +281,8 @@ public final class StateInterval implements Storable
 		sb.append("interval:").append(interval).append(",");
 		sb.append("origin:").append(parent).append(",");
 		sb.append("originType:").append(parentType).append(",");
+		sb.append("executedObject:").append(executedObject).append(",");
+		sb.append("executedObjectType:").append(executedObjectType).append(",");
 		sb.append("productionRate:").append(productionRate);
 		sb.append("conversion1:").append(conversion1);
 		sb.append("conversion2:").append(conversion2);
@@ -235,7 +294,7 @@ public final class StateInterval implements Storable
 	
 	public int compareTo(StateInterval a)
 	{
-		return this.toString().compareTo(a.toString());
+		return this.lastUpdttm.compareTo(a.getLastUpdttm());
 	}
 
 	@JsonIgnore

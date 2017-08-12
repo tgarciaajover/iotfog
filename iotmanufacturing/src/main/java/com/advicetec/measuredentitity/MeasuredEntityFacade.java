@@ -422,6 +422,9 @@ public final class MeasuredEntityFacade {
 	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
 		
+		// Obtains the current executed entity being processed.
+		ExecutedEntity executedEntity = this.entity.getCurrentExecutedEntity();
+				
 		// search the production rate in the actual production job, if not defined then search on the measured entity. 
 		Double rate = this.entity.getProductionRate(this.productionRateId);
 		Double conversion1 = this.entity.getConversion1(this.unit1PerCycles);
@@ -462,7 +465,13 @@ public final class MeasuredEntityFacade {
 			actualRate = new Double(sum * 60 / seconds);    // The actual rate is in cycle over minutes. 
 		}
 			
-		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType(), rate, conversion1, conversion2, actualRate, new Double(0));
+		StateInterval stateInterval = null;
+		if (executedEntity != null){
+			stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType(), executedEntity.getId(), executedEntity.getType().getValue(),executedEntity.getCanonicalKey(), rate, conversion1, conversion2, actualRate, new Double(0));
+		}
+		else{
+			stateInterval = new StateInterval(status, reasonCode, interval, entity.getId(), entity.getType(), 0, 0, "", rate, conversion1, conversion2, actualRate, new Double(0));
+		}
 		stateInterval.setKey(entity.getId()+stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());
@@ -518,9 +527,9 @@ public final class MeasuredEntityFacade {
 	 * @return Json Array of states.
 	 */
 	public synchronized JSONArray getJsonStates(LocalDateTime from, LocalDateTime to){
+		logger.debug("getJsonStates" + " from: " + from.toString() + " to: " + to.toString());
 		JSONArray array = null;
 		String cannonicalMachine = "";
-		logger.info("from: "+from.toString()+" to: "+to.toString());
 		try {
 			cannonicalMachine = MeasuredEntityManager.getInstance()
 					.getCanonicalById(entity.getId());
@@ -541,6 +550,10 @@ public final class MeasuredEntityFacade {
 					else 
 						jsob.append("reason", null);
 					// adding the jsonObject to array
+					
+					jsob.append("executedObject", interval.getExecutedObject().toString());
+					jsob.append("executedObjectType", interval.getExecutedObjectType().toString());
+					jsob.append("executedObjectCanonical", interval.getExecutedObjectCanonical());
 					array.put(jsob);
 				}
 			}
@@ -999,13 +1012,16 @@ public final class MeasuredEntityFacade {
 		return array;
 	}
 
-	public void updateStateInterval(String startDttmStr, ReasonCode reasonCode) {
+	public boolean updateStateInterval(String startDttmStr, ReasonCode reasonCode) {
 
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
 		
+		boolean ret = false;
+		
 		if (this.entity.getCurrentStatDateTime().equals(startDttm)){
 			this.entity.setCurrentReasonCode(reasonCode);
+			ret = true;
 		} else {
 
 			LocalDateTime oldest = stateCache.getOldestTime();
@@ -1013,12 +1029,14 @@ public final class MeasuredEntityFacade {
 			// all values are in the cache
 			if(oldest.isBefore(startDttm)){
 				String stateKey = statesMap.get(startDttm);
-				stateCache.updateCacheStateInterval(stateKey, reasonCode);
+				ret = stateCache.updateCacheStateInterval(stateKey, reasonCode);
 			} else if(oldest.isAfter(startDttm)){
 				// all values are in the database 
-				stateCache.updateStateInterval(startDttm, reasonCode);				
+				ret = stateCache.updateStateInterval(this.entity.getId(), this.entity.getType(), startDttm, reasonCode);				
 			}
 		}
+		
+		return ret;
 	}
 }
 

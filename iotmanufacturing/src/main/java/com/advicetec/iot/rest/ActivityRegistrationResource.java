@@ -357,7 +357,7 @@ public class ActivityRegistrationResource extends ServerResource
 	}
 	
 	
-	private void executeUpdateStop(MeasuredEntityFacade measuredEntityFacade, int idStopReason, String startDttm){
+	private void executeUpdateStop(MeasuredEntityFacade measuredEntityFacade, int idStopReason, String startDttm) {
 
     	logger.info("in updating a measured entity stop");
 
@@ -367,9 +367,16 @@ public class ActivityRegistrationResource extends ServerResource
 		ReasonCode reasonCode = (ReasonCode) reasonCodeCon.getObject(idStopReason);
 
 		// look for the correct stop.
-		measuredEntityFacade.updateStateInterval(startDttm,reasonCode);
+		boolean ret = measuredEntityFacade.updateStateInterval(startDttm,reasonCode);
 		
-		getResponse().setStatus(Status.SUCCESS_OK);
+		if (ret){ 
+			getResponse().setStatus(Status.SUCCESS_OK);
+		}
+		else{
+			String error = "It could not find the interval to update";
+			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
+		}
+			
 
 	}
 	
@@ -381,26 +388,45 @@ public class ActivityRegistrationResource extends ServerResource
     	// Look for it in the Reason Code database.
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
 		ReasonCodeContainer reasonCodeCon = confManager.getReasonCodeContainer();
-		reasonCodeCon.getObject(idStopReason);
+		ReasonCode reasonCode = (ReasonCode) reasonCodeCon.getObject(idStopReason);
 
-		// Start of a new stop, call the behavior.
+		// Update the current stop, call the behavior.
 		MeasuringState state =  measuredEntityFacade.getEntity().getCurrentState();
-		String behavior = measuredEntityFacade.getEntity().getBehaviorText(state, idStopReason);
 		
-		ArrayList<InterpretedSignal> signals = new ArrayList<InterpretedSignal>();
-		InterpretedSignal reasonSignal = new InterpretedSignal(AttributeType.INT, new Integer(idStopReason));
-		signals.add(reasonSignal);
+		if ((state == MeasuringState.SCHEDULEDOWN) || (state == MeasuringState.UNSCHEDULEDOWN)){
 
-		MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuredEntityFacade.getEntity().getId(),0, 0, signals );
-		event.setRepeated(false);
-		event.setMilliseconds(0); // To be executed now.
-		
-		EventManager eventManager = EventManager.getInstance();
-		
-		Queueable obj = new Queueable(QueueType.EVENT, event);
-		eventManager.getQueue().enqueue(6, obj);
-		
-		getResponse().setStatus(Status.SUCCESS_OK);
+			// Update the reason code.
+			measuredEntityFacade.getEntity().setCurrentReasonCode(reasonCode);
+			
+			String behavior = measuredEntityFacade.getEntity().getBehaviorText(state, idStopReason);
+			
+			if (!behavior.isEmpty()){
+				ArrayList<InterpretedSignal> signals = new ArrayList<InterpretedSignal>();
+				InterpretedSignal reasonSignal = new InterpretedSignal(AttributeType.INT, new Integer(idStopReason));
+				signals.add(reasonSignal);
+	
+				MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuredEntityFacade.getEntity().getId(),0, 0, signals );
+				event.setRepeated(false);
+				event.setMilliseconds(0); // To be executed now.
+				
+				EventManager eventManager = EventManager.getInstance();
+				
+				try {
+					Queueable obj = new Queueable(QueueType.EVENT, event);
+					eventManager.getQueue().enqueue(6, obj);
+				} catch (InterruptedException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}				
+			}
+			
+			getResponse().setStatus(Status.SUCCESS_OK);
+
+		} else {
+			String error = "The measuring entity is not in a stop status, so we could not register the reason";
+			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
+
+		}
 
 	}
 	
