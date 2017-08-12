@@ -460,6 +460,10 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	startDateTimeStatus = dateTime;
     }
     
+    public void setCurrentReasonCode(ReasonCode rCode){
+    	currentReason= rCode;
+    }
+    
     @JsonIgnore
     public MeasuringState getCurrentState(){
     	return this.currentState;

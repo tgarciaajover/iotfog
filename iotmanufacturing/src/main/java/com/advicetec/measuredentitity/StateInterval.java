@@ -22,6 +22,7 @@ import com.advicetec.persistence.Storable;
 @JsonIgnoreProperties({"preparedInsertText","preparedDeleteText"})
 public final class StateInterval implements Storable
 {
+
 	private String key;
 	private MeasuringState state;
 	private ReasonCode reason;
@@ -95,6 +96,10 @@ public final class StateInterval implements Storable
 		this.conversion2 = conversion2;
 	}
 
+	public void setReason(ReasonCode reason) {
+		this.reason = reason;
+	}
+	
 	public MeasuringState getState() {
 		return state;
 	}

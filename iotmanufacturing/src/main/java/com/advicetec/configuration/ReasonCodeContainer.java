@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,10 +21,20 @@ public class ReasonCodeContainer extends Container
 	static String sqlSelect = "SELECT id, descr, classification, down, create_date, group_cd FROM setup_idlereason";
 	static String sqlReasonSelect = "SELECT idlereason_ptr_id, id_compania, id_sede, id_planta, id_razon_parada FROM setup_idlereasonhostsystem WHERE idlereason_ptr_id = ";
 
+	private Map<String, Integer> canonicalMapIndex;
+	
 	public ReasonCodeContainer(String driver, String server, String user, String password) 
 	{	
 		super(driver, server, user, password);	
+		
+		canonicalMapIndex = new HashMap<String, Integer>();
 	}
+
+	private String getCanonicalKey(String company, String location, String plant, String stopReasonId)
+	{
+		return company + "-" + location + "-" + plant + "-" + stopReasonId;
+	}
+	
 	
 	public void loadContainer() throws SQLException
 	{
@@ -100,6 +112,8 @@ public class ReasonCodeContainer extends Container
 				reasonCode.setCannonicalLocation(location);
 				reasonCode.setCannonicalPlant(plant);
 				reasonCode.setCannonicalReasonId(reason);
+				
+				canonicalMapIndex.put(getCanonicalKey(company, location, plant, reason) , reasonCode.getId());
 			}
 
 			rs.close();
@@ -137,6 +151,11 @@ public class ReasonCodeContainer extends Container
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
+	}
+
+	public Integer getReasonCodeId(String canCompany, String canLocation, String canPlant, String canStopReason) {
+		logger.info("Number of reason codes registered:" + Integer.toString(this.canonicalMapIndex.size()));
+		return this.canonicalMapIndex.get(getCanonicalKey(canCompany, canLocation, canPlant, canStopReason));
 	}
 		
 }

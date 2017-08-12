@@ -998,5 +998,27 @@ public final class MeasuredEntityFacade {
 		}
 		return array;
 	}
+
+	public void updateStateInterval(String startDttmStr, ReasonCode reasonCode) {
+
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
+		
+		if (this.entity.getCurrentStatDateTime().equals(startDttm)){
+			this.entity.setCurrentReasonCode(reasonCode);
+		} else {
+
+			LocalDateTime oldest = stateCache.getOldestTime();
+			
+			// all values are in the cache
+			if(oldest.isBefore(startDttm)){
+				String stateKey = statesMap.get(startDttm);
+				stateCache.updateCacheStateInterval(stateKey, reasonCode);
+			} else if(oldest.isAfter(startDttm)){
+				// all values are in the database 
+				stateCache.updateStateInterval(startDttm, reasonCode);				
+			}
+		}
+	}
 }
 

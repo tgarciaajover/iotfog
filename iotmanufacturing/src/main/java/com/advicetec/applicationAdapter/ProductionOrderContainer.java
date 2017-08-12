@@ -6,6 +6,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.Map;
 import java.sql.PreparedStatement;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +19,7 @@ import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.advicetec.measuredentitity.Plant;
 
 public class ProductionOrderContainer extends Container
 {
@@ -24,9 +27,11 @@ public class ProductionOrderContainer extends Container
 	static Logger logger = LogManager.getLogger(ProductionOrderContainer.class.getName());
 	
 	static String sqlSelect = "SELECT id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, ano, mes, id_produccion, id_articulo, descr_articulo, fechahora_inicial, fechahora_final, num_horas, cantidad_producir, tasa_esperada, velocidad_esperada, create_date, last_updttm FROM canonical_ordenproduccionplaneada where id = ?";
+	static String sqlProductionOrderSelect = "SELECT id FROM canonical_ordenproduccionplaneada where id_compania = ? and id_sede = ? and id_planta = ? and id_grupo_maquina = ? and id_maquina =? and ano = ? and mes = ? and id_produccion = ? ";
 	
 	public ProductionOrderContainer(String driver, String server, String user, String password) {
 		super(driver, server, user, password);
+		
 	}
 	
 	public synchronized com.advicetec.configuration.ConfigurationObject getObject(Integer id) 
@@ -199,7 +204,7 @@ public class ProductionOrderContainer extends Container
 			}
 		    
 			rs1.close();			
-			
+						
 			super.disconnect();
 			
 			return prdOrderTmp; 
@@ -215,6 +220,50 @@ public class ProductionOrderContainer extends Container
         }
 
 		return null;
+	}
+	
+	public synchronized Integer getCanonicalObject(String company, String location, String plant, String machineGroup, String machineId,
+			int year, int month, String productionOrder) {
+	
+		Integer id  = null;
+		
+		try 
+		{
+			super.connect_prepared(sqlProductionOrderSelect);
+			(( PreparedStatement) super.pst).setString(1, company);
+			(( PreparedStatement) super.pst).setString(2, location);
+			(( PreparedStatement) super.pst).setString(3, plant);
+			(( PreparedStatement) super.pst).setString(4, machineGroup);
+			(( PreparedStatement) super.pst).setString(5, machineId);
+			(( PreparedStatement) super.pst).setInt(6, year);
+			(( PreparedStatement) super.pst).setInt(7, month);
+			(( PreparedStatement) super.pst).setString(8, productionOrder);
+
+			ResultSet rs1 = (( PreparedStatement) super.pst).executeQuery();
+			
+			while (rs1.next())
+			{
+				 id = rs1.getInt("id");
+			}
+			
+			rs1.close();			
+			
+			super.disconnect();
+			
+			
+		} catch (ClassNotFoundException e){
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
+        	e.printStackTrace();
+        } catch (SQLException e) {
+        	String error = "Container:" + this.getClass().getName() +  "Error connecting to the database - error:" + e.getMessage();
+        	logger.error(error);
+        	e.printStackTrace();        	
+        }
+
+		return id;
+
+		
 	}
 	
 }

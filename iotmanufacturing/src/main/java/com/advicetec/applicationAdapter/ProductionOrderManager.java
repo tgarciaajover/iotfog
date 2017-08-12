@@ -120,4 +120,9 @@ public class ProductionOrderManager extends Configurable {
         	productionOrderFacade.storeAllStateIntervals();    		
     	}
 	}
+
+	public Integer getProductionOrderId(String company, String location, String plant, String machineGroup,
+			String machineId, int year, int month, String productionOrder) {
+		return  this.productionOrders.getCanonicalObject(company, location, plant, machineGroup, machineId, year, month, productionOrder);
+	}
 }

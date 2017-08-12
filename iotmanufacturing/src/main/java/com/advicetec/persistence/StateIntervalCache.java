@@ -183,7 +183,7 @@ public class StateIntervalCache extends Configurable {
 	 * @param key 
 	 * @return
 	 */
-	public StateInterval getFromCache(String key){
+	public synchronized StateInterval getFromCache(String key){
 		return cache.getIfPresent(key);
 	}
 
@@ -474,5 +474,23 @@ public class StateIntervalCache extends Configurable {
 			}
 		}
 		return map;
+	}
+
+	public synchronized void updateStateInterval(LocalDateTime startDttm, ReasonCode reasonCode) {
+		
+		
+	}
+
+
+	public synchronized boolean updateCacheStateInterval(String stateKey, ReasonCode reasonCode) {
+		
+		StateInterval stateInterval = cache.getIfPresent(stateKey);
+		if (stateInterval == null){		
+			return false;
+		} else {
+			stateInterval.setReason(reasonCode); 
+			cache.put(stateKey, stateInterval);
+			return true;
+		}
 	}
 }
