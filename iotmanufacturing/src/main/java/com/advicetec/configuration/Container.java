@@ -100,6 +100,13 @@ public abstract class Container
 		
 	}
 	
+	protected void prepare_statement(String sqlText) throws SQLException{
+		
+		if ((conn != null) && (!conn.isClosed()))
+			pst = conn.prepareStatement(sqlText);
+	}
+	
+	
 	protected void commit() throws SQLException{
 		conn.commit();
 	}

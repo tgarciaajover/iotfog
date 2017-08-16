@@ -1,5 +1,7 @@
 package com.advicetec.iot.rest;
 
+import java.io.IOException;
+
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Delete;
@@ -8,6 +10,9 @@ import org.restlet.resource.Post;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 import org.restlet.data.Status;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.advicetec.configuration.ConfigurationManager;
@@ -16,6 +21,46 @@ import com.advicetec.configuration.ReasonCodeContainer;
 
 public class ReasonCodeResource extends ServerResource  
 {
+	
+	static Logger logger = LogManager.getLogger(ReasonCodeResource.class.getName());
+	
+	private Integer id;
+	private String descr;
+	private String reasonCodeGroup;
+	private String cause;
+	private String affectCapacity;
+	private String classification;
+	
+	private void getParamsFromJson(Representation representation) {
+		
+		try {
+			
+			// Get the Json representation of the ReasonCode.
+			JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
+
+			// Convert the Json representation to the Java representation.
+			JSONObject jsonobject = jsonRepresentation.getJsonObject();
+			String jsonText = jsonobject.toString();
+			
+			
+			this.id = Integer.getInteger(jsonobject.getString("id"));
+			this.descr = jsonobject.getString("descr");
+			this.reasonCodeGroup = jsonobject.getString("group_cd");
+			this.cause = jsonobject.getString("cause");
+			this.classification = jsonobject.getString("classification");
+			this.affectCapacity = jsonobject.getString("down");
+			
+						
+		} catch (JSONException e) {
+			logger.error("Error:" + e.getMessage() );
+			e.printStackTrace();
+		} catch (IOException e) {
+			logger.error("Error:" + e.getMessage() );
+			e.printStackTrace();
+		}
+		
+	}
+
 
 	  /**
 	   * Returns the Reason Code instance requested by the URL. 
@@ -31,9 +76,9 @@ public class ReasonCodeResource extends ServerResource
 
 		// Create an empty JSon representation.
 		Representation result;
-
-		// Get the reason code's uniqueID from the URL.
-	    int uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
+		
+	    // Get the requested Contact ID from the URL.
+	    Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 	    
 	    // Look for it in the Reason Code database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
@@ -65,7 +110,10 @@ public class ReasonCodeResource extends ServerResource
 	  @Put("json")
 	  @Post("json")
 	  public Representation putReasonCode(Representation representation) throws Exception {
-		   
+
+		// Create an empty JSon representation.
+		Representation result;
+
 		// Get the Json representation of the ReasonCode.
 		JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
@@ -73,15 +121,22 @@ public class ReasonCodeResource extends ServerResource
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 		
+		logger.info("jsonText:" + jsonText);
+		
 	    // Look for it in the Reason Code database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
 	    ReasonCodeContainer reasonCodeCon = confManager.getReasonCodeContainer();
 	    
-	    reasonCodeCon.fromJSON(jsonText);
+	    // This replace the reason code in the container.
+	    boolean res = reasonCodeCon.fromJSON(jsonText);
 	    
-	    getResponse().setStatus(Status.SUCCESS_OK);
+	    if (res == true){
+	    	getResponse().setStatus(Status.SUCCESS_OK);
+	    } else {
+	    	getResponse().setStatus(Status.SERVER_ERROR_INTERNAL);
+	    }
 	    
-	    Representation result = new JsonRepresentation("");
+	    result = new JsonRepresentation("");
 	    return result;
 	  }
 	  

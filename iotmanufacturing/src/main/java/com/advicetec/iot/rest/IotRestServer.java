@@ -60,6 +60,7 @@ public class IotRestServer extends Application {
       router.attach("/SignalType/{uniqueID}", SignalTypeResource.class);
       router.attach("/Signal/{uniqueID}", SignalResource.class);
       router.attach("/DeviceType/{uniqueID}", DeviceTypeResource.class);
+      router.attach("/ReasonCode/{uniqueID}", ReasonCodeResource.class);
       router.attach("/MonitoringDevice/{uniqueID}", MonitoringDeviceResource.class);
       router.attach("/MeasuredEntity/{uniqueID}", MeasuredEntityResource.class);
       router.attach("/MeasuredEntity/{uniqueID}/Behavior/{BehaviorID}", MeasuredEntityBehaviorResource.class);

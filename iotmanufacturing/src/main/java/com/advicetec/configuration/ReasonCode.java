@@ -9,6 +9,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import com.advicetec.core.serialization.BooleanDeserializer;
+import com.advicetec.core.serialization.BooleanSerializer;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
 
@@ -25,15 +27,22 @@ public class ReasonCode extends ConfigurationObject
 	
 	@JsonProperty("descr")
 	String description;
+	
 	/* tipo de falla */
-	@JsonProperty("group")
+	@JsonProperty("group_cd")
 	String group;
+	
 	/* clasificacion para el OEE*/
 	@JsonProperty("classification")
 	String classification;
 
-	@JsonProperty("idle_down")
+	@JsonProperty("down")
+	@JsonSerialize(using = BooleanSerializer.class)
+	@JsonDeserialize(using = BooleanDeserializer.class)	
 	Boolean idleDown;
+	
+	@JsonProperty("cause")
+	String rootCause; 
 	
 	@JsonProperty("create_date") 
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
@@ -66,6 +75,14 @@ public class ReasonCode extends ConfigurationObject
 
 	public void setClassification(String classification) {
 		this.classification = classification;
+	}
+
+	public String getRootCause() {
+		return rootCause;
+	}
+
+	public void setRootCause(String rootCause) {
+		this.rootCause = rootCause;
 	}
 
 	@JsonIgnore

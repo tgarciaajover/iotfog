@@ -542,7 +542,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 					productionRateId = pOrderManager.getFacadeOfPOrderById(id).getProductionRateId();
 					AttributeValue value = executedEntity.getAttributeValue(productionRateId);
 					if (value == null){
-						logger.error(" The attribute: " + productionRateId + "does not exist in the executed entitity:" + id);
+						logger.error(" The attribute: " + productionRateId + " does not exist in the executed entitity:" + id);
 						return null;
 					} else {
 						return (Double) value.getValue();
@@ -558,7 +558,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	// Second, If not found in the executed entities, then it gets the data from the measured entity.
     	AttributeValue value = getAttributeValue(productionRateId);
     	if (value == null){
-			logger.error(" The attribute: " + productionRateId + "does not exist in the measured entitity:" + getId());
+			logger.error(" The attribute: " + productionRateId + " does not exist in the measured entitity:" + getId());
 			return null;
     	} else {
     		return (Double) value.getValue();
@@ -649,7 +649,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 					conversion1 = pOrderManager.getFacadeOfPOrderById(id).getConversion1();
 					AttributeValue value = executedEntity.getAttributeValue(conversion1);
 					if (value == null){
-						logger.error(" The attribute: " + conversion1 + "does not exist in the executed entitity:" + id);
+						logger.error(" The attribute: " + conversion1 + " does not exist in the executed entitity:" + id);
 						return null;
 					} else {
 						return (Double) value.getValue();
@@ -665,7 +665,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	// Second, If not found in the executed entities, then it gets the data from the measured entity.
     	AttributeValue value = getAttributeValue(conversion1);
     	if (value == null){
-			logger.error(" The attribute: " + conversion1 + "does not exist in the measured entitity:" + getId());
+			logger.error(" The attribute: " + conversion1 + " does not exist in the measured entitity:" + getId());
 			return null;
     	} else {
     		return (Double) value.getValue();
@@ -686,7 +686,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 					conversion2 = pOrderManager.getFacadeOfPOrderById(id).getConversion2();
 					AttributeValue value = executedEntity.getAttributeValue(conversion2);
 					if (value == null){
-						logger.error(" The attribute: " + conversion2 + "does not exist in the executed entitity:" + id);
+						logger.error(" The attribute: " + conversion2 + " does not exist in the executed entitity:" + id);
 						return null;
 					} else {
 						return (Double) value.getValue();
@@ -702,7 +702,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	// Second, If not found in the executed entities, then it gets the data from the measured entity.
     	AttributeValue value = getAttributeValue(conversion2);
     	if (value == null){
-			logger.error(" The attribute: " + conversion2 + "does not exist in the measured entitity:" + getId());
+			logger.error(" The attribute: " + conversion2 + " does not exist in the measured entitity:" + getId());
 			return null;
     	} else {
     		return (Double) value.getValue();

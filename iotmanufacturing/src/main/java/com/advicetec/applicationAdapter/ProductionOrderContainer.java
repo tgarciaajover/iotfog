@@ -6,6 +6,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.sql.PreparedStatement;
@@ -26,9 +27,9 @@ public class ProductionOrderContainer extends Container
 
 	static Logger logger = LogManager.getLogger(ProductionOrderContainer.class.getName());
 	
-	static String sqlSelect = "SELECT id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, ano, mes, id_produccion, id_articulo, descr_articulo, fechahora_inicial, fechahora_final, num_horas, cantidad_producir, tasa_esperada, velocidad_esperada, create_date, last_updttm FROM canonical_ordenproduccionplaneada where id = ?";
+	static String sqlSelect = "SELECT * FROM canonical_ordenproduccionplaneada where id = ?";
 	static String sqlProductionOrderSelect = "SELECT id FROM canonical_ordenproduccionplaneada where id_compania = ? and id_sede = ? and id_planta = ? and id_grupo_maquina = ? and id_maquina =? and ano = ? and mes = ? and id_produccion = ? ";
-	static String sqlCanonicalSelect = "SELECT id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, ano, mes, id_produccion FROM canonical_ordenproduccionplaneada WHERE id = ? ";
+	static String sqlCanonicalSelect = "SELECT id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, ano, mes, id_produccion FROM canonical_ordenproduccionplaneada WHERE id = ?";
 	
 	public ProductionOrderContainer(String driver, String server, String user, String password) {
 		super(driver, server, user, password);
@@ -47,6 +48,8 @@ public class ProductionOrderContainer extends Container
 			ResultSet rs1 = (( PreparedStatement) super.pst).executeQuery();
 			ResultSetMetaData rsmd = rs1.getMetaData();
 			
+			String[] fixedFieldNames = {"id", "create_date", "last_updttm"};
+			
 			logger.info("it was executed the query for bringing the order production");
 			while (rs1.next())
 			{
@@ -56,137 +59,139 @@ public class ProductionOrderContainer extends Container
 				for (int i = 1; i <= rsmd.getColumnCount(); i++) {
 					int type = rsmd.getColumnType(i);
 					String name = rsmd.getColumnName(i);
+					if (!(Arrays.asList(fixedFieldNames).contains(name))) {
 
-					switch (type) {
-	
-					    case java.sql.Types.TINYINT:
-					    case java.sql.Types.SMALLINT:
-					    case java.sql.Types.INTEGER:
-					    {	
-					    	Integer valueInteger = rs1.getInt(i);
-					    	Attribute attrInt = new Attribute(name, AttributeType.INT);
-					    	attrInt.setTrend(false);
-					    	attrInt.setOrigin(AttributeOrigin.ERP);
-					    	prdOrderTmp.registerAttribute(attrInt);
-					    	AttributeValue valueAttrInt = new AttributeValue(name, attrInt, valueInteger, i, MeasuredEntityType.JOB );
-					    	prdOrderTmp.registerAttributeValue(valueAttrInt);
-					    	break;
-					    }
-					    
-					    case java.sql.Types.FLOAT:
-					    case java.sql.Types.REAL:
-					    {
-					    	Double valueDouble = 0.0 + rs1.getFloat(i);
-					    	Attribute attrFloat = new Attribute(name, AttributeType.DOUBLE);
-					    	attrFloat.setTrend(false);
-					    	attrFloat.setOrigin(AttributeOrigin.ERP);
-					    	prdOrderTmp.registerAttribute(attrFloat);
-					    	AttributeValue valueAttrFloat = new AttributeValue(name, attrFloat, valueDouble, i, MeasuredEntityType.JOB );
-					    	prdOrderTmp.registerAttributeValue(valueAttrFloat);
-					    	break;
-					    }	
-					    case java.sql.Types.DOUBLE:
-					    case java.sql.Types.NUMERIC:
-					    case java.sql.Types.DECIMAL:
-					    {
-					    	Double valueDouble2 = rs1.getDouble(i);
-					    	Attribute attrDouble = new Attribute(name, AttributeType.DOUBLE);
-					    	attrDouble.setTrend(false);
-					    	attrDouble.setOrigin(AttributeOrigin.ERP);
-					    	prdOrderTmp.registerAttribute(attrDouble);
-					    	AttributeValue valueAttrDouble = new AttributeValue(name, attrDouble, valueDouble2, i, MeasuredEntityType.JOB );
-					    	prdOrderTmp.registerAttributeValue(valueAttrDouble);
-					    	break;
-					    }
-					    						    		
-					    case java.sql.Types.CHAR:
-					    case java.sql.Types.VARCHAR:
-					    case java.sql.Types.NCHAR:
-					    case java.sql.Types.NVARCHAR:
-					    {
-					    	String valueString = rs1.getString(i);
-					    	Attribute attrString = new Attribute(name, AttributeType.STRING);
-					    	attrString.setTrend(false);
-					    	attrString.setOrigin(AttributeOrigin.ERP);
-					    	prdOrderTmp.registerAttribute(attrString);
-					    	AttributeValue valueAttrString = new AttributeValue(name, attrString, valueString, i, MeasuredEntityType.JOB );
-					    	prdOrderTmp.registerAttributeValue(valueAttrString);
-					    	break;
-					    }
-	
-					    case java.sql.Types.DATE:
-					    {
-					    	Date valueDate = rs1.getDate(i);
-					    	Attribute attrDate = new Attribute(name, AttributeType.DATE);
-					    	attrDate.setTrend(false);
-					    	attrDate.setOrigin(AttributeOrigin.ERP);
-					    	prdOrderTmp.registerAttribute(attrDate);
-					    	AttributeValue valueAttrDate = new AttributeValue(name, attrDate, valueDate.toLocalDate(), i, MeasuredEntityType.JOB );
-					    	prdOrderTmp.registerAttributeValue(valueAttrDate);
-					    	break;
-					    }
-					    case java.sql.Types.TIME:
-					    {
-					    	Time valueTime = rs1.getTime(i);
-					    	Attribute attrTime = new Attribute(name, AttributeType.TIME);
-					    	attrTime.setTrend(false);
-					    	attrTime.setOrigin(AttributeOrigin.ERP);
-					    	prdOrderTmp.registerAttribute(attrTime);
-					    	AttributeValue valueAttrTime = new AttributeValue(name, attrTime, valueTime.toLocalTime(), i, MeasuredEntityType.JOB );
-					    	prdOrderTmp.registerAttributeValue(valueAttrTime);
-					    	break;					    	
-					    }
-					    case java.sql.Types.TIMESTAMP:
-					    {
-					    	Timestamp valueDateTime = rs1.getTimestamp(i);
-					    	Attribute attrDateTime = new Attribute(name, AttributeType.DATETIME);
-					    	attrDateTime.setTrend(false);
-					    	attrDateTime.setOrigin(AttributeOrigin.ERP);
-					    	prdOrderTmp.registerAttribute(attrDateTime);
-					    	AttributeValue valueAttrDateTime = new AttributeValue(name, attrDateTime, valueDateTime.toLocalDateTime(), i, MeasuredEntityType.JOB );
-					    	prdOrderTmp.registerAttributeValue(valueAttrDateTime);
-					    	break;					    						    
-					    }
-	
-					    case java.sql.Types.BINARY:
-					    case java.sql.Types.BOOLEAN:
-					    {
-					    	Boolean valueBool = rs1.getBoolean(i);
-					    	Attribute attrBool = new Attribute(name, AttributeType.BOOLEAN);
-					    	attrBool.setTrend(false);
-					    	attrBool.setOrigin(AttributeOrigin.ERP);
-					    	prdOrderTmp.registerAttribute(attrBool);
-					    	AttributeValue valueAttrBool = new AttributeValue(name, attrBool, valueBool, i, MeasuredEntityType.JOB );
-					    	prdOrderTmp.registerAttributeValue(valueAttrBool);
-					    	break;					    						    					    	
-					    }
-					    
-					    case java.sql.Types.ROWID:
-					    	// This is the id of the production in the database, which is the id of the object. 
-					    	// So we don't have to do anything.
-					    	break;
-					    	
-					    case java.sql.Types.BIT:
-					    case java.sql.Types.BIGINT:
-					    case java.sql.Types.LONGVARCHAR:
-					    case java.sql.Types.VARBINARY:
-					    case java.sql.Types.LONGVARBINARY:
-					    case java.sql.Types.NULL:
-					    case java.sql.Types.OTHER:
-					    case java.sql.Types.JAVA_OBJECT:
-					    case java.sql.Types.DISTINCT:
-					    case java.sql.Types.STRUCT:
-					    case java.sql.Types.ARRAY:
-					    case java.sql.Types.BLOB:
-					    case java.sql.Types.CLOB:
-					    case java.sql.Types.REF:
-					    case java.sql.Types.DATALINK:
-					    case java.sql.Types.LONGNVARCHAR:
-					    case java.sql.Types.NCLOB:
-					    case java.sql.Types.SQLXML:
-					    	logger.error("Type is not translatable to attribute");
-					    	break;
-					    	
+						switch (type) {
+
+						case java.sql.Types.TINYINT:
+						case java.sql.Types.SMALLINT:
+						case java.sql.Types.INTEGER:
+						{	
+							Integer valueInteger = rs1.getInt(i);
+							Attribute attrInt = new Attribute(name, AttributeType.INT);
+							attrInt.setTrend(false);
+							attrInt.setOrigin(AttributeOrigin.ERP);
+							prdOrderTmp.registerAttribute(attrInt);
+							AttributeValue valueAttrInt = new AttributeValue(name, attrInt, valueInteger, i, MeasuredEntityType.JOB );
+							prdOrderTmp.registerAttributeValue(valueAttrInt);
+							break;
+						}
+
+						case java.sql.Types.FLOAT:
+						case java.sql.Types.REAL:
+						{
+							Double valueDouble = 0.0 + rs1.getFloat(i);
+							Attribute attrFloat = new Attribute(name, AttributeType.DOUBLE);
+							attrFloat.setTrend(false);
+							attrFloat.setOrigin(AttributeOrigin.ERP);
+							prdOrderTmp.registerAttribute(attrFloat);
+							AttributeValue valueAttrFloat = new AttributeValue(name, attrFloat, valueDouble, i, MeasuredEntityType.JOB );
+							prdOrderTmp.registerAttributeValue(valueAttrFloat);
+							break;
+						}	
+						case java.sql.Types.DOUBLE:
+						case java.sql.Types.NUMERIC:
+						case java.sql.Types.DECIMAL:
+						{
+							Double valueDouble2 = rs1.getDouble(i);
+							Attribute attrDouble = new Attribute(name, AttributeType.DOUBLE);
+							attrDouble.setTrend(false);
+							attrDouble.setOrigin(AttributeOrigin.ERP);
+							prdOrderTmp.registerAttribute(attrDouble);
+							AttributeValue valueAttrDouble = new AttributeValue(name, attrDouble, valueDouble2, i, MeasuredEntityType.JOB );
+							prdOrderTmp.registerAttributeValue(valueAttrDouble);
+							break;
+						}
+
+						case java.sql.Types.CHAR:
+						case java.sql.Types.VARCHAR:
+						case java.sql.Types.NCHAR:
+						case java.sql.Types.NVARCHAR:
+						{
+							String valueString = rs1.getString(i);
+							Attribute attrString = new Attribute(name, AttributeType.STRING);
+							attrString.setTrend(false);
+							attrString.setOrigin(AttributeOrigin.ERP);
+							prdOrderTmp.registerAttribute(attrString);
+							AttributeValue valueAttrString = new AttributeValue(name, attrString, valueString, i, MeasuredEntityType.JOB );
+							prdOrderTmp.registerAttributeValue(valueAttrString);
+							break;
+						}
+
+						case java.sql.Types.DATE:
+						{
+							Date valueDate = rs1.getDate(i);
+							Attribute attrDate = new Attribute(name, AttributeType.DATE);
+							attrDate.setTrend(false);
+							attrDate.setOrigin(AttributeOrigin.ERP);
+							prdOrderTmp.registerAttribute(attrDate);
+							AttributeValue valueAttrDate = new AttributeValue(name, attrDate, valueDate.toLocalDate(), i, MeasuredEntityType.JOB );
+							prdOrderTmp.registerAttributeValue(valueAttrDate);
+							break;
+						}
+						case java.sql.Types.TIME:
+						{
+							Time valueTime = rs1.getTime(i);
+							Attribute attrTime = new Attribute(name, AttributeType.TIME);
+							attrTime.setTrend(false);
+							attrTime.setOrigin(AttributeOrigin.ERP);
+							prdOrderTmp.registerAttribute(attrTime);
+							AttributeValue valueAttrTime = new AttributeValue(name, attrTime, valueTime.toLocalTime(), i, MeasuredEntityType.JOB );
+							prdOrderTmp.registerAttributeValue(valueAttrTime);
+							break;					    	
+						}
+						case java.sql.Types.TIMESTAMP:
+						{
+							Timestamp valueDateTime = rs1.getTimestamp(i);
+							Attribute attrDateTime = new Attribute(name, AttributeType.DATETIME);
+							attrDateTime.setTrend(false);
+							attrDateTime.setOrigin(AttributeOrigin.ERP);
+							prdOrderTmp.registerAttribute(attrDateTime);
+							AttributeValue valueAttrDateTime = new AttributeValue(name, attrDateTime, valueDateTime.toLocalDateTime(), i, MeasuredEntityType.JOB );
+							prdOrderTmp.registerAttributeValue(valueAttrDateTime);
+							break;					    						    
+						}
+
+						case java.sql.Types.BINARY:
+						case java.sql.Types.BOOLEAN:
+						{
+							Boolean valueBool = rs1.getBoolean(i);
+							Attribute attrBool = new Attribute(name, AttributeType.BOOLEAN);
+							attrBool.setTrend(false);
+							attrBool.setOrigin(AttributeOrigin.ERP);
+							prdOrderTmp.registerAttribute(attrBool);
+							AttributeValue valueAttrBool = new AttributeValue(name, attrBool, valueBool, i, MeasuredEntityType.JOB );
+							prdOrderTmp.registerAttributeValue(valueAttrBool);
+							break;					    						    					    	
+						}
+
+						case java.sql.Types.ROWID:
+							// This is the id of the production in the database, which is the id of the object. 
+							// So we don't have to do anything.
+							break;
+
+						case java.sql.Types.BIT:
+						case java.sql.Types.BIGINT:
+						case java.sql.Types.LONGVARCHAR:
+						case java.sql.Types.VARBINARY:
+						case java.sql.Types.LONGVARBINARY:
+						case java.sql.Types.NULL:
+						case java.sql.Types.OTHER:
+						case java.sql.Types.JAVA_OBJECT:
+						case java.sql.Types.DISTINCT:
+						case java.sql.Types.STRUCT:
+						case java.sql.Types.ARRAY:
+						case java.sql.Types.BLOB:
+						case java.sql.Types.CLOB:
+						case java.sql.Types.REF:
+						case java.sql.Types.DATALINK:
+						case java.sql.Types.LONGNVARCHAR:
+						case java.sql.Types.NCLOB:
+						case java.sql.Types.SQLXML:
+							logger.error("Type is not translatable to attribute");
+							break;
+
+						}
 					}
 		        }
 			    				
@@ -277,8 +282,9 @@ public class ProductionOrderContainer extends Container
 		
 		try 
 		{
-			String sqlSelect = sqlCanonicalSelect + String.valueOf(prodOrder.getId());  
-			ResultSet rs = super.pst.executeQuery(sqlSelect);
+			super.prepare_statement(sqlCanonicalSelect);
+			(( PreparedStatement) super.pst).setInt(1, prodOrder.getId());
+			ResultSet rs = (( PreparedStatement) super.pst).executeQuery();
 
 			while (rs.next()) 
 			{

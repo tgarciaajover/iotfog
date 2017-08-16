@@ -482,6 +482,8 @@ public class StateIntervalCache extends Configurable {
 	public synchronized boolean updateStateInterval(Integer entityId, MeasuredEntityType mType, 
 												  LocalDateTime startDttm, ReasonCode reasonCode) {
 		
+		logger.info("In updateStateInverval reasonCd:" + reasonCode.getId() );
+		
 		boolean ret = false;
 		Connection connDB  = null; 
 		PreparedStatement pstDB = null;
@@ -498,11 +500,14 @@ public class StateIntervalCache extends Configurable {
 				pstDB.setString(1, null);
 			}
 			
-			pstDB.setString(2, Integer.toString(entityId));
+			pstDB.setInt(2, entityId);
 			pstDB.setInt(3, mType.getValue());
 			pstDB.setTimestamp(4, Timestamp.valueOf(startDttm));
 			if (pstDB.executeUpdate() > 0){
 				ret = true;
+				
+				connDB.commit();
+
 			}
 
 		}catch (ClassNotFoundException e) {
@@ -531,11 +536,14 @@ public class StateIntervalCache extends Configurable {
 			}
 		}			
 		
+		logger.info("In updateStateInverval return:" + ret);
 		return ret;
 	}
 
 
 	public synchronized boolean updateCacheStateInterval(String stateKey, ReasonCode reasonCode) {
+		
+		logger.info("In updateCacheStateInterval");
 		
 		StateInterval stateInterval = cache.getIfPresent(stateKey);
 		if (stateInterval == null){		

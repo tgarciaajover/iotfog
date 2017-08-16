@@ -1014,8 +1014,10 @@ public final class MeasuredEntityFacade {
 
 	public boolean updateStateInterval(String startDttmStr, ReasonCode reasonCode) {
 
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
+		
+		logger.info("reasoncode id:" + reasonCode.getId() + " descr:" + reasonCode.getDescription() + " startDttm:" + startDttm );
 		
 		boolean ret = false;
 		

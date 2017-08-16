@@ -53,7 +53,7 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm FROM setup_measureentityscheduleevent WHERE measure_entity_id =";
 	static String sqlSelect7 = "SELECT count(*) from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'Q' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
 
-	static String sqlMachineSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, descripcion_sin_trabajo, factor_conversion_emp_ciclo, factor_conversion_kg_ciclo, factor_conversion_mil_ciclo, tasa_vel_esperada, tiempo_esperado_config FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
+	static String sqlMachineSelect = "SELECT * FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
 
 	private Map<String, Integer> canonicalMapIndex;

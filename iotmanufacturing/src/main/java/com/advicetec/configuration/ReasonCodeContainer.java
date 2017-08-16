@@ -127,11 +127,22 @@ public class ReasonCodeContainer extends Container
 
 	public void deleteReasonCode(int uniqueID)
 	{
-		super.configuationObjects.remove(uniqueID);
+		
+		ReasonCode reasonCode = (ReasonCode)super.configuationObjects.get(uniqueID);
+		
+		if (reasonCode != null){ 
+			canonicalMapIndex.remove(getCanonicalKey(reasonCode.getCannonicalCompany(), 
+					   								 reasonCode.getCannonicalLocation(),
+					   								 reasonCode.getCannonicalPlant(),
+					   								 reasonCode.getCannonicalReasonId()));
+			super.configuationObjects.remove(uniqueID);
+		}
+	
 	}
 	
-	public void fromJSON(String json){
+	public synchronized boolean fromJSON(String json){
 		
+		boolean ret = false;
 		ObjectMapper mapper = new ObjectMapper();
 		
 		//Convert object to JSON string and pretty print
@@ -139,7 +150,18 @@ public class ReasonCodeContainer extends Container
 		try {
 		
 			reasonCode = mapper.readValue(json, ReasonCode.class);
+			
+			super.connect();
+			
+			// Remove from the canonical map.
+			if (canonicalMapIndex.get(reasonCode.getId()) != null)
+				canonicalMapIndex.remove(reasonCode.getId());
+			
+			loadCannonicalReasonCodes(reasonCode);
+			super.disconnect();
 			super.configuationObjects.put(reasonCode.getId(), reasonCode);
+			ret = true;
+			return ret;
 		
 		} catch (JsonParseException e) {
 			logger.error(e.getMessage());
@@ -150,7 +172,17 @@ public class ReasonCodeContainer extends Container
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
+			e.printStackTrace();
+		} catch (SQLException e) {
+        	String error = "Container:" + this.getClass().getName() +  "Error connecting to the database - error:" + e.getMessage();
+        	logger.error(error);
+			e.printStackTrace();
 		}
+		
+		return ret;
 	}
 
 	public Integer getReasonCodeId(String canCompany, String canLocation, String canPlant, String canStopReason) {
