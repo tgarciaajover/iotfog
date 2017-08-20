@@ -93,8 +93,11 @@ public class SignalUnitResource extends ServerResource
 	    // Get the requested Contact ID from the URL.
 	    int uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
-	    // Make sure it is no longer present in the Signal Unit database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
+	    
+	    // Deletes the signal unit from all signals that has it as the unit.
+	    
+	    // Make sure it is no longer present in the Signal Unit database.
 	    SignalUnitContainer signalUnitCon = confManager.getSignalUnitContainer();
 	    
 	    signalUnitCon.deleteSignalUnit(uniqueID);

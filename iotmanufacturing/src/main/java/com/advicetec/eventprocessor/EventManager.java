@@ -60,12 +60,22 @@ public class EventManager extends Manager
 		
 		// Maximum number of modbus connections.
 		String strMaxModbusConnections = getProperty("MaxModbusConnections");
-		strMaxModbusConnections = strMaxModbusConnections.replaceAll("\\s","");
-		maxModbusConnections = Integer.valueOf(strMaxModbusConnections); 
+		if (strMaxModbusConnections != null){
+			strMaxModbusConnections = strMaxModbusConnections.replaceAll("\\s","");
+			maxModbusConnections = Integer.valueOf(strMaxModbusConnections); 
+		} else {
+			logger.error("maxModbus connection field not established in event manager config file");
+			System.exit(0);
+		}
 		
 		String strTimeOut = getProperty("TimeOut");
-		strTimeOut = strTimeOut.replaceAll("\\s","");
-		timeOut = Integer.valueOf(strTimeOut);
+		if (strTimeOut != null){
+			strTimeOut = strTimeOut.replaceAll("\\s","");
+			timeOut = Integer.valueOf(strTimeOut);
+		} else {
+			logger.error("timeout field not established in event manager config file");
+			System.exit(0);			
+		}
 		
 		logger.info("timeout given:" + String.valueOf(timeOut));
 		
@@ -75,19 +85,32 @@ public class EventManager extends Manager
 	{
 		logger.info("Starting Event Manager run");
 		
-		int number = Integer.valueOf(getProperty("NumProcessHandlers")); 
-		List<Thread> listThread =  new ArrayList<Thread>();
-		
-		for (int i = 0; i < number; i++) 
-		{
-			Thread t = new Thread(new EventHandler(instance.getQueue(), this.delayedQueue));
-			t.start();
-			listThread.add(t);
-		}
+		String numProcessHandlers = getProperty("NumProcessHandlers");
+		if (numProcessHandlers != null){
+			try
+			{
+				int number = Integer.valueOf(numProcessHandlers);
+				
+				List<Thread> listThread =  new ArrayList<Thread>();
+	
+				for (int i = 0; i < number; i++) 
+				{
+					Thread t = new Thread(new EventHandler(instance.getQueue(), this.delayedQueue));
+					t.start();
+					listThread.add(t);
+				}
+	
+				Thread delayConsumer = new Thread(new DelayQueueConsumer("EventConsumer", this.delayedQueue));
+				delayConsumer.start();
 
-		Thread delayConsumer = new Thread(new DelayQueueConsumer("EventConsumer", this.delayedQueue));
-		delayConsumer.start();
-		
+			} catch (NumberFormatException e) {
+				logger.error("The value given in NumProcessHandlers is not a valid number");
+				System.exit(0);		
+			}
+		} else {
+			logger.error("NumProcessHandlers field not established in event manager config file");
+			System.exit(0);
+		}
 		logger.info("Ending Event Manager run");
 	}	
 

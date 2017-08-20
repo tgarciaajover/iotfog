@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonSubTypes;
@@ -40,6 +41,10 @@ import com.advicetec.core.serialization.LocalDateTimeSerializer;
  *
  */
 
+/**
+ * @author andres
+ *
+ */
 @JsonTypeInfo(
 	    use = JsonTypeInfo.Id.NAME,
 	    include = JsonTypeInfo.As.PROPERTY,
@@ -64,16 +69,21 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
 	private LocalDateTime createDate;
 
+	@JsonProperty("last_updttm") 
+	@JsonSerialize(using = LocalDateTimeSerializer.class)
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
+	private LocalDateTime lastUpdttm;
+	
 	@JsonProperty("descr")
 	protected String descr;
 
-	@JsonProperty("behaviors")
+	@JsonIgnore
 	protected List<MeasuredEntityBehavior> behaviors;
     
-	@JsonProperty("statebehaviors")
+	@JsonIgnore
 	protected List<MeasuredEntityStateBehavior> stateBehaviors;
 	
-	@JsonProperty("statebehaviors")
+	@JsonIgnore
 	protected List<MeasuredEntityStateTransition> stateTransitions;
 	
     @JsonIgnore
@@ -98,7 +108,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     protected Integer maxTimeForInterval;
     
     
-    public MeasuredEntity(@JsonProperty("id") Integer id, MeasuredEntityType type) 
+    public MeasuredEntity( Integer id, MeasuredEntityType type) 
     {
 		super(id);
 		this.type = type;
@@ -155,6 +165,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	return attributes;
     }
     
+    @JsonIgnore
     public synchronized boolean registerAttribute(Attribute attrMeasureEntity){
     	return attributes.add(attrMeasureEntity);
     }
@@ -169,6 +180,14 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	
 	public synchronized void setCreateDate(LocalDateTime create_date) {
 		this.createDate = create_date;
+	}
+	
+	public LocalDateTime getLastUpdttm() {
+		return lastUpdttm;
+	}
+
+	public void setLastUpdttm(LocalDateTime lastUpdttm) {
+		this.lastUpdttm = lastUpdttm;
 	}
 
 	public synchronized String getDescr() {
@@ -227,6 +246,17 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		}
 	}
 
+	public synchronized void removeBehavior(Integer id)
+	{
+		for (int i = 0; i < this.behaviors.size(); i++){
+			MeasuredEntityBehavior measuredEntityBehavior = this.behaviors.get(i);
+			if (measuredEntityBehavior.getId().compareTo(id) == 0){
+				this.behaviors.remove(i);
+				break;
+			}
+		}		
+	}
+	
 	public synchronized void putStateBehavior(Integer id, String stateBehaviorType, String descr, String behavior_text)
 	{
 		logger.debug("Put State Behavior" + Integer.toString(this.stateBehaviors.size()));
@@ -399,6 +429,19 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 
+	public synchronized MeasuredEntityBehavior getBehavior(Integer id)
+	{
+		logger.debug("behavior:" + id);
+
+		for (int i = 0; i < this.behaviors.size(); i++){
+			MeasuredEntityBehavior measuredEntityBehavior = this.behaviors.get(i);
+			if (measuredEntityBehavior.getId().compareTo(id) == 0){
+				return measuredEntityBehavior;
+			}
+		}
+		return null;
+	}
+	
 	public synchronized MeasuredEntityStateBehavior getStateBehavior(String stateBehaviorType)
 	{
 		logger.debug("State Behavior:" + stateBehaviorType);
@@ -508,6 +551,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		
     }
     
+    @JsonIgnore
     public ExecutedEntity getExecutedEntity(Integer id){
     	return this.executedEntities.get(id);
     }
@@ -516,6 +560,8 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	this.executedEntities.remove(id);
     }
 
+    
+    @JsonIgnore
     public ExecutedEntity getCurrentExecutedEntity()
     {
     	
@@ -528,6 +574,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	return null;
     }
     
+    @JsonIgnore
     public Double getProductionRate(String productionRateId)
     {
     	
@@ -565,6 +612,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	}
     }
 
+    @JsonIgnore
     public AttributeValue getAttributeValue(String name){
     	
     	logger.debug("Starting getAttributeValue - attribute:" + name);  
@@ -581,7 +629,8 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
     }
     
-	public String getBehaviorText(MeasuringState state, Integer idRazonParada) {
+    @JsonIgnore
+    public String getBehaviorText(MeasuringState state, Integer idRazonParada) {
 		int behaviorId = 0; 
 		for (int i = 0; i < this.stateTransitions.size(); i++){
 			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
@@ -599,7 +648,8 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 
-	public AttributeValue getAttributeFromExecutedObject(String attributeId) {
+    @JsonIgnore
+    public AttributeValue getAttributeFromExecutedObject(String attributeId) {
 		logger.debug("Starting getAttributeFromExecutedObject - measure entity id:" + getId() + " attribute:" + attributeId + " executed entities:" + this.executedEntities.size());
 		
 		for (Integer id : this.executedEntities.keySet()){
@@ -612,7 +662,8 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 	
-	public String getCanonicalIdentifier()
+    @JsonIgnore
+    public String getCanonicalIdentifier()
 	{
 		return null;
 	}

@@ -2,7 +2,9 @@ package com.advicetec.measuredentitity;
 
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonTypeName;
 
+@JsonTypeName("M")
 public class Machine extends ProductionEntity {
 	
 	String canonicalMachineId;

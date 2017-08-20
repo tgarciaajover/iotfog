@@ -2,11 +2,18 @@ package com.advicetec.measuredentitity;
 
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonTypeName;
 
+@JsonTypeName("P")
 public class Plant extends ProductionEntity {
 	
+	@JsonProperty("id_compania")
 	private String canonicalCompany;
+	
+	@JsonProperty("id_sede")
 	private String canonicalLocation;
+	
+	@JsonProperty("id_planta")
 	private String canonicalPlantId;
 	
 	public String getCannonicalCompany() {
