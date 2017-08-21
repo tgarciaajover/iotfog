@@ -14,12 +14,14 @@ import java.util.concurrent.DelayQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.MessageProcessor.DelayQueueConsumer;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
 import com.advicetec.language.behavior.BehaviorDefPhase;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
+import java.util.Iterator;
 
 public class EventManager extends Manager
 {
@@ -50,7 +52,7 @@ public class EventManager extends Manager
 	{
 		super("EventManager");	
 		confManager = ConfigurationManager.getInstance();
-		this.delayedQueue = new DelayQueue();
+		this.delayedQueue = new DelayQueue<DelayEvent>();
 		
 		// This list contains the connections available to be used by any handler.
 		this.availableConnections = new HashMap<String, Stack<Map.Entry<LocalDateTime,TCPMasterConnection>>>();
@@ -223,8 +225,35 @@ public class EventManager extends Manager
 		}
 	}
 
-	public BlockingQueue getDelayedQueue() {
+	public synchronized BlockingQueue getDelayedQueue() {
 		return this.delayedQueue;
+	}
+	
+	public synchronized boolean removeMeasuredEntityEvents(Integer measuredId) {
+		
+		// List with the list of current events.
+		List<DelayEvent> currentEvents = new ArrayList<DelayEvent>();
+		
+		// This will be the list of elements to delete from current events.
+		List<DelayEvent> removeEvents = new ArrayList<DelayEvent>();
+		
+		this.delayedQueue.drainTo(currentEvents);
+		Iterator<DelayEvent> itr= currentEvents.iterator();
+		while(itr.hasNext()){
+			DelayEvent dt= (DelayEvent) itr.next();
+			if (dt.getEvent().getMeasuredEntity().equals(measuredId)){
+				removeEvents.add(dt);
+			}
+		}
+		
+		for (DelayEvent event : removeEvents){
+			currentEvents.remove(event);
+		}
+		
+		// The list of events after being eliminated are added again to the list of delayed events.
+		this.delayedQueue.addAll(currentEvents);
+		
+		return true;
 	}
 	
     public synchronized void releaseModbusConnection(String ipAddress, TCPMasterConnection con) throws Exception

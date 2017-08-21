@@ -24,24 +24,25 @@ import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuredEntityContainer;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
+import com.advicetec.measuredentitity.MeasuredEntityScheduledEvent;
 import com.advicetec.measuredentitity.MeasuredEntityStateTransition;
 
-public class MeasuredEntityStateTransitionResource extends ServerResource  
+public class MeasuredEntityScheduledEventResource extends ServerResource  
 {
-	static Logger logger = LogManager.getLogger(MeasuredEntityStateTransitionResource.class.getName());
+	static Logger logger = LogManager.getLogger(MeasuredEntityScheduledEventResource.class.getName());
 
 
 	/**
-	 * Returns the MeasuredEntity State Transition instance requested by the URL. 
+	 * Returns the MeasuredEntity Scheduled Event instance requested by the URL. 
 	 * 
-	 * @return The JSON representation of the Measured Entity State Transition, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
+	 * @return The JSON representation of the Measured Entity Scheduled Event, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
 	 * unique ID is not present.
 	 * 
 	 * @throws Exception: if problems occur making the representation. Shouldn't occur in 
 	 * 		 practice but if it does, Restlet will set the Status code. 
 	 */
 	@Get("json")
-	public Representation getMeasuredEntityStateTransition() throws Exception {
+	public Representation getMeasuredEntityScheduledEvent() throws Exception {
 
 		// Create an empty JSon representation.
 		Representation result;
@@ -55,23 +56,29 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 
 		if (measuredEntityFacade == null) {
 			// The requested contact was not found, so set the Status to indicate this.
-			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+			String error = "The measured entity facade with id: " + Integer.toString(uniqueID) + " was not found";
+			logger.error(error);
+			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 			result = new JsonRepresentation("");
 		} 
 		else {
-			Integer transitionID = Integer.valueOf((String)this.getRequestAttributes().get("TransitionID"));
+			Integer eventID = Integer.valueOf((String)this.getRequestAttributes().get("EventID"));
 
 			// The requested contact was found, so add the Contact's XML representation to the response.
 			if (measuredEntityFacade.getEntity() != null){
-				if (measuredEntityFacade.getEntity().getStateTransition(transitionID) != null){
+				if (measuredEntityFacade.getEntity().getScheduledEvent(eventID) != null){
 					// Status code defaults to 200 if we don't set it.
-					result = new JsonRepresentation(measuredEntityFacade.getEntity().getStateTransition(transitionID).toJson());
+					result = new JsonRepresentation(measuredEntityFacade.getEntity().getScheduledEvent(eventID).toJson());
 				} else {
-					getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+					String error = "The scheduled event was not found";
+					logger.error(error);
+					getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 					result = new JsonRepresentation("");
 				}
 			} else {
-				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+				String error = "The measured entity with Id: " + Integer.toString(uniqueID) +  " is invalid";
+				logger.error(error);
+				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 				result = new JsonRepresentation("");
 			}
 
@@ -81,17 +88,17 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 	}
 
 	/**
-	 * Adds the passed MeasuredEntity State Transition to our internal database of Measured Entities.
-	 * @param representation The Json representation of the new State Transition to add.
+	 * Adds the passed MeasuredEntity Scheduled Event to our internal database of Measured Entities.
+	 * @param representation The Json representation of the new Scheduled Event to add.
 	 * 
 	 * @return null.
 	 * 
 	 * @throws Exception If problems occur unpacking the representation.
 	 */
 	@Put("json")
-	public Representation putMeasuredEntityStateTransition(Representation representation) throws Exception {
+	public Representation putMeasuredEntityScheduledEvent(Representation representation) throws Exception {
 
-		logger.info("putMeasureEntityStateTransition");
+		logger.info("putMeasuredEntityScheduledEvent");
 		Representation result = null;
 
 		// Get the Json representation of the SignalUnit.
@@ -121,11 +128,10 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 
 				try{
 					ObjectMapper mapper = new ObjectMapper();
-					MeasuredEntityStateTransition transition = mapper.readValue(jsonText, MeasuredEntityStateTransition.class);
-					measuredEntityFacade.getEntity().putStateTransition(transition.getId(), transition.getStateFrom(), 
-							transition.getResonCode(), transition.getBehavior(), transition.getCreateDate());
+					MeasuredEntityScheduledEvent event = mapper.readValue(jsonText, MeasuredEntityScheduledEvent.class);
+					measuredEntityFacade.getEntity().putScheduledEvent( event );
 
-					logger.debug("putMeasureEntityStateTransition OK");
+					logger.debug("putMeasureEntityScheduleEvent OK");
 
 					getResponse().setStatus(Status.SUCCESS_OK);
 					result = new JsonRepresentation("");
@@ -154,8 +160,8 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 
 
 	/**
-	 * Deletes the passed MeasuredEntity State Transition in our internal database of Measured Entities.
-	 * @param Json representation of the measured entity state transition to delete.
+	 * Deletes the passed MeasuredEntity Scheduled Event in our internal database of Measured Entities.
+	 * @param Json representation of the measured entity scheduled event to delete.
 	 * 
 	 * @return null.
 	 * @throws SQLException 
@@ -163,21 +169,23 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 	 * @throws Exception If problems occur unpacking the representation.
 	 */
 	@Delete("json")
-	public Representation deleteMeasuredEntityStateTransition() throws SQLException {
+	public Representation deleteMeasuredEntityScheduledEvent() throws SQLException {
 
 		Representation result;
 
 		// Get the Measured Entity's uniqueID from the URL.
 		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
-		// Get the Transition Id
-		String transitionIdStr = (String)this.getRequestAttributes().get("TransitionID");
-		if (transitionIdStr != null){
+		// Get the Scheduled Event Id
+		String eventIdStr = (String)this.getRequestAttributes().get("EventID");
+		if (eventIdStr != null){
 
 			try{
-				Integer transitionId = Integer.valueOf(transitionIdStr);
+				Integer eventId = Integer.valueOf(eventIdStr);
 
 				ConfigurationManager confManager = ConfigurationManager.getInstance();
+
+				// Deletes the signal unit from all signals that has it as the unit.
 
 				// Look for it in the Measured Entity database.
 				MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
@@ -185,21 +193,21 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 				// Get the measuring entity facade. 
 				MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
-				measuredEntityFacade.getEntity().removeStateTransition(transitionId);
+				measuredEntityFacade.getEntity().removeScheduledEvent(eventId);
 
 				getResponse().setStatus(Status.SUCCESS_OK);
 
 			} catch (NumberFormatException e) {
-				String error = "The value given in state transition is not a valid number";
+				String error = "The value given in Scheduled Event is not a valid number";
 				logger.error(error);
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 
 			}
 
 		}
-
+		
 		else {
-			String error = "transitionId was not provided";
+			String error = "behaviorId was not provided";
 			logger.error(error);
 			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 		}
@@ -207,4 +215,5 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 		result = new JsonRepresentation("");	
 		return result;
 	}
+
 }

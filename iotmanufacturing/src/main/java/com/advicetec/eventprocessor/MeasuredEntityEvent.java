@@ -46,7 +46,7 @@ public class MeasuredEntityEvent extends Event
 		return behaviorTransformation;
 	}
 
-	public Integer getEntity() {
+	public Integer getMeasuredEntity() {
 		return entity;
 	}
 

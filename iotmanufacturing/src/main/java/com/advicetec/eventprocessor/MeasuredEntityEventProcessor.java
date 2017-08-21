@@ -35,7 +35,7 @@ public class MeasuredEntityEventProcessor implements Processor
 	public List<DelayEvent> process() throws SQLException 
 	{
 		
-		Integer measuringEntity = this.event.getEntity();
+		Integer measuringEntity = this.event.getMeasuredEntity();
 		String behaviorName = this.event.getBehaviorTransformation();
 		
         logger.debug("process - behavior:" + behaviorName);

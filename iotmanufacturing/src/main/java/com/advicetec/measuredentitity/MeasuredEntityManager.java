@@ -209,7 +209,7 @@ public class MeasuredEntityManager extends Configurable {
 	}
 
 	
-	public Integer getMeasuredEntityId(String company, String location,
+	public synchronized Integer getMeasuredEntityId(String company, String location,
 			String plant, String machineGroup, String machineId) {
 		
 		return this.measuredEntities.getCanonicalObject(company, location, plant, machineGroup, machineId);
@@ -222,6 +222,41 @@ public class MeasuredEntityManager extends Configurable {
 		else {
 			return ((MeasuredEntity) this.measuredEntities.getObject(id)).getCanonicalIdentifier();
 		}
+	}
+	
+	public synchronized boolean removeMeasuredEntity(Integer entityId)
+	{
+
+		logger.debug("getFacadeOfEntityById" + Integer.toString(entityId) );
+		
+		// Remove the measured entity from the list of measured entities facades.
+		int index = 0;
+		MeasuredEntityFacade facade = null;
+		while ( index <= entities.size()) {
+			facade = entities.get(index);
+			
+			if (facade.getEntity() == null)
+				logger.error("entity registered is null");
+			else{ 
+				logger.debug("facade:" + Integer.toString(facade.getEntity().getId()));
+				
+				if(facade.getEntity().getId().equals(entityId)){
+					entities.remove(index);
+					break;
+				}
+			}
+			
+			index = index + 1;
+		}
+		
+		// Remove from the container 
+		this.measuredEntities.removeObject(entityId);
+		
+		// Remove the events related with this measured entity
+		EventManager.getInstance().removeMeasuredEntityEvents(entityId);
+		
+		// always return true, that means that if not present is like it has been deleted.
+		return true;
 	}
 	
 }

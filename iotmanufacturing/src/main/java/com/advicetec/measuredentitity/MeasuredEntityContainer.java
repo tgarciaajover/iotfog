@@ -50,7 +50,7 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
 	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
 	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
-	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm FROM setup_measureentityscheduleevent WHERE measure_entity_id =";
+	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm FROM setup_measuredentityscheduledevent WHERE measure_entity_id =";
 	static String sqlSelect7 = "SELECT count(*) from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'Q' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
 
 	static String sqlMachineSelect = "SELECT * FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
@@ -233,7 +233,12 @@ public class MeasuredEntityContainer extends Container
 				String descr             = rs3.getString("descr");
 				String behaviorText      = rs3.getString("behavior_text");
 
-				entity.putStateBehavior(id, stateBehaviorType, descr, behaviorText);
+				MeasuredEntityStateBehavior measuredEntityStateBehavior = new MeasuredEntityStateBehavior(id, stateBehaviorType);
+				measuredEntityStateBehavior.setDescr(descr);
+				measuredEntityStateBehavior.setBehaviorText(behaviorText);
+
+				
+				entity.putStateBehavior(measuredEntityStateBehavior);
 			}
 
 			rs3.close();
@@ -688,5 +693,23 @@ public class MeasuredEntityContainer extends Container
 		}
 
 		return ret;
+	}
+	
+	public boolean removeObject(Integer uid){
+		Map.Entry pairToDelete = null;
+		Iterator it = this.canonicalMapIndex.entrySet().iterator();
+	    while (it.hasNext()) {
+	        Map.Entry pair = (Map.Entry)it.next();
+	        if (uid.equals( (Integer) pair.getValue())){
+	        	pairToDelete = pair;
+	        	break;
+	        }
+	    }
+	    
+	    if (pairToDelete != null){
+	    	return this.canonicalMapIndex.remove(pairToDelete.getKey(), pairToDelete.getValue());
+	    }
+	    
+	    return false;
 	}
 }

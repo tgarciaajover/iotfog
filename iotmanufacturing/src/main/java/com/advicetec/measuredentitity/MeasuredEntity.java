@@ -107,6 +107,8 @@ public abstract class MeasuredEntity extends ConfigurationObject
     @JsonIgnore
     protected Integer maxTimeForInterval;
     
+    @JsonIgnore
+    protected Map<Integer, MeasuredEntityScheduledEvent> scheduledEvents;
     
     public MeasuredEntity( Integer id, MeasuredEntityType type) 
     {
@@ -124,6 +126,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
 		stateTransitions = new ArrayList<MeasuredEntityStateTransition>();
 		executedEntities = new HashMap<Integer, ExecutedEntity>();
+		scheduledEvents = new HashMap<Integer, MeasuredEntityScheduledEvent>();
 		
 	}
 
@@ -245,7 +248,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 			this.behaviors.add(measuredEntityBehavior2);
 		}
 	}
-
+	
 	public synchronized void removeBehavior(Integer id)
 	{
 		for (int i = 0; i < this.behaviors.size(); i++){
@@ -256,31 +259,45 @@ public abstract class MeasuredEntity extends ConfigurationObject
 			}
 		}		
 	}
+
+	public synchronized void removeScheduledEvent(Integer id)
+	{
+		this.scheduledEvents.remove(id);
+		
+		// TODO: remove the event from the queue. 
+	}
 	
-	public synchronized void putStateBehavior(Integer id, String stateBehaviorType, String descr, String behavior_text)
+	public synchronized void putStateBehavior(MeasuredEntityStateBehavior measuredEntityStateBehavior)
 	{
 		logger.debug("Put State Behavior" + Integer.toString(this.stateBehaviors.size()));
 		
-		MeasuredEntityStateBehavior measuredEntityStateBehavior2 = new MeasuredEntityStateBehavior(id, stateBehaviorType);
-		measuredEntityStateBehavior2.setDescr(descr);
-		measuredEntityStateBehavior2.setBehaviorText(behavior_text);
 
 		for (int i = 0; i < this.stateBehaviors.size(); i++){
-			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
-			if (measuredEntityStateBehavior.getId().equals(id)){
+			MeasuredEntityStateBehavior measuredEntityStateBehavior2 = this.stateBehaviors.get(i);
+			if (measuredEntityStateBehavior2.getId().equals(measuredEntityStateBehavior.getId())){
 				logger.debug("removed element");
 				this.stateBehaviors.remove(i);
 				break;
 			}
 		}
 		
-		this.stateBehaviors.add(measuredEntityStateBehavior2);
+		this.stateBehaviors.add(measuredEntityStateBehavior);
 
 		for (int i = 0; i < this.stateBehaviors.size(); i++){
 			logger.debug("statebehavior:" + this.stateBehaviors.get(i).toString());
 		}
 		
 		logger.debug("Method end. Num State Behavior" + Integer.toString(this.stateBehaviors.size()));
+	}
+	
+	public synchronized void putScheduledEvent(MeasuredEntityScheduledEvent measuredEntityScheduledEvent)
+	{
+		logger.debug("Put Scheduled Event" + Integer.toString(this.scheduledEvents.size() ));
+				
+		this.scheduledEvents.put(measuredEntityScheduledEvent.getId(), measuredEntityScheduledEvent);
+		
+		// TODO: CREATE THE SCHEDULED EVENT IN THE QUEUE.
+		
 	}
 	
 	public synchronized void putStateTransition(Integer id, MeasuringState stateFrom, Integer reasonCodeFrom, Integer behavior, LocalDateTime createDate)
@@ -356,6 +373,10 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		}
 		
 		return null;
+	}
+	
+	public synchronized MeasuredEntityScheduledEvent getScheduledEvent (Integer id){
+		return this.scheduledEvents.get(id);
 	}
 	
 	public synchronized MeasuredEntityBehavior behaviorFromJSON(String json)
@@ -485,10 +506,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		removeStateBehaviors();
 		for ( int i=0; i < measuredEntity.stateBehaviors.size(); i++)
 		{
-			putStateBehavior(measuredEntity.stateBehaviors.get(i).getId(),
-					     measuredEntity.stateBehaviors.get(i).getStateBehaviorType(), 
-						   measuredEntity.stateBehaviors.get(i).getDescr(), 
-							measuredEntity.stateBehaviors.get(i).getBehavior_text() );			
+			putStateBehavior(measuredEntity.stateBehaviors.get(i) );			
 		}
 		
 		if (measuredEntity instanceof Machine){
@@ -668,7 +686,10 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 
-	// This function verifies if the current interval state should be calculated and saved 
+	/**
+	 * This function verifies if the current interval state should be calculated and saved 
+	 * @return
+	 */
 	public boolean startNewInterval() {
 		
 		if (getCurrentStatDateTime().plusSeconds(getMaxTimeForInterval()).isBefore(LocalDateTime.now()))
@@ -760,5 +781,29 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	}
 
 	}
+
+	public synchronized void removeStateBehavior(Integer behaviorId) {
+
+		for (int i = 0; i < this.stateBehaviors.size(); i++){
+			MeasuredEntityStateBehavior measuredEntityStateBehavior = this.stateBehaviors.get(i);
+			if (measuredEntityStateBehavior.getId().compareTo(behaviorId) == 0){
+				this.stateBehaviors.remove(i);
+				break;
+			}
+		}		
+
+	}
+
+	public void removeStateTransition(Integer transitionId) {
+
+		for (int i = 0; i < this.stateTransitions.size(); i++){
+			MeasuredEntityStateTransition transition = this.stateTransitions.get(i);
+			if (transition.getId().compareTo(transitionId) == 0){
+				this.stateTransitions.remove(i);
+				break;
+			}
+		}		
+	}
+
 
 }

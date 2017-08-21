@@ -196,6 +196,8 @@ public class MonitoringDeviceContainer extends Container
 			}
 			
 			super.configuationObjects.put(mDeviceTemp.getId(), mDeviceTemp);
+			
+			logger.info("The monitoring device with Id:" + mDeviceTemp.getId() + " was inserted");
 					
 		} catch (JsonParseException e) {
 			logger.error(e.getMessage());

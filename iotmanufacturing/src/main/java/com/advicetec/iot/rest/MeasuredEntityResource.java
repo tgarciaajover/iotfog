@@ -8,11 +8,17 @@ import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
+
+import java.sql.SQLException;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.SignalUnit;
 import com.advicetec.configuration.SignalUnitContainer;
+import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuredEntityContainer;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -21,6 +27,8 @@ import com.advicetec.measuredentitity.MeasuredEntityManager;
 public class MeasuredEntityResource extends ServerResource  
 {
 
+		static Logger logger = LogManager.getLogger(MeasuredEntityResource.class.getName());
+	
 	  /**
 	   * Returns the MeasuredEntity instance requested by the URL. 
 	   * 
@@ -88,10 +96,58 @@ public class MeasuredEntityResource extends ServerResource
 	    	measuredEntityManager.addNewEntity(measuredEntity);
 	    }
 	    	    
-	    getResponse().setStatus(Status.SUCCESS_OK);
-	    
+	    getResponse().setStatus(Status.SUCCESS_OK);	    
 	    Representation result = new JsonRepresentation("");
 	    return result;
+	    
 	  }
+	  
+	  /**
+	   * Deletes the measured entity identified by uniqueID from the internal database.
+	   * This function delete all related objects associated with the measured entity. 
+	   * @return null.
+	 * @throws SQLException 
+	   */
+	  @Delete("json")
+	  public Representation deleteMeasuredEntity() throws SQLException {
+
+		// Create an empty JSon representation.
+		Representation result;
+
+		  // Get the requested Contact ID from the URL.
+		String uniqueIdStr = (String)this.getRequestAttributes().get("uniqueID");
+		
+		if (uniqueIdStr == null){
+			String error = "The request should include a uniqueId";
+			logger.error(error);
+		    getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
+		    result = new JsonRepresentation("");
+			return result;
+		} 
+		
+		try 
+		{	
+			Integer uniqueID = Integer.valueOf(uniqueIdStr);
+
+		    ConfigurationManager confManager = ConfigurationManager.getInstance();
+		    
+		    // Look for it in the Measured Entity database.
+		    MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
+		    measuredEntityManager.removeMeasuredEntity(uniqueID);
+		    
+		    getResponse().setStatus(Status.SUCCESS_OK);	    
+		    result = new JsonRepresentation("");
+		    return result;
+		
+		} catch (NumberFormatException e) {
+			String error = "The value given in uniqueId is not a valid measured entity";
+			logger.error(error);
+			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
+			result = new JsonRepresentation("");
+			return result;
+			
+		}
+	}
+
 	  
 }

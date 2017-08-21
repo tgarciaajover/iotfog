@@ -106,4 +106,10 @@ public class AggregationEvent extends Event
 		
 		return seconds;
 	}
+	
+	public Integer getMeasuredEntity()
+	{
+		return new Integer(this.measuredEntity);
+	}
+
 }

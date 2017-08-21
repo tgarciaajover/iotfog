@@ -47,7 +47,9 @@ public class MonitoringDeviceResource extends ServerResource
 		MonitoringDevice monitoringDevice = (MonitoringDevice) monitoringDeviceCon.getObject(uniqueID);
 		if (monitoringDevice == null) {
 			// The requested contact was not found, so set the Status to indicate this.
-			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+			String error = "Monitoring device with Id:" + Integer.toString(uniqueID) + " was not found";
+			logger.error(error);
+			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 			result = new JsonRepresentation("");
 		} 
 		else {
@@ -85,7 +87,7 @@ public class MonitoringDeviceResource extends ServerResource
 
 		monitoringDeviceCon.fromJSON(jsonText);
 
-		logger.debug("numElements:" + monitoringDeviceCon.size());
+		logger.info("numElements:" + monitoringDeviceCon.size());
 
 		getResponse().setStatus(Status.SUCCESS_OK);
 

@@ -52,4 +52,17 @@ public abstract class Event
 		this.repeated = repeated;
 	}
 
+	/**
+	 * This method should be overriden by all events that are related to a measured entity object. 
+	 * It is used to delete the event from delayed queues. 
+	 * @return. This base class returns -1 (an invalid measured entity id.) 
+	 */
+	public Integer getMeasuredEntity()
+	{
+		return new Integer(-1);
+	}
+	
+	public boolean equals(Event o){
+		return this.uuid.equals(o.uuid);
+	}
 }

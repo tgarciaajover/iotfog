@@ -150,9 +150,12 @@ public abstract class Container
 		return references.get(field); 
 	}
 
-	public synchronized void removeObject(Integer id)
+	public synchronized boolean removeObject(Integer id)
 	{
-		this.configuationObjects.remove(id);
+		if (this.configuationObjects.remove(id) == null)
+			return false;
+		else 
+			return true;
 	}
 	
 	public synchronized int size()

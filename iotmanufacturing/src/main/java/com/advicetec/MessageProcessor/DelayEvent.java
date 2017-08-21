@@ -12,17 +12,15 @@ import com.advicetec.eventprocessor.Event;
 public class DelayEvent implements Delayed
 {
 
-	
-	
 	/**
 	 * Event to process.
 	 */
-	private Event data;
+	protected Event data;
 	
 	/**
 	 *  This number is in milliseconds.
 	 */
-	private long startTime;
+	protected long startTime;
 	
 	 
 	public DelayEvent(Event data, long delay) {
@@ -59,6 +57,10 @@ public class DelayEvent implements Delayed
 	                "data='" + data + '\'' +
 	                ", startTime=" + startTime +
 	                '}';
+	}
+	
+	public boolean equals(DelayEvent o){
+		return (this.startTime == o.startTime) && this.getEvent().equals(o.getEvent()); 
 	}
 	
 	public long getStartTime(){

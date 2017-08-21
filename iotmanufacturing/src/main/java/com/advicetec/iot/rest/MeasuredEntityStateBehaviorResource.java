@@ -1,6 +1,7 @@
 package com.advicetec.iot.rest;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
@@ -124,8 +125,7 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 					  
 					  logger.debug("object reveived:" + behavior.getId() + behavior.getDescr() );
 					  
-					  measuredEntityFacade.getEntity().putStateBehavior(behavior.getId(), behavior.getStateBehaviorType(), 
-							  behavior.getDescr(), behavior.getBehavior_text());
+					  measuredEntityFacade.getEntity().putStateBehavior(behavior);
 					  
 					  logger.debug("putMeasuredEntityStateBehavior OK");
 					  
@@ -154,5 +154,63 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 		getResponse().setStatus(Status.SUCCESS_OK);
 		return result;
 	}
-	  
+
+	/**
+	 * Deletes the passed MeasuredEntity State Behavior in our internal database of Measured Entities.
+	 * @param Json representation of the measured entity State Behavior to delete.
+	 * 
+	 * @return null.
+	 * @throws SQLException 
+	 * 
+	 * @throws Exception If problems occur unpacking the representation.
+	 */
+	@Delete("json")
+	public Representation deleteMeasuredEntityStateBehavior() throws SQLException {
+
+		Representation result;
+
+		// Get the Measured Entity's uniqueID from the URL.
+		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
+
+		// Get the Scheduled Event Id
+		String behaviorIdStr = (String)this.getRequestAttributes().get("BehaviorID");
+		if (behaviorIdStr != null){
+
+			try{
+				Integer behaviorId = Integer.valueOf(behaviorIdStr);
+
+				ConfigurationManager confManager = ConfigurationManager.getInstance();
+
+				// Deletes the signal unit from all signals that has it as the unit.
+
+				// Look for it in the Measured Entity database.
+				MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
+
+				// Get the measuring entity facade. 
+				MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
+
+				measuredEntityFacade.getEntity().removeStateBehavior(behaviorId);
+
+				getResponse().setStatus(Status.SUCCESS_OK);
+
+			} catch (NumberFormatException e) {
+				String error = "The value given in State Behavior is not a valid number";
+				logger.error(error);
+				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
+
+			}
+
+		}
+		
+		else {
+			String error = "behaviorId was not provided";
+			logger.error(error);
+			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
+		}
+
+		result = new JsonRepresentation("");	
+		return result;
+	}
+
+	
 }
