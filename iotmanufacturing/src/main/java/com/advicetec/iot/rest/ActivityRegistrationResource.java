@@ -319,21 +319,25 @@ public class ActivityRegistrationResource extends ServerResource
 	}
 	
 	
-	private void executeStopProduction(MeasuredEntityFacade measuredEntityFacade, int idProduction) throws SQLException{
+	private void executeStopProduction(MeasuredEntityFacade measuredEntityFacade, Integer idProduction) throws SQLException{
 
     	logger.info("in register production order end");
     	
     	// End of the production order
     	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
-    		        		        	
-    	// remove the facade from the Manager
-    	productionOrderManager.removeFacade(idProduction);
     	
-    	productionOrderManager.getProductionOrderContainer().removeObject(idProduction);
+    	// Stop the production order if was in operation.
+    	ProductionOrderFacade  pOrderfacade = productionOrderManager.getFacadeOfPOrderById(idProduction);
+    	pOrderfacade.stop();
     	
     	// Remove the production order from the measured entity.
     	measuredEntityFacade.removeExecutedObject(idProduction);
     	
+    	// remove the facade from the Manager
+    	productionOrderManager.removeFacade(idProduction);
+    	
+    	productionOrderManager.getProductionOrderContainer().removeObject(idProduction);
+    	    	
     	getResponse().setStatus(Status.SUCCESS_OK);
 
 	}

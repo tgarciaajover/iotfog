@@ -62,6 +62,8 @@ public class IotInit extends Configurable
 		// caches initiation
 		//		StatusStore.getInstance();
 		
+
+		
 		try {
 
 			IotInit iotInit = IotInit.getInstance();
@@ -84,9 +86,8 @@ public class IotInit extends Configurable
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		}
+		} 
 
-		
 	}
 
 	public void getMeasuredEntityStatus(Integer entityID){

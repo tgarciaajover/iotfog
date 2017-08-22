@@ -199,29 +199,56 @@ public final class StateInterval implements Storable
 				pstmt.setString(6, null);
 			}
 			
-			// Executed Object
-			pstmt.setInt(7, getExecutedObject());
+			if (getExecutedObject() == null){
+				pstmt.setNull(7, java.sql.Types.INTEGER);
+			} else{
+				// Executed Object
+				pstmt.setInt(7, getExecutedObject());
+			}
 			
 			// Executed Object Type
-			pstmt.setInt(8, getExecutedObjectType());
+			if (getExecutedObjectType() == null){
+				pstmt.setNull(8, java.sql.Types.INTEGER);
+			} else {
+				pstmt.setInt(8, getExecutedObjectType());
+			}
 
-			// Executed Object Canonical
 			pstmt.setString(9, getExecutedObjectCanonical());
 
 			// Production rate
-			pstmt.setDouble(10, getProductionRate());
+			if (getProductionRate() == null){
+				pstmt.setDouble(10, new Double(0.0));
+			} else {
+				pstmt.setDouble(10, getProductionRate());
+			}
 			
 			// Conversion 1
-			pstmt.setDouble(11, getConversion1());
+			if (getConversion1() == null){
+				pstmt.setDouble(11, new Double(0.0));
+			} else {
+				pstmt.setDouble(11, getConversion1());
+			}
 
 			// Conversion 2
-			pstmt.setDouble(12, getConversion2());
+			if (getConversion2() == null) {
+				pstmt.setDouble(12, new Double(0.0));
+			} else {
+				pstmt.setDouble(12, getConversion2());
+			}
 
 			// actual production rate
-			pstmt.setDouble(13, getActualProductionRate());
+			if (getActualProductionRate() == null){
+				pstmt.setDouble(13, new Double(0.0));
+			} else {
+				pstmt.setDouble(13, getActualProductionRate());
+			}
 	
 			// qty defective
-			pstmt.setDouble(14, getQtyDefective());
+			if (getQtyDefective() == null){
+				pstmt.setDouble(14, new Double(0.0));
+			} else {
+				pstmt.setDouble(14, getQtyDefective());
+			}
 			
 			pstmt.addBatch();
 
@@ -307,7 +334,7 @@ public final class StateInterval implements Storable
 		return this.actualProductionRate;
 	}
 
-	public double getQtyDefective() {
+	public Double getQtyDefective() {
 		return this.qtyDefective;
 	}	
 	

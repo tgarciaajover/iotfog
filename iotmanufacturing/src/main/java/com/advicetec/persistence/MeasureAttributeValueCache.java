@@ -322,16 +322,21 @@ public class MeasureAttributeValueCache extends Configurable {
 			conn.setAutoCommit(false);
 
 			pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
+			
+			// Get the keys to insert in the database.
 			Map<String,AttributeValue> subSet = cache.getAllPresent(keys);
 			for (AttributeValue value :	subSet.values()) {
 				if(value instanceof MeasuredAttributeValue){
 					MeasuredAttributeValue mav = (MeasuredAttributeValue) value;
 					mav.dbInsert(pst);
-					pst.addBatch();
 				}
 			}
 			pst.executeBatch();
 			conn.commit();
+			
+			// Remove all keys inserted in the database.
+			cache.invalidateAll(keys);
+			
 		} catch (ClassNotFoundException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();

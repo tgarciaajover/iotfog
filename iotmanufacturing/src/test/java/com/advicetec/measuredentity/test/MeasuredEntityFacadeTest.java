@@ -143,15 +143,21 @@ public class MeasuredEntityFacadeTest
 				
 				Thread.sleep(2000);
 				
+				productionOrderFacade.stop();
+
+				// Remove the production order from the measured entity.
+		    	facade.removeExecutedObject(idProduction);
+				
 				ProductionOrderManager.getInstance().removeFacade(idProduction);
 		    	
+				System.out.println("in 1");
 				ProductionOrderManager.getInstance().getProductionOrderContainer().removeObject(idProduction);
 		    	
-		    	// Remove the production order from the measured entity.
-		    	facade.removeExecutedObject(idProduction);
-		    	
+				System.out.println("in 2");
+				
 		    	states = facade.getJsonStates(LocalDateTime.now().minusDays(1),  LocalDateTime.now());
 		    	
+		    	System.out.println("in 3");
 		    	System.out.println("Intervals :" + states.toString());
 			
 			}

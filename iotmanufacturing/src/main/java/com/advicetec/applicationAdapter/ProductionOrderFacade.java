@@ -270,7 +270,7 @@ public final class ProductionOrderFacade {
 		
 		if(!attMap.containsKey(attrName)){
 			logger.error("attribute is not in facade");
-			return null;
+			return new ArrayList<AttributeValue>();  
 		}
 		SortedMap<LocalDateTime,String> internalMap = attMap.get(attrName);
 		
@@ -416,56 +416,80 @@ public final class ProductionOrderFacade {
 
 	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
-		Double rate = new Double(0.0);
-		Double conversion1 = new Double(0.0);
-		Double conversion2 = new Double(0.0);
+		
+		Double rate = null;
+		Double conversion1 = null;
+		Double conversion2 = null;
 		Double actualRate = null; 
 		
 		if (this.pOrder.getCurrentState() == MeasuringState.OPERATING) {
 			AttributeValue attrValue = this.pOrder.getAttributeValue(this.productionRateId);
-			rate = (Double) attrValue.getValue();
+			if (attrValue != null){
+				rate = (Double) attrValue.getValue();
+			} else {
+				rate = new Double(0.0);
+			}
+		} else {
+			rate = new Double(0.0);
 		}
 
 		if (this.pOrder.getCurrentState() == MeasuringState.OPERATING) {
 			AttributeValue attrValue = this.pOrder.getAttributeValue(this.unit1PerCycles);
-			conversion1 = (Double) attrValue.getValue();
+			if (attrValue != null){
+				conversion1 = (Double) attrValue.getValue();
+			} else {
+				conversion1 = new Double(0.0);
+			}
+		} else {
+			conversion1 = new Double(0.0);
 		}
 
 		if (this.pOrder.getCurrentState() == MeasuringState.OPERATING) {
 			AttributeValue attrValue = this.pOrder.getAttributeValue(this.unit2PerCycles);
-			conversion2 = (Double) attrValue.getValue();
+			if (attrValue != null){
+				conversion2 = (Double) attrValue.getValue();
+			} else {
+				conversion2 = new Double(0.0);
+			}
+		} else {
+			conversion2 = new Double(0.0);
 		}
 
-		// Verifies that the actual production count id field is an attribute in the measuring entity
-		if (!isAttribute(actualProductionCountId)) {
-			logger.error("The given attribute: " + this.actualProductionCountId + " does not exists as attribute in the measuring entity");
-			actualRate = new Double(0.0);
-		} else {
-		
-			ArrayList<AttributeValue> list = getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
+		if (this.pOrder.getCurrentState() == MeasuringState.OPERATING) {
+			// Verifies that the actual production count id field is an attribute in the measuring entity
+			if (!isAttribute(actualProductionCountId)) {
+				logger.error("The given attribute: " + this.actualProductionCountId + " does not exists as attribute in the measuring entity");
+				actualRate = new Double(0.0);
+			} else {
 			
-			double sum = 0;
-			// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
-			for (AttributeValue attributeValue : list) 
-			{
+				ArrayList<AttributeValue> list = getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
 				
-				MeasuredAttributeValue measvalue = (MeasuredAttributeValue) attributeValue;
-				
-				if ((measvalue.getValue() instanceof Double) || (measvalue.getValue() instanceof Integer)){
-					if (measvalue.getValue() instanceof Double)
-						sum = sum + (Double) measvalue.getValue();
-					else
-						sum = sum + (Integer) measvalue.getValue();
-				} else {
-					logger.error("The production count attribute: " + actualProductionCountId + " parametrized is not of type Double or Integer");
-					break;
+				double sum = 0;
+				// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
+				for (AttributeValue attributeValue : list) 
+				{
+					
+					MeasuredAttributeValue measvalue = (MeasuredAttributeValue) attributeValue;
+					
+					if ((measvalue.getValue() instanceof Double) || (measvalue.getValue() instanceof Integer)){
+						if (measvalue.getValue() instanceof Double)
+							sum = sum + (Double) measvalue.getValue();
+						else
+							sum = sum + (Integer) measvalue.getValue();
+					} else {
+						logger.error("The production count attribute: " + actualProductionCountId + " parametrized is not of type Double or Integer");
+						break;
+					}
 				}
+				LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
+				long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
+				actualRate = new Double(sum * 60 / seconds); 
 			}
-			LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
-			long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
-			actualRate = new Double(sum * 60 / seconds); 
+		} else {
+			actualRate = new Double(0.0);
 		}
 		
+		logger.info("we are going to register the production order interval");
 		
 		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType(), this.pOrder.getId(), this.pOrder.getType().getValue(), this.pOrder.getCanonicalKey(), rate, conversion1, conversion2, actualRate, new Double(0));
 		stateInterval.setKey(this.pOrder.getId()+stateInterval.getKey());
@@ -596,7 +620,16 @@ public final class ProductionOrderFacade {
 		
 		logger.info("After deleting all states");
 		
-		stateCache.bulkCommit(new ArrayList<String>(statesMap.values()));
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.addAll(statesMap.values());
+		
+		logger.info("before bulk commit");
+		
+		for (String key :keys){
+			logger.info("key to delete:" + key);
+		}
+		
+		stateCache.bulkCommit(keys);
 		
 		logger.info("finish storeAllStateIntervals");
 	}
@@ -635,6 +668,9 @@ public final class ProductionOrderFacade {
 		return status.toXml();
 	}
 
+	/**
+	 * Starts the production order, whenever the production order was in schedule down or operating 
+	 */
 	public void start()
 	{
 		if (this.pOrder.getCurrentState() != MeasuringState.OPERATING) {  
@@ -645,15 +681,24 @@ public final class ProductionOrderFacade {
 		
 	}
 	
+	/**
+	 * Stops the production order, whenever the production order was in schedule down or operating 
+	 */
 	public void stop()
 	
 	{
+		logger.info("Stopping the production order");
+		
 		if (this.pOrder.getCurrentState() != MeasuringState.UNSCHEDULEDOWN) {
+			
+			logger.info("Registering the final interval for the production order");
+			
 			TimeInterval tInterval= new TimeInterval(this.pOrder.getCurrentStatDateTime(), LocalDateTime.now()); 
 			registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), tInterval);
 			this.pOrder.startInterval(MeasuringState.UNSCHEDULEDOWN, null);
 		}
 		
+		logger.info("Finish production order stop ");
 	}
 	
 }

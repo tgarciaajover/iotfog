@@ -238,21 +238,41 @@ public class StateIntervalCache extends Configurable {
 	 */
 	public void bulkCommit(List<String> keys){
 		
-		logger.debug("In bulk commit Db Url:" + DB_URL);
-		
+		logger.info("In bulk commit Db Url:" + DB_URL + "Number of elements to remove:" + keys.size());
+
 		try {
 			Class.forName(DB_DRIVER);
 			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 			conn.setAutoCommit(false);
 			pst = conn.prepareStatement(StateInterval.SQL_Insert);
+
+			// Get the values to put in the database. 
 			Map<String,StateInterval> subSet = cache.getAllPresent(keys);
-			for (StateInterval interval :subSet.values()) {
-				interval.dbInsert(pst);
+
+			logger.info("aqui 1");
+
+			if (subSet != null){
+				// Store the values in the database.
+				
+				
+				for (StateInterval interval :subSet.values()) {
+					interval.dbInsert(pst);
+				}
+
+				logger.info("aqui 2");
+				pst.executeBatch();
+				conn.commit();
+				
+				if (keys == null)
+					logger.info("keys deleted");
+				
+				// Discard those values obtained as they would be inserted in the database.
+				cache.invalidateAll(keys);
+
+			} else {
+				logger.info("Elements not found in the cache");
 			}
-			pst.executeBatch();
-			conn.commit();
-			// here the 
-			
+
 		} catch (ClassNotFoundException | SQLException e) {
 			logger.error("Error: "+ e.getMessage());
 			e.printStackTrace();
@@ -281,6 +301,7 @@ public class StateIntervalCache extends Configurable {
 			}
 		}
 	}
+	
 	public LocalDateTime getOldestTime(){
 		return LocalDateTime.now().minusSeconds(WRITE_TIME + DELETE_TIME);
 	}

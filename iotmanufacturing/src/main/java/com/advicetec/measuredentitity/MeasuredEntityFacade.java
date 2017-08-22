@@ -433,6 +433,14 @@ public final class MeasuredEntityFacade {
 		if (rate == null)
 			rate = new Double(0.0); // No rate defined. 
 		
+		if (conversion1 == null) {
+			conversion1 = new Double(0.0); // No conversion defined
+		}
+		
+		if (conversion2 == null) {
+			conversion2 = new Double(0.0); // No conversion defined
+		}
+		
 		Double actualRate = null; 
 		
 		// Verifies that the actual production count id field is an attribute in the measuring entity
