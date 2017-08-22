@@ -615,7 +615,11 @@ public class MeasuredEntityContainer extends Container
 				String descr  				= rs6.getString("descr");  
 				String recurrences        	= rs6.getString("recurrences");
 				Timestamp createDate 		= rs6.getTimestamp("create_date");
-				Timestamp lastUpdttm 		= rs6.getTimestamp("last_updttm");
+				
+				MeasuredEntityScheduledEvent measuredEvent = new MeasuredEntityScheduledEvent(entity.getId(), scheduleEventType );
+				measuredEvent.setDescr(descr);
+				measuredEvent.setRecurrence(recurrences);
+				measuredEvent.setCreateDate(createDate.toLocalDateTime());
 				
 				// According to the type of event, we create the instance class.
 				
@@ -625,11 +629,14 @@ public class MeasuredEntityContainer extends Container
 					
 					for (String recurrence : lines) {
 						AggregationEvent aggEvent = new AggregationEvent(entity.getId(), entity.getType(), AggregationEventType.OEE, recurrence);
+						measuredEvent.addReferencedEvent(aggEvent.getId());
 						events.add(aggEvent);
 					}
 				} else {
 					logger.error("The Schedule event given is not being handled - Type given:" +  scheduleEventType );
 				}
+				
+				entity.putScheduledEvent(measuredEvent);
 				
 			}
 
