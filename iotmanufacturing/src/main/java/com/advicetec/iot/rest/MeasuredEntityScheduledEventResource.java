@@ -2,6 +2,8 @@ package com.advicetec.iot.rest;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
@@ -16,10 +18,15 @@ import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONObject;
 
+import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.MonitoringDeviceContainer;
 import com.advicetec.configuration.SignalUnit;
 import com.advicetec.configuration.SignalUnitContainer;
+import com.advicetec.eventprocessor.AggregationEvent;
+import com.advicetec.eventprocessor.AggregationEventType;
+import com.advicetec.eventprocessor.Event;
+import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuredEntityContainer;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -127,11 +134,48 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 				logger.debug("MeasuredEntityFacade found");
 
 				try{
+					
+					List<Event> events = new ArrayList<Event>();
+					
 					ObjectMapper mapper = new ObjectMapper();
 					MeasuredEntityScheduledEvent event = mapper.readValue(jsonText, MeasuredEntityScheduledEvent.class);
-					measuredEntityFacade.getEntity().putScheduledEvent( event );
 
-					logger.debug("putMeasureEntityScheduleEvent OK");
+					if (event.getScheduledEventType().compareTo("AG") == 0) {
+						
+						String lines[] = event.getRecurrence().split("\\r?\\n");
+						
+						for (String recurrence : lines) {
+							AggregationEvent aggEvent = new AggregationEvent(measuredEntityFacade.getEntity().getId(), measuredEntityFacade.getEntity().getType(), AggregationEventType.OEE, recurrence);
+							event.addReferencedEvent(aggEvent.getId());
+							events.add(aggEvent);
+						}
+					} else {
+						logger.error("The Schedule event given is not being handled - Type given:" +  event.getScheduledEventType() );
+					}
+					
+					int numEvent = 0;
+					for (Event evt : events){
+						long seconds = ((AggregationEvent) evt).getSecondsToNextExecution();
+						
+						logger.info("Next Recurrence to occur in: " + seconds + " seconds");
+						
+						DelayEvent dEvent = new DelayEvent(evt,seconds*1000);
+						
+						try {
+							
+							EventManager.getInstance().getDelayedQueue().put(dEvent);
+							
+						} catch (InterruptedException e) {
+							logger.error(e.getMessage());
+							e.printStackTrace();
+						}
+						
+						numEvent = numEvent + 1;
+					}
+					
+					measuredEntityFacade.getEntity().putScheduledEvent( event );
+					
+					logger.info("Number of scheduled events that have been read:" + numEvent );
 
 					getResponse().setStatus(Status.SUCCESS_OK);
 					result = new JsonRepresentation("");
