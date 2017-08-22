@@ -476,6 +476,7 @@ public final class MeasuredEntityFacade {
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());
 		StateIntervalCache.getInstance().storeToCache(stateInterval);
+		
 	}
 
 	// Verifies if a particular attribute belongs to the measure entity status.  
@@ -674,9 +675,32 @@ public final class MeasuredEntityFacade {
 	 * and clean the cache.
 	 */
 	public synchronized void storeAllStateIntervals(){
+		LocalDateTime oldest = stateCache.getOldestTime();
+		
+		deleteOldStates(oldest);
+		
 		stateCache.bulkCommit(new ArrayList<String>(statesMap.values()));
 	}
+	
+	/***
+	 * Commands to store all measured attribute values into the database
+	 * and clean the cache. 
+	 */
+	public void storeAllMeasuredAttributeValues(){
+		LocalDateTime oldest = attValueCache.getOldestTime();
+		
+		deleteOldValues(oldest);
 
+		ArrayList<String> keys = new ArrayList<String>();
+		
+		for(SortedMap<LocalDateTime, String> internalMap : attMap.values()){
+			// replace the map with the last entries. 
+			keys.addAll(internalMap.values());
+		}
+		attValueCache.bulkCommit(keys);
+	}
+
+	
 	/**
 	 * Returns the Entity Status into a XML document.
 	 * @return
@@ -794,6 +818,8 @@ public final class MeasuredEntityFacade {
 	public void addExecutedObject(ExecutedEntity executedEntity)
 	{
 		this.entity.addExecutedEntity(executedEntity);
+		
+		ExecutedEntityChange();
 	}
 	
 	public void stopExecutedObjects()
@@ -804,6 +830,8 @@ public final class MeasuredEntityFacade {
 	public void removeExecutedObject(Integer id)
 	{
 		this.entity.removeExecutedEntity(id);
+		
+		ExecutedEntityChange();
 	}
 
 	public AttributeValue getExecutedObjectAttribute(String attributeId)
@@ -850,6 +878,15 @@ public final class MeasuredEntityFacade {
 				
 			}
 		}
+
+	}
+	
+	public synchronized void ExecutedEntityChange(){
+		
+		LocalDateTime localDateTime = LocalDateTime.now();
+		TimeInterval interval = new TimeInterval(this.entity.getCurrentStatDateTime(), localDateTime);
+		this.registerInterval(this.entity.getCurrentState(), this.entity.getCurrentReason(), interval);
+		this.entity.startInterval(localDateTime, this.entity.getCurrentState(), null);						
 
 	}
 
@@ -1022,17 +1059,28 @@ public final class MeasuredEntityFacade {
 		boolean ret = false;
 		
 		if (this.entity.getCurrentStatDateTime().equals(startDttm)){
+			
+			logger.info("Updating the current state interval");
+			
 			this.entity.setCurrentReasonCode(reasonCode);
 			ret = true;
 		} else {
 
+			logger.info("Updating the past state interval");
+			
 			LocalDateTime oldest = stateCache.getOldestTime();
 			
+			logger.info("oldest" + oldest.format(formatter));
+			
 			// all values are in the cache
-			if(oldest.isBefore(startDttm)){
+			if(oldest.isBefore(startDttm))
+			{
+				logger.info("the datetime given is before");
 				String stateKey = statesMap.get(startDttm);
+				logger.info("State key found:" + stateKey);
 				ret = stateCache.updateCacheStateInterval(stateKey, reasonCode);
 			} else if(oldest.isAfter(startDttm)){
+				logger.info("the datetime given is after");
 				// all values are in the database 
 				ret = stateCache.updateStateInterval(this.entity.getId(), this.entity.getType(), startDttm, reasonCode);				
 			}

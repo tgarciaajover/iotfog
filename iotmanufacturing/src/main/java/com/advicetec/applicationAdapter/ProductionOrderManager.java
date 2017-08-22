@@ -115,8 +115,7 @@ public class ProductionOrderManager extends Configurable {
     	ProductionOrderFacade productionOrderFacade = this.pOrders.remove(idProduccion);
     	if (productionOrderFacade != null){
         	// Store all data associated with the production order.
-    		// TODO: to finish this implementation.
-        	// productionOrderFacade.storeAllAttributeValues();
+        	productionOrderFacade.storeAllMeasuredAttributeValues();
         	productionOrderFacade.storeAllStateIntervals();    		
     	}
 	}

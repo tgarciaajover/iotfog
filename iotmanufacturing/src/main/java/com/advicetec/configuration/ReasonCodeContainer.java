@@ -184,6 +184,15 @@ public class ReasonCodeContainer extends Container
 		
 		return ret;
 	}
+	
+	/**
+	 * This method is for testing. 
+	 */
+	public synchronized void insertReason(ReasonCode reasonObj, String company, String location, String plant, String reason)
+	{
+		canonicalMapIndex.put(getCanonicalKey(company, location, plant, reason) , reasonObj.getId());
+		super.configuationObjects.put(reasonObj.getId(), reasonObj);
+	}
 
 	public Integer getReasonCodeId(String canCompany, String canLocation, String canPlant, String canStopReason) {
 		logger.info("Number of reason codes registered:" + Integer.toString(this.canonicalMapIndex.size()));

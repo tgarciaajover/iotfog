@@ -237,6 +237,9 @@ public class StateIntervalCache extends Configurable {
 	 * @param keys
 	 */
 	public void bulkCommit(List<String> keys){
+		
+		logger.debug("In bulk commit Db Url:" + DB_URL);
+		
 		try {
 			Class.forName(DB_DRIVER);
 			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
@@ -245,14 +248,13 @@ public class StateIntervalCache extends Configurable {
 			Map<String,StateInterval> subSet = cache.getAllPresent(keys);
 			for (StateInterval interval :subSet.values()) {
 				interval.dbInsert(pst);
-				pst.addBatch();
 			}
 			pst.executeBatch();
 			conn.commit();
 			// here the 
 			
 		} catch (ClassNotFoundException | SQLException e) {
-			System.err.println("Error: "+ e.getMessage());
+			logger.error("Error: "+ e.getMessage());
 			e.printStackTrace();
 		}
 		finally{
@@ -262,6 +264,7 @@ public class StateIntervalCache extends Configurable {
 				{
 					pst.close();
 				} catch (SQLException e) {
+					logger.error("Error: "+ e.getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -272,6 +275,7 @@ public class StateIntervalCache extends Configurable {
 				{
 					conn.close();
 				} catch (SQLException e) {
+					logger.error("Error: "+ e.getMessage());
 					e.printStackTrace();
 				}
 			}
@@ -302,7 +306,7 @@ public class StateIntervalCache extends Configurable {
 			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 			connDB.setAutoCommit(false);
 			pstDB = connDB.prepareStatement(StateIntervalCache.sqlStatusIntervalRangeSelect);
-			pstDB.setString(1, Integer.toString(entityId));
+			pstDB.setInt(1, entityId);
 			pstDB.setInt(2, mType.getValue());
 			pstDB.setTimestamp(3, Timestamp. valueOf(from));
 			pstDB.setTimestamp(4, Timestamp.valueOf(to));

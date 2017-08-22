@@ -249,6 +249,7 @@ public class ProductionOrderContainer extends Container
 			(( PreparedStatement) super.pst).setInt(7, month);
 			(( PreparedStatement) super.pst).setString(8, productionOrder);
 
+			
 			ResultSet rs1 = (( PreparedStatement) super.pst).executeQuery();
 			
 			while (rs1.next())
@@ -294,7 +295,7 @@ public class ProductionOrderContainer extends Container
 				String plan 	 	 	= rs.getString("id_planta");
 				String machineGroup  	= rs.getString("id_grupo_maquina");
 				Integer ano 		 	= rs.getInt("ano");
-				Integer month        	= rs.getInt("month");
+				Integer month        	= rs.getInt("mes");
 				String productionOrder = rs.getString("id_produccion");
 				
 				canonicalKey = company + "-" + location + "-" + plan + "-" + machineGroup + "-" + 

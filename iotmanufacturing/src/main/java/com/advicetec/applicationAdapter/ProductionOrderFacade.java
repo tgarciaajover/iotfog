@@ -316,10 +316,10 @@ public final class ProductionOrderFacade {
 	}
 	
 	
-	/*public void deleteOldStates(LocalDateTime oldest){
-		statesMap = (TreeMap<LocalDateTime, String>) statesMap.tailMap(oldest, true);
+	public void deleteOldStates(LocalDateTime oldest){
+		statesMap = (SortedMap<LocalDateTime, String>) statesMap.tailMap(oldest);
 	}
-	*/
+	
 		
 	public String getByIntervalByAttributeNameJSON(
 			String attrName, LocalDateTime from, LocalDateTime to){
@@ -587,9 +587,44 @@ public final class ProductionOrderFacade {
 	 * and clean the cache.
 	 */
 	public void storeAllStateIntervals(){
+		
+		logger.info("in storeAllStateIntervals");
+		
+		LocalDateTime oldest = stateCache.getOldestTime();
+				
+		deleteOldStates(oldest);
+		
+		logger.info("After deleting all states");
+		
 		stateCache.bulkCommit(new ArrayList<String>(statesMap.values()));
+		
+		logger.info("finish storeAllStateIntervals");
 	}
 
+	/***
+	 * Commands to the cache to store all measured attribute values into the database
+	 * and clean the cache.
+	 */
+	public void storeAllMeasuredAttributeValues(){
+
+		logger.info("in storeAllMeasuredAttributeValues");
+
+		LocalDateTime oldest = attValueCache.getOldestTime();
+		
+		deleteOldValues(oldest);
+
+		ArrayList<String> keys = new ArrayList<String>();
+		
+		for(SortedMap<LocalDateTime, String> internalMap : attMap.values()){
+			// replace the map with the last entries. 
+			keys.addAll(internalMap.values());
+		}
+		attValueCache.bulkCommit(keys);
+
+		logger.info("finish storeAllMeasuredAttributeValues");
+
+	}
+	
 	/**
 	 * Returns the Entity Status into a XML document.
 	 * @return

@@ -31,6 +31,7 @@ import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.configuration.ReasonCodeContainer;
 import com.advicetec.core.AttributeType;
+import com.advicetec.core.TimeInterval;
 import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.eventprocessor.MeasuredEntityEvent;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -311,7 +312,7 @@ public class ActivityRegistrationResource extends ServerResource
     		
         	// start production
         	measuredEntityFacade.addExecutedObject(productionOrderFacade.getProductionOrder());
-	        				        	
+        	
         	getResponse().setStatus(Status.SUCCESS_OK);
 	        	
     	}		
