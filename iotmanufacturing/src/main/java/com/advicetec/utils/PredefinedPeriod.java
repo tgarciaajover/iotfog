@@ -7,12 +7,16 @@ import java.util.GregorianCalendar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.advicetec.eventprocessor.OEEAggregationEventProcessor;
+
 public class PredefinedPeriod 
 {
     PredefinedPeriodType type;
     Calendar calendarFrom;
     Calendar calendarTo;
-     
+    
+    static Logger logger = LogManager.getLogger(PredefinedPeriod.class.getName());
+    
 	public PredefinedPeriod(int year) {
 		super();
 		this.type = PredefinedPeriodType.YEAR;
@@ -63,18 +67,24 @@ public class PredefinedPeriod
 	
 	
 	public static PredefinedPeriod getInstanceFrom(String periodKey) {
+		
 		String[] tokens = periodKey.split("-");
-		if(tokens.length == 1){ // it is only the year
-			return new PredefinedPeriod(Integer.parseInt(tokens[0]));
-		} else if(tokens.length == 2){ // it is the year and month 
-			return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]));
-		} else if(tokens.length == 3){ // it is the year, month, day
-			return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]) );
-		} else if (tokens.length == 4){ // it is the year, month, day, hour
-			return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]) );
-		} else{
-			Logger logger = LogManager.getLogger(PredefinedPeriod.class.getName());
-			logger.error("error creating a predefined period from String key numParts:" + tokens.length + " key given:" + periodKey);
+		
+		try{
+			if(tokens.length == 1){ // it is only the year
+				return new PredefinedPeriod(Integer.parseInt(tokens[0]));
+			} else if(tokens.length == 2){ // it is the year and month 
+				return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]));
+			} else if(tokens.length == 3){ // it is the year, month, day
+				return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]) );
+			} else if (tokens.length == 4){ // it is the year, month, day, hour
+				return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]) );
+			} else{
+				Logger logger = LogManager.getLogger(PredefinedPeriod.class.getName());
+				logger.error("error creating a predefined period from String key numParts:" + tokens.length + " key given:" + periodKey);
+			}
+		} catch (NumberFormatException e){
+			logger.error("The period given has an invalid format value:" + periodKey);
 		}
 		return null;
 	}

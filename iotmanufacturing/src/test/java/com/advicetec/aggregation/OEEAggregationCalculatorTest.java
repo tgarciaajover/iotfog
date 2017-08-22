@@ -31,7 +31,7 @@ public class OEEAggregationCalculatorTest
 		
 		int owner = 2;
 		LocalDateTime formerHour = LocalDateTime.of(2017, 07, 10, 5, 0);
-		oeeAggregationCalculator.calculateHour(owner, MeasuredEntityType.MACHINE, formerHour, true);
+		oeeAggregationCalculator.calculateHour(owner, MeasuredEntityType.MACHINE, formerHour, true, false);
 
 	}
 	
@@ -51,7 +51,7 @@ public class OEEAggregationCalculatorTest
 		
 		int owner = 2;
 		LocalDateTime day = LocalDateTime.of(2017, 07, 10, 0, 0);
-		oeeAggregationCalculator.calculateDay(owner, MeasuredEntityType.MACHINE, day, true);
+		oeeAggregationCalculator.calculateDay(owner, MeasuredEntityType.MACHINE, day, true, false);
 	}	
 
 	@Test
@@ -70,7 +70,7 @@ public class OEEAggregationCalculatorTest
 		
 		int owner = 2;
 		LocalDateTime month = LocalDateTime.of(2017, 07, 1, 0, 0);
-		oeeAggregationCalculator.calculateMonth(owner, MeasuredEntityType.MACHINE, month,true);
+		oeeAggregationCalculator.calculateMonth(owner, MeasuredEntityType.MACHINE, month,true, false);
 
 	}	
 
@@ -90,7 +90,7 @@ public class OEEAggregationCalculatorTest
 		
 		int owner = 2;
 		LocalDateTime year = LocalDateTime.of(2017, 1, 1, 0, 0);
-		oeeAggregationCalculator.calculateYear(owner, MeasuredEntityType.MACHINE, year, true);
+		oeeAggregationCalculator.calculateYear(owner, MeasuredEntityType.MACHINE, year, true, false);
 
 	}	
 

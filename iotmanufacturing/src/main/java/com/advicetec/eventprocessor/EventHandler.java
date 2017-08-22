@@ -93,6 +93,26 @@ public class EventHandler implements Runnable
 						this.delayQueue.put(event);
 					}
 					logger.debug("The Num delayed enqueued elements is:" + this.delayQueue.size());
+				} else if (evnt.getEvntType() == EventType.AGGREGATION_EVENT ){
+					AggregationEvent aggregationEvent = (AggregationEvent) evnt;
+					
+					if (aggregationEvent.getType() == AggregationEventType.OEE){
+						logger.debug("It is going to start to execute the OEE Aggregation");
+						OEEAggregationEventProcessor processor = new OEEAggregationEventProcessor(aggregationEvent);
+						List<DelayEvent> eventsToCreate = processor.process();
+						for ( int i=0; i < eventsToCreate.size(); i++){
+							DelayEvent event = eventsToCreate.get(i);
+							this.delayQueue.put(event);
+						}
+						logger.debug("The num of new delayed elements enqueued is:" + eventsToCreate.size());
+						
+					} else {
+						logger.error("This aggregation event type: " + 
+										aggregationEvent.getType().getName() + 
+											" can not be processed");
+					}
+					
+					
 				} else {
 					logger.error("This event cannot be processed" + evnt.getEvntType().getName());
 				}
@@ -102,6 +122,15 @@ public class EventHandler implements Runnable
 					long milliseconds = evnt.getMilliseconds();
 					DelayEvent dEvent = new DelayEvent(evnt,milliseconds);
 					this.delayQueue.put(dEvent);
+				} else if ( evnt.getEvntType() == EventType.AGGREGATION_EVENT ) {
+					
+					long seconds = ((AggregationEvent) evnt).getSecondsToNextExecution();
+					
+					logger.debug("Next Recurrence to occur in: " + seconds + " seconds");
+					
+					DelayEvent dEvent = new DelayEvent(evnt,seconds*1000);
+					this.delayQueue.put(dEvent);
+
 				} else {
 					// remove the event from the delay event list.
 					MessageManager.getInstance().removeDelayEventType(evnt.getKey());

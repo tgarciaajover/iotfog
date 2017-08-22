@@ -125,6 +125,7 @@ public class MeasuredEntityManager extends Configurable {
 			long seconds = ((AggregationEvent) evt).getSecondsToNextExecution();
 			
 			logger.info("Next Recurrence to occur in: " + seconds + " seconds");
+			seconds = 1;
 			
 			DelayEvent dEvent = new DelayEvent(evt,seconds*1000);
 			

@@ -48,22 +48,53 @@ public class OEEAggregationEventProcessor implements Processor
 			OEEAggregationContainer OEEContainer = manager.getOeeAggregationContainer();
 			List<OverallEquipmentEffectiveness> ret;
 			
+			logger.info("before starting to execute OEE Aggregation Event Processor");
+			
 			// Calculates the current day
 			LocalDateTime current = LocalDateTime.now();
 			LocalDateTime formerDay = PeriodUtils.getStartOfDay(current);
-			ret = oeeAggregationCalculator.calculateDay(measuringEntity, measuredEntityType,formerDay, true);
-			OEEContainer.dbInsert(ret);
+			ret = oeeAggregationCalculator.calculateDay(measuringEntity, measuredEntityType,formerDay, true, true);
+			
+			for (OverallEquipmentEffectiveness oee : ret){
+				logger.info(oee.toString());
+			}
+			
+			logger.info("After executing for the day OEE Aggregation Event Processor");
+			
+			/* Removes the information for the current day. 
+			 * We are replacing previous calculations for the current date*/
+			// OEEContainer.dbInsert(ret);
 
 			// Obtains the current month
 			LocalDateTime month = LocalDateTime.of(current.getYear(), current.getMonthValue(), 1, 0, 0, 0 );
-			ret = oeeAggregationCalculator.calculateMonth(measuringEntity, measuredEntityType,month, true);
-			OEEContainer.dbInsert(ret);
+			ret = oeeAggregationCalculator.calculateMonth(measuringEntity, measuredEntityType,month, true, true);
+
+			for (OverallEquipmentEffectiveness oee : ret){
+				logger.info(oee.toString());
+			}
+			
+			logger.info("After executing for the month OEE Aggregation Event Processor");
+			
+			/* Removes the information for the current month. 
+			 * We are replacing previous calculations for the current month*/
+			// OEEContainer.dbDelete(ret);
+			// OEEContainer.dbInsert(ret);
 
 
 			// Obtains the current year
 			LocalDateTime year = LocalDateTime.of(current.getYear(), 1, 1, 0, 0, 0 );
-			ret = oeeAggregationCalculator.calculateYear(measuringEntity, measuredEntityType,year, true);
-			OEEContainer.dbInsert(ret);
+			ret = oeeAggregationCalculator.calculateYear(measuringEntity, measuredEntityType,year, true, true);
+			
+			for (OverallEquipmentEffectiveness oee : ret){
+				logger.info(oee.toString());
+			}
+
+			logger.info("After executing for the year OEE Aggregation Event Processor");
+			
+			/* Removes the information for the current year. 
+			 * We are replacing previous calculations for the current year*/
+			// OEEContainer.dbDelete(ret);
+			// OEEContainer.dbInsert(ret);
 
 		} else {
 			logger.error("Facade not found" + measuringEntity);
