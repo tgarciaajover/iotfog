@@ -665,14 +665,17 @@ public final class MeasuredEntityFacade {
 			// all values are in the database 
 			list.addAll(stateCache.getFromDatabase(entity.getId(),entity.getType(),from,to));
 		} else {
-			
+
+			// get from database
+			list.addAll(stateCache.getFromDatabase(entity.getId(),entity.getType(),from,oldest));
+
 		     // get from cache
 			SortedMap<LocalDateTime, String> subMap = statesMap.subMap(oldest, to);
 			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
 				list.add(stateCache.getFromCache(entry.getValue()));
 			}
-			// get from database
-			list.addAll(stateCache.getFromDatabase(entity.getId(),entity.getType(),from,oldest));
+
+
 		}
 		return list;
 	}

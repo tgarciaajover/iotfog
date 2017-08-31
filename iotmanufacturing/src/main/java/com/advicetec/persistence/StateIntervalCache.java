@@ -84,6 +84,20 @@ public class StateIntervalCache extends Configurable {
 			sqlDownTimeReasons = "SELECT reason_code, COUNT(*) AS counter, SUM(DATEDIFF(minute,datetime_from,datetime_to)) AS duration FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? AND ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? AND datetime_to <= ?)) GROUP BY reason_code";
 		}
 
+		// This part inserts any pending data in the cache to the database in case of shutdown.  
+		Runtime.getRuntime().addShutdownHook(new Thread()
+		{
+			@Override
+			public void run()
+			{
+
+				List<String> keys = new ArrayList<>();
+				keys.addAll(cache.asMap().keySet());
+				bulkCommit(keys);
+			}
+		});  
+
+		
 	}
 	
 	

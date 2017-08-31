@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
@@ -69,6 +70,20 @@ public class MeasureAttributeValueCache extends Configurable {
 		DELETE_TIME = Integer.valueOf(properties.getProperty("delete_time"));
 		logger.info("Write time:" + WRITE_TIME + "Delete Time:" + DELETE_TIME);
 
+
+		// This part inserts any pending data in the cache to the database, in case of shutdown.
+		Runtime.getRuntime().addShutdownHook(new Thread()
+		{
+			@Override
+			public void run()
+			{
+
+				List<String> keys = new ArrayList<>();
+				keys.addAll(cache.asMap().keySet());
+				bulkCommit(keys);
+			}
+		});  
+		
 	}
 
 	public static void setCache(int initialCapacity, int maxSize){

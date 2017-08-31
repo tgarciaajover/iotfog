@@ -33,7 +33,6 @@ public class MeasuredEntityManager extends Configurable {
 	static Logger logger = LogManager.getLogger(MeasuredEntityManager.class.getName());
 	
 	private List<MeasuredEntityFacade> entities;
-	private int modBusPort;
 	
 	// Field that maintains the machine speed in case of no job on the machine. 
 	private String productionRateId;
@@ -70,7 +69,7 @@ public class MeasuredEntityManager extends Configurable {
 		String server = properties.getProperty("server");
 		String user = properties.getProperty("user");
 		String password = properties.getProperty("password");
-		this.modBusPort = Integer.valueOf(properties.getProperty("ModBusPort"));
+
 		this.productionRateId = properties.getProperty("machineRateField");
 		this.unit1PerCycles = properties.getProperty("machineUnit1PerCycles");
 		this.unit2PerCycles = properties.getProperty("machineUnit2PerCycles");
@@ -89,7 +88,7 @@ public class MeasuredEntityManager extends Configurable {
 		
 		logger.info("Num facades that have been read:" + Integer.toString(this.entities.size()) );
 		
-		List<ModBusTcpEvent> events = measuredEntities.getModBusEvents( modBusPort );
+		List<ModBusTcpEvent> events = measuredEntities.getModBusEvents();
 		
 		for (ModBusTcpEvent evt : events){
 			Queueable obj = new Queueable(QueueType.EVENT, evt);

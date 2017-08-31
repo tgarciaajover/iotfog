@@ -20,7 +20,8 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 
 	static Logger logger = LogManager.getLogger(Modbus2UnifiedMessage.class.getName());
 
-	private String ipAddr; // Address of concentrator
+	private String ipAddr; // Concentrator's ip address
+	private Integer port;  // Concentrator's port
 	private Integer uid;   // id of device measure
 	private Integer offSet; // Number of the first register
 	private Integer count;   // Number of elements read. 
@@ -30,6 +31,7 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 
 	public Modbus2UnifiedMessage(Map<String, Object> dictionary) {
 		ipAddr = (String) dictionary.get("IPAddress");
+		port = (Integer) dictionary.get("Port");
 		uid = (Integer) dictionary.get("UID");
 		offSet = (Integer) dictionary.get("Offset");
 		count = (Integer) dictionary.get("Count");
@@ -42,11 +44,11 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	@Override
 	public List<UnifiedMessage> getUnifiedMessage() throws Exception {
 
-		logger.debug("entering getUnifiedMessage" + "type: " + this.type + " uid:" + this.uid + " offset: " + this.offSet + "count: " + this.count);
+		logger.debug("entering getUnifiedMessage" + "port:" + Integer.toString(port) + "type: " + this.type + " uid:" + this.uid + " offset: " + this.offSet + "count: " + this.count);
 		
 		ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
 		
-		String portLabel = ModBusUtils.buildPortLabel(this.type, this.uid, this.offSet, this.count);
+		String portLabel = ModBusUtils.buildPortLabel(this.type, this.port, this.uid, this.offSet, this.count);
 		
 		if (portLabel == null){
 			return theList;

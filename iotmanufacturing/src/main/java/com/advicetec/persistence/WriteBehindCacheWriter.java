@@ -58,6 +58,7 @@ public final class WriteBehindCacheWriter<K, V> implements CacheWriter<K, V>
 
   
   private WriteBehindCacheWriter(Builder<K, V> builder) {
+	  	  
     subject = PublishSubject.create();
     subject.buffer(builder.bufferTimeNanos, TimeUnit.NANOSECONDS)
         .map(entries -> entries.stream().collect(

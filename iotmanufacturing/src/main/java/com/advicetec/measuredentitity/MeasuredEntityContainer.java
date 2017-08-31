@@ -502,7 +502,7 @@ public class MeasuredEntityContainer extends Container
 		return null;
 	}	
 	
-	public List<ModBusTcpEvent> getModBusEvents( int port ) throws SQLException {
+	public List<ModBusTcpEvent> getModBusEvents( ) throws SQLException {
 
 		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
 
@@ -511,7 +511,7 @@ public class MeasuredEntityContainer extends Container
 
 			super.connect();
 
-			logger.info("in getModbusEvents:" + port );
+			logger.info("in getModbusEvents:" );
 			
 			String sqlSelect = sqlSelect5;  
 			ResultSet rs5 = super.pst.executeQuery(sqlSelect);
@@ -528,6 +528,7 @@ public class MeasuredEntityContainer extends Container
 					if (ModBusUtils.isPortLabelValid(portLabel) == false){
 						logger.error("Port label" + portLabel + " is invalid");
 					} else {
+						Integer port = ModBusUtils.getPort(portLabel);
 						ModBusTcpEventType type = ModBusUtils.getModBusType(portLabel);
 						Integer unitId = ModBusUtils.getUnitId(portLabel);
 						Integer offset = ModBusUtils.getOffset(portLabel);
@@ -537,7 +538,6 @@ public class MeasuredEntityContainer extends Container
 						case READ_DISCRETE:
 							ModBusTcpDiscreteDataInputEvent evnt1 = new ModBusTcpDiscreteDataInputEvent(ipaddress, port,
 									unitId, offset, count, true);
-							// TODO: Establish where to put this parameter.
 							evnt1.setMilliseconds(refreshTimeMs); 
 							events.add(evnt1);
 							break;
@@ -550,7 +550,6 @@ public class MeasuredEntityContainer extends Container
 						case WRITE_DISCRETE:
 							ModBusTcpDiscreteDataOutputEvent evnt3 = new ModBusTcpDiscreteDataOutputEvent(ipaddress, port,
 									unitId, offset, count, true);
-							// TODO: Establish where to put this parameter.
 							evnt3.setMilliseconds(refreshTimeMs); 
 							events.add(evnt3);
 							break;
