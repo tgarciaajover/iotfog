@@ -294,7 +294,7 @@ public class OEEAggregationContainer extends Container
 
 			while (rs.next()) {
 
-				String periodKey = rs.getString("period_key"); 
+				String periodKey = rs.getString("period_key").trim(); 
 				Integer productiveTime	= rs.getInt("productive_time");
 				Double qtySchedToProduce = rs.getDouble("qty_sched_to_produce");
 				Double qtyProduced = rs.getDouble("qty_produced");  

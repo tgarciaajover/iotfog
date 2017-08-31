@@ -949,7 +949,7 @@ public final class MeasuredEntityFacade {
 				} else {
 					logger.info("calculating oee for hour");
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
+					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false, false));
 				}
 			} else if ( period.getType() == PredefinedPeriodType.DAY ) {
 				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
@@ -958,7 +958,7 @@ public final class MeasuredEntityFacade {
 					oees.add(oee2);
 				} else {
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateDay(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
+					oees.addAll(oeeCalculator.calculateDay(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false, false));
 				}
 				
 			} else if ( period.getType() == PredefinedPeriodType.MONTH ) {
@@ -968,7 +968,7 @@ public final class MeasuredEntityFacade {
 					oees.add(oee2);
 				} else {
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateMonth(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
+					oees.addAll(oeeCalculator.calculateMonth(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false, false));
 				}
 				
 			} else if ( period.getType() == PredefinedPeriodType.YEAR )  {
@@ -979,7 +979,7 @@ public final class MeasuredEntityFacade {
 					oees.add(oee2);
 				} else {
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateYear(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false));
+					oees.addAll(oeeCalculator.calculateYear(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false, false));
 				}
 									
 			} else {

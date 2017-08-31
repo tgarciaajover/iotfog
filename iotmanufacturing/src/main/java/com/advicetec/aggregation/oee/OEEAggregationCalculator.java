@@ -27,7 +27,9 @@ public class OEEAggregationCalculator {
 	 * @param insert   True, it inserts in the database sub-periods calculations.
 	 * @return
 	 */
-	public List<OverallEquipmentEffectiveness> calculateYear(Integer measuringEntity, MeasuredEntityType measuredEntityType, LocalDateTime formerYear, boolean insert) {
+	public List<OverallEquipmentEffectiveness> calculateYear(Integer measuringEntity, 
+						MeasuredEntityType measuredEntityType, LocalDateTime formerYear, 
+						boolean insert, boolean replace) {
 
 		// if the former year is already store, then does nothing, else calculate
 
@@ -37,7 +39,8 @@ public class OEEAggregationCalculator {
 
 		PredefinedPeriod yearPeriod = new PredefinedPeriod(formerYear.getYear());
 		if (OEEContainer != null){
-			if (!OEEContainer.existPeriodOEE(measuringEntity, measuredEntityType, yearPeriod)){
+			if (!OEEContainer.existPeriodOEE(measuringEntity, measuredEntityType, yearPeriod) 
+					|| replace ){
 				List<OverallEquipmentEffectiveness> list = 
 						OEEContainer.getOEEList(measuringEntity, measuredEntityType, yearPeriod);
 				
@@ -55,7 +58,7 @@ public class OEEAggregationCalculator {
 							if (!existsOEEinList( list, per)){
 								LocalDateTime localdatetime = LocalDateTime.of(formerYear.getYear(), i, 1, 0, 0);
 								List<OverallEquipmentEffectiveness> oeeMonth = 
-										calculateMonth(measuringEntity, measuredEntityType, localdatetime, insert);
+										calculateMonth(measuringEntity, measuredEntityType, localdatetime, insert, false);
 								list.addAll(oeeMonth);
 							}
 						} else {
@@ -68,9 +71,18 @@ public class OEEAggregationCalculator {
 				}
 
 				ret = aggregateList(measuringEntity, measuredEntityType, yearPeriod,  list);
-				if (insert)
+				if (insert){
+					
+					logger.debug("Replacing the OEE for year:" + yearPeriod.getKey());
+					
+					OEEContainer.dbDelete(ret);
 					OEEContainer.dbInsert(ret);
+				}
+			}  else {
+				logger.debug("The aggregation is already calculed to predefined period:" + yearPeriod.getKey() 
+						+ " Measured Entity:" + measuringEntity + "Entity Type:" + measuredEntityType.getName() );
 			}
+
 		} else {
 
 			logger.error("The OEE Aggretation Container was not created");
@@ -90,7 +102,7 @@ public class OEEAggregationCalculator {
 
 	public List<OverallEquipmentEffectiveness> calculateMonth(
 			Integer measuringEntity, MeasuredEntityType measuredEntityType, 
-			LocalDateTime formerMonth, boolean insert) {
+			LocalDateTime formerMonth, boolean insert, boolean replace) {
 
 		OEEAggregationManager manager = OEEAggregationManager.getInstance();
 		OEEAggregationContainer OEEContainer = manager.getOeeAggregationContainer();
@@ -98,7 +110,7 @@ public class OEEAggregationCalculator {
 
 		PredefinedPeriod monthPeriod = new PredefinedPeriod(formerMonth.getYear(), formerMonth.getMonthValue());
 		if (OEEContainer != null){
-			if (!OEEContainer.existPeriodOEE(measuringEntity, measuredEntityType, monthPeriod)){
+			if (!OEEContainer.existPeriodOEE(measuringEntity, measuredEntityType, monthPeriod) || replace){
 				
 				List<OverallEquipmentEffectiveness> list = 
 						OEEContainer.getOEEList(measuringEntity, measuredEntityType, monthPeriod);
@@ -119,7 +131,7 @@ public class OEEAggregationCalculator {
 							PredefinedPeriod per = new PredefinedPeriod(formerMonth.getYear(), formerMonth.getMonthValue(), i);
 							if (!existsOEEinList( list, per)){
 								LocalDateTime localdatetime = LocalDateTime.of(formerMonth.getYear(), formerMonth.getMonthValue(), i, 0, 0);
-								List<OverallEquipmentEffectiveness> oeeDay = calculateDay(measuringEntity, measuredEntityType, localdatetime, insert);
+								List<OverallEquipmentEffectiveness> oeeDay = calculateDay(measuringEntity, measuredEntityType, localdatetime, insert, false);
 								list.addAll(oeeDay);
 							}
 						} else {
@@ -134,22 +146,31 @@ public class OEEAggregationCalculator {
 				}
 
 				ret = aggregateList(measuringEntity, measuredEntityType, monthPeriod,  list);
-				if (insert)
+				if (insert){
+					
+					logger.debug("Replacing the OEE for month:" + monthPeriod.getKey());
+					
+					OEEContainer.dbDelete(ret);
 					OEEContainer.dbInsert(ret);
+				}
 
 			} else {
-
-				logger.error("The OEE Aggretation Container was not created");
+				logger.debug("The aggregation is already calculed to predefined period:" + monthPeriod.getKey() 
+								+ " Measured Entity:" + measuringEntity + "Entity Type:" + measuredEntityType.getName() );
 			}
 
+		} else {
+
+				logger.error("The OEE Aggretation Container was not created");
 		}
+
 		return ret;
 	}
 
 	public List<OverallEquipmentEffectiveness> calculateDay(Integer measuringEntity, 
 			MeasuredEntityType measuredEntityType, 
 			LocalDateTime formerDay, 
-			boolean insert) {
+			boolean insert, boolean replace) {
 
 		OEEAggregationManager manager = OEEAggregationManager.getInstance();
 		OEEAggregationContainer OEEContainer = manager.getOeeAggregationContainer();
@@ -160,7 +181,7 @@ public class OEEAggregationCalculator {
 
 		if (OEEContainer != null){
 			
-			if (!OEEContainer.existPeriodOEE(measuringEntity, measuredEntityType,period)){
+			if (!OEEContainer.existPeriodOEE(measuringEntity, measuredEntityType,period) || replace ){
 				List<OverallEquipmentEffectiveness> list = OEEContainer.getOEEList(
 						measuringEntity, measuredEntityType, period);
 				
@@ -180,7 +201,7 @@ public class OEEAggregationCalculator {
 																		 formerDay.getMonthValue(), formerDay.getDayOfMonth(), i);
 
 							if (!existsOEEinList( list, per)){
-								List<OverallEquipmentEffectiveness> oeeHour = calculateHour(measuringEntity, measuredEntityType, hour, insert);
+								List<OverallEquipmentEffectiveness> oeeHour = calculateHour(measuringEntity, measuredEntityType, hour, insert, false);
 								list.addAll(oeeHour);
 							}
 						} else {
@@ -193,18 +214,26 @@ public class OEEAggregationCalculator {
 					}	
 				}
 				ret = aggregateList(measuringEntity, measuredEntityType, period,  list);
-				if (insert) 
+				if (insert){
+					
+					logger.debug("Replacing the OEE for day:" + period.getKey());
+					
+					OEEContainer.dbDelete(ret);
 					OEEContainer.dbInsert(ret);
+				}
 				
 			} else {
-				logger.info("The aggregation is already calculed to predefined period:" + period.getKey() 
-								+ "Measured Entity:" + measuringEntity + "Entity Type:" + measuredEntityType.getName() );
+				logger.debug("The aggregation is already calculed to predefined period:" + period.getKey() 
+								+ " Measured Entity:" + measuringEntity + "Entity Type:" + measuredEntityType.getName() );
 			}
 			
 		} else {
 
 			logger.error("The OEE Aggretation Container was not created");
 		}
+		
+		logger.info("Finishing calculate by day");
+		
 		return ret;
 	}
 
@@ -212,7 +241,7 @@ public class OEEAggregationCalculator {
 	public List<OverallEquipmentEffectiveness> calculateHour(Integer measuringEntity, 
 							  MeasuredEntityType measuredEntityType, 
 							  LocalDateTime formerHour,
-							  boolean insert) {
+							  boolean insert, boolean replace) {
 
 		logger.info("In calculateHour params measuredEntity:" + measuringEntity + "entityType:" + measuredEntityType.getName() + 
 					" hour: " + formerHour.toString());
@@ -225,7 +254,7 @@ public class OEEAggregationCalculator {
 		List<OverallEquipmentEffectiveness> ret = new ArrayList<OverallEquipmentEffectiveness>();
 		
 		if (OEEContainer != null){
-			if (!OEEContainer.existPeriodOEE(measuringEntity, measuredEntityType, period)){
+			if (!OEEContainer.existPeriodOEE(measuringEntity, measuredEntityType, period) || replace){
 
 				String parQueryFrom =  period.getKey()+":00:00.001";
 				String parQueryTo =  period.getKey()+":59:59.999";
@@ -234,9 +263,18 @@ public class OEEAggregationCalculator {
 				logger.info("number of oees calculated for the hour:" + list.size());
 				ret = aggregateList(measuringEntity, measuredEntityType, period,  list);
 				
-				if (insert)
+				if (insert){
+					
+					logger.debug("Replacing the OEE for hour:" + period.getKey());
+					
+					OEEContainer.dbDelete(ret);
 					OEEContainer.dbInsert(ret);
+				}
+			} else {
+				logger.debug("The aggregation is already calculed to predefined period:" + period.getKey() 
+						+ " Measured Entity:" + measuringEntity + "Entity Type:" + measuredEntityType.getName() );
 			}
+
 		} else {
 
 			logger.error("The OEE Aggretation Container was not created");

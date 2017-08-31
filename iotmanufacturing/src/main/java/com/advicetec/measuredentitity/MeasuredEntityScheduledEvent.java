@@ -2,11 +2,14 @@ package com.advicetec.measuredentitity;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -35,11 +38,18 @@ public class MeasuredEntityScheduledEvent extends  ConfigurationObject
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
 	private LocalDateTime createDate;
+	
+	/**
+	 * This list maintains references to events scheduled and created in the delay queue. 
+	 */
+	@JsonIgnore
+	List<String> referencedEvents;
 		
 	@JsonCreator
 	public MeasuredEntityScheduledEvent(@JsonProperty("id") Integer id, @JsonProperty("scheduled_event_type") String scheduledEventType) {
 		super(id);
 		this.scheduledEventType = scheduledEventType;
+		this.referencedEvents = new ArrayList<String>();
 	}
 
 	public void setScheduledEventType(String scheduledEventType) {
@@ -72,6 +82,15 @@ public class MeasuredEntityScheduledEvent extends  ConfigurationObject
 
 	public void setCreateDate(LocalDateTime createDate) {
 		this.createDate = createDate;
+	}
+	
+	public void addReferencedEvent(String uuid){
+		this.referencedEvents.add(uuid);
+	}
+	
+	public List<String> getReferencedEvents()
+	{
+		return this.referencedEvents;
 	}
 	
 	public String toString(){
