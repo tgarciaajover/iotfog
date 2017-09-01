@@ -51,7 +51,7 @@ public class ModBusTcpProcessor implements Processor {
 			TCPMasterConnection con = eventManager.getModbusConnection(event.getIpAddress(), event.getPort());
 			
 			if (con == null){
-				logger.error("could not establish the connection" + " IpAddress:" + event.getIpAddress() + " port:" + event.getPort() );
+				logger.error("No Tcp Connection could be established with" + " IpAddress:" + event.getIpAddress() + " port:" + event.getPort() );
 			} else {
 			
 				ModbusTCPTransaction trans = null; //the transaction
@@ -82,6 +82,7 @@ public class ModBusTcpProcessor implements Processor {
 						}
 											
 						dictionary.put("IPAddress", event.getIpAddress());
+						dictionary.put("Port", event.getPort());
 						dictionary.put("UID", event.getUid());
 						dictionary.put("Offset", evt.getOffset());
 						dictionary.put("Count", evt.getCount());
@@ -110,6 +111,7 @@ public class ModBusTcpProcessor implements Processor {
 						res2 = (ReadInputRegistersResponse) trans.getResponse();
 						
 						dictionary.put("IPAddress", event.getIpAddress());
+						dictionary.put("Port", event.getPort());
 						dictionary.put("UID", event.getUid());
 						dictionary.put("Offset", evt2.getOffset());
 						dictionary.put("Count", evt2.getCount());
@@ -141,13 +143,14 @@ public class ModBusTcpProcessor implements Processor {
 						res3 = (ReadMultipleRegistersResponse) trans.getResponse();
 						
 						dictionary.put("IPAddress", event.getIpAddress());
+						dictionary.put("Port", event.getPort());
 						dictionary.put("UID", event.getUid());
 						dictionary.put("Offset", evt3.getOffset());
 						dictionary.put("Count", evt3.getCount());
 						dictionary.put("Type", (Integer) event.getType().getValue());
 						dictionary.put("Read", res3.getMessage());
 						
-						logger.debug("UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
+						logger.info("Connection  IpAddress:" + event.getIpAddress() + "Port" + event.getPort() + "UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
 						
 						Queueable obj3 = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
 						adapterManager.getQueue().enqueue(6, obj3);						
@@ -164,7 +167,7 @@ public class ModBusTcpProcessor implements Processor {
 					 			
 				} 
 			
-				eventManager.releaseModbusConnection(event.getIpAddress(), con);
+				eventManager.releaseModbusConnection(event.getIpAddress(), event.getPort(), con);
 			}
 			
 		} catch (UnknownHostException e) {

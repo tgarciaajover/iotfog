@@ -50,7 +50,7 @@ public class ModBusUtils {
 	 */
 	public static boolean isPortLabelValid(String portLabel){
 		
-		logger.info("Starting isPortLabelValid string:" + portLabel);
+		logger.debug("Starting isPortLabelValid string:" + portLabel);
 		String parts[] = portLabel.split(SEPARATOR);
 		
 		if (parts.length != 6)

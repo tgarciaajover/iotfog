@@ -119,10 +119,11 @@ public class EventManager extends Manager
 	private LocalDateTime getActiveModbusConnection(Map.Entry<LocalDateTime,TCPMasterConnection> con) throws Exception
 	{
 		
-		logger.debug("in getActiveModbusConnection");
+		logger.info("in getActiveModbusConnection");
 		
 		LocalDateTime start = con.getKey();
 		if (start.plusNanos(con.getValue().getTimeout()* 1000000).isBefore(LocalDateTime.now())){
+			logger.info("Reconnecting to modbus slave");
 			con.getValue().close();
 			con.getValue().connect();
 			return LocalDateTime.now();
@@ -133,49 +134,51 @@ public class EventManager extends Manager
 	
 	public synchronized TCPMasterConnection getModbusConnection(String ipAddress, int port) throws UnknownHostException
 	{
-		logger.debug("in getModbusConnection  address: " + ipAddress + " port: " + port  );
+		logger.info("in getModbusConnection  address: " + ipAddress + " port: " + port  );
+		
+		String key = ipAddress + ":" + Integer.toString(port);
 		
 		int usedCon = 0;
 		int avilCon = 0;
-		if (this.availableConnections.get(ipAddress) != null)
-			avilCon = this.availableConnections.get(ipAddress).size();
+		if (this.availableConnections.get(key) != null)
+			avilCon = this.availableConnections.get(key).size();
 			
 		
-		if (this.usedConnections.get(ipAddress) != null)
-			usedCon = this.usedConnections.get(ipAddress).size();
+		if (this.usedConnections.get(key) != null)
+			usedCon = this.usedConnections.get(key).size();
 		
 		if (usedCon + avilCon <= maxModbusConnections){
 			if (avilCon > 0)
 			{
 				
-				logger.debug("There are avail connections - availCon: " + avilCon + " usedConnection: " + String.valueOf((usedCon)));
+				logger.info("There are avail connections - availCon: " + avilCon + " usedConnection: " + String.valueOf((usedCon)));
 				
 				// Remove the connection from available connections
-				Map.Entry<LocalDateTime,TCPMasterConnection> ret = availableConnections.get(ipAddress).pop();
+				Map.Entry<LocalDateTime,TCPMasterConnection> ret = availableConnections.get(key).pop();
 				
 				try{
 					// Update the connection (reconnect or maintain the connection).
 					LocalDateTime start = getActiveModbusConnection(ret);
 					
-					logger.debug("The available connection stated at:" + start.toString() );
+					logger.info("The available connection stated at:" + start.toString() );
 					
 					// Create the entry.
 					Map.Entry<LocalDateTime,TCPMasterConnection> newEntry = new AbstractMap.SimpleEntry<LocalDateTime,TCPMasterConnection>(start, ret.getValue()); 
 					
-					// Verifies that there exists a node for the ipadddres
-					if (!(this.usedConnections.containsKey(ipAddress))){
+					// Verifies that there exists a node for the ip_address, port
+					if (!(this.usedConnections.containsKey(key))){
 						Stack<Map.Entry<LocalDateTime,TCPMasterConnection>> list = new Stack<Map.Entry<LocalDateTime,TCPMasterConnection>>();
-						this.usedConnections.put(ipAddress, list);
+						this.usedConnections.put(key, list);
 					}
 	
 					// Insert the connection into the used connections.
-					this.usedConnections.get(ipAddress).push(newEntry);
+					this.usedConnections.get(key).push(newEntry);
 										
 					// return the connection.
 					return newEntry.getValue();
 
 				} catch (Exception e) {
-					logger.error("could not connect with the modbus slave with ipaddress" + ipAddress + " port:" + Integer.toString(port));
+					logger.error("could not connect with the modbus slave with ipaddress" + ipAddress + " port:" + Integer.toString(port), " Message:" + e.getMessage());
 					return null;
 				}
 				
@@ -200,13 +203,13 @@ public class EventManager extends Manager
 					
 					Map.Entry<LocalDateTime,TCPMasterConnection> newEntry = new AbstractMap.SimpleEntry<LocalDateTime,TCPMasterConnection>(LocalDateTime.now(), con);
 					
-					if (!(this.usedConnections.containsKey(ipAddress))){
+					if (!(this.usedConnections.containsKey(key))){
 						Stack<Map.Entry<LocalDateTime,TCPMasterConnection>> list = new Stack<Map.Entry<LocalDateTime,TCPMasterConnection>>();
-						this.usedConnections.put(ipAddress, list);
+						this.usedConnections.put(key, list);
 					}
 
 					// Insert the connection into the used connections.
-					this.usedConnections.get(ipAddress).push(newEntry);
+					this.usedConnections.get(key).push(newEntry);
 					
 					logger.debug("connection established");
 					
@@ -256,24 +259,27 @@ public class EventManager extends Manager
 		return true;
 	}
 	
-    public synchronized void releaseModbusConnection(String ipAddress, TCPMasterConnection con) throws Exception
+    public synchronized void releaseModbusConnection(String ipAddress, int port, TCPMasterConnection con) throws Exception
     {
-    	if (this.usedConnections.containsKey(ipAddress))
+    	
+    	String key = ipAddress + ":" + Integer.toString(port);
+    	
+    	if (this.usedConnections.containsKey(key))
     	{
     		boolean found= false;
-    		Stack<Map.Entry<LocalDateTime,TCPMasterConnection>> list = this.usedConnections.get(ipAddress);
+    		Stack<Map.Entry<LocalDateTime,TCPMasterConnection>> list = this.usedConnections.get(key);
     		for (int index=0; index < list.size(); index++){
     			if (con.equals(list.get(index).getValue())){
     				Map.Entry<LocalDateTime,TCPMasterConnection> entryCon = list.get(index);
     				list.remove(index);
 
-					if (!(this.availableConnections.containsKey(ipAddress))){
+					if (!(this.availableConnections.containsKey(key))){
 						Stack<Map.Entry<LocalDateTime,TCPMasterConnection>> listInsert = new Stack<Map.Entry<LocalDateTime,TCPMasterConnection>>();
-						this.availableConnections.put(ipAddress, listInsert);
+						this.availableConnections.put(key, listInsert);
 					}
 					
 					// Insert the connection into the available connections.
-					this.availableConnections.get(ipAddress).push(entryCon);
+					this.availableConnections.get(key).push(entryCon);
 					
 					// The connection was found
 					found= true;
@@ -282,12 +288,12 @@ public class EventManager extends Manager
     		}
     		
     		if (found == false){
-    			logger.error("The connection for Ip Address was not found in Connection Container" + ipAddress);
-    			throw new Exception("The connection for Ip Address was not found in Connection Container" + ipAddress);
+    			logger.error("The connection for Ip Address was not found in Connection Container" + key);
+    			throw new Exception("The connection for Ip Address was not found in Connection Container" + key);
     		}
     	} else {
-    		logger.error("Ip Address Not found In Connection Container:" + ipAddress);
-    		throw new Exception("Ip Address Not found In Connection Container:" + ipAddress);
+    		logger.error("Ip Address Not found In Connection Container:" + key);
+    		throw new Exception("Ip Address Not found In Connection Container:" + key);
     	}
     }
 }
