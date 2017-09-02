@@ -17,15 +17,35 @@ public class DeviceTypeContainer extends Container
 
 	static Logger logger = LogManager.getLogger(DeviceTypeContainer.class.getName());
 	
+	/**
+	 * SQL statement used to select all device types from the database 
+	 */
 	static String sqlSelect1 = "SELECT id, descr, create_date FROM setup_devicetype";
+	
+	/**
+	 * SQL statement used to select of input/output signals associated to device types in the database.
+	 */
 	static String sqlSelect2 = "SELECT id, i_o, device_id, signal_id  FROM setup_iosignalsdevicetype";
 	
 
+	/**
+	 * Constructor for the container 
+	 * 
+	 * @param driver 	: driver string used to connect to the database.
+	 * @param server	: Ip address of the database server 
+	 * @param user		: database user
+	 * @param password	: password of the user's database.
+	 */
 	public DeviceTypeContainer(String driver, String server, String user, String password) 
 	{	
 		super(driver, server, user, password);	
 	}
 	
+	/**
+	 * Load the information of device types from the database.
+	 * 
+	 * @throws SQLException it is trigered if some error occurs during the reading of device types.
+	 */
 	public void loadContainer() throws SQLException
 	{
 
@@ -86,11 +106,21 @@ public class DeviceTypeContainer extends Container
 		
 	}
 
+	/**
+	 * Removes a device type from the container.
+	 * 
+	 * @param uniqueID   identifier of the device type to delete from the container.
+	 */
 	public synchronized void deleteDeviceType(int uniqueID)
 	{
 		super.configuationObjects.remove(uniqueID);
 	}
 	
+	/**
+	 * Loads a device type from json 
+	 * 
+	 * @param json json object representing a device type.
+	 */
 	public synchronized void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();

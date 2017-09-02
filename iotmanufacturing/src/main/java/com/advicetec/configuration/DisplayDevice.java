@@ -3,6 +3,8 @@ package com.advicetec.configuration;
 import java.io.IOException;
 import java.net.InetAddress;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -11,18 +13,35 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class DisplayDevice extends ConfigurationObject  
 {
 
+	static Logger logger = LogManager.getLogger(DisplayDevice.class.getName());
+	
+	/**
+	 * 
+	 */
 	@JsonProperty("reference_cd") 
 	String referenceCd;
     
+	/**
+	 * 
+	 */
 	@JsonProperty("display_type") 
     DisplayType displayType;
     
+	/**
+	 * Description of the display device.
+	 */
 	@JsonProperty("descr") 
     String descr;
     
+	/**
+	 * Ip Address where the display is listening to connections
+	 */
 	@JsonProperty("ip_address") 
     InetAddress ipAddress;
     
+	/**
+	 * port where the display is listening to connections
+	 */
 	@JsonProperty("port") 
     Integer port;
 
