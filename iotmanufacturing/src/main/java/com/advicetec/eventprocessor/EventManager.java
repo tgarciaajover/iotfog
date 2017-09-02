@@ -23,24 +23,60 @@ import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
 import java.util.Iterator;
 
+/**
+ * @author andres
+ *
+ */
 public class EventManager extends Manager
 {
 
 	static Logger logger = LogManager.getLogger(EventManager.class.getName());
 	
+	/**
+	 * Singleton Instance 
+	 */
 	private static EventManager instance=null;
+	
+	
+	/**
+	 * Reference to the configuration manager.
+	 */
 	private static ConfigurationManager confManager = null;
+	
+	
+	/**
+	 * This is the reference to the queue of events to be processed.
+	 */
 	private BlockingQueue delayedQueue = null;
+	
+	
+	/**
+	 * Max number modbus connections to be able to process at the same time. This number is configured by means of the properties file 
+	 */
 	private int maxModbusConnections = 0;
+	
+	
+	/**
+	 * This the is the time in seconds that is used to renew modbus connections. If the connection is open for more than timeOut seconds
+	 * then the connection is closed and open again.
+	 */
 	private int timeOut = 0; 
 	
 	
-	// This hashmap contains the available connections for the ipadress in the key of the hashmap. 
+	/**
+	 * This hashmap contains the available connections for the duple (ipadress,key) in the key of the hashmap. 
+	 */
 	private Map<String, Stack<Map.Entry<LocalDateTime,TCPMasterConnection>> > availableConnections = null;
 	
-	// This hashmap contains the used connections for the ipadress in the key of the hashmap.
+	/**
+	 * This hashmap contains the used connections for the duple (ipadress, key) in the key of the hashmap.
+	 */
 	private Map<String, Stack<Map.Entry<LocalDateTime,TCPMasterConnection>>> usedConnections = null;
 		
+	/**
+	 * Returns the singleton instance for the class, if not created then creates the instance. 
+	 * @return Event manager singleton.
+	 */
 	public static EventManager getInstance()
 	{
 		if (instance==null)
@@ -48,6 +84,15 @@ public class EventManager extends Manager
 		return instance;
 	}
 
+	/**
+	 * Event manager constructor. 
+	 * This class reads the properties file from a file that must be under resource folder called EventManager.properties
+	 * The expected options are:
+	 * 		MaxModbusConnections : Maximum number of connections that can be open at the same time. 
+	 * 							   If all the modbus slaves are in a different (ip_address, port) then put the number of ports as the value.
+	 * 
+	 *      timeOut: timeout to refresh a modbus connection. 
+	 */
 	private EventManager() 
 	{
 		super("EventManager");	
@@ -83,6 +128,10 @@ public class EventManager extends Manager
 		
 	}	
 
+	/**
+	 * This method puts to execute all event handlers as well as the delay consumer instance.
+	 * Once all handlers are running, it finishes.
+	 */
 	public void run() 
 	{
 		logger.info("Starting Event Manager run");
@@ -116,6 +165,12 @@ public class EventManager extends Manager
 		logger.info("Ending Event Manager run");
 	}	
 
+	/**
+	 * This method verifies that connections are not too old, in case of timeout then it refreshes the connection. 
+	 * @param con. Connection to verify 
+	 * @return an updated connection. 
+	 * @throws Exception This exception is triggered when the connection can not be establised.
+	 */
 	private LocalDateTime getActiveModbusConnection(Map.Entry<LocalDateTime,TCPMasterConnection> con) throws Exception
 	{
 		
@@ -132,9 +187,19 @@ public class EventManager extends Manager
 		}
 	}
 	
+	/**
+	 * Get a connection from the pool of active modbus connections. 
+	 * In case that maxmodbus connection has been reached, it returns null.  
+	 * Works for ipv4
+	 * 
+	 * @param ipAddress Ipv4 address of the modbus slave
+	 * @param port : port where the slave is listening to.
+	 * @return  a modbus TCP connection 
+	 * @throws UnknownHostException. The slave can not be reached through the network.
+	 */
 	public synchronized TCPMasterConnection getModbusConnection(String ipAddress, int port) throws UnknownHostException
 	{
-		logger.info("in getModbusConnection  address: " + ipAddress + " port: " + port  );
+		logger.debug("in getModbusConnection  address: " + ipAddress + " port: " + port  );
 		
 		String key = ipAddress + ":" + Integer.toString(port);
 		
@@ -228,10 +293,21 @@ public class EventManager extends Manager
 		}
 	}
 
+	/**
+	 * Get the delayed queue. This queue maintains those events that should be executed in the future.
+	 * Synchronized method because it can be called by many thread at the same time. 
+	 * @return a reference to the queue.
+	 * 
+	 */
 	public synchronized BlockingQueue getDelayedQueue() {
 		return this.delayedQueue;
 	}
 	
+	/**
+	 * This method removes all the events associated to the measured entity given as parameter
+	 * @param measuredId identifier of the measured entity to delete.
+	 * @return true if the method execute successfully, false otherwise.
+	 */
 	public synchronized boolean removeMeasuredEntityEvents(Integer measuredId) {
 		
 		// List with the list of current events.
@@ -259,6 +335,13 @@ public class EventManager extends Manager
 		return true;
 	}
 	
+    /**
+     * This method let a TCP modbus event process to inform that a connection being used can be released to another handler.
+     * @param ipAddress ip address modbus slave
+     * @param port      slave's port
+     * @param con       connection being released.
+     * @throws Exception
+     */
     public synchronized void releaseModbusConnection(String ipAddress, int port, TCPMasterConnection con) throws Exception
     {
     	

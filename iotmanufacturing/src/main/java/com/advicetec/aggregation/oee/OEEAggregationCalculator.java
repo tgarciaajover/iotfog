@@ -11,21 +11,31 @@ import org.apache.logging.log4j.Logger;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.utils.PredefinedPeriod;
 
+/**
+ * This class implements the algorithm to calculate OEE aggregations. There are four kinds of predefined aggregation periods: year, month, day and hour.
+ * @author andres Marentes
+ *
+ */
 public class OEEAggregationCalculator {
 
 	static Logger logger = LogManager.getLogger(OEEAggregationCalculator.class.getName());
 
+	/**
+	 * 
+	 */
 	public OEEAggregationCalculator(){
 		super();
 	}
 	
 	/**
-	 * 
-	 * @param measuringEntity
-	 * @param measuredEntityType
-	 * @param formerYear
-	 * @param insert   True, it inserts in the database sub-periods calculations.
-	 * @return
+	 * Calculate the OEE aggregation for the year. The idea is to verify whether aggregations for the months are previously calculated. If they exist then it
+	 * aggregates the values and calculates the year aggregation. Otherwise it calls the month aggregation.
+	 * @param measuringEntity: measuring entity for which we are going to calculate the aggregation.
+	 * @param measuredEntityType: type of measuring entity
+	 * @param formerYear: Aggregation calculation year 
+	 * @param insert   True, it inserts in the database sub-periods calculations. False otherwise.
+	 * @param replace: if already exist in the DB, then it recalculates and replaces the OEE aggregation. 
+	 * @return The new OEE aggregation calculated. It is returned in a list to make it easier for caller's procedures.
 	 */
 	public List<OverallEquipmentEffectiveness> calculateYear(Integer measuringEntity, 
 						MeasuredEntityType measuredEntityType, LocalDateTime formerYear, 
@@ -90,6 +100,13 @@ public class OEEAggregationCalculator {
 		return ret;
 	}
 
+	/**
+	 * Verify if a particular OEE aggregation is in a list of OEE aggregations.
+	 * 
+	 * @param list: a list of OEE aggregations where we find a specific aggregation with the predefined period.  
+	 * @param predefinedPeriod: period to find.
+	 * @return True if the predefined period exists, false otherwise.
+	 */
 	private boolean existsOEEinList(List<OverallEquipmentEffectiveness> list, PredefinedPeriod predefinedPeriod){
 		for(OverallEquipmentEffectiveness month : list){
 			if(month.getPredefinedPeriod().equals(predefinedPeriod)){
@@ -100,6 +117,16 @@ public class OEEAggregationCalculator {
 	}
 
 
+	/**
+	 * Calculate the OEE aggregation for a month. The idea is to verify whether aggregations for the days are previously calculated. If they exist, then it
+	 * aggregates the values and calculates the month aggregation. Otherwise it calls the day aggregation.
+	 * @param measuringEntity: measuring entity for which we are going to calculate the aggregation.
+	 * @param measuredEntityType: type of measuring entity.
+	 * @param formerMonth: Aggregation calculation month. 
+	 * @param insert: True, it inserts in the database sub-periods calculations. False otherwise.
+	 * @param replace: if already exist in the DB, then it recalculates and replaces the OEE aggregation. 
+	 * @return The new OEE month aggregation calculated. It is returned in a list to make it easier for caller's procedures.
+	 */
 	public List<OverallEquipmentEffectiveness> calculateMonth(
 			Integer measuringEntity, MeasuredEntityType measuredEntityType, 
 			LocalDateTime formerMonth, boolean insert, boolean replace) {
@@ -167,6 +194,16 @@ public class OEEAggregationCalculator {
 		return ret;
 	}
 
+	/**
+	 * Calculate the OEE aggregation for a day. The idea is to verify whether aggregations for the hours have been previously calculated. If they exist, then it
+	 * aggregates the values and calculates the day aggregation. Otherwise it calls the hour aggregation.
+	 * @param measuringEntity: measuring entity for which we are going to calculate the aggregation.
+	 * @param measuredEntityType: type of measuring entity.
+	 * @param formerDay: Aggregation calculation day. 
+	 * @param insert: True, it inserts in the database sub-periods calculations. False otherwise.
+	 * @param replace: if already exist in the DB, then it recalculates and replaces the OEE aggregation. 
+	 * @return The new OEE day aggregation calculated. It is returned in a list to make it easier for caller's procedures.
+	 */
 	public List<OverallEquipmentEffectiveness> calculateDay(Integer measuringEntity, 
 			MeasuredEntityType measuredEntityType, 
 			LocalDateTime formerDay, 
@@ -238,6 +275,16 @@ public class OEEAggregationCalculator {
 	}
 
 
+	/**
+	 * Calculate the OEE aggregation for an hour. The idea is to verify whether aggregations for five minute intervals within the hour have been previously calculated. 
+	 * If they exist, then it aggregates the values and calculates the hour aggregation. Otherwise it calculates subperiods aggregation.
+	 * @param measuringEntity: measuring entity for which we are going to calculate the aggregation.
+	 * @param measuredEntityType: type of measuring entity.
+	 * @param formerHour: Aggregation calculation hour. 
+	 * @param insert: True, it inserts in the database sub-periods calculations. False otherwise.
+	 * @param replace: if already exist in the DB, then it recalculates and replaces the OEE aggregation. 
+	 * @return The new OEE day aggregation calculated. It is returned in a list to make it easier for caller's procedures.
+	 */
 	public List<OverallEquipmentEffectiveness> calculateHour(Integer measuringEntity, 
 							  MeasuredEntityType measuredEntityType, 
 							  LocalDateTime formerHour,
@@ -283,6 +330,14 @@ public class OEEAggregationCalculator {
 		return ret;
 	}
 
+	/**
+	 * Performs the aggregation process from a list of OEE aggregations.
+	 * @param measuringEntity: : measuring entity for which we are going to calculate the aggregation.
+	 * @param measuredEntityType: type of measuring entity.
+	 * @param period: Predefined period of the aggregation that is going to calculate.
+	 * @param list: list of OEE aggregations forming the basis for the calculation process.
+	 * @returnL an OEE aggregation represented the aggregated OEE.
+	 */
 	public List<OverallEquipmentEffectiveness> aggregateList(Integer measuringEntity,
 			MeasuredEntityType measuredEntityType, PredefinedPeriod period,
 			List<OverallEquipmentEffectiveness> list) {		

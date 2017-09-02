@@ -7,8 +7,6 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.sql.PreparedStatement;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,22 +18,43 @@ import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
-import com.advicetec.measuredentitity.Plant;
 
 public class ProductionOrderContainer extends Container
 {
 
 	static Logger logger = LogManager.getLogger(ProductionOrderContainer.class.getName());
 	
+	/**
+	 * SQL statement used to bring the production order information from the database. 
+	 */
 	static String sqlSelect = "SELECT * FROM canonical_ordenproduccionplaneada where id = ?";
+	
+	/**
+	 * SQL Statement used to bring the id of a production order giving as parameters the canonical production order data
+	 */
 	static String sqlProductionOrderSelect = "SELECT id FROM canonical_ordenproduccionplaneada where id_compania = ? and id_sede = ? and id_planta = ? and id_grupo_maquina = ? and id_maquina =? and ano = ? and mes = ? and id_produccion = ? ";
+	
+	/**
+	 * SQL Statement used to bring the canonical production order data from its id registered in the production order.
+	 */
 	static String sqlCanonicalSelect = "SELECT id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, ano, mes, id_produccion FROM canonical_ordenproduccionplaneada WHERE id = ?";
 	
+	/**
+	 * Constructor for the production order 
+	 * @param driver : driver string used to connect to the database. In this case this is the canonical database.
+	 * @param server : Ip address of the database server 
+	 * @param user : database user
+	 * @param password : password of the user's database.
+	 */
 	public ProductionOrderContainer(String driver, String server, String user, String password) {
 		super(driver, server, user, password);
 		
 	}
 	
+	/** 
+	 * Gets a Production order from the container 
+	 * @param id : id of the production order to retry.
+	 */
 	public synchronized com.advicetec.configuration.ConfigurationObject getObject(Integer id) 
 	{
 		try 
@@ -232,6 +251,20 @@ public class ProductionOrderContainer extends Container
 		return null;
 	}
 	
+	/**
+	 * Returns the identifier of a production order from its canonical data
+	 * 
+	 * @param company : company to which the production order belongs to.
+	 * @param location: location to which the production order belongs to.
+	 * @param plant: plant to which the production order belongs to.
+	 * @param machineGroup: : machine group to which the production order belongs to.
+	 * @param machineId: : machine the production order is going to be executed.
+	 * @param year: year when the production order is going to be executed.
+	 * @param month: month when the production order is going to be executed.
+	 * @param productionOrder: canonical production order code.
+	 * 
+	 * @return Returns the identifier of a production order from its canonical data
+	 */
 	public synchronized Integer getCanonicalObject(String company, String location, String plant, String machineGroup, String machineId,
 			int year, int month, String productionOrder) {
 	
@@ -277,6 +310,12 @@ public class ProductionOrderContainer extends Container
 		
 	}
 
+	/**
+	 * Returns an string representing the production order canonical information 
+	 * 
+	 * @param prodOrder production order object
+	 * @return string concatenating all canonical information of the production order.
+	 */
 	private String getCanonicalInformation(ProductionOrder prodOrder) {
 		
 		String canonicalKey = "";

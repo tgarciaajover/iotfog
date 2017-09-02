@@ -29,30 +29,61 @@ public class OverallEquipmentEffectiveness implements Storable
 	static int DAYS_NON_LEAP_YEAR = 365;
     	
 
-	// information about the parent.
+	/**
+	 * information about the measured entity for which this OEE was calculated.
+	 */
 	private Integer parent;
 	private MeasuredEntityType parentType;
 
-	// Calculated Predefined Period
+	/**
+	 * Calculated Predefined Period
+	 */
 	private PredefinedPeriod predefinedPeriod;
 
-	// The productive time is measured in seconds. 
+	/**
+	 *  The productive time which is measured in seconds. 
+	 */
 	double productiveTime;
 
-	// Total quantity possible to produce.
+	/**
+	 * Total quantity possible to produce.
+	 */
 	double qtySchedToProduce; 
 
-	// Total quantity produced
+	/**
+	 * Total quantity produced
+	 */
 	double qtyProduced;
 
-	// Total reproduced or unusefull parts produced.
+	/**
+	 * Total reproduced or not useful parts produced.
+	 */
 	double qtyDefective;
 
+	/**
+	 * Sql sentence used to insert an OEE aggregation
+	 */
 	public static final String SQL_Insert = "insert into measuringentityoee (id_owner, owner_type, period_key, productive_time, qty_sched_to_produce, qty_produced, qty_defective) values (?, ?, ?, ?, ?, ?, ? )";
+	
+	/**
+	 * Sql sentence used to delete an OEE aggregation
+	 */
 	public static final String SQL_Delete =	"delete from measuringentityoee where id_owner = ? and owner_type = ? and period_key = ?";
+	
+	/**
+	 * Select an specific OEE aggregation from the database. The folloing fields defines a unique OEE aggregation (id_owner, owner_type, period_key)
+	 */
 	public static final String SQL_Select = "select productive_time, qty_sched_to_produce, qty_produced, qty_defective from measuringentityoee where id_owner = ? and owner_type = ? and period_key = ?";
+	
+	/**
+	 * SQL statement used to verify if an OEE aggregation exists in the database.
+	 */
 	public static final String SQL_EXISTS = "select 'x' as found from measuringentityoee where id_owner = ? and owner_type = ? and period_key = ?";
 	
+	/**
+	 * SQL statement used to search for those OEE aggregations less than an hour that are in an interval defined by datetime_from and datetime_from. 
+	 * If an OEE aggregation is not completely included in the interval given, then it is still included. However, the user should split the part included from the part not included. 
+	 */
 	public static final String SQL_LT_HOUR = "SELECT datetime_from,datetime_to,"
 			+ "status,reason_code,production_rate, conversion1, conversion2, actual_production_rate, qty_defective FROM measuringentitystatusinterval "
 			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from >= ? AND datetime_to <= ? " 
@@ -66,13 +97,30 @@ public class OverallEquipmentEffectiveness implements Storable
 			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from <= ? AND datetime_to >= ? AND datetime_to <= ? "
 			+ "ORDER BY datetime_from ";
 
+	/**
+	 * Brings all intervals which predefined period key start with a specific prefix. It is specific for Postgres. This sentence helps to bring the following cases:
+	 *    - all months within a year.
+	 *    - all days within a month
+	 *    - all hours within a day
+	 */
 	public static final String SQL_LIKE_POSTGRES = "SELECT id_owner, owner_type,period_key,productive_time,qty_sched_to_produce,qty_produced,qty_defective  FROM measuringentityoee " 
 			+ " WHERE id_owner = ? AND owner_type = ? AND TRIM(period_key) like ?";
 
+	/**
+	 * Brings all intervals which predefined period key start with a specific prefix. It is specific for SQL server or SQL Express. This sentence helps to bring the following cases:
+	 *    - all months within a year.
+	 *    - all days within a month
+	 *    - all hours within a day
+	 */
 	public static final String SQL_LIKE_SQLSERVER = "SELECT id_owner, owner_type,period_key,productive_time,qty_sched_to_produce,qty_produced,qty_defective  FROM measuringentityoee " 
 			+ " WHERE id_owner = ? AND owner_type = ? AND RTRIM(period_key) like ?";
 
-
+	/**
+	 * Overall Equipment Effectiveness Aggregation Constructor.
+	 * @param predefinedPeriod predefined period for which we are creating a new instance
+	 * @param parent: measuring entity or production order
+	 * @param parentType: it establishes the type of parent.
+	 */
 	public OverallEquipmentEffectiveness(@JsonProperty("predefinedPeriod") PredefinedPeriod predefinedPeriod, 
 			@JsonProperty("origin")Integer parent, 
 			@JsonProperty("originType")MeasuredEntityType parentType) {
@@ -86,19 +134,29 @@ public class OverallEquipmentEffectiveness implements Storable
 		this.qtyDefective = 0;
 	}
 
+	/**
+	 * @return Gets the OEE aggregation parent (measured entity, production order)
+	 */
 	public Integer getParent() {
 		return parent;
 	}
 
+	/**
+	 * @return Gets the OEE aggregation parent type (measured entity, production order)
+	 */
 	public MeasuredEntityType getParentType() {
 		return parentType;
 	}
 
+	/**
+	 * @return Returns the available time in seconds for the OEE Aggregation. This value is fixed and depends on the king of aggregation 
+	 * year, month, day, hour.
+	 */
 	public double getAvailableTime() {
 		
 		double ret = 0.0;
 		
-		logger.info("Predefined period:" + this.predefinedPeriod.getType().getName());
+		logger.debug("Predefined period:" + this.predefinedPeriod.getType().getName());
 		
 		if (this.predefinedPeriod.getType() == PredefinedPeriodType.INT_LT_HOUR) {
 			
@@ -148,52 +206,93 @@ public class OverallEquipmentEffectiveness implements Storable
 	}
 
 
+	/**
+	 * @return Return the productive time. This value is defined as the available time minus all stops not market to be excluded.
+	 */
 	public double getProductiveTime() {
 		return productiveTime;
 	}
 
+	/**
+	 * @param productiveTime: productive time to be set.
+	 */
 	public void setProductiveTime(double productiveTime) {
 		this.productiveTime = productiveTime;
 	}
 
+	/**
+	 * @return Returns the quantity schedule to produce during this OEE aggregation.
+	 */
 	public double getQtySchedToProduce() {
 		return qtySchedToProduce;
 	}
 
+	/**
+	 * Set the quantity scheduled to procedure during this OEE aggregation.
+	 * @param qtySchedToProduce
+	 */
 	public void setQtySchedToProduce(double qtySchedToProduce) {
 		this.qtySchedToProduce = qtySchedToProduce;
 	}
 
+	/**
+	 * Get the quantity produced during this OEE aggregation.
+	 * @return
+	 */
 	public double getQtyProduced() {
 		return qtyProduced;
 	}
 
+	/**
+	 * Sets the quantity produced during this OEE aggregation.
+	 * @param qtyProduced
+	 */
 	public void setQtyProduced(double qtyProduced) {
 		this.qtyProduced = qtyProduced;
 	}
 
+	/**
+	 * Gets the quantity that has been reported as defective during this OEE aggregation.
+	 * @return
+	 */
 	public double getQtyDefective() {
 		return qtyDefective;
 	}
 
+	/**
+	 * Sets the quantity that has been reported as defective during this OEE aggregation.
+	 * @param qtyDefective
+	 */
 	public void setQtyDefective(double qtyDefective) {
 		this.qtyDefective = qtyDefective;
 	}
 	
+	/**
+	 * @return Gets the predefined period for which this OEE aggregation is calculated.
+	 */
 	public PredefinedPeriod getPredefinedPeriod(){
 		return predefinedPeriod;
 	}
 
+	/** 
+	 * Gets the SQL statement used to Insert in the database.
+	 */
 	@Override
 	public String getPreparedInsertText() {
 		return SQL_Insert;
 	}
 
+	/** 
+	 * Gets the SQL statement used to delete in the database.
+	 */
 	@Override
 	public String getPreparedDeleteText() {
 		return SQL_Delete;
 	}
 
+	/** 
+	 * Inserts this object in the database by filling the parameters of a prepared statement. 
+	 */
 	@Override
 	public void dbInsert(PreparedStatement pstmt) {
 		try 
@@ -216,6 +315,9 @@ public class OverallEquipmentEffectiveness implements Storable
 
 	}
 
+	/** 
+	 * Deletes this object in the database by filling the parameters of a prepared statement. 
+	 */
 	@Override
 	public void dbDelete(PreparedStatement pstmt) {
 
@@ -235,6 +337,9 @@ public class OverallEquipmentEffectiveness implements Storable
 
 	}
 
+	/** 
+	 * Gets an string representing the startDttm of the predefined period for which this OEE was previously calculated.  
+	 */
 	public String getStartDttm() {
 		
 		if (this.predefinedPeriod.getType() == PredefinedPeriodType.YEAR) {
@@ -266,7 +371,10 @@ public class OverallEquipmentEffectiveness implements Storable
 		return null;
 	}
 
-	public Object endDttm() {
+	/** 
+	 * Gets an string representing the endDttm of the predefined period for which this OEE was previously calculated.  
+	 */
+	public String endDttm() {
 		
 		if (this.predefinedPeriod.getType() == PredefinedPeriodType.YEAR) {
 			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-12-31 59:59:59.999"; 
@@ -305,6 +413,9 @@ public class OverallEquipmentEffectiveness implements Storable
 		return null;
 	}
 
+	/** 
+	 * prints the object in string.
+	 */
 	public String toString(){
 		return "predefinedPeriod:" + getPredefinedPeriod().getType().getName() + 
 				"productiveTime:" + getProductiveTime() + "qtySchedToProduce:" + 

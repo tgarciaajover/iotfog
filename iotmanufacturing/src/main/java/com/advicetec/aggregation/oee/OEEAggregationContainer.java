@@ -26,7 +26,7 @@ import com.advicetec.utils.PredefinedPeriodType;
 
 /**
  * Container for the OEE aggregation data.
- * @author iot
+ * @author Andres Marentes
  *
  */
 public class OEEAggregationContainer extends Container 
@@ -34,13 +34,20 @@ public class OEEAggregationContainer extends Container
 
 	static Logger logger = LogManager.getLogger(OEEAggregationContainer.class.getName());
 
+	/**
+	 * Class's constructor 
+	 * @param driverStr: driver string used to connect to the database.
+	 * @param server: Ip address of the database server 
+	 * @param user: database user
+	 * @param password: password of the user's database.
+	 */
 	public OEEAggregationContainer(String driverStr, String server, String user, String password) {
 		super(driverStr, server, user, password);
 	}
 
 	/**
 	 * Inserts into database the list of OEE values.
-	 * @param list
+	 * @param list  List OEE to insert in the database.
 	 */
 	public void dbInsert(List<OverallEquipmentEffectiveness> list)
 	{
@@ -53,7 +60,7 @@ public class OEEAggregationContainer extends Container
 	
 	    	int ret[] = pst.executeBatch();
 	    	super.commit();
-	    	logger.info("Number of commands executed by insert: " + ret.length);
+	    	logger.debug("Number of commands executed by insert: " + ret.length);
 			super.disconnect();
 
 		} catch (ClassNotFoundException e){
@@ -66,6 +73,10 @@ public class OEEAggregationContainer extends Container
 		}
 	}
 	
+	/**
+	 * Delete a list of OEEs from the database
+	 * @param list: list of OEE to delete. 
+	 */
 	public void dbDelete(List<OverallEquipmentEffectiveness> list){
 		try{
 			super.connect_prepared(OverallEquipmentEffectiveness.SQL_Delete);
@@ -74,7 +85,7 @@ public class OEEAggregationContainer extends Container
 			}
 			int ret[] = pst.executeBatch();
 	    	super.commit();
-	    	logger.info("Number of commands executed by Delete: " + ret.length);
+	    	logger.debug("Number of commands executed by Delete: " + ret.length);
 			super.disconnect();
 		} catch (ClassNotFoundException e){
 			String error = "Could not find the driver class - Error: " + e.getMessage(); 
@@ -86,6 +97,16 @@ public class OEEAggregationContainer extends Container
 		}
 	}
 	
+	/**
+	 * Return the list of OEE intervals (initially five minutes intervals) previously calculated and stored in the DB.
+	 * 
+	 * @param owner: measure entity for which the intervals were calculated.
+	 * @param ownerType: type of measuring entity for which the intervals were calculated.
+	 * @param periodKey: key for the predefined hour that we are quering the intervals
+	 * @param parQueryFrom: start Dttm for the intervals
+	 * @param parQueryTo: End Dttm for the intervals
+	 * @return: List of predefined intervals for the hour.
+	 */
 	public synchronized List<OverallEquipmentEffectiveness> intervalsByHour(
 			Integer owner,MeasuredEntityType ownerType, 
 			String periodKey, String parQueryFrom, String parQueryTo) {
@@ -96,7 +117,7 @@ public class OEEAggregationContainer extends Container
         cal.setTimeZone(utcTimeZone);
 
 		
-		logger.info("MeasuredEntity:" + owner + "Measured Entity Type:" + ownerType + "intervalsByHour periodKey:" 
+		logger.debug("MeasuredEntity:" + owner + "Measured Entity Type:" + ownerType + "intervalsByHour periodKey:" 
 						+ periodKey + " parQueryFrom:" + parQueryFrom + " parQueryTo:" + parQueryTo );
 		
 		double productiveTime = 0;
@@ -117,7 +138,7 @@ public class OEEAggregationContainer extends Container
 			lineIndx = parQueryTo.lastIndexOf("-");
 			parQueryTo = parQueryTo.substring(0, lineIndx)+" "+parQueryTo.substring(lineIndx + 1);
 			
-			logger.info(" from:" + parQueryFrom + " to:" + parQueryTo);
+			logger.debug(" from:" + parQueryFrom + " to:" + parQueryTo);
 			
 			((PreparedStatement)super.pst).setInt(1, owner);
 			((PreparedStatement)super.pst).setInt(2, ownerType.getValue());      // owner_type
@@ -258,17 +279,17 @@ public class OEEAggregationContainer extends Container
 
 	
 	/**
+	 * Return the list of OEE intervals previously calculated for the predefined interval with key parQueryFrom and stored in the DB.
 	 * 
-	 * @param pstmt
-	 * @param owner
-	 * @param ownerType
-	 * @param parQueryFrom
-	 * @return
+	 * @param owner: measure entity for which the intervals were calculated.
+	 * @param ownerType: type of measuring entity for which the intervals were calculated.
+	 * @param parQueryFrom: predefined period key prefix to find.
+	 * @return all OEE aggregations which associated predefined periods start with parQueryFrom.
 	 */
 	public List<OverallEquipmentEffectiveness> intervalsByPredefinedPeriod(
 			Integer owner,MeasuredEntityType ownerType, String parQueryFrom) {
 
-		logger.info("in intervalsByPredefinedPeriod Parameters:" + "Owner:" + owner + " OwnerType:" + ownerType.getName() + " parQueryFrom:" + parQueryFrom);
+		logger.debug("in intervalsByPredefinedPeriod Parameters:" + "Owner:" + owner + " OwnerType:" + ownerType.getName() + " parQueryFrom:" + parQueryFrom);
 		
 		List<OverallEquipmentEffectiveness> list = new ArrayList<OverallEquipmentEffectiveness>();
 
@@ -327,6 +348,14 @@ public class OEEAggregationContainer extends Container
 		return list;
 	}
 	
+	/**
+	 * Verify if a predefined period is defined in the database. 
+	 * 
+	 * @param owner : measure entity for which the intervals were calculated.
+	 * @param ownerType: type of measuring entity for which the intervals were calculated.
+	 * @param predefinedPeriod: predefined period prefix to find.
+	 * @return: True if the database contains the predefined period key, false otherwise.  
+	 */
 	public synchronized boolean existPeriodOEE(Integer owner, MeasuredEntityType ownerType, PredefinedPeriod predefinedPeriod) 
 	{
 
@@ -357,6 +386,13 @@ public class OEEAggregationContainer extends Container
 		return ret;
 	}
 	
+	/**
+	 * Facade method to call method to get a list of predefined periods
+	 * @param owner  : measure entity for which the intervals were calculated.
+	 * @param ownerType : type of measuring entity for which the intervals were calculated.
+	 * @param predefinedPeriod : predefined period prefix to find.
+	 * @return List of those OEE aggregations that fits the predefined period prefix.
+	 */
 	public List<OverallEquipmentEffectiveness> getOEEList(Integer owner, 
 			MeasuredEntityType ownerType, PredefinedPeriod predefinedPeriod) 
 	{
@@ -386,7 +422,14 @@ public class OEEAggregationContainer extends Container
 	}
 	
 	
-	
+	/**
+	 * Get an OEE aggregation defined in the database. 
+	 * 
+	 * @param owner : measure entity for which the intervals were calculated.
+	 * @param ownerType: type of measuring entity for which the intervals were calculated.
+	 * @param predefinedPeriod: : predefined period prefix to find.
+	 * @return The OEE object which predefined period was given as parameter
+	 */
 	public synchronized OverallEquipmentEffectiveness getPeriodOEE(Integer owner, 
 			MeasuredEntityType ownerType, PredefinedPeriod predefinedPeriod) {
 		OverallEquipmentEffectiveness eff = null;

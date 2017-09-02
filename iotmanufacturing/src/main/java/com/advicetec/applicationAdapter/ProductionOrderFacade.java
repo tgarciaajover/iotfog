@@ -39,9 +39,9 @@ import com.advicetec.persistence.StatusStore;
 
 
 /**
- * This class is a MeasuredEntity facade.
- * It allows the language processor to access some functionality
- * from the MeasuredEntity without expose all its methods.
+ * This class is a Production Order facade.
+ * It allows other classes to access the functionality
+ * from the production order without exposing all its methods.
  *   
  * @author maldofer
  *
@@ -51,33 +51,69 @@ public final class ProductionOrderFacade {
 
 	static Logger logger = LogManager.getLogger(ProductionOrderFacade.class.getName());
 	
+	
+	/**
+	 * Production order object for which this facade is created.
+	 */
 	private ProductionOrder pOrder;
 	
-	// Keeps an in-memory entity status (The status is the set of variables register for the production order)
+	/**
+	 * Keeps an in-memory entity status (The status is the set of variables register for the production order)
+	 */
 	private StatusStore status;
 	
-	// The first string in the outer map corresponds to the attribute, datetime in the inner map corresponds to
-	// the exact time when the variable change and the key assigned to this change within the cache.
+	/**
+	* The first string in the outer map corresponds to the attribute name, datetime in the inner map corresponds to
+	* the exact time when the variable change and the key assigned to this change within the cache.
+	 */
 	private Map<String,SortedMap<LocalDateTime,String>> attMap;
+	
+	/**
+	 * Reference to the cache where we store temporarily the measured attribute values.
+	 */
 	private MeasureAttributeValueCache attValueCache;
 	
-	// This map stores endTime, startTime of every state
-	// A state is created when a stop or ready condition show up.  
+	/**
+	 * This map stores endTime, startTime of every state
+	 * A state is created when a stop or ready condition show up.  
+	 */
 	private SortedMap<LocalDateTime,String> statesMap;
+
+	/**
+	 * Reference to the cache where we store temporarily state intervals.
+	 */
 	private StateIntervalCache stateCache;
 	
-	// Production Field Identifier
+	/**
+	 * Production rate field.
+	 * Form this field we are going to take the production rate. 
+	 */
 	private String productionRateId;
 	
-	// Field that establishes the conversion Product Unit 1 / Cycle
+	/**
+	 * Field that establishes the conversion Product Unit 1 / Cycle
+	 */
 	private String unit1PerCycles;
 	
-	// Field that establishes the conversion Product Unit 2 / Cycle
+	/**
+	 * Field that establishes the conversion Product Unit 2 / Cycle
+	 */
 	private String unit2PerCycles;
 	
-
+	/**
+	 * Production cycle or cycle count registered from the sensor. 
+	 */
 	private String actualProductionCountId;
 	
+	/**
+	 * Constructor for the object.
+	 * 
+	 * @param pOrder			: production order that is the base for the facade.
+	 * @param productionRateId	: production rate field. It is assumed part of the production order object and used to evaluate the actual rate of the machine.
+	 * @param unit1PerCycles	: field used to convert from cycles to a first product unit.
+	 * @param unit2PerCycles	: field used to convert from cycles to a second product unit.
+	 * @param actualProductionCountId : actual rate registered from the sensor.
+	 */
 	public ProductionOrderFacade(ProductionOrder pOrder, String productionRateId, String unit1PerCycles, String unit2PerCycles, String actualProductionCountId) 
 	{
 		this.pOrder = pOrder;
@@ -92,21 +128,32 @@ public final class ProductionOrderFacade {
 		this.actualProductionCountId = actualProductionCountId;
 	}
 
+	/**
+	 * @return Returns the reference to the production order.
+	 */
 	public ProductionOrder getProductionOrder() {
 		return pOrder;
 	}
 
+	/**
+	 * Sets the production order for which this facade is being created.
+	 * @param pOrder production order object.
+	 */
 	public void setProductionOrder(ProductionOrder pOrder) {
 		this.pOrder = pOrder;
 	}
 
+	/**
+	 * Gets the measured entity type of the production order.
+	 * @return
+	 */
 	public MeasuredEntityType getType(){
 		return pOrder.getType();
 	}
 
 	/**
-	 * Sets an Attribute.
-	 * @param attribute
+	 * Sets a new attribute.
+	 * @param attribute to add.
 	 * @throws Exception If the new type of the attribute does not match the 
 	 * previous type.
 	 */
@@ -116,8 +163,8 @@ public final class ProductionOrderFacade {
 	}
 
 	/**
-	 * Sets or updates the attribute value into the status and store.
-	 * @param attrValue
+	 * Sets or updates an attribute value into the status and store it.
+	 * @param attrValue The attribute value to set in the production order.
 	 */
 	public synchronized void setAttributeValue(AttributeValue attrValue){
 		
@@ -139,34 +186,59 @@ public final class ProductionOrderFacade {
 		internalMap.put(mav.getTimeStamp(), mav.getKey());
 	}
 
+	/**
+	 * Gets the production rate field 
+	 * @return The field that establishes the production rate.
+	 */
 	public String getProductionRateId() {
 		return productionRateId;
 	}
 
+	/**
+	 * Sets the production rate field 
+	 * @param productionRateId production rate field to set.
+	 */
 	public void setProductionRateId(String productionRateId) {
 		this.productionRateId = productionRateId;
 	}
 
+	/**
+	 * Gets the conversion unit 1 from cycle to product's unit
+	 * @return conversion unit 1 from cycle to product's unit
+	 */
 	public String getConversion1() {
 		return unit1PerCycles;
 	}
 
+	/**
+	 * Sets the conversion unit 1 from cycle to product's unit
+	 * @param unit1PerCycles : conversion unit 1 from cycle to product's unit
+	 */
 	public void setConversion1(String unit1PerCycles) {
 		this.unit1PerCycles = unit1PerCycles;
 	}
 
+	/**
+	 * Gets the conversion unit 2 from cycle to product's unit
+	 * @return  : conversion unit 2 from cycle to product's unit
+	 */
 	public String getConversion2() {
 		return unit2PerCycles;
 	}
 
+	/**
+	 * Sets the conversion unit 2 from cycle to product's unit
+	 * @param unit2PerCycles conversion unit 2 from cycle to product's unit
+	 */
 	public void setConversion2(String unit2PerCycles) {
 		this.unit2PerCycles = unit2PerCycles;
 	}
 		
 	/**
+	 * Gets the most recent measured attribute value from the attribute with name attName
 	 * Returns the newest Measured Attribute Value for a given Attribute name.
-	 * @param attName
-	 * @return
+	 * @param attName Attribute name for which we want to know the latest attribute value.
+	 * @return The last measure attribute value registered.
 	 */
 	public AttributeValue getNewestByAttributeName(String attName){
 		return status.getAttributeValueByName(attName);
@@ -174,10 +246,12 @@ public final class ProductionOrderFacade {
 
 
 	/**
+	 * Inserts a new measure attribute value from the map valueMap. The map has as key the name of the attribute and as value 
+	 * the measure of the attribute value to insert. 
 	 * 
-	 * @param valueMap 
-	 * @param parent Identificator from the Production Order
-	 * @param parentType Type of the Production Order.
+	 * @param valueMap : Map with tuple attribute name, value 
+	 * @param parent : the production Order of
+	 * @param parentType Type of measure entity, in this case production order.
 	 */
 	public void importAttributeValues(Map<String, ASTNode> valueMap, Integer parent, MeasuredEntityType parentType) {
 
@@ -242,7 +316,8 @@ public final class ProductionOrderFacade {
 
 
 	/**
-	 * Adds to the STATUS a new Attribute Value.
+	 * Adds to the STATUS of the measuring entity a new Attribute Value.
+	 * 
 	 * @param att The Attribute
 	 * @param value The Value
 	 * @param parent Id of the measured entity
@@ -256,12 +331,12 @@ public final class ProductionOrderFacade {
 	}	
 
 	/**
-	 * Returns a list of attribute values for a given interval.
+	 * Returns a list of Measured Attribute Values for the given interval.
 	 * 
 	 * @param attrName Attribute name.
 	 * @param from Time from.
 	 * @param to Time to.
-	 * @return
+	 * @return List of measured attribute values registered to the interval [from, to]
 	 */
 	public ArrayList<AttributeValue> getByIntervalByAttributeName(
 			String attrName, LocalDateTime from, LocalDateTime to){
@@ -302,11 +377,9 @@ public final class ProductionOrderFacade {
 		}
 	}
 
-	
-	
 	/**
-	 * Deletes old values from attribute value map.
-	 * @param oldest
+	 * Deletes all attribute values registered previous to oldest 
+	 * @param oldest : data and time establishing the date limit to delete the measure attribute values
 	 */
 	public void deleteOldValues(LocalDateTime oldest){
 		for(SortedMap<LocalDateTime, String> internalMap : attMap.values()){
@@ -316,11 +389,24 @@ public final class ProductionOrderFacade {
 	}
 	
 	
+	/**
+	 * Deletes all state intervals registered previous to oldest
+	 * 
+	 * @param oldest : data and time establishing the date limit to delete the state intervals.
+	 */
 	public void deleteOldStates(LocalDateTime oldest){
 		statesMap = (SortedMap<LocalDateTime, String>) statesMap.tailMap(oldest);
 	}
 	
 		
+	/**
+	 * Returns a Json list of Measured Attribute Values for the given interval. 
+	 * 
+	 * @param attrName Attribute name.
+	 * @param from Time from.
+	 * @param to Time to.
+	 * @return Json list of measured attribute values registered to the interval [from, to]
+	 */
 	public String getByIntervalByAttributeNameJSON(
 			String attrName, LocalDateTime from, LocalDateTime to){
 
@@ -333,13 +419,13 @@ public final class ProductionOrderFacade {
 			jsonText = mapper. writeValueAsString(ret);
 
 		} catch (JsonGenerationException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 
@@ -377,9 +463,9 @@ public final class ProductionOrderFacade {
 
 
 	/**
-	 * Returns a list of Measured Attribute Values, from the cache,
-	 * @param keyArray
-	 * @return
+	 * Returns a list of Measured Attribute Values, from the cache which keys are in keyArray.
+	 * @param keyArray Keys of the measured attributes to get from the cache
+	 * @return Measured Attribute Value List.
 	 */
 	private ArrayList<AttributeValue> getFromCache(String[] keyArray){
 		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
@@ -389,10 +475,24 @@ public final class ProductionOrderFacade {
 		return maValues;
 	}
 
+	/**
+	 * Creates attributes and units from the symbolMap. the string key on the map corresponds to the attribute name or unit.
+	 * The object (symbol) corresponds to the information of the attribute or unit to be added.
+	 * 
+	 * @param symbolMap Map with attributes or units to be inserted. 
+	 * @param origin : there are two origins language transformation or behavior 
+	 * @throws Exception excepts if some symbol could not be inserted.
+	 */
 	public void importSymbols(Map<String, Symbol> symbolMap, AttributeOrigin origin) throws Exception {
 		status.importSymbols(symbolMap, origin);
 	}
 
+	/**
+	 * The STATUS is the collection of attributes defined for a measured entity. This method returns the list 
+	 * of attributes associated to the measured entity(production order).
+	 * 
+	 * @return List of attributes.
+	 */
 	public Collection<Attribute> getStatus(){
 		return status.getStatus();
 	}
@@ -405,15 +505,34 @@ public final class ProductionOrderFacade {
 		return new JSONArray(getStatusValues());
 	}
 	
+	/**
+	 * This method register a new value for all attributes within valueMap The string in the map corresponds to 
+	 * the attribute name and the value corresponds to the new measure attribute value to insert.
+	 * 
+	 * @param valueMap Map with tuples attribute name, value to be registered.
+	 */
 	public void importAttributeValues(Map<String, ASTNode> valueMap) {
 		importAttributeValues(valueMap,this.pOrder.getId(),this.pOrder.getType());
 
 	}
 
+	/**
+	 * The STATUS is the collection of attributes defined for a measured entity. This method returns the list 
+	 * of measured attributes values associated to the measured entity(production order).
+
+	 * @return Current values of all attributes registered for the measured entity.
+	 */
 	public Collection<AttributeValue> getStatusValues(){
 		return status.getAttributeValues();
 	}
 
+	/**
+	 * Register a new state interval in the measured entity.
+	 * 
+	 * @param status : Measured entity state during the interval. 
+	 * @param reasonCode : Reason code for that state
+	 * @param interval : date from and to when the interval happens.
+	 */
 	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
 		
@@ -489,7 +608,7 @@ public final class ProductionOrderFacade {
 			actualRate = new Double(0.0);
 		}
 		
-		logger.info("we are going to register the production order interval");
+		logger.debug("we are going to register the production order interval");
 		
 		StateInterval stateInterval = new StateInterval(status, reasonCode, interval, this.pOrder.getId(), this.pOrder.getType(), this.pOrder.getId(), this.pOrder.getType().getValue(), this.pOrder.getCanonicalKey(), rate, conversion1, conversion2, actualRate, new Double(0));
 		stateInterval.setKey(this.pOrder.getId()+stateInterval.getKey());
@@ -500,6 +619,12 @@ public final class ProductionOrderFacade {
 	}
 
 
+	/**
+	 * This method verifies if an attribute with name attrName is registered for the measured entity.
+	 * 
+	 * @param attrName  Attribute name to verify.
+	 * @return True if an attribute with name attrName is registered, false otherwise.
+	 */
 	private boolean isAttribute(String attrName) {
 		
 		Attribute att = status.getAttribute(attrName);
@@ -511,10 +636,11 @@ public final class ProductionOrderFacade {
 	}
 
 	/**
-	 * Returns a
-	 * @param from
-	 * @param to
-	 * @return
+	 * Returns the list of states assumed by the measured entity during the interval [from, to]
+	 * 
+	 * @param from start of the interval
+	 * @param to   end of the interval
+	 * @return String in Json format representing the list of states assumed by the measured entity.
 	 */
 	public String getJsonStatesByInterval(LocalDateTime from, LocalDateTime to){
 
@@ -528,44 +654,25 @@ public final class ProductionOrderFacade {
 			jsonText = mapper. writeValueAsString(intervals);
 
 		} catch (JsonGenerationException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (JsonMappingException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		} catch (IOException e) {
+			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
 
 		return jsonText;
 
 	}
-
-	public String statesByInterval(TimeInterval interval){
-		ArrayList<StateInterval> intervals = getStatesByInterval(interval.getStart(), interval.getEnd());
-
-		ObjectMapper mapper = new ObjectMapper();
-		String jsonText=null;
-
-		try {
-
-			jsonText = mapper. writeValueAsString(intervals);
-
-		} catch (JsonGenerationException e) {
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return jsonText;
-	}
-
 
 	/**
-	 * Returns the list of intervals between two datetimes.
+	 * Returns the list of state intervals between two datetimes.
 	 * @param from Beginning time
 	 * @param to Ending time.
-	 * @return List of intervals.
+	 * @return List of state intervals.
 	 */
 	public ArrayList<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
 		
@@ -595,8 +702,9 @@ public final class ProductionOrderFacade {
 	}
 
 	/**
-	 * Returns the list of keys from the map of attributes.
-	 * @return
+	 * Get all attribute name registered in the measured entity(production order) 
+	 * 
+	 * @return Returns the list of keys from the map of attributes.
 	 */
 	private List<String> getAllKeysFromAttributeMap() {
 		List<String> attKeys = new ArrayList<String>();
@@ -607,40 +715,38 @@ public final class ProductionOrderFacade {
 	}
 
 	/**
-	 * Commands to the cache to store all intervals into the database 
-	 * and clean the cache.
+	 * Command to make the cache store all intervals into the database and clean itself.
 	 */
 	public void storeAllStateIntervals(){
 		
-		logger.info("in storeAllStateIntervals");
+		logger.debug("in storeAllStateIntervals");
 		
 		LocalDateTime oldest = stateCache.getOldestTime();
 				
 		deleteOldStates(oldest);
 		
-		logger.info("After deleting all states");
+		logger.debug("After deleting all states");
 		
 		ArrayList<String> keys = new ArrayList<String>();
 		keys.addAll(statesMap.values());
 		
-		logger.info("before bulk commit");
+		logger.debug("before bulk commit");
 		
 		for (String key :keys){
-			logger.info("key to delete:" + key);
+			logger.debug("key to delete:" + key);
 		}
 		
 		stateCache.bulkCommit(keys);
 		
-		logger.info("finish storeAllStateIntervals");
+		logger.debug("finish storeAllStateIntervals");
 	}
 
 	/***
-	 * Commands to the cache to store all measured attribute values into the database
-	 * and clean the cache.
+	 * Command to make the cache to store all measured attribute values into the database and clean itself.
 	 */
 	public void storeAllMeasuredAttributeValues(){
 
-		logger.info("in storeAllMeasuredAttributeValues");
+		logger.debug("in storeAllMeasuredAttributeValues");
 
 		LocalDateTime oldest = attValueCache.getOldestTime();
 		
@@ -654,20 +760,10 @@ public final class ProductionOrderFacade {
 		}
 		attValueCache.bulkCommit(keys);
 
-		logger.info("finish storeAllMeasuredAttributeValues");
+		logger.debug("finish storeAllMeasuredAttributeValues");
 
 	}
 	
-	/**
-	 * Returns the Entity Status into a XML document.
-	 * @return
-	 * @throws ParserConfigurationException
-	 * @throws JAXBException
-	 */
-	public Document getXmlStatus() throws ParserConfigurationException, JAXBException{
-		return status.toXml();
-	}
-
 	/**
 	 * Starts the production order, whenever the production order was in schedule down or operating 
 	 */
@@ -687,18 +783,18 @@ public final class ProductionOrderFacade {
 	public void stop()
 	
 	{
-		logger.info("Stopping the production order");
+		logger.debug("Stopping the production order");
 		
 		if (this.pOrder.getCurrentState() != MeasuringState.UNSCHEDULEDOWN) {
 			
-			logger.info("Registering the final interval for the production order");
+			logger.debug("Registering the final interval for the production order");
 			
 			TimeInterval tInterval= new TimeInterval(this.pOrder.getCurrentStatDateTime(), LocalDateTime.now()); 
 			registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), tInterval);
 			this.pOrder.startInterval(MeasuringState.UNSCHEDULEDOWN, null);
 		}
 		
-		logger.info("Finish production order stop ");
+		logger.debug("Finish production order stop ");
 	}
 	
 }

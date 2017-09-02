@@ -10,25 +10,72 @@ import com.advicetec.core.Configurable;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 
 /**
- * This class manages the list of entities.
+ * Manager for the production order object.
  * 
- * @author user
+ * The manager object is represented as singleton. It supports the rest of the SW, so other classes can deal with these kind of objects.
+ * 
+ * @author Andres Marentes
  *
  */
 public class ProductionOrderManager extends Configurable {
 	
 	static Logger logger = LogManager.getLogger(ProductionOrderManager.class.getName());
 	
+	/**
+	 * Singleton Instance 
+	 */
 	private static ProductionOrderManager instance=null;
+	
+	/**
+	 * Reference to the Production Order container. Through this object we can select and update Production Orders.
+	 */
 	private ProductionOrderContainer productionOrders;
 	
+	/**
+	 * Map with production order being used by the software, the Integer corresponds to the key given in the database. The facade let the system
+	 * to expose some methods of the production order to other classes. 
+	 */
 	private Map<Integer, ProductionOrderFacade> pOrders;
 	
+	/**
+	 * Production rate field.
+	 * Form this field we are going to take the production rate. 
+	 */
 	private String productionRateId;
+	
+	/**
+	 * Field that establishes the conversion Product Unit 1 / Cycle
+	 */
 	private String unit1PerCycles;
+	
+	/**
+	 * Field that establishes the conversion Product Unit 2 / Cycle
+	 */
 	private String unit2PerCycles;
+	
+	/**
+	 * Production cycle or cycle count registered from the sensor. 
+	 */
 	private String actualProductionCountId;
 	
+	/**
+	 * Constructor for the class. The manager uses a properties file with name:  ProductionOrderManager.properties
+	 * 
+	 * The following are the properties expected to be defined in this file:
+	 * 
+	 * cache_initialCapacity : initial capacity for the cache 
+	 * cache_maxSize		 : Max size of the cache.
+	 * driver				 
+	 * server
+	 * user
+	 * password
+	 * productionRateField
+	 * productionUnit1PerCycles
+	 * productionUnit2PerCycles
+	 * actualProductionCountField
+	 * 
+	 * @throws SQLException
+	 */
 	private ProductionOrderManager() throws SQLException{
 		super("ProductionOrderManager");
 		
@@ -58,6 +105,10 @@ public class ProductionOrderManager extends Configurable {
 				
 	}
 
+	/**
+	 * @return ProductionOrderManager instance
+	 * @throws SQLException - This exception is returned when we can not establish the connection to the database.
+	 */
 	public static ProductionOrderManager getInstance() throws SQLException{
 		if(instance == null){
 			instance = new ProductionOrderManager();
@@ -66,9 +117,9 @@ public class ProductionOrderManager extends Configurable {
 	}
 	
 	/**
-	 * Returns TRUE if the entity parameter is already into the list of facades.
-	 * @param entity
-	 * @return TRUE if the entity already exist into the list, FALSE otherwise.
+	 * Returns TRUE if the production order given as parameter is already into the list of facades.
+	 * @param production order object to test.
+	 * @return TRUE if the production order already exist into the list, FALSE otherwise.
 	 */
 	private boolean pOrderAlreadyExists(final ProductionOrder pOrder){
 		if (pOrder != null) {
@@ -79,9 +130,10 @@ public class ProductionOrderManager extends Configurable {
 	}
 	
 	/**
-	 * Inserts a new entity in the list and creates its facade.
-	 * @param entity The new measured entity.
-	 * @return
+	 * Inserts a new production order in the list and creates its facade.
+	 * 
+	 * @param entity The new production order to control.
+	 * @return true if it could insert the production order, false otherwise.
 	 */
 	public boolean addProductionOrder(ProductionOrder pOrder){
 		if(pOrderAlreadyExists(pOrder)){
@@ -97,6 +149,7 @@ public class ProductionOrderManager extends Configurable {
 	
 	/**
 	 * Returns the Production Order facade given the production order id.
+	 * 
 	 * @param pOrderId The production order id to search.
 	 * @return NULL if there is not a production order with the given id.
 	 */
@@ -104,11 +157,19 @@ public class ProductionOrderManager extends Configurable {
 		return this.pOrders.get(pOrderId);
 	}
 
+	/**
+	 * @return Return a reference to the production order container.
+	 */
 	public ProductionOrderContainer getProductionOrderContainer()
 	{
 		return this.productionOrders;
 	}
 	
+	/**
+	 * Removes a production order. This means that the production order is not anymore controlled.
+	 * 
+	 * @param idProduccion Id of the production order to remove.
+	 */
 	public void removeFacade(Integer idProduccion)
 	{
 		
@@ -120,6 +181,20 @@ public class ProductionOrderManager extends Configurable {
     	}
 	}
 
+	/**
+	 * Get the production order Id from the canonical information given.
+	 * 
+	 * @param company		: company to which the production order belongs to.
+	 * @param location		: location to which the production order belongs to.
+	 * @param plant			: plant to which the production order belongs to.
+	 * @param machineGroup	: machine group to which the production order belongs to.
+	 * @param machineId		: machine the production order is going to be executed.
+	 * @param year			: year when the production order is going to be executed.
+	 * @param month			: month when the production order is going to be executed.
+	 * @param productionOrder	: canonical production order code.
+	 * 
+	 * @return Returns the identifier of a production order from its canonical data
+	 */
 	public Integer getProductionOrderId(String company, String location, String plant, String machineGroup,
 			String machineId, int year, int month, String productionOrder) {
 		return  this.productionOrders.getCanonicalObject(company, location, plant, machineGroup, machineId, year, month, productionOrder);
