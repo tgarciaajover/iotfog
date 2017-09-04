@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
@@ -26,8 +25,9 @@ import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+
 /**
- * This is the cache for Measured Attribute Values. <br>
+ * This class is the cache for Measured Attribute Values. <br>
  * It is a singleton object.
  * @author user
  *

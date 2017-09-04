@@ -5,13 +5,16 @@ import java.io.IOException;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
-
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import com.advicetec.applicationAdapter.ProductionOrderManager;
-
+/**
+ * This class models types of predefined time periods in years, months, days, 
+ * hours or less_than_hour.
+ * @author advicetec
+ *
+ */
 public enum PredefinedPeriodType 
 {
 	
@@ -53,6 +56,4 @@ public enum PredefinedPeriodType
 		}
 		return json;
 	}
-
-
 }

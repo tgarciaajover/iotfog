@@ -9,6 +9,12 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Utilities class for periods of time.
+ * 
+ * @author maldofer
+ *
+ */
 public class PeriodUtils 
 {
 	static int MAX_MINUTES = 59;
@@ -19,52 +25,107 @@ public class PeriodUtils
 	public static int HOURSPERMONTH = HOURSPERDAY * 30;
 	public static int HOURSPERYEAR = HOURSPERMONTH * 12;
 	 
-	
+	/**
+	 * Returns start of the next hour from the given date-time.
+	 * @param date Date-Time
+	 * @return A Date-Time with the next hour.
+	 */
 	static public LocalDateTime getStartNextHour(LocalDateTime date) {
 		LocalDateTime startNextHour = LocalDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), date.getHour(), MAX_MINUTES, MAX_SECONDS );
 		return startNextHour.plusSeconds(1);
 	}
 	
+	/**
+	 * Returns the final of the previous hour from the given date-time.
+	 * @param date Date-Time
+	 * @return A Date-Time with the previour hour.
+	 */
 	static public LocalDateTime getPreviousFinalHour(LocalDateTime date) {
 		LocalDateTime temp = LocalDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), date.getHour(), MAX_MINUTES, MAX_SECONDS, 0 );
 		return temp.minusHours(1);
 	}
 	
+	/**
+	 * Returns the final time of the previous day from the given date-time.
+	 * @param date Date-Time
+	 * @return The final time of the previous day.
+	 */
 	static public LocalDateTime getPreviousFinalDay(LocalDateTime date){
 		LocalDateTime temp  = LocalDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), 1, 1, 1, 0 );
 		return temp = temp.minusSeconds(1);		
 	}
 	
+	/**
+	 * Returns the start time of the next day from the given date-time.
+	 * @param date Date-Time
+	 * @return The start time for the next day.
+	 */
 	static public LocalDateTime getStartNextDay(LocalDateTime date) {
 		LocalDateTime startNextDay = date.with(LocalTime.MAX);
 		return startNextDay.plusNanos(1);
 	}
 	
+	/**
+	 * Returns the start time of the given date-time.
+	 * @param date Date-Time
+	 * @return The start time of the given date.
+	 */
 	static public LocalDateTime getStartOfDay(LocalDateTime date) {
 		LocalDateTime startNextDay = date.with(LocalTime.MIN);
 		return startNextDay;		
 	}
 	
+	/**
+	 * Returns the time of start the next month from the given date-time.
+	 * @param date Date-Time
+	 * @return The start time for the next month.
+	 */
 	static public LocalDateTime getStartNextMonth(LocalDateTime date) {
 		LocalDateTime temp = LocalDateTime.of(date.getYear(), date.getMonthValue(), 1, 0, 0, 0 );
 		return temp.plusMonths(1);
 	}
 	
+	/**
+	 * Returns the final time from of the previous month for the given date-time.
+	 * @param date Date-Time
+	 * @return The final time form the previous month.
+	 */
 	static public LocalDateTime getPreviousFinalMonth(LocalDateTime date) {
 		LocalDateTime temp = LocalDateTime.of(date.getYear(), date.getMonthValue(), 1, 0, 0, 0 );
 		return temp.minusSeconds(1);
 	}
 	
+	/**
+	 * Returns the start time from of the next year for the given date-time.
+	 * @param date Date-Time
+	 * @return The start time form the next year.
+	 */
 	static public LocalDateTime getStartNextYear(LocalDateTime date) {
 		LocalDateTime temp = LocalDateTime.of(date.getYear(), 1, 1, 0, 0, 0 );
 		return temp.plusYears(1);
 	}
 	
+	/**
+	 * Returns the final time from of the previous year for the given date-time.
+	 * @param date Date-Time
+	 * @return The final time form the previous year.
+	 */
 	static public LocalDateTime getPreviousFinalYear(LocalDateTime date) {
 		LocalDateTime temp = LocalDateTime.of(date.getYear(), 1, 1, 0, 0, 0 );
 		return temp.minusSeconds(1);
 	}
 	
+	/**
+	 * Returns a list of predefined periods in hours between the initial 
+	 * time and end time.
+	 * 
+	 * @param from Initial time.
+	 * @param to End time.
+	 * @return List of predefined periods in hours after initial time and 
+	 * before end time.
+	 * 
+	 * @see PredefinedPeriod
+	 */
 	static public List<PredefinedPeriod> getPredefinedPeriodHours( LocalDateTime from, LocalDateTime to )
 	{
 		
@@ -75,37 +136,46 @@ public class PeriodUtils
 		LocalDateTime startNext = getStartNextHour(from);
 		LocalDateTime previousEnd = getPreviousFinalHour(to);		
 		previousEnd = previousEnd.plusSeconds(1);
-		
+		// calculates the number of hours between initial and end dates.
 		long hours = ChronoUnit.HOURS.between(startNext, previousEnd);
 		
 		logger.info("startNext:" + startNext + " previousEnd:" + previousEnd);
 		logger.info("in getPredefinedPeriodHours  NumHours:" + Long.toString(hours));
-		
+		// if the difference is less than an hour
 		if (hours <= 0) {
 			// Inserts the initial hour
 			PredefinedPeriod predefinedPeriod = new PredefinedPeriod(from, to );
 			ret.add(predefinedPeriod);
 		
 		} else {
-		
+			// inserts the less than an hour period.
 			PredefinedPeriod predefinedPeriod = new PredefinedPeriod(from, startNext );
 			ret.add(predefinedPeriod);
-			
+			// inserts the periods of hours
 			for (int i = 0; i < hours; i++) { 
 				predefinedPeriod = new PredefinedPeriod((int)startNext.getYear(), (int) startNext.getMonthValue(), 
 																		(int)startNext.getDayOfMonth(), startNext.getHour() + i);
 				ret.add(predefinedPeriod);
 			}
-			
+			// inserts the last less than an hour period.
 			if (previousEnd.isBefore(to)){
 				predefinedPeriod = new PredefinedPeriod(previousEnd, to );
 				ret.add(predefinedPeriod);
 			}
 		}
 		return ret;
-		
 	}
 	
+	/**
+	 * Returns a list of predefined periods in days between initial 
+	 * time and end time.
+	 * 
+	 * @param from Initial time.
+	 * @param to End time.
+	 * @return List of predefined periods in days between initial time and end time.
+	 * 
+	 * @see PredefinedPeriod
+	 */
 	static private List<PredefinedPeriod> getPredefinedPeriodDays(LocalDateTime from, LocalDateTime to)
 	{
 		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
@@ -125,6 +195,15 @@ public class PeriodUtils
 		return ret;		
 	}
 	
+	/**
+	 * Returns a list of predefined periods in months between initial 
+	 * time and end time.
+	 * @param from Initial time.
+	 * @param to End time.
+	 * @return List of predefined periods in months between initial time and end time.
+	 * 
+	 * @see PredefinedPeriod
+	 */
 	static private List<PredefinedPeriod> getPredefinedPeriodMonths(LocalDateTime from, LocalDateTime to)
 	{
 		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
@@ -147,6 +226,16 @@ public class PeriodUtils
 		
 	}
 
+	/**
+	 * Returns a list of predefined periods in years between initial 
+	 * time and end time.
+	 * 
+	 * @param from Initial time.
+	 * @param to End time.
+	 * @return List of predefined periods in years between initial time and end time.
+	 * 
+	 * @see PredefinedPeriod
+	 */
 	static private List<PredefinedPeriod> getPredefinedPeriodYears(LocalDateTime from, LocalDateTime to)
 	{
 		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
@@ -165,6 +254,23 @@ public class PeriodUtils
 		return ret;		
 	}
 
+	/**
+	 * Returns a list of predefined periods between initial time and end time.
+	 * Default periods depend on the given parameters. 
+	 * If the period denotes less than a day, the period is defined in hours.
+	 * If the period denotes more than a day and less than a month, the period is defined in days.
+	 * If the period denotes more than a month and less than a year, the period is defined in months.
+	 * Otherwise, the period is defined in months.
+	 * Incomplete periods, from the initial time to first complete period 
+	 * and from the last complete period to the final time, are also 
+	 * interpreted as default periods.
+	 * 
+	 * @param from Initial time.
+	 * @param to End time.
+	 * @return List of predefined periods by default between initial time and end time.
+	 * 
+	 * @see PredefinedPeriod
+	 */
 	public static List<PredefinedPeriod> getPredefinedPeriodsDefault(LocalDateTime from, LocalDateTime to){
 
 		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
@@ -250,6 +356,16 @@ public class PeriodUtils
 		return ret; 
 	}
 
+	/**
+	 * Returns a list of PredefinedPeriods between the initial and final times.
+	 * The period type is given by the <code>reqInterval</code> parameter.
+	 * 
+	 * @param from Initial time.
+	 * @param to Final time.
+	 * @param reqInterval Required interval; "H" for hours, "D" for days, and 
+	 * "M" for minutes. Otherwise <i>default</i> interval is used.
+	 * @return A list of PredefinedPeriods between the initial and final dates.
+	 */
 	public static List<PredefinedPeriod> getPredefinedPeriods(LocalDateTime from, LocalDateTime to, String reqInterval )
 	{
 				

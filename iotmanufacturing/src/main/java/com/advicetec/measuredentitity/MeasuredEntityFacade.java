@@ -38,7 +38,6 @@ import com.advicetec.core.AttributeValue;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.Symbol;
-import com.advicetec.persistence.DowntimeReason;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
 import com.advicetec.persistence.StatusStore;
@@ -924,13 +923,13 @@ public final class MeasuredEntityFacade {
 				
 				// Search for intervals in the requested hour.
 				DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
-				String parQueryFrom = formatter.format(period.getCalendar().getTime());
+				String parQueryFrom = formatter.format(period.getCalendarFrom().getTime());
 				String parQueryTo = formatter.format(period.getCalendarTo().getTime());
 				
-				PredefinedPeriod periodTmp = new PredefinedPeriod(period.getCalendar().get(Calendar.YEAR), 
-						period.getCalendar().get(Calendar.MONTH) +1,
-						period.getCalendar().get(Calendar.DAY_OF_MONTH),
-						period.getCalendar().get(Calendar.HOUR_OF_DAY)); 
+				PredefinedPeriod periodTmp = new PredefinedPeriod(period.getCalendarFrom().get(Calendar.YEAR), 
+						period.getCalendarFrom().get(Calendar.MONTH) +1,
+						period.getCalendarFrom().get(Calendar.DAY_OF_MONTH),
+						period.getCalendarFrom().get(Calendar.HOUR_OF_DAY)); 
 				
 				List<OverallEquipmentEffectiveness> oeesHour = oeeAggregation.getOeeAggregationContainer().intervalsByHour(
 															this.getEntity().getId(), this.getEntity().getType(), periodTmp.getKey(), parQueryFrom, parQueryTo);

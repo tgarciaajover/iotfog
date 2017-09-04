@@ -9,49 +9,71 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
-
 import com.advicetec.core.Configurable;
-import com.advicetec.measuredentitity.MeasuredEntityContainer;
 import com.advicetec.monitorAdapter.AdapterManager;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
 
 /**
- * A sample application that demonstrates how to use the Paho MQTT v3.1 Client blocking API.
+ * Application that uses the Paho MQTT v3.1 Client blocking API.
+ * This applications is configurable from the properties file "MqttSubscriber.properties".
+ * 
  */
 public class MqttSubscriber extends Configurable implements MqttCallback  
 {
 
 	static Logger logger = LogManager.getLogger(MqttSubscriber.class.getName());
 
+	/**
+	 * Message broker address. 
+	 */
 	private String brokerUrl;
+	/**
+	 * Username
+	 */
 	private String userName;
+	/**
+	 * password
+	 */
 	private String password;
+	/**
+	 * Topic used to identify the group of messages. 
+	 */
 	private String topicName;
+	/**
+	 * Client id.
+	 */
 	private String clientId;
+	/**
+	 * QoS level
+	 */
 	private int qos;
-	AdapterManager adapterManager=null;
+	/**
+	 * Adapter manager reference.
+	 */
+	AdapterManager adapterManager = null;
 	
+	/**
+	 * Creates a subscriber with the parameter read from the properties file.
+	 */
 	public MqttSubscriber(){
 		
 		super("MqttSubscriber");
-		
+		// read configuration properties
 		brokerUrl = getProperty("BrokeUrl");
 		userName = getProperty("UserName");
 		password = getProperty("Password");
 		topicName = getProperty("TopicName");
 		clientId = getProperty("ClientId");
 		qos = Integer.valueOf(getProperty("QoS"));
+		// gets the adapter manager instance.
 		adapterManager = AdapterManager.getInstance(); 
 	}
 	
 	public void run(){
-		
-		
+		// set connection options
 		MqttConnectOptions conOpt = new MqttConnectOptions();
 		conOpt.setCleanSession(true);
 		conOpt.setUserName(this.userName);	   
@@ -84,7 +106,8 @@ public class MqttSubscriber extends Configurable implements MqttCallback
 			client.subscribe(topicName, qos);
 			
 		} catch (MqttException e) {
-			// TODO Auto-generated catch block
+			logger.error("Cannot subscribe with "+brokerUrl +":"+clientId +
+					",topic:" + topicName+". cause:"+e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -101,7 +124,7 @@ public class MqttSubscriber extends Configurable implements MqttCallback
 		// Called when the connection to the server has been lost.
 		// An application may choose to implement reconnection
 		// logic at this point. This sample simply exits.
-//		log("Connection to " + brokerUrl + " lost!" + cause);
+		logger.info("Connection to " + brokerUrl + " lost!" + cause.getMessage());
 		System.exit(1);
 	}
 

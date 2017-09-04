@@ -160,7 +160,7 @@ public class OverallEquipmentEffectiveness implements Storable
 		
 		if (this.predefinedPeriod.getType() == PredefinedPeriodType.INT_LT_HOUR) {
 			
-			Date dateFrom = this.predefinedPeriod.getCalendar().getTime();
+			Date dateFrom = this.predefinedPeriod.getCalendarFrom().getTime();
 			Date dateTo =  this.predefinedPeriod.getCalendarTo().getTime();
 
 			// TODO: Verify this with timezone.
@@ -176,8 +176,8 @@ public class OverallEquipmentEffectiveness implements Storable
 			return SECONDS_DAY;
 
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.MONTH) {
-			int year = this.predefinedPeriod.getCalendar().get(Calendar.YEAR);
-			int month = this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1;
+			int year = this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR);
+			int month = this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1;
 
 			// Get the number of days in that month
 			YearMonth yearMonthObject = YearMonth.of(year, month);
@@ -186,7 +186,7 @@ public class OverallEquipmentEffectiveness implements Storable
 			return (double)  daysInMonth * SECONDS_DAY;
 
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.YEAR) {
-			int year = this.predefinedPeriod.getCalendar().get(Calendar.YEAR);
+			int year = this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR);
 
 			// Get the number of days in that month
 			YearMonth yearMonthObject = YearMonth.of(year, Calendar.FEBRUARY + 1);
@@ -343,28 +343,28 @@ public class OverallEquipmentEffectiveness implements Storable
 	public String getStartDttm() {
 		
 		if (this.predefinedPeriod.getType() == PredefinedPeriodType.YEAR) {
-			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-01-01 00:00:00.000"; 
+			return  String.format("%04d",this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-01-01 00:00:00.000"; 
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.MONTH) {
-			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
-					 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) + "-01 00:00:00.000";
+			return  String.format("%04d",this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1) + "-01 00:00:00.000";
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.DAY) {
-			return  String.format("%04d", this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
-					 String.format("%02d", this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1)  + 
-					 String.format("%02d", this.predefinedPeriod.getCalendar().get(Calendar.DAY_OF_MONTH)) + " 00:00:00.000";
+			return  String.format("%04d", this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d", this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1)  + 
+					 String.format("%02d", this.predefinedPeriod.getCalendarFrom().get(Calendar.DAY_OF_MONTH)) + " 00:00:00.000";
 			
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.HOUR) {
-			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
-					 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) + "-" +
-					  String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.DAY_OF_MONTH)) + " " + 
-					   String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.HOUR_OF_DAY)) + ":00:00.000";
+			return  String.format("%04d",this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1) + "-" +
+					  String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.DAY_OF_MONTH)) + " " + 
+					   String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.HOUR_OF_DAY)) + ":00:00.000";
 			
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.INT_LT_HOUR) {
-			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
-					 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) + "-" + 
-					  String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.DAY_OF_MONTH)) + " " + 
-					   String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.HOUR_OF_DAY)) + ":" + 
-					    String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MINUTE)) + ":" +
-					     String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.SECOND)) + ".000";
+			return  String.format("%04d",this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1) + "-" + 
+					  String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.DAY_OF_MONTH)) + " " + 
+					   String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.HOUR_OF_DAY)) + ":" + 
+					    String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MINUTE)) + ":" +
+					     String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.SECOND)) + ".000";
 
 		} 
 		
@@ -377,29 +377,29 @@ public class OverallEquipmentEffectiveness implements Storable
 	public String endDttm() {
 		
 		if (this.predefinedPeriod.getType() == PredefinedPeriodType.YEAR) {
-			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-12-31 59:59:59.999"; 
+			return  String.format("%04d",this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-12-31 59:59:59.999"; 
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.MONTH) {
 			
-			int year = this.predefinedPeriod.getCalendar().get(Calendar.YEAR);
-			int month = this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1;
+			int year = this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR);
+			int month = this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1;
 			
 			YearMonth yearMonthObject = YearMonth.of(year, month);
 			int daysInMonth = yearMonthObject.lengthOfMonth();
 			
-			return  String.format("%04d", this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
-			 		 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) + "-" +
+			return  String.format("%04d", this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-" + 
+			 		 String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1) + "-" +
 			 		 String.format("%02d",daysInMonth) + " " + "23:59:59.999";
 			
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.DAY) {
-			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
-					 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) +  "-" +
-					  String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.DAY_OF_MONTH)) + " "+ "23:59:59.999";
+			return  String.format("%04d",this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1) +  "-" +
+					  String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.DAY_OF_MONTH)) + " "+ "23:59:59.999";
 			
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.HOUR) {
-			return  String.format("%04d",this.predefinedPeriod.getCalendar().get(Calendar.YEAR)) + "-" + 
-					 String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.MONTH) + 1) + "-" + 
-					  String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.DAY_OF_MONTH)) + " " + 
-					   String.format("%02d",this.predefinedPeriod.getCalendar().get(Calendar.HOUR_OF_DAY)) + ":59:59.999";
+			return  String.format("%04d",this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1) + "-" + 
+					  String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.DAY_OF_MONTH)) + " " + 
+					   String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.HOUR_OF_DAY)) + ":59:59.999";
 			
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.INT_LT_HOUR) {
 			return  String.format("%04d",this.predefinedPeriod.getCalendarTo().get(Calendar.YEAR)) + "-" + 

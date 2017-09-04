@@ -7,16 +7,37 @@ import java.util.GregorianCalendar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.advicetec.eventprocessor.OEEAggregationEventProcessor;
-
+/**
+ * Utility class that models a predefined period between two dates.
+ * The type of a predefined period ranges from years to hours or less_than_hour.
+ * @see PredefinedPeriodType
+ * @author advicetec
+ *
+ */
 public class PredefinedPeriod 
 {
+	/**
+	 * Defines a time unit.
+	 * @see PredefinedPeriodType
+	 */
     PredefinedPeriodType type;
+    /**
+     * initial time
+     */
     Calendar calendarFrom;
+    /**
+     * final time
+     */
     Calendar calendarTo;
     
     static Logger logger = LogManager.getLogger(PredefinedPeriod.class.getName());
     
+    /**
+	 * Constructs an open predefined period in hours from the given parameters.
+	 * Final time will be null.
+	 * 
+	 * @param year Initial year.
+	 */
 	public PredefinedPeriod(int year) {
 		super();
 		this.type = PredefinedPeriodType.YEAR;
@@ -24,6 +45,13 @@ public class PredefinedPeriod
 		calendarTo = null;
 	}
 	
+	/**
+	 * Constructs an open predefined period in hours from the given parameters.
+	 * Final time will be null.
+	 * 
+	 * @param year Initial year.
+	 * @param month Initial month.
+	 */
 	public PredefinedPeriod(int year, int month) {
 		super();
 		this.type = PredefinedPeriodType.MONTH;
@@ -33,6 +61,14 @@ public class PredefinedPeriod
 		calendarTo = null;
 	} 
 	
+	/**
+	 * Constructs an open predefined period in hours from the given parameters.
+	 * Final time will be null.
+	 * 
+	 * @param year Initial year.
+	 * @param month Initial month.
+	 * @param day Initial day.
+	 */
 	public PredefinedPeriod(int year, int month, int day) {
 		super();
 		this.type = PredefinedPeriodType.DAY;
@@ -41,6 +77,15 @@ public class PredefinedPeriod
 		calendarTo = null;
 	}
 
+	/**
+	 * Constructs an open predefined period in hours from the given parameters.
+	 * Final time will be null.
+	 * 
+	 * @param year Initial year.
+	 * @param month Initial month.
+	 * @param day Initial day.
+	 * @param hour Initial hour.
+	 */
 	public PredefinedPeriod(int year, int month, int day, int hour) {
 		super();
 		this.type = PredefinedPeriodType.HOUR;
@@ -50,6 +95,14 @@ public class PredefinedPeriod
 		calendarTo = null;
 	}
 	
+	/**
+	 * Constructs a predefined period between two dates.
+	 * Commonly used for less than an hour period.
+	 * The type will be LESS_THAN_HOUR.
+	 * @see PredefinedPeriodType
+	 * @param from Initial date.
+	 * @param to Final date.
+	 */
 	public PredefinedPeriod (LocalDateTime from, LocalDateTime to) {
 		this.type = PredefinedPeriodType.INT_LT_HOUR;
 		calendarFrom = new GregorianCalendar( from.getYear(), 
@@ -65,7 +118,11 @@ public class PredefinedPeriod
 											  	  	to.getMinute(), 0);		
 	}
 	
-	
+	/**
+	 * Returns an open PredefinedPeriod instance from a given key.
+	 * @param periodKey String with period information separated by "-".
+	 * @return An open PredefinedPeriod from the given key. 
+	 */
 	public static PredefinedPeriod getInstanceFrom(String periodKey) {
 		
 		String[] tokens = periodKey.split("-");
@@ -89,19 +146,35 @@ public class PredefinedPeriod
 		return null;
 	}
 	
-
+	/**
+	 * Return type of predefined period.
+	 * @see PredefinedPeriodType
+	 * @return Type of predefinedPeriod.
+	 */
 	public PredefinedPeriodType getType() {
 		return type;
 	}
     
-	public Calendar getCalendar() {
+	/**
+	 * Returns the initial time of the predefined period.
+	 * @return Initial time of the predefined period.
+	 */
+	public Calendar getCalendarFrom() {
 		return this.calendarFrom;
 	}
 	
+	/**
+	 * Returns the final time of the predefined period.
+	 * @return Final time of the predefined period.
+	 */
 	public Calendar getCalendarTo() {
 		return this.calendarTo;
 	}
 	
+	/**
+	 * Returns a string that represents the initial time of this period.
+	 * @return A string with the key of the initial time of this period.
+	 */
 	public String getKey() {
 		
 		String ret = "";
@@ -143,13 +216,16 @@ public class PredefinedPeriod
 				break;
 			
 			default:
+				logger.warn("Predefined type is not well defined.");
 				break;
 		}
-		
-		return ret; 
-				
+		return ret; 		
 	}
 	
+	/**
+	 * Returns a LocalDateTime object with the initial time of this period.
+	 * @return A LocalDateTime object with the initial time of this period.
+	 */
 	public LocalDateTime getLocalDateTime(){
 
 		switch (this.type)
@@ -183,6 +259,13 @@ public class PredefinedPeriod
 
 	}
 	
+	/**
+	 * Compares two predefinedPeriod objects. The comparison is done by the 
+	 * lexicographical comparison of period keys.
+	 * @param another PredefinedPeriod to compare with.
+	 * @return <code>TRUE</code> if the predefined periods are equals, 
+	 * <code>FALSE</code> otherwise. 
+	 */
 	public boolean equals(PredefinedPeriod another){
 		return(getKey().equalsIgnoreCase(another.getKey()));
 	}

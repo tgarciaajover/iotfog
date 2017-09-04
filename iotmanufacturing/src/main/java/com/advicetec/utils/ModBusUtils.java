@@ -4,12 +4,28 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.eventprocessor.ModBusTcpEventType;
-import com.advicetec.measuredentitity.MeasuredEntityContainer;
 
+/**
+ * This class implements functions for MODBUS protocols.
+ * Modbus label for measuring devices follows the structure :
+ * <code>M-port-registerType-unitId-registerOffset-length</code>. Where:<br> 
+ * <code>M</code> represents the Modbus protocol. <br>
+ * <code>port</code> the port number where the measurin device responds. <br>
+ * <code>registerType</code> represents the class of register to read/write. <br>
+ * <code>unitId</code> represents the unit number. <br>
+ * <code>offset</code> represents the register address to read/write. <br>
+ * <code>length</code> represents the amount of registers to read/write. <br>
+ * 
+ * @author advicetec
+ *
+ */
 public class ModBusUtils {
 
 	static Logger logger = LogManager.getLogger(ModBusUtils.class.getName());
 	
+	/*
+	 * Prefix and register types. 
+	 */
 	private static final String PREFIX = "M";
 	private static final String SEPARATOR = "-";
 	private static final String REGISTER_READ = "RR";
@@ -18,6 +34,16 @@ public class ModBusUtils {
 	private static final String REGISTER_WRITE = "RW";
 	private static final String DIGITAL_WRITE = "DW";
 	
+	/**
+	 * Creates the label for a measuring entity. 
+	 * 
+	 * @param type Operation type.
+	 * @param port Port number.
+	 * @param unitId Unit number.
+	 * @param offSet Initial register address.
+	 * @param count Amount of registers to read/write.
+	 * @return A label for Measuring Entity
+	 */
 	public static String buildPortLabel(ModBusTcpEventType type, Integer port, Integer unitId, Integer offSet, Integer count)
 	{
 		switch (type) {
@@ -74,8 +100,11 @@ public class ModBusUtils {
 				return false;
 		
 			
+			@SuppressWarnings("unused")
 			Integer unitId = Integer.parseInt(parts[3]);
+			@SuppressWarnings("unused")
 			Integer offset = Integer.parseInt(parts[4]);
+			@SuppressWarnings("unused")
 			Integer count = Integer.parseInt(parts[5]);
 			
 		} catch (NumberFormatException nfe) {
@@ -85,6 +114,13 @@ public class ModBusUtils {
 		return true;
 	}
 
+	/**
+	 * Returns the type of operation given a label.
+	 * 
+	 * @param portLabel Label for the measuring entity port.
+	 * @return A type of modbus event if it is valid ModBusTcpEventType, 
+	 * or ModBusTcpEventType.INVALID otherwise. 
+	 */
 	public static ModBusTcpEventType getModBusType(String portLabel){
 		
 		if (isPortLabelValid(portLabel) == true) {
@@ -110,6 +146,11 @@ public class ModBusUtils {
 
 	}
 	
+	/**
+	 * Extracts the port number from the given label.
+	 * @param portLabel Label for the measuring entity port.
+	 * @return Port number if the label is valid, -1 otherwise.
+	 */
 	public static Integer getPort(String portLabel){
 
 		String parts[] = portLabel.split(SEPARATOR);
@@ -123,6 +164,11 @@ public class ModBusUtils {
 		
 	}
 	
+	/**
+	 * Extracts the unit id number from the given label.
+	 * @param portLabel Label for the measuring entity port.
+	 * @return The unit id if the label is valid, -1 otherwise.
+	 */
 	public static Integer getUnitId(String portLabel){
 		
 		if (isPortLabelValid(portLabel) == true) {
@@ -141,7 +187,11 @@ public class ModBusUtils {
 		
 	}
 	
-	
+	/**
+	 * Extracts the offset number from the given label.
+	 * @param portLabel Label for the measuring entity port.
+	 * @return The offset if the label is valid, -1 otherwise.
+	 */
 	public static Integer getOffset(String portLabel){
 		
 		if (isPortLabelValid(portLabel) == true) {
@@ -160,6 +210,11 @@ public class ModBusUtils {
 		
 	}
 	
+	/**
+	 * Extracts the operation length from the given label.
+	 * @param portLabel Label for the measuring entity port.
+	 * @return The length if the label is valid, -1 otherwise.
+	 */
 	public static Integer getCount(String portLabel){
 
 		if (isPortLabelValid(portLabel) == true) {

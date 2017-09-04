@@ -26,6 +26,7 @@ import com.advicetec.configuration.ReasonCodeContainer;
 import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.core.TimeInterval;
+import com.advicetec.measuredentitity.DowntimeReason;
 import com.advicetec.measuredentitity.Machine;
 import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuringState;
