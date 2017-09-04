@@ -11,7 +11,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayEvent;
-import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.core.Processor;
 import com.advicetec.monitorAdapter.AdapterManager;
 import com.advicetec.mpmcqueue.QueueType;
@@ -150,7 +149,7 @@ public class ModBusTcpProcessor implements Processor {
 						dictionary.put("Type", (Integer) event.getType().getValue());
 						dictionary.put("Read", res3.getMessage());
 						
-						logger.info("Connection  IpAddress:" + event.getIpAddress() + "Port" + event.getPort() + "UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
+						logger.debug("Connection  IpAddress:" + event.getIpAddress() + "Port" + event.getPort() + "UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
 						
 						Queueable obj3 = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
 						adapterManager.getQueue().enqueue(6, obj3);						

@@ -174,11 +174,11 @@ public class EventManager extends Manager
 	private LocalDateTime getActiveModbusConnection(Map.Entry<LocalDateTime,TCPMasterConnection> con) throws Exception
 	{
 		
-		logger.info("in getActiveModbusConnection");
+		logger.debug("in getActiveModbusConnection");
 		
 		LocalDateTime start = con.getKey();
 		if (start.plusNanos(con.getValue().getTimeout()* 1000000).isBefore(LocalDateTime.now())){
-			logger.info("Reconnecting to modbus slave");
+			logger.debug("Reconnecting to modbus slave");
 			con.getValue().close();
 			con.getValue().connect();
 			return LocalDateTime.now();
@@ -216,7 +216,7 @@ public class EventManager extends Manager
 			if (avilCon > 0)
 			{
 				
-				logger.info("There are avail connections - availCon: " + avilCon + " usedConnection: " + String.valueOf((usedCon)));
+				logger.debug("There are avail connections - availCon: " + avilCon + " usedConnection: " + String.valueOf((usedCon)));
 				
 				// Remove the connection from available connections
 				Map.Entry<LocalDateTime,TCPMasterConnection> ret = availableConnections.get(key).pop();
@@ -225,7 +225,7 @@ public class EventManager extends Manager
 					// Update the connection (reconnect or maintain the connection).
 					LocalDateTime start = getActiveModbusConnection(ret);
 					
-					logger.info("The available connection stated at:" + start.toString() );
+					logger.debug("The available connection stated at:" + start.toString() );
 					
 					// Create the entry.
 					Map.Entry<LocalDateTime,TCPMasterConnection> newEntry = new AbstractMap.SimpleEntry<LocalDateTime,TCPMasterConnection>(start, ret.getValue()); 
