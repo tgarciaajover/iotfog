@@ -11,17 +11,12 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
-import org.w3c.dom.Document;
-
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
@@ -699,19 +694,6 @@ public final class ProductionOrderFacade {
 			list.addAll(stateCache.getFromDatabase(this.pOrder.getId(),this.pOrder.getType(),from,oldest));
 		}
 		return list;
-	}
-
-	/**
-	 * Get all attribute name registered in the measured entity(production order) 
-	 * 
-	 * @return Returns the list of keys from the map of attributes.
-	 */
-	private List<String> getAllKeysFromAttributeMap() {
-		List<String> attKeys = new ArrayList<String>();
-		for(Map<LocalDateTime,String> map:attMap.values()){
-			attKeys.addAll(map.values());
-		}
-		return attKeys;
 	}
 
 	/**

@@ -11,8 +11,9 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 
 /**
- * This class describes the measure unit. e.g. Kilograms.
- * @author user
+ * This class describes the measure unit to be used in attributes; e.g, Kilograms.
+ * 
+ * @author Andres Marentes
  *
  */
 public class MeasuringUnit 

@@ -1,7 +1,6 @@
 package com.advicetec.configuration;
 
 import java.io.IOException;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -12,19 +11,40 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+/**
+ * Container class for Display Types.
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class DisplayTypeContainer extends Container 
 {
 
 	static Logger logger = LogManager.getLogger(DisplayTypeContainer.class.getName());
 	
+	/**
+	 * SQL Statement for reading the configuration data of display types.
+	 */
 	static String sqlSelect1 = "SELECT id, descr, pixels_width, pixels_height, text_color, back_color, in_mode, out_mode, speed, line_spacing, letter_size, vertical_alignment, horizontal_alignment, create_date FROM setup_displaytype";
 	
-
+	/**
+	 * Constructor for the class, it takes as parameters data required to connect to the database.
+	 * 
+	 * @param driver	: driver string used to connect to the database.
+	 * @param server	: Ip address of the database server
+	 * @param user		: database user
+	 * @param password	: password of the user's database.
+	 */
 	public DisplayTypeContainer(String driver, String server, String user, String password) 
 	{	
 		super(driver, server, user, password);	
 	}
 	
+	/**
+	 * Loads all display types registered in the database into the container.
+	 * 
+	 * @throws SQLException
+	 */
 	public void loadContainer() throws SQLException
 	{
 
@@ -89,11 +109,21 @@ public class DisplayTypeContainer extends Container
 		
 	}
 
+	/**
+	 * Delete a display type from the container
+	 * 
+	 * @param uniqueID  Identifier of the display type to remove.
+	 */
 	public synchronized void deleteDisplayType(int uniqueID)
 	{
 		super.configuationObjects.remove(uniqueID);
 	}
 	
+	/**
+	 * Builds a display type from Json object representation. Once it creates the new instance, that instance is inserted in the container
+	 * 
+	 * @param json	json representation.
+	 */
 	public synchronized void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();

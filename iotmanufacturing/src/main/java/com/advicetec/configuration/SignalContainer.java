@@ -16,13 +16,29 @@ public class SignalContainer extends Container
 
 	static Logger logger = LogManager.getLogger(SignalContainer.class.getName());
 	
+	/**
+	 *  SQL Statement for reading the configuration data of signals. 
+	 */
 	static String sqlSelect = "SELECT id, descr, create_date, type_id, unit_id FROM setup_signal";
 
+	/**
+	 * Constructor for the class, it takes as parameters data required to connect to the database.
+	 * 
+	 * @param driver		: driver string used to connect to the database.
+	 * @param server		: Ip address of the database server
+	 * @param user			: database user
+	 * @param password		: password of the user's database.
+	 */
 	public SignalContainer(String driver, String server, String user, String password) 
 	{	
 		super(driver, server, user, password);	
 	}
 	
+	/**
+	 * Loads all signals registered in the database into the container.
+	 * 
+	 * @throws SQLException
+	 */
 	public void loadContainer() throws SQLException
 	{
 
@@ -41,7 +57,7 @@ public class SignalContainer extends Container
 		        Timestamp timestamp = rs.getTimestamp("create_date");
 		        		        
 		        SignalType signalType = (SignalType) this.getReferencedObject("SignalType", signalTypeId);
-		        SignalUnit signalUnit = (SignalUnit) this.getReferencedObject("Unit", signalTypeId);
+		        SignalUnit signalUnit = (SignalUnit) this.getReferencedObject("Unit", unitId);
 		        
 		        Signal object = new Signal(id);
 		        object.setDescr(descr);
@@ -71,11 +87,21 @@ public class SignalContainer extends Container
 		
 	}
 
+	/**
+	 * Delete a signal from the container
+	 * 
+	 * @param uniqueID	Identifier of the signal to remove.
+	 */
 	public void deleteSignal(int uniqueID)
 	{
 		super.configuationObjects.remove(uniqueID);
 	}
 
+	/**
+	 * Builds a signal from Json object representation. Once it creates the new instance, it is inserted in the container
+	 * 
+	 * @param json	json representation.
+	 */
 	public void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();
