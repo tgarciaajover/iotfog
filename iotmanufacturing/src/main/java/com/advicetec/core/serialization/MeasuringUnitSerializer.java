@@ -9,6 +9,15 @@ import org.codehaus.jackson.map.SerializerProvider;
 import com.advicetec.core.MeasuringUnit;
 import org.codehaus.jackson.JsonGenerator;
 
+
+/**
+ * Serialize a unit of measure object into JSON format. 
+ * 
+ * It takes the attributes symbol and description and builds a json object with elements symbol and description. 
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class MeasuringUnitSerializer extends JsonSerializer<MeasuringUnit> {
 
 	protected MeasuringUnitSerializer(Class<MeasuringUnit> t) {

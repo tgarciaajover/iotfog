@@ -9,8 +9,18 @@ import org.codehaus.jackson.map.SerializerProvider;
 
 import com.advicetec.core.Attribute;
 
+/**
+ * This class lets convert from an attribute into a JSON object with the following fields:
+ * 	  name, type, and unit
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class AttributeSerializer extends JsonSerializer<Attribute> {
 
+	/**
+	 * Serialize the attribute into json.
+	 */
 	@Override
 	public void serialize(Attribute attr, JsonGenerator jgen,
 			SerializerProvider provider) throws IOException,

@@ -10,6 +10,14 @@ import org.codehaus.jackson.map.JsonDeserializer;
 
 import com.advicetec.core.MeasuringUnit;
 
+/**
+ * Deserialize a unit of measure object which is in JSON format. 
+ * 
+ * It takes the elements symbol and description and builds and unit of measure object. 
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class MeasuringUnitDeserializer extends JsonDeserializer<MeasuringUnit>{
 
 	@Override

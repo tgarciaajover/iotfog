@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayEvent;
-import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
 import com.advicetec.language.ast.Symbol;
@@ -21,6 +20,12 @@ import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
+/**
+ * 
+ * 
+ * @author andres
+ *
+ */
 public class MeasuredEntityEventProcessor implements Processor
 {
 

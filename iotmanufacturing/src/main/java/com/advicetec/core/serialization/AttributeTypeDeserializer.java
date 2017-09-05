@@ -9,8 +9,18 @@ import org.codehaus.jackson.map.JsonDeserializer;
 
 import com.advicetec.core.AttributeType;
 
+/**
+ * This class lets to deserialize the attribute type from json object
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class AttributeTypeDeserializer extends JsonDeserializer<AttributeType> {
 
+	
+	/**
+	 * it takes the json element and returns the internal attribute type code.
+	 */
 	@Override
 	public AttributeType deserialize(JsonParser parser,
 			DeserializationContext arg1) throws IOException,

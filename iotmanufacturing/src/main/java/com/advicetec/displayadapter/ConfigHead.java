@@ -5,77 +5,302 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.utils.UdpUtils;
 
+/**
+ * Class to configurate the display message head. It defines fields used in this configuration. 
+ * 
+ * @author Ferney Maldonado
+ *
+ */
 public class ConfigHead {
 
 	static Logger logger = LogManager.getLogger(ConfigHead.class.getName());
 
-	String screenWidth ; // screen width
-	String screenHeight; // screen height
-	String priority ; // priority
-	String language ; // language
-	String baudRate1; // baud rate
-	String baudRate2 ; // baud rate 2
-	String tcpTimeOut; // tcp time out
-	String dhcpEnable ; // dhcp on / off
+	/**
+	 * screen width
+	 */
+	String screenWidth ; 
 
-	String cardSize; // card size
-	String fpgaType; // fpga type
-	String fpgaMode; // fpga mode
-	String fpgaGrade; // fpga gray scale
-	String fpgaLight; // fpga light
-	String fpgaLength; // fpga length
-	String fpgaStartLine; // start line
-	String sameset; // same set? same=1 different=0
-	String ledbin; // led bin
-	String group; // group address
-	String unit; // unit address
-	String poweronmessage; // power on message=0 , f0= no power on message
-	String broadcastIpEnable; // reserved
-	String ipAddress; // ip address
-	String MacAddress; // mac address
-	String softSecVer; // soft sectoin version number
-	String softver; // soft version
-	String hardver; // hardware version
-	String powertimeUser; // power time is_user, true = valid
-	String powertimeOffHour; // power time off hour
-	String powertimeOffMin; // power time off min
-	String powertimeOnHour; // power time on hour
-	String powertimeOnMin; // power time on min
-
-	String timeZone; //time zone
-	String remote;   // remote control = 0, no remote control =1
-	String playMode; // process file immediately=0, delayed=1
-	String daylight; // saving time
+	/**
+	 * screen height
+	 */
+	String screenHeight;  
 	
-	String halflightTimeUser; 	// user
-	String halflightTimeOffHour;// 
+	/**
+	 * priority
+	 */
+	String priority ; 
+	
+	/**
+	 * language
+	 */
+	String language ; 
+	
+	/**
+	 * baud rate
+	 */
+	String baudRate1; 
+	
+	/**
+	 * baud rate 2
+	 */
+	String baudRate2 ; 
+	
+	/**
+	 * tcp time out
+	 */
+	String tcpTimeOut; 
+	
+	/**
+	 * dhcp on / off
+	 */
+	String dhcpEnable ; 
+
+	/**
+	 * card size
+	 */
+	String cardSize; 
+	
+	/**
+	 * fpga type
+	 */
+	String fpgaType; 
+	
+	/**
+	 * fpga mode
+	 */
+	String fpgaMode; 
+	
+	/**
+	 * fpga gray scale
+	 */
+	String fpgaGrade; 
+	
+	/**
+	 * fpga light
+	 */
+	String fpgaLight; 
+	
+	/**
+	 * fpga length
+	 */
+	String fpgaLength; 
+	
+	/**
+	 * start line
+	 */
+	String fpgaStartLine; 
+	
+	/**
+	 * same set? same=1 different=0
+	 */
+	String sameset; 
+	
+	/**
+	 * led bin
+	 */
+	String ledbin; 
+	
+	/**
+	 * group address
+	 */
+	String group; 
+	
+	/**
+	 * unit address
+	 */
+	String unit; 
+	
+	/**
+	 * power on message=0 , f0= no power on message
+	 */
+	String poweronmessage; 
+	
+	/**
+	 * reserved
+	 */
+	String broadcastIpEnable; 
+	
+	/**
+	 * ip address
+	 */
+	String ipAddress; 
+	
+	/**
+	 * mac address
+	 */
+	String MacAddress; 
+	
+	/**
+	 * soft section version number
+	 */
+	String softSecVer; 
+	
+	/**
+	 * soft version
+	 */
+	String softver; 
+	
+	/**
+	 * hardware version
+	 */
+	String hardver; 
+	
+	/**
+	 * power time is_user, true = valid
+	 */
+	String powertimeUser; 
+	
+	/**
+	 * power time off hour
+	 */
+	String powertimeOffHour; 
+	
+	/**
+	 * power time off min
+	 */
+	String powertimeOffMin; 
+	
+	/**
+	 * power time on hour
+	 */
+	String powertimeOnHour; 
+	
+	/**
+	 * power time on min
+	 */
+	String powertimeOnMin; 
+
+	/**
+	 * time zone
+	 */
+	String timeZone; 
+	
+	/**
+	 * remote control = 0, no remote control =1
+	 */
+	String remote;   
+	
+	/**
+	 * process file immediately=0, delayed=1
+	 */
+	String playMode; 
+	
+	/**
+	 * saving time
+	 */
+	String daylight;
+	
+	/**
+	 * user
+	 */
+	String halflightTimeUser; 
+	String halflightTimeOffHour; 
 	String halflightTimeOffMin;
 	String halflightTimeOnHour;
 	String halflightTimeOnMin;
 	
-	String systemStat; // starting state of a system, 0= schedule mode
-	String uselogin; // log in, default=no log in.
-	String slaveNum; // number of slave board
-	String tempFlag; // temp flag, 0=celcious, 1=fahrenheit
-	String newLineWidth; // new line width
-	String newLineHeigth; // new line height
-	String offlineX; // offline x
-	String offlineY; // offline y
-	String tempValue; // temp value
-	String serial; // serial number
-	String dateTime; // datetime renewing files
-	String ledName; // led name
-	String brightCtrl; // brigth control
+	/**
+	 * starting state of a system, 0= schedule mode
+	 */
+	String systemStat; 
+	
+	/**
+	 * log in, default=no log in.
+	 */
+	String uselogin; 
+	
+	/**
+	 * number of slave board
+	 */
+	String slaveNum; 
+	
+	/**
+	 * temp flag, 0=celcious, 1=fahrenheit
+	 */
+	String tempFlag; 
+	
+	/**
+	 * new line width
+	 */
+	String newLineWidth; 
+	
+	/**
+	 * new line height
+	 */
+	String newLineHeigth; 
+	
+	/**
+	 * offline x
+	 */
+	String offlineX; 
+	
+	/**
+	 * offline y
+	 */
+	String offlineY; 
+	
+	/**
+	 * temp value
+	 */
+	String tempValue; 
+	
+	/**
+	 * serial number
+	 */
+	String serial; 
+	
+	/**
+	 * datetime renewing files
+	 */
+	String dateTime; 
+	
+	/**
+	 * led name
+	 */
+	String ledName; 
 
-	String gatewayIp; // gateway ip
-	String maskAddr; // mask address
-	String cfglist1; // sigma 3000 config select
-	String cfglist2; // sigma 3000 config select 2
-	String functionlist1; // firmware function list
-	String functionlist2; // firmware function list
+	/**
+	 * brigth control
+	 */
+	String brightCtrl;  
+
+	/**
+	 * gateway ip
+	 */
+	String gatewayIp; 
+	
+	/**
+	 * mask address
+	 */
+	String maskAddr; 
+	
+	/**
+	 * sigma 3000 config select
+	 */
+	String cfglist1; 
+	
+	/**
+	 * sigma 3000 config select 2
+	 */
+	String cfglist2; 
+	
+	/**
+	 * firmware function list
+	 */
+	String functionlist1; 
+	
+	/**
+	 * firmware function list 2
+	 */
+	String functionlist2;
 	// 188 = 0xbc
 
 	
+	/**
+	 * This class constructs by configuring default parameters for the message header of the jetFileProtocol
+	 * @param data
+	 * @param expectedSize
+	 */
 	public ConfigHead(String data, int expectedSize){
 		if(!UdpUtils.getFields(data, 0, 2).equalsIgnoreCase("aa55") || data.length() != expectedSize*2 || data.length() < 160){ // 216 0xd8
 			logger.error(" Format does not match: "+ data);
@@ -152,66 +377,130 @@ public class ConfigHead {
 		}
 	}
 
+	/**
+	 * Gets a reference to the logger  
+	 * @return logger reference
+	 */
 	public static Logger getLogger() {
 		return logger;
 	}
 
+	/**
+	 * Gets the screen width
+	 * @return screen width
+	 */
 	public String getScreenWidth() {
 		return screenWidth;
 	}
 
+	/**
+	 * Gets the screen height 
+	 * @return screen height
+	 */
 	public String getScreenHeight() {
 		return screenHeight;
 	}
 
+	/**
+	 * Gets the priority
+	 * @return priority
+	 */
 	public String getPriority() {
 		return priority;
 	}
 
+	/**
+	 * Gets the language
+	 * @return language
+	 */
 	public String getLanguage() {
 		return language;
 	}
 
+	/**
+	 * Gets the baud rate 1
+	 * @return baud rate 1
+	 */
 	public String getBaudRate1() {
 		return baudRate1;
 	}
 
+	/**
+	 * Gets the baud rate 2
+	 * @return  baud rate 2
+	 */
 	public String getBaudRate2() {
 		return baudRate2;
 	}
 
+	/**
+	 * Gets the TCP time out
+	 * @return  TCP time out
+	 */
 	public String getTcpTimeOut() {
 		return tcpTimeOut;
 	}
 
+	/**
+	 * Gets if DHCP is enabled
+	 * @return DHCP is enabled
+	 */
 	public String getDhcpEnable() {
 		return dhcpEnable;
 	}
 
+	/**
+	 * Gets the card size.
+	 * @return card size
+	 */
 	public String getCardSize() {
 		return cardSize;
 	}
 
+	/**
+	 * Gets the Fpga type
+	 * @return Fpga type
+	 */
 	public String getFpgaType() {
 		return fpgaType;
 	}
 
+	/**
+	 * Gets the Fpga Mode
+	 * @return Fpga Mode
+	 */
 	public String getFpgaMode() {
 		return fpgaMode;
 	}
 
+	/**
+	 * Gets the Fpga Grade
+	 * @return Fpga Grade
+	 */
 	public String getFpgaGrade() {
 		return fpgaGrade;
 	}
 
+	/**
+	 * Gets the Fpga Light 
+	 * @return Fpga Light 
+	 */
 	public String getFpgaLight() {
 		return fpgaLight;
 	}
 
+	/**
+	 * Gets the Fpga lenght
+	 * @return  Fpga lenght
+	 */
 	public String getFpgaLength() {
 		return fpgaLength;
 	}
 
+	/**
+	 * Gets the Fpga Start line
+	 * @return Fpga Start line
+	 */
 	public String getFpgaStartLine() {
 		return fpgaStartLine;
 	}
@@ -220,6 +509,10 @@ public class ConfigHead {
 		return sameset;
 	}
 
+	/**
+	 * Gets the led bin
+	 * @return led bin
+	 */
 	public String getLedbin() {
 		return ledbin;
 	}

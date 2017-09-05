@@ -1,33 +1,98 @@
 package com.advicetec.eventprocessor;
 
+/**
+ * Enumeration with the event types
+ * 
+ * @author Andres Marentes
+ *
+ */
 public enum EventType 
 {
 
-	   TIMER_EVENT(0,"Timer Event"),
-	   MEASURING_ENTITY_EVENT(1,"Measuring Entity Event"),
-	   META_MODEL_EVENT(2,"Meta Model Event"),
-	   PRODUCTION_ORDER(3,"Production Order"),
-	   WEB_APPLICATION_QUERY_EVENT(4,"Web Application Query Event"),
-	   DISPLAY_EVENT(5,"Display Event"),
-	   MODBUS_READ_EVENT(6,"Modbus Read Event"),
-	   MODBUS_WRITE_EVENT(7,"Modbus Write Event"),
-	   AGGREGATION_EVENT(8,"Aggregation Event"),
-	   INVALID(9,"Invalid Event");
-	  
-	   private int code;
-	   private String name;
-	   
-	   private EventType(int value, String name) {
-	      this.code = value;
-	      this.name = name;
-	   }
-	   
-	   public int getValue() {
-	      return this.code;
-	   }
-	   
-	   public String getName() {
-		  return this.name;
-	   }
+	/**
+	 * It is created to establish a timer in the system. for now it is not used.  
+	 */
+	TIMER_EVENT(0,"Timer Event"),
+	
+	/**
+	 * The measuring entity event is used to execute a behavior (measured entity behavior or state behavior).
+	 */
+	MEASURING_ENTITY_EVENT(1,"Measuring Entity Event"),
+	
+	/**
+	 * The meta model event is designed to register a change in the meta model. For now it is not used, because this changes occurs in the rest interface.
+	 */
+	META_MODEL_EVENT(2,"Meta Model Event"),
+	
+	/**
+	 *  The production order event is designed to register the arrival of a new production order. For now it is not used, because this changes occurs in the rest interface.
+	 */
+	PRODUCTION_ORDER(3,"Production Order"),
+	
+	/**
+	 * The web application query is designed to respond to queryes from the web application. For now it is not used, because this changes occurs in the rest interface.
+	 */
+	WEB_APPLICATION_QUERY_EVENT(4,"Web Application Query Event"),
+	
+	/**
+	 * The Display event is designed to show messages in a display.
+	 */
+	DISPLAY_EVENT(5,"Display Event"),
+	
+	/**
+	 * The modbus read event is designed to read from a sensor using the modbus protocol.
+	 */
+	MODBUS_READ_EVENT(6,"Modbus Read Event"),
+	
+	/**
+	 * The modbus write event is designed to write to sensors using the modbus protocol.
+	 */
+	MODBUS_WRITE_EVENT(7,"Modbus Write Event"),
+	
+	/**
+	 * The Aggregation event is designed to execute an aggregation in data
+	 */
+	AGGREGATION_EVENT(8,"Aggregation Event"),
+	
+	/**
+	 * Invalid event. 
+	 */
+	INVALID(9,"Invalid Event");
+
+	/**
+	 * Unique code defining the event type 
+	 */
+	private int code;
+	
+	/**
+	 * Name given to the event type.
+	 */
+	private String name;
+
+	/**
+	 * Constructor for the enumeration
+	 * @param value  code for the event type
+	 * @param name   name for the event type
+	 */
+	private EventType(int value, String name) {
+		this.code = value;
+		this.name = name;
+	}
+
+	/**
+	 * Gets the code of the event type
+	 * @return event code
+	 */
+	public int getValue() {
+		return this.code;
+	}
+
+	/**
+	 * Gets the name of the event type.
+	 * @return event type name
+	 */
+	public String getName() {
+		return this.name;
+	}
 	
 }

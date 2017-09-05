@@ -12,18 +12,36 @@ import com.advicetec.configuration.DisplayDevice;
 import com.advicetec.core.Processor;
 import com.advicetec.displayadapter.LedSignDisplay;
 
+/**
+ * This class process display events, it takes as parameter the display event to be executed, 
+ * then it creates a connection with the display and sends to message to be shown. 
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class DisplayEventProcessor implements Processor
 {
 
 	static Logger logger = LogManager.getLogger(DisplayEventProcessor.class.getName());
+	
+	/**
+	 * 
+	 */
 	DisplayEvent event;
 	
+	/**
+	 * @param event
+	 */
 	public DisplayEventProcessor(DisplayEvent event) {
 		super();
 		this.event = event;
 	}
 
-	
+	/**
+	 * This method takes the event parameters, connects to the display and publish the message.
+	 * 
+	 * Returns an empty list of delayed events.
+	 */
 	public List<DelayEvent> process() throws SQLException 
 	{
 		
@@ -58,24 +76,11 @@ public class DisplayEventProcessor implements Processor
 
 
 		} else {
-			// TODO: put the log error saying that there is not facade.
+			logger.error("No display with name:" + name + " was found registered in the system");
 		}
 
 		return ret;
 
-	}
-
-	/**
-	 * This function get the behavior from list of names given as parameter. 
-	 * We expect to have machinegroup.machine.behaviorid as the name 
-	 * @param names
-	 * @return
-	 */
-	
-	public String getBehavior(List<String> names)
-	{
-		// TODO: create the method.
-		return null;
 	}
 	
 }

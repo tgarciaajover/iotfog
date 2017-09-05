@@ -18,13 +18,14 @@ import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.MessageProcessor.DelayQueueConsumer;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
-import com.advicetec.language.behavior.BehaviorDefPhase;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
 import java.util.Iterator;
 
 /**
- * @author andres
+ * This class manages all event handlers. To manage includes: create the event handlers and put them to execute. 
+ * 
+ * @author Andres Marentes
  *
  */
 public class EventManager extends Manager
