@@ -25,19 +25,50 @@ import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersRequest;
 import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersResponse;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
+/**
+ * This class process Modbus Tcp events, it takes as parameter a modbus tcp event to execute. 
+ * Then it creates a connection with the modbus slave and reads or writes the desired registers. 
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class ModBusTcpProcessor implements Processor {
 
 	static Logger logger = LogManager.getLogger(ModBusTcpProcessor.class.getName());
+	
+	/**
+	 * Modbus Event to execute.
+	 */
 	ModBusTcpEvent event;
+	
+	/**
+	 * Instance to the adapter manager whic is required to process he new sample.
+	 */
 	AdapterManager adapterManager=null;
+	
+	/**
+	 * Instance to the event manager to create a new events.
+	 */
 	EventManager eventManager=null;
 
+	/**
+	 * Constructor for the class. It takes a modbus event. 
+	 * @param event Modbus event to process
+	 */
 	public ModBusTcpProcessor(ModBusTcpEvent event) {
 		super();
 		this.event = event;
 	}
 	
 	
+	/**
+	 * Method to process the event. To process these events we perform:
+	 * 
+	 *  	1. Establish a new connection with the modbus slave
+	 *  	2. Depending on the type of event it creates a request to the modbus slave
+	 *  	3. makes the request and receive the information and build a new sample message
+	 *  	4. closes the connection.  
+	 */
 	@Override
 	public List<DelayEvent> process() throws SQLException {
 
@@ -46,7 +77,7 @@ public class ModBusTcpProcessor implements Processor {
 		Map<String, Object> dictionary = new HashMap<String, Object>();
 		
 		try {
-			// Obtains the connection 
+			// TODO: AM change this part. 
 			TCPMasterConnection con = eventManager.getModbusConnection(event.getIpAddress(), event.getPort());
 			
 			if (con == null){

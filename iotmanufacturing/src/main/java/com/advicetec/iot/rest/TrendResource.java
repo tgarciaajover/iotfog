@@ -43,7 +43,6 @@ public class TrendResource extends ServerResource
 
 			// Convert the Json representation to the Java representation.
 			JSONObject jsonobject = jsonRepresentation.getJsonObject();
-			String jsonText = jsonobject.toString();
 			
 			this.canMachineId = jsonobject.getString("machineId");
 			this.canCompany = jsonobject.getString("company");
@@ -63,8 +62,6 @@ public class TrendResource extends ServerResource
 		}
 		
 	}
-
-	
 	
 	@Get("json")
 	public Representation getTrendVariable(Representation rep){

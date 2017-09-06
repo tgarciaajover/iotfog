@@ -16,7 +16,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.advicetec.configuration.Container;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.behavior.BehaviorSyntaxChecking;
 

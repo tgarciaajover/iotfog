@@ -1,5 +1,6 @@
 package com.advicetec.iot.rest;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
+import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -20,11 +22,15 @@ public class IntervalResource extends ServerResource
 {
 
 	/**
-	 * Returns the intervals instance requested by the URL. 
-	 * @return The XML representation of the status, or CLIENT_ERROR_NOT_ACCEPTABLE if the unique ID is not present.
+	 * Get the list of state intervals registered for a measured entity. It is assumed that the user 
+	 * 	asks by the internal measured entity identifier .
 	 * 
-	 * @throws Exception if problems occur making the representation.
-	 * Shouldn't occur in practice but if it does, Restlet will set the Status code. 
+	 * @param representation  Optional Json representation of the measured entity requested and the time interval.
+	 * 
+	 * @return Representation of Json array of state intervals for a measured entity.
+	 * 
+	 * @throws ResourceException
+	 * @throws IOException If the representation is not a valid json.
 	 */
 	@Get("json")
 	public Representation getEntityInterval(Representation representation) throws Exception {

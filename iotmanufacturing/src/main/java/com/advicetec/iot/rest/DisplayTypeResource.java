@@ -12,19 +12,29 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import com.advicetec.configuration.ConfigurationManager;
-import com.advicetec.configuration.Container;
 import com.advicetec.configuration.DisplayType;
 import com.advicetec.configuration.DisplayTypeContainer;
 
+/**
+ * This class exposes all display type instances that are configured in the container.
+ * 
+ * The user of this interface can retry a display type definition, inserts a new display type or deletes a registered one.
+ * 
+ * In the case of adding a new display type, it verifies whether the dependent objects where previously created. If those are not created,
+ * then the system creates them in their containers. 
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class DisplayTypeResource extends ServerResource  
 {
 
 	static Logger logger = LogManager.getLogger(DisplayTypeResource.class.getName());
 	
 	   /**
-	   * Returns the Display Type instance requested by the URL. 
+	   * Returns the display type instance requested by the URL. 
 	   * 
-	   * @return The JSON representation of the Signal, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
+	   * @return The JSON representation of the display type, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
 	   * unique ID is not present.
 	   * 
 	   * @throws Exception If problems occur making the representation. Shouldn't occur in 
@@ -60,8 +70,8 @@ public class DisplayTypeResource extends ServerResource
 	  }
 	  
 	  /**
-	   * Adds the passed Display Type to our internal database of Display Type.
-	   * @param representation The Json representation of the new Device Type to add.
+	   * Adds the given display type to the internal display type container.
+	   * @param representation the Json representation of the new display Type to add.
 	   * 
 	   * @return null.
 	   * 
@@ -95,7 +105,7 @@ public class DisplayTypeResource extends ServerResource
 	  }
 	  
 	  /**
-	   * Deletes the unique ID from the internal database. 
+	   * Deletes the unique display type Identifier given as parameter from the internal container. 
 	   * @return null.
 	   */
 	  @Delete("json")

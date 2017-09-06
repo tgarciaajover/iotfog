@@ -10,30 +10,73 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
-import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 
+/**
+ * This class exposes reason code instances that are configured in the container.
+ * 
+ * The user of this interface can retry a reason code definition, inserts a new reason code or deletes a registered one.
+ * 
+ * In the case of adding a new reason code, it verifies whether the dependent objects where previously created. If those are not created,
+ * then the system creates them in their containers. 
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class DowntimeReasonResource extends ServerResource {
 
 	static final Logger logger = LogManager.getLogger(DowntimeReasonResource.class.getName());
 
+	/**
+	 * canonical machine identifier 
+	 */
 	private String canMachineId;
+	
+	/**
+	 * canonical company identifier
+	 */
 	private String canCompany;
+	
+	/**
+	 * canonical location identifier
+	 */
 	private String canLocation;
+	
+	/**
+	 * canonical plant identifier
+	 */
 	private String canPlant;
+	
+	/**
+	 * canonical machine group identifier
+	 */
 	private String canMachineGroup;
+	
+	/**
+	 * Start date time of the downtime intervals
+	 */
 	private String reqStartDateTime;
+	
+	/**
+	 * End date time of the downtime intervals
+	 */
 	private String reqEndDateTime;
 
+	/**
+	 * Obtains and verifies the parameters from a JSON representation.
+	 * 
+	 * @param representation  JSON representation that maintain the parameters for the interface.
+	 * 
+	 * It does not have a return value, but it lets the parameters in the class's attributes.   
+	 */
 	private void getParamsFromJson(Representation representation) {
 		
 		try {
@@ -44,7 +87,6 @@ public class DowntimeReasonResource extends ServerResource {
 
 			// Convert the Json representation to the Java representation.
 			JSONObject jsonobject = jsonRepresentation.getJsonObject();
-			String jsonText = jsonobject.toString();
 			
 			this.canCompany = jsonobject.getString("company");
 			this.canLocation = jsonobject.getString("location");
@@ -66,16 +108,19 @@ public class DowntimeReasonResource extends ServerResource {
 	
 	
 	/**
-	 * Handle a POST http request.<br>
-	 * @param rep 
-	 * @return Representation of Json array of downtime reasons from a device.
+	 * Get the list of downtime intervals registered for a measured entity in given date time interval.
+	 * 
+	 * @param representation  Optional Json representation of the measured entity requested and the time interval.
+	 * 
+	 * @return Representation of Json array of downtime reasons for a measured entity.
+	 * 
 	 * @throws ResourceException
 	 * @throws IOException If the representation is not a valid json.
 	 */
 	@Get("json")
 	public Representation getDowntimeReasonsInterval(Representation representation) throws ResourceException, IOException{
 		Representation result = null;
-		logger.info("in getDowntimeReasonsInterval");
+		logger.debug("in getDowntimeReasonsInterval");
 		this.canCompany = getQueryValue("company");
 		this.canLocation = getQueryValue("location");
 		this.canPlant = getQueryValue("plant");

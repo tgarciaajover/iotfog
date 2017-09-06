@@ -12,10 +12,20 @@ import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 
 import com.advicetec.configuration.ConfigurationManager;
-import com.advicetec.configuration.Container;
 import com.advicetec.configuration.DisplayDevice;
 import com.advicetec.configuration.DisplayDeviceContainer;
 
+/**
+ * This class exposes all display device instances that are configured in the display device container.
+ * 
+ * The user of this interface can retry the display device definition, inserts a new display device or deletes a registered one.
+ * 
+ * In the case of adding a new display device, it verifies whether the dependent objects where previously created. If those are not created,
+ * then the system creates them in their containers. 
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class DisplayDeviceResource extends ServerResource  
 {
 
@@ -24,7 +34,7 @@ public class DisplayDeviceResource extends ServerResource
 	  /**
 	   * Returns the Display Device instance requested by the URL. 
 	   * 
-	   * @return The JSON representation of the Signal, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
+	   * @return The JSON representation of the Display device, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
 	   * unique ID is not present.
 	   * 
 	   * @throws Exception If problems occur making the representation. Shouldn't occur in 
@@ -61,7 +71,8 @@ public class DisplayDeviceResource extends ServerResource
 	  }
 	  
 	  /**
-	   * Adds the passed Display Device to our internal database of Display Device.
+	   * Adds the given Display Device to display device container.
+	   * 
 	   * @param representation The Json representation of the new Display Device to add.
 	   * 
 	   * @return null.
@@ -96,7 +107,7 @@ public class DisplayDeviceResource extends ServerResource
 	  }
 	  
 	  /**
-	   * Deletes the unique ID from the internal database. 
+	   * Deletes the unique display device ID from the display device container. 
 	   * @return null.
 	   */
 	  @Delete("json")

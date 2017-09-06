@@ -63,7 +63,6 @@ public class MeasuredEntityAttributesResource extends ServerResource
 
 			// Convert the Json representation to the Java representation.
 			JSONObject jsonobject = jsonRepresentation.getJsonObject();
-			String jsonText = jsonobject.toString();
 			
 			this.canCompany = jsonobject.getString("company");
 			this.canLocation = jsonobject.getString("location");
