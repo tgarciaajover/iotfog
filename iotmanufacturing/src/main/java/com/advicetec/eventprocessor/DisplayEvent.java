@@ -20,7 +20,8 @@ public class DisplayEvent extends Event
 	 */
 	public DisplayEvent(String name, String text) 
 	{
-		super(EventType.DISPLAY_EVENT);
+		super(EventType.DISPLAY_EVENT, 
+					EventType.DISPLAY_EVENT.getName() + "-" + name + "-" +  text);
 		this.display_name = name;
 		this.display_text = text;
 	}
@@ -51,15 +52,5 @@ public class DisplayEvent extends Event
 	                " display_name" + display_name +
 	                ", display_text=" + display_text +
 	                '}';
-	}
-	
-	/**
-	 * Gets a unique key to reference the event in queues. 
-	 * 
-	 * In this case the key is the type of event, the name of the display and the text to be shown.
-	 */
-	@Override
-	public String getKey(){
-		return super.getEvntType().getName() + "-" +  getDisplayName() + "-" +  getDisplayText();
 	}
 }

@@ -37,17 +37,23 @@ public abstract class Event
 	 * It has to be repeated after processed or not.
 	 */
 	private boolean repeated;
-		
+	
+	/**
+	 * Key to identify the event within a queue. 
+	 */
+	private String key;
+	
 	/**
 	 * Constructor for the event 
 	 * @param type type of event being built
 	 * 
 	 *  By default it gives the event an unique identifier.
 	 */
-	public Event(EventType type) 
+	public Event(EventType type, String eventKey) 
 	{
 		super();
 		this.evntType = type;
+		this.key = eventKey;
 		this.uuid = UUID.randomUUID().toString();
 		this.milliseconds = 0;
 		this.repeated = false;
@@ -67,10 +73,10 @@ public abstract class Event
 	 * The key is used to determine if an event can be considered with the same purpose 
 	 * 		as another already inserted in a queue. So we can skip events that will do the same job. 
 	 * 
-	 * @return key for the event. We assume that subclasses override this method.
+	 * @return key for the event.
 	 */
 	public String getKey(){
-		return evntType.getName();
+		return key;
 	}
 	
 	/**

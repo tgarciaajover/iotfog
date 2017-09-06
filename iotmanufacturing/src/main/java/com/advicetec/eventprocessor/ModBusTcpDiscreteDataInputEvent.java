@@ -42,10 +42,11 @@ public class ModBusTcpDiscreteDataInputEvent extends ModBusTcpEvent
 	 * 					 For example if we have to read three times the sensor to get the average value. 
 	 */
 	public ModBusTcpDiscreteDataInputEvent(String ipAddress, int port,
-			Integer uid, int offset, int count, boolean repeat) {
+			Integer uid, int offset, int count, boolean repeat, long milliseconds) {
 		super(ipAddress, port, uid, ModBusTcpEventType.READ_DISCRETE);
 
 		super.setRepeated(repeat);
+		super.setMilliseconds(milliseconds);
 		
 		this.offset = offset;
 		this.count = count;

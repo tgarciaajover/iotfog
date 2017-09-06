@@ -6,11 +6,11 @@ import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class MeasuredEntityEvent extends Event 
 {
-
+	
 	/**
-	 * name of the behavior transformation
+	 * name of the behavior name
 	 */
-	private String behaviorTransformation;
+	private String behaviorName;
 	
 	/**
 	 * Entity involved for this event.
@@ -35,7 +35,7 @@ public class MeasuredEntityEvent extends Event
 	/**
 	 * Constructor for the class 
 	 * 
-	 * @param behavior		behavior text (program) to execute
+	 * @param behavior		behavior name (program) to execute
 	 * @param entity		measured entity giving the context for the program. 
 	 * @param device		measuring device where the information was registered and that triggers this behavior
 	 * @param port			port in the measuring device where the information was registered and that triggers this behavior
@@ -43,8 +43,11 @@ public class MeasuredEntityEvent extends Event
 	 */
 	public MeasuredEntityEvent(String behavior, Integer entity, Integer device, Integer port, List<InterpretedSignal> parameters) 
 	{
-		super(EventType.MEASURING_ENTITY_EVENT);
-		this.behaviorTransformation = behavior;
+		super(EventType.MEASURING_ENTITY_EVENT, 
+					EventType.MEASURING_ENTITY_EVENT.getName() + "-" + 
+						Integer.toString(entity) + "-" + behavior );
+		
+		this.behaviorName = behavior;
 		this.entity = entity;
 		this.device = device;
 		this.port = port;
@@ -74,8 +77,8 @@ public class MeasuredEntityEvent extends Event
 	 * 
 	 * @return behavior program
 	 */
-	public String getBehaviorTransformation() {
-		return behaviorTransformation;
+	public String getBehaviorName() {
+		return behaviorName;
 	}
 
 	/**
@@ -86,7 +89,7 @@ public class MeasuredEntityEvent extends Event
 	public Integer getMeasuredEntity() {
 		return entity;
 	}
-
+	
 	/**
 	 * Gets the list of parameters required to execute the behavior
 	 * 
@@ -103,16 +106,6 @@ public class MeasuredEntityEvent extends Event
 	 */
 	@Override
 	public String toString() {
-		return "entity=" + entity + "-" + "device=" + this.device + "-" + "Port=" + this.port + "-" + "behavior=" + behaviorTransformation;
+		return "entity=" + entity + "-" + "device=" + this.device + "-" + "Port=" + this.port + "-" + "behavior=" + behaviorName;
 	}
-
-	/**
-	 * Gets the key for the event
-	 * 
-	 *  @return key for the event, in this case the key is the device and port where the signal was read as well as the transformation text. 
-	 */
-	public String getKey() {
-		return getEvntType().getName() + "-" + this.device + "-" + this.port + "-" + behaviorTransformation;
-	}
-
 }

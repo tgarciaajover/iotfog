@@ -28,6 +28,10 @@ import java.util.Iterator;
  * @author Andres Marentes
  *
  */
+/**
+ * @author andres
+ *
+ */
 public class EventManager extends Manager
 {
 
@@ -37,18 +41,11 @@ public class EventManager extends Manager
 	 * Singleton Instance 
 	 */
 	private static EventManager instance=null;
-	
-	
-	/**
-	 * Reference to the configuration manager.
-	 */
-	private static ConfigurationManager confManager = null;
-	
-	
+		
 	/**
 	 * This is the reference to the queue of events to be processed.
 	 */
-	private BlockingQueue delayedQueue = null;
+	private BlockingQueue<DelayEvent> delayedQueue = null;
 	
 	
 	/**
@@ -97,7 +94,7 @@ public class EventManager extends Manager
 	private EventManager() 
 	{
 		super("EventManager");	
-		confManager = ConfigurationManager.getInstance();
+
 		this.delayedQueue = new DelayQueue<DelayEvent>();
 		
 		// This list contains the connections available to be used by any handler.
@@ -300,7 +297,7 @@ public class EventManager extends Manager
 	 * @return a reference to the queue.
 	 * 
 	 */
-	public synchronized BlockingQueue getDelayedQueue() {
+	public synchronized BlockingQueue<DelayEvent> getDelayedQueue() {
 		return this.delayedQueue;
 	}
 	
@@ -380,4 +377,13 @@ public class EventManager extends Manager
     		throw new Exception("Ip Address Not found In Connection Container:" + key);
     	}
     }
+
+    /**
+     * Delete an event from the event queue by its key. 
+     *
+     * @param key Event to delete it is deleted by comparing its key.
+     */
+    public void removeEvent(DelayEvent event) {
+    	this.delayedQueue.remove(event);
+	}
 }

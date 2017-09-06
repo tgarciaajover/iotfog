@@ -119,9 +119,9 @@ public class ActivityRegistrationResource extends ServerResource
 	/**
 	 * Obtains and verifies the parameters from a JSON representation.
 	 * 
-	 * @param representation  JSON representation that maintain the parameters for the interface.
+	 * @param representation  JSON representation that maintains the parameters for the interface.
 	 * 
-	 * It does not have a return value, but it lets the parameters in the class's attributes.   
+	 * It does not have a return value, but it registers the parameters in the class's attributes.   
 	 */
 	private void getParamsFromJson(Representation representation) { 
 		try {
@@ -129,7 +129,7 @@ public class ActivityRegistrationResource extends ServerResource
 			// Get the Json representation of the ReasonCode.
 			JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
-			// Convert the Json representation to the Java representation.
+			// Convert the Json representation to a Java representation.
 			JSONObject jsonobject = jsonRepresentation.getJsonObject();
 			
 			// Gets the parameters required to process the interface.

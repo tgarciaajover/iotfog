@@ -13,13 +13,21 @@ import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.SignalType;
 import com.advicetec.configuration.SignalTypeContainer;
 
+/**
+ * This class exposes all signal types instances that are configured in the signal type container.
+ * 
+ * The user of this interface can retry a signal type definition, 
+ *   inserts a new signal type or deletes a registered one.
+ *   
+ * @author Andres Marentes
+ */
 public class SignalTypeResource extends ServerResource  
 {
 
 	  /**
-	   * Returns the Signal Type instance requested by the URL. 
+	   * Returns the signal Type instance requested by the URL. 
 	   * 
-	   * @return The JSON representation of the Signal Type, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
+	   * @return The JSON representation of the signal Type, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
 	   * unique ID is not present.
 	   * 
 	   * @throws Exception If problems occur making the representation. Shouldn't occur in 
@@ -28,24 +36,24 @@ public class SignalTypeResource extends ServerResource
 	  @Get("json")
 	  public Representation getSignaType() throws Exception {
 
-		// Create an empty JSon representation.
+		// Creates an empty JSON representation.
 		Representation result;
 
-		// Get the contact's uniqueID from the URL.
+		// Gets the signal type uniqueID from the URL.
 	    int uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 	    
-	    // Look for it in the Signal Unit database.
+	    // Looks for the signal type in the Signal Type container.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
 	    SignalTypeContainer signalTypeCon = confManager.getSignalTypeContainer();
 	    
 	    SignalType signalType = (SignalType) signalTypeCon.getObject(uniqueID);
 	    if (signalType == null) {
-	      // The requested contact was not found, so set the Status to indicate this.
+	      // The requested signal type was not found, so we set the status to indicate this fail condition.
 	      getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
 	      result = new JsonRepresentation("");
 	    } 
 	    else {
-	      // The requested contact was found, so add the Contact's XML representation to the response.
+	      // The requested signal type was found, so we add the signal type into a JSON representation to the response.
 	    	result = new JsonRepresentation(signalType.toJson());
 	      // Status code defaults to 200 if we don't set it.
 	      }
@@ -54,8 +62,8 @@ public class SignalTypeResource extends ServerResource
 	  }
 	  
 	  /**
-	   * Adds the passed Signal Type to our internal database of Signal Types.
-	   * @param representation The Json representation of the new Contact to add.
+	   * Adds the given Signal Type to the internal container of Signal Types.
+	   * @param representation The JSON representation of the new Contact to add.
 	   * 
 	   * @return null.
 	   * 
@@ -64,14 +72,14 @@ public class SignalTypeResource extends ServerResource
 	  @Put("json")
 	  public Representation putSignalType(Representation representation) throws Exception {
 		   
-		// Get the Json representation of the SignalType.
+		// Gets the JSON representation of the SignalType.
 		JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
-		// Convert the Json representation to the Java representation.
+		// Converts the JSON representation to the Java representation.
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 		
-	    // Look for it in the Signal Type database.
+	    // Looks for the signal type in the Signal Type container.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
 	    SignalTypeContainer signalTypeCon = confManager.getSignalTypeContainer();
 	    
@@ -84,15 +92,16 @@ public class SignalTypeResource extends ServerResource
 	  }
 	  
 	  /**
-	   * Deletes the unique ID from the internal database. 
+	   * Deletes the signal type unique ID from the internal container.
+	   *  
 	   * @return null.
 	   */
 	  @Delete("json")
 	  public Representation deleteSignalType() {
-	    // Get the requested Contact ID from the URL.
+	    // Gets the requested Contact ID from the URL.
 	    int uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
-	    // Make sure it is no longer present in the Signal Unit database.
+	    // Makes sure it is no longer present in the Signal Unit database.
 	    ConfigurationManager confManager = ConfigurationManager.getInstance();
 	    SignalTypeContainer signalTypeCon = confManager.getSignalTypeContainer();
 	    

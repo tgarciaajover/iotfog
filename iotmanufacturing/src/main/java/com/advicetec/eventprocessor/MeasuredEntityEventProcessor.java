@@ -61,7 +61,7 @@ public class MeasuredEntityEventProcessor implements Processor
 	{
 		
 		Integer measuringEntity = this.event.getMeasuredEntity();
-		String behaviorName = this.event.getBehaviorTransformation();
+		String behaviorName = this.event.getBehaviorName();
 		
         logger.debug("process - behavior:" + behaviorName);
 		

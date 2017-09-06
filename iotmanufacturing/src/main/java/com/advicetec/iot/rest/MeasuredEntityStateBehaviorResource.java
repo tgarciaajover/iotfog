@@ -31,11 +31,10 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
       
 	static Logger logger = LogManager.getLogger(MeasuredEntityStateBehaviorResource.class.getName());
 	
-	
 	/**
-	 * Returns the MeasuredEntity instance requested by the URL. 
+	 * Returns the measured entity state behavior requested by the URL. 
 	 * 
-	 * @return The JSON representation of the Measured Entity, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
+	 * @return The JSON representation of the measured entity state behavior, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
 	 * unique ID is not present.
 	 * 
 	 * @throws Exception If problems occur making the representation. Shouldn't occur in 
@@ -44,46 +43,50 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 	@Get("json")
 	public Representation getMeasuredEntityStateBehavior() throws Exception {
 
-		// Create an empty JSon representation.
+		// Creates an empty JSON representation.
 		Representation result;
 
-		// Get the contact's uniqueID from the URL.
+		// Gets the measured entity uniqueID from the URL.
 		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
-		// Look for it in the Measured Entity database.
+		// Looks for the measured entity in the Measured Entity manager.
 		MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
 		if (measuredEntityFacade == null) {
-			// The requested contact was not found, so set the Status to indicate this.
+			// The requested measured entity was not found, so we set the status to indicate this failing condition.
 			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
 			result = new JsonRepresentation("");
 		} 
-		else {
-			Integer behaviorID = Integer.valueOf((String)this.getRequestAttributes().get("BehaviorID"));
-
-			// The requested contact was found, so add the Contact's XML representation to the response.
+		else {			
 			if (measuredEntityFacade.getEntity() != null){
+				// The requested measured entity was found.
+				Integer behaviorID = Integer.valueOf((String)this.getRequestAttributes().get("BehaviorID"));
 				if (measuredEntityFacade.getEntity().getStateBehavior(behaviorID) != null){
-					// Status code defaults to 200 if we don't set it.
+					// We found the behavior state, so we can add it to the JSON response. Status code defaults to 200 if we don't set it.
 					result = new JsonRepresentation(measuredEntityFacade.getEntity().getStateBehavior(behaviorID).toJson());
 				} else {
-					getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+					String error = "The requested measured entity state behavior was not found";
+					logger.warn(error);
+					getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 					result = new JsonRepresentation("");
 				}
 			} else {
-				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
+				String error = "Undefined measured entity";
+				logger.warn(error);
+				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 				result = new JsonRepresentation("");
 			}
 		}
 
-		// Return the representation.  The Status code tells the client if the representation is valid.
+		// Returns the representation.  The Status code tells the client if the representation is valid.
 		return result;
 	}
 	  
 	/**
-	 * Adds the passed MeasuredEntity to our internal database of Measured Entities.
-	 * @param representation The Json representation of the new Contact to add.
+	 * Adds the given measured entity state behavior to measured entity container.
+	 * 
+	 * @param representation The JSON representation of the measured entity state behavior to add.
 	 * 
 	 * @return null.
 	 * 
@@ -94,26 +97,26 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 
 		Representation result = null;
 
-		// Get the Json representation of the SignalUnit.
+		// Gets the JSON representation of the request.
 		JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
-		// Get the contact's uniqueID from the URL.
+		// Gets the measured entity uniqueID from the request.
 		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
-		// Convert the Json representation to the Java representation.
+		// Converts the JSON representation to the Java representation.
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 
 		logger.debug("jsonText received:" + jsonText);
 		
-		// Look for it in the Signal Unit database.
+		// Looks for the measured entity in the measured entity manager.
 		MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
 
 		if (measuredEntityManager.getFacadeOfEntityById(uniqueID) != null){
 
 			  MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
-			  // The requested contact was found, so add the Contact's XML representation to the response.
+			  // The requested measured entity was found
 			  if (measuredEntityFacade.getEntity() != null){
 				  
 				  logger.debug("MeasuredEntityFacade found");
@@ -156,10 +159,12 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 	}
 
 	/**
-	 * Deletes the passed MeasuredEntity State Behavior in our internal database of Measured Entities.
+	 * Deletes the given MeasuredEntity State Behavior in the measured entity container.
+	 * 
 	 * @param Json representation of the measured entity State Behavior to delete.
 	 * 
 	 * @return null.
+	 * 
 	 * @throws SQLException 
 	 * 
 	 * @throws Exception If problems occur unpacking the representation.
@@ -179,16 +184,13 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 			try{
 				Integer behaviorId = Integer.valueOf(behaviorIdStr);
 
-				ConfigurationManager confManager = ConfigurationManager.getInstance();
-
-				// Deletes the signal unit from all signals that has it as the unit.
-
 				// Look for it in the Measured Entity database.
 				MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
 
 				// Get the measuring entity facade. 
 				MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
+				// Deletes the state behavior from the measured entity.
 				measuredEntityFacade.getEntity().removeStateBehavior(behaviorId);
 
 				getResponse().setStatus(Status.SUCCESS_OK);
@@ -199,10 +201,7 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 
 			}
-
-		}
-		
-		else {
+		} else {
 			String error = "behaviorId was not provided";
 			logger.error(error);
 			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
@@ -211,6 +210,4 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 		result = new JsonRepresentation("");	
 		return result;
 	}
-
-	
 }

@@ -1,8 +1,17 @@
 package com.advicetec.eventprocessor;
 
+import java.util.ArrayList;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.advicetec.utils.ModBusUtils;
+
 public abstract class ModBusTcpEvent extends Event
 {
 
+	static Logger logger = LogManager.getLogger(ModBusTcpEvent.class.getName());
+	
 	/**
 	 * Type of modbus event
 	 */
@@ -31,7 +40,11 @@ public abstract class ModBusTcpEvent extends Event
 	 * @param type		 Type of read to execute. Valid types are defined in the enumeration ModBusTcpEventType. 
 	 */
 	public ModBusTcpEvent(String ipAddress, int port, Integer uid, ModBusTcpEventType type) {
-		super(EventType.MODBUS_READ_EVENT);
+		super(EventType.MODBUS_READ_EVENT, 
+				EventType.MODBUS_READ_EVENT.getName() + "-" + 
+						ipAddress + "-" + Integer.toString(port) + "-" 
+						+ Integer.toString(uid));
+		
 		this.ipAddress = ipAddress;
 		this.port = port;
 		this.Uid = uid;
@@ -100,18 +113,53 @@ public abstract class ModBusTcpEvent extends Event
 		return type;
 	}
 
-	/**
-	 * Obtains a key to identify this modbus event.
-	 * The key in this case is the concatenation of the following fields:
-	 * 
-	 * 		event type
-	 * 		modbus event type
-	 * 		ip address
-	 * 		port
-	 * 		unit id
-	 */
-	public String getKey(){
-		return getEvntType().getName() + "-" + getIpAddress() + "-" + getPort() + "-" + getUid();
-	}
+	public static ModBusTcpEvent createModbusEvent(String ipAddress, Integer MeasuredEntityId, String portLabel, Integer refreshTimeMs)
+	{
+		ModBusTcpEvent retEvent = null;
+		
+		if (ModBusUtils.isPortLabelValid(portLabel) == false){
+			logger.error("Port label" + portLabel + " is invalid");
+		} else {
+			
+			Integer port = ModBusUtils.getPort(portLabel);
+			ModBusTcpEventType type = ModBusUtils.getModBusType(portLabel);
+			Integer unitId = ModBusUtils.getUnitId(portLabel);
+			Integer offset = ModBusUtils.getOffset(portLabel);
+			Integer count = ModBusUtils.getCount(portLabel);
 
+			switch (type){
+			case READ_DISCRETE:
+				retEvent = new ModBusTcpDiscreteDataInputEvent(ipAddress, port,
+						unitId, offset, count, true, refreshTimeMs);
+				retEvent.setMilliseconds(refreshTimeMs); 
+				break;
+			case READ_REGISTER:
+				retEvent = new ModBusTcpInputRegisterEvent(ipAddress, port,
+						unitId, offset, count, true, refreshTimeMs);
+				retEvent.setMilliseconds(refreshTimeMs); 
+				break;
+			case WRITE_DISCRETE:
+				retEvent = new ModBusTcpDiscreteDataOutputEvent(ipAddress, port,
+						unitId, offset, count, new ArrayList<Boolean>(), true, refreshTimeMs);
+				retEvent.setMilliseconds(refreshTimeMs); 
+				break;
+			case WRITE_REGISTER:
+				retEvent = new ModBusTcpReadHoldingRegisterEvent(ipAddress, port,
+						unitId, offset, count, true, refreshTimeMs);
+				retEvent.setMilliseconds(refreshTimeMs); 
+				break;
+			case READ_HOLDING_REGISTER:
+				retEvent = new ModBusTcpReadHoldingRegisterEvent(ipAddress, port,
+						unitId, offset, count, true, refreshTimeMs);
+				retEvent.setMilliseconds(refreshTimeMs); 
+				break;
+			case INVALID:
+				logger.error("The type of action in the port is invalid - Port label:" + portLabel);
+				break;
+			}
+		}
+		
+		return retEvent;
+	}
+	
 }

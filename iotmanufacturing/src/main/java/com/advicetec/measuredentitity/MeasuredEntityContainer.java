@@ -52,7 +52,7 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
 	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm FROM setup_measuredentityscheduledevent WHERE measure_entity_id =";
 	static String sqlSelect7 = "SELECT count(*) from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'Q' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
-
+	
 	static String sqlMachineSelect = "SELECT * FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
 
@@ -502,6 +502,7 @@ public class MeasuredEntityContainer extends Container
 		return null;
 	}	
 	
+	
 	public List<ModBusTcpEvent> getModBusEvents( ) throws SQLException {
 
 		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
@@ -510,7 +511,6 @@ public class MeasuredEntityContainer extends Container
 		{
 
 			super.connect();
-
 			logger.info("in getModbusEvents:" );
 			
 			String sqlSelect = sqlSelect5;  
@@ -524,52 +524,9 @@ public class MeasuredEntityContainer extends Container
 				Integer refreshTimeMs       = rs5.getInt("refresh_time_ms");
 
 				if (refreshTimeMs > 0){
-				
-					if (ModBusUtils.isPortLabelValid(portLabel) == false){
-						logger.error("Port label" + portLabel + " is invalid");
-					} else {
-						Integer port = ModBusUtils.getPort(portLabel);
-						ModBusTcpEventType type = ModBusUtils.getModBusType(portLabel);
-						Integer unitId = ModBusUtils.getUnitId(portLabel);
-						Integer offset = ModBusUtils.getOffset(portLabel);
-						Integer count = ModBusUtils.getCount(portLabel);
-	
-						switch (type){
-						case READ_DISCRETE:
-							ModBusTcpDiscreteDataInputEvent evnt1 = new ModBusTcpDiscreteDataInputEvent(ipaddress, port,
-									unitId, offset, count, true);
-							evnt1.setMilliseconds(refreshTimeMs); 
-							events.add(evnt1);
-							break;
-						case READ_REGISTER:
-							ModBusTcpInputRegisterEvent evnt2 = new ModBusTcpInputRegisterEvent(ipaddress, port,
-									unitId, offset, count, true);
-							evnt2.setMilliseconds(refreshTimeMs); 
-							events.add(evnt2);
-							break;
-						case WRITE_DISCRETE:
-							ModBusTcpDiscreteDataOutputEvent evnt3 = new ModBusTcpDiscreteDataOutputEvent(ipaddress, port,
-									unitId, offset, count, true);
-							evnt3.setMilliseconds(refreshTimeMs); 
-							events.add(evnt3);
-							break;
-						case WRITE_REGISTER:
-							ModBusTcpReadHoldingRegisterEvent evnt4 = new ModBusTcpReadHoldingRegisterEvent(ipaddress, port,
-									unitId, offset, count, true);
-							evnt4.setMilliseconds(refreshTimeMs); 
-							events.add(evnt4);
-							break;
-						case READ_HOLDING_REGISTER:
-							ModBusTcpReadHoldingRegisterEvent evnt5 = new ModBusTcpReadHoldingRegisterEvent(ipaddress, port,
-									unitId, offset, count, true);
-							evnt5.setMilliseconds(refreshTimeMs); 
-							events.add(evnt5);
-							break;
-						case INVALID:
-							logger.error("The type of action in the port is invalid - Port label:" + portLabel);
-							break;
-						}
-					}
+					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(ipaddress, measured_entity_id, portLabel, refreshTimeMs);
+					if (modBusEvent != null)
+						events.add(modBusEvent);
 				} else {
 					logger.error("Refresh time is zero for Port label:" + portLabel + " which is invalid");
 				}
@@ -587,20 +544,18 @@ public class MeasuredEntityContainer extends Container
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
-
 		
 		return events;
-
 	}
-
+	
 	public List<Event> getScheduledEvents(MeasuredEntity entity){
+		
 		List<Event> events = new ArrayList<Event>();
 
 		try 
 		{
 
 			super.connect();
-
 			logger.debug("in get Scheduled Events:" );
 			
 			String sqlSelect = sqlSelect6 + String.valueOf(entity.getId());

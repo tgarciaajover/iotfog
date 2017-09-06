@@ -48,10 +48,11 @@ import java.util.List;
 	 * @param repeat		Number of times that it should write the data.
 	 */
 	public ModBusTcpDiscreteDataOutputEvent(String ipAddress, int port,
-			Integer uid, int offset, int count, List<Boolean> values, boolean repeat) {
+			Integer uid, int offset, int count, List<Boolean> values, boolean repeat, long milliseconds) {
 		super(ipAddress, port, uid, ModBusTcpEventType.WRITE_DISCRETE);
 
 		super.setRepeated(repeat);
+		super.setMilliseconds(milliseconds);
 		this.offset = offset;
 		this.count = count;
 		this.values = values;

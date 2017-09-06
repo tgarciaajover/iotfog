@@ -227,6 +227,9 @@ public class MeasuredEntityManager extends Configurable {
 	{
 
 		logger.debug("getFacadeOfEntityById" + Integer.toString(entityId) );
+	
+		// Removes the events related with this measured entity
+		EventManager.getInstance().removeMeasuredEntityEvents(entityId);
 		
 		// Remove the measured entity from the list of measured entities facades.
 		int index = 0;
@@ -240,6 +243,15 @@ public class MeasuredEntityManager extends Configurable {
 				logger.debug("facade:" + Integer.toString(facade.getEntity().getId()));
 				
 				if(facade.getEntity().getId().equals(entityId)){
+					
+					// Stops all executed objects
+					facade.stopExecutedObjects();
+					
+					// Stores pending data in caches.
+					facade.storeAllMeasuredAttributeValues();
+					facade.storeAllStateIntervals();
+					
+					// Removes the facade.
 					entities.remove(index);
 					break;
 				}
@@ -248,12 +260,9 @@ public class MeasuredEntityManager extends Configurable {
 			index = index + 1;
 		}
 		
-		// Remove from the container 
+		// Remove from the container
 		this.measuredEntities.removeObject(entityId);
-		
-		// Remove the events related with this measured entity
-		EventManager.getInstance().removeMeasuredEntityEvents(entityId);
-		
+			
 		// always return true, that means that if not present is like it has been deleted.
 		return true;
 	}

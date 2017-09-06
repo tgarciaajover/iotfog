@@ -11,7 +11,6 @@ import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
-import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,29 +19,32 @@ import org.json.JSONObject;
 
 import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.configuration.ConfigurationManager;
-import com.advicetec.configuration.MonitoringDeviceContainer;
-import com.advicetec.configuration.SignalUnit;
-import com.advicetec.configuration.SignalUnitContainer;
 import com.advicetec.eventprocessor.AggregationEvent;
 import com.advicetec.eventprocessor.AggregationEventType;
 import com.advicetec.eventprocessor.Event;
 import com.advicetec.eventprocessor.EventManager;
-import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuredEntityContainer;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.measuredentitity.MeasuredEntityScheduledEvent;
-import com.advicetec.measuredentitity.MeasuredEntityStateTransition;
 
+/**
+ * This class exposes measured entity scheduled events instances which are configured in the container.
+ * 
+ * The user of this interface can retry a measured entity schedule event definition, inserts a new schedule event or deletes a registered one.
+ *  
+ * @author Andres Marentes
+ *
+ */
 public class MeasuredEntityScheduledEventResource extends ServerResource  
 {
 	static Logger logger = LogManager.getLogger(MeasuredEntityScheduledEventResource.class.getName());
 
 
 	/**
-	 * Returns the MeasuredEntity Scheduled Event instance requested by the URL. 
+	 * Returns the measured entity scheduled event instance requested by the URL. 
 	 * 
-	 * @return The JSON representation of the Measured Entity Scheduled Event, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
+	 * @return The JSON representation of the measured entity scheduled event, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
 	 * unique ID is not present.
 	 * 
 	 * @throws Exception: if problems occur making the representation. Shouldn't occur in 
@@ -51,18 +53,18 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 	@Get("json")
 	public Representation getMeasuredEntityScheduledEvent() throws Exception {
 
-		// Create an empty JSon representation.
+		// Creates an empty JSON representation.
 		Representation result;
 
-		// Get the contact's uniqueID from the URL.
+		// Gets the measured entity Identifier from the URL.
 		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
-		// Look for it in the Measured Entity database.
+		// Looks for measured entity in the container.
 		MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
 		if (measuredEntityFacade == null) {
-			// The requested contact was not found, so set the Status to indicate this.
+			// The requested measured entity was not found, so set the status to indicate this condition.
 			String error = "The measured entity facade with id: " + Integer.toString(uniqueID) + " was not found";
 			logger.error(error);
 			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
@@ -71,18 +73,20 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 		else {
 			Integer eventID = Integer.valueOf((String)this.getRequestAttributes().get("EventID"));
 
-			// The requested contact was found, so add the Contact's XML representation to the response.
+			// The requested measured entity was found.
 			if (measuredEntityFacade.getEntity() != null){
 				if (measuredEntityFacade.getEntity().getScheduledEvent(eventID) != null){
-					// Status code defaults to 200 if we don't set it.
+					// The schedule event was found, status code defaults to 200 if we don't set it.
 					result = new JsonRepresentation(measuredEntityFacade.getEntity().getScheduledEvent(eventID).toJson());
 				} else {
+					// The schedule event was not found, we set the status code to report the error condition.
 					String error = "The scheduled event was not found";
 					logger.error(error);
 					getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 					result = new JsonRepresentation("");
 				}
 			} else {
+				// The measured entity was not found, we set the status code to report the error condition.
 				String error = "The measured entity with Id: " + Integer.toString(uniqueID) +  " is invalid";
 				logger.error(error);
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
@@ -95,8 +99,9 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 	}
 
 	/**
-	 * Adds the passed MeasuredEntity Scheduled Event to our internal database of Measured Entities.
-	 * @param representation The Json representation of the new Scheduled Event to add.
+	 * Adds the given measured entity scheduled event to measured entity container and schedule the event in the delay queue.
+	 * 
+	 * @param representation The JSON representation of the new scheduled event to add.
 	 * 
 	 * @return null.
 	 * 
@@ -105,34 +110,29 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 	@Put("json")
 	public Representation putMeasuredEntityScheduledEvent(Representation representation) throws Exception {
 
-		logger.info("putMeasuredEntityScheduledEvent");
+		logger.debug("putMeasuredEntityScheduledEvent");
 		Representation result = null;
 
-		// Get the Json representation of the SignalUnit.
+		// Gets the JSON representation of the SignalUnit.
 		JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
-		// Get the contact's uniqueID from the URL.
+		// Gets the measured entity uniqueID from the URL.
 		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
-		// Convert the Json representation to the Java representation.
+		// Converts the JSON representation to a Java representation.
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 
-		// Look for it in the Signal Unit database.
+		// Looks for measured entity in the measured entity manager.
 		MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
-		MeasuredEntityContainer container = measuredEntityManager.getMeasuredEntityContainer();
 
 		logger.debug("jsonTxt:" + jsonText);
 
 		if (measuredEntityManager.getFacadeOfEntityById(uniqueID) != null){
-
 			MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
-
-			// The requested contact was found, so add the Contact's XML representation to the response.
 			if (measuredEntityFacade.getEntity() != null){
-
+				// The requested measured entity was found, so we can add the measured entity schedule
 				logger.debug("MeasuredEntityFacade found");
-
 				try{
 					
 					List<Event> events = new ArrayList<Event>();
@@ -140,6 +140,7 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 					ObjectMapper mapper = new ObjectMapper();
 					MeasuredEntityScheduledEvent event = mapper.readValue(jsonText, MeasuredEntityScheduledEvent.class);
 
+					// Creates the required schedule events. We create an event by each recurrence included.  
 					if (event.getScheduledEventType().compareTo("AG") == 0) {
 						
 						String lines[] = event.getRecurrence().split("\\r?\\n");
@@ -150,9 +151,10 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 							events.add(aggEvent);
 						}
 					} else {
-						logger.error("The Schedule event given is not being handled - Type given:" +  event.getScheduledEventType() );
+						logger.error("The Schedule event given cannot be processed - Type given:" +  event.getScheduledEventType() );
 					}
 					
+					// Includes the events in the delayed queue
 					int numEvent = 0;
 					for (Event evt : events){
 						long seconds = ((AggregationEvent) evt).getSecondsToNextExecution();
@@ -175,7 +177,7 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 					
 					measuredEntityFacade.getEntity().putScheduledEvent( event );
 					
-					logger.info("Number of scheduled events that have been read:" + numEvent );
+					logger.debug("Number of scheduled events that have been read:" + numEvent );
 
 					getResponse().setStatus(Status.SUCCESS_OK);
 					result = new JsonRepresentation("");
@@ -185,8 +187,6 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 					getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
 					result = new JsonRepresentation("");
 				}
-
-
 			} else {
 				logger.error("MeasuredEntity not found");
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
@@ -204,11 +204,14 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 
 
 	/**
-	 * Deletes the passed MeasuredEntity Scheduled Event in our internal database of Measured Entities.
+	 * Deletes the given measured entity scheduled event in the measured entity container 
+	 * 	 and removes from the delayed queue. 
+	 * 
 	 * @param Json representation of the measured entity scheduled event to delete.
 	 * 
 	 * @return null.
-	 * @throws SQLException 
+	 * 
+	 * @throws SQLException It is triggered whenever the MeasuredEntityManager cannot connect with the database.
 	 * 
 	 * @throws Exception If problems occur unpacking the representation.
 	 */
@@ -217,26 +220,47 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 
 		Representation result;
 
-		// Get the Measured Entity's uniqueID from the URL.
+		// Gets the Measured Entity's uniqueID from the URL.
 		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
-		// Get the Scheduled Event Id
-		String eventIdStr = (String)this.getRequestAttributes().get("EventID");
+		// Gets the Scheduled Event Id
+		String eventIdStr = (String) this.getRequestAttributes().get("EventID");
 		if (eventIdStr != null){
 
 			try{
 				Integer eventId = Integer.valueOf(eventIdStr);
 
-				ConfigurationManager confManager = ConfigurationManager.getInstance();
-
-				// Deletes the signal unit from all signals that has it as the unit.
-
-				// Look for it in the Measured Entity database.
+				// Look for the measured entity in the Measured Entity Manager.
 				MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
 
 				// Get the measuring entity facade. 
 				MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
+				MeasuredEntityScheduledEvent scheduleEvent = measuredEntityFacade.getEntity().getScheduledEvent(eventId);
+
+				// Creates the required schedule events. We create an event by each recurrence included.  
+				if (scheduleEvent.getScheduledEventType().compareTo("AG") == 0) {
+					
+					String lines[] = scheduleEvent.getRecurrence().split("\\r?\\n");
+					List<Event> events = new ArrayList<Event>();
+					
+					for (String recurrence : lines) {
+						AggregationEvent aggEvent = new AggregationEvent(measuredEntityFacade.getEntity().getId(), measuredEntityFacade.getEntity().getType(), AggregationEventType.OEE, recurrence);
+						events.add(aggEvent);
+					}
+					
+					// Removes the events from the delay queue.
+					for (Event evt : events){						
+						DelayEvent dEvent = new DelayEvent(evt,0);						
+						EventManager.getInstance().getDelayedQueue().remove(dEvent);	
+					}
+					
+				} else {
+					logger.error("The Schedule event given cannot be processed - Type given:" +  scheduleEvent.getScheduledEventType() );
+				}
+
+				
+				// Deletes the schedule event from the measured entity. 
 				measuredEntityFacade.getEntity().removeScheduledEvent(eventId);
 
 				getResponse().setStatus(Status.SUCCESS_OK);

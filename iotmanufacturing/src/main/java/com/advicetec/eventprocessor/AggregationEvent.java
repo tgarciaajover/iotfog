@@ -62,7 +62,10 @@ public class AggregationEvent extends Event
 	public AggregationEvent(int measuredEntity, MeasuredEntityType ownerType,
 			AggregationEventType type, String recurrence) {
 		
-		super(EventType.AGGREGATION_EVENT);
+		super(EventType.AGGREGATION_EVENT, 
+					EventType.AGGREGATION_EVENT.getName() + "-" + 
+						Integer.toString(measuredEntity) + "-" + type.getName());
+		
 		this.measuredEntity = measuredEntity;
 		this.type = type;
 		this.ownerType = ownerType;
@@ -91,15 +94,6 @@ public class AggregationEvent extends Event
 	 */
 	public MeasuredEntityType getOwnerType() {
 		return ownerType;
-	}
-
-	/**
-	 * Builds a unique key for the event that can be used to identify them on queues. 
-	 * 
-	 * In this case the key is the name of the type of event, the measured entity and its type. 
-	 */
-	public String getKey(){
-		return getEvntType().getName() + "-" + getEntity() + "-" + getType();
 	}
 	
 	/**
