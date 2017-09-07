@@ -12,23 +12,60 @@ import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.AdapterManager;
-import com.advicetec.utils.MqttSubscriber;
 import com.advicetec.iot.rest.IotRestServer;
 
+/**
+ * Main class for the FOG.
+ * 
+ * This class creates instances for all system's singletons and puts to execute all managers.
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class IotInit extends Configurable 
 {
 	
 	static Logger logger = LogManager.getLogger(IotInit.class.getName());
 	
+	/**
+	 * Class instance. 
+	 */
 	private static IotInit instance = null;
 	
+	/**
+	 * Reference to configuration manager instance
+	 */
 	private ConfigurationManager configManager;
-	private EventManager eventManager;
-	private MessageManager messageManager;
-	private AdapterManager adapterManager;
-	private MeasuredEntityManager entityManager;
-	private Thread managerThread; 
 	
+	/**
+	 * Reference to event manager instance
+	 */
+	private EventManager eventManager;
+	
+	/**
+	 * Reference to message manager instance
+	 */
+	private MessageManager messageManager;
+	
+	/**
+	 * Reference to adapter manager instance
+	 */
+	private AdapterManager adapterManager;
+	
+	/**
+	 * Reference to entity manager instance
+	 */
+	private MeasuredEntityManager entityManager;
+		
+	/**
+	 * Constructor for the class, it performs the following steps:
+	 * 
+	 * 		1. Loads the properties file IotInit.properties
+	 * 		2. Load the configurable objects from the database.
+	 * 		3. puts to execute adapter, message and event processors.
+	 * 		
+	 * @throws SQLException
+	 */
 	private IotInit() throws SQLException  {
 		
 		super("IotInit");
@@ -50,6 +87,13 @@ public class IotInit extends Configurable
 		
 	}
 	
+	/**
+	 * Gets the instance of the IoT class, where we put to execute all sub-components. 
+	 * 
+	 * @return instance of the class.
+	 * 
+	 * @throws SQLException
+	 */
 	public static IotInit getInstance() throws SQLException{
 		if (instance == null){
 			instance = new IotInit();
@@ -57,13 +101,14 @@ public class IotInit extends Configurable
 		return instance;
 	}
 
+	/**
+	 * 
+	 * Main for the FOG, it creates the iot instance and creates a REST server to listen for new request.  
+	 *  
+	 * @param args  we don't require any parameter.
+	 */
 	public static void main(String[] args) {
-		
-		// caches initiation
-		//		StatusStore.getInstance();
-		
-
-		
+				
 		try {
 
 			IotInit iotInit = IotInit.getInstance();
@@ -87,11 +132,6 @@ public class IotInit extends Configurable
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		} 
-
 	}
 
-	public void getMeasuredEntityStatus(Integer entityID){
-		MeasuredEntityFacade facade = entityManager.getFacadeOfEntityById(entityID);
-		facade.getStatus();
-	}
 }

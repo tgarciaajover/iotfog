@@ -2,9 +2,6 @@ package com.advicetec.MessageProcessor;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.concurrent.Delayed;
 
 import com.advicetec.eventprocessor.Event;
@@ -60,7 +57,7 @@ public class DelayEvent implements Delayed
 	}
 	
 	public boolean equals(DelayEvent o){
-		return (this.startTime == o.startTime) && this.getEvent().equals(o.getEvent()); 
+		return this.getKey().equals(o.getKey()); 
 	}
 	
 	public long getStartTime(){

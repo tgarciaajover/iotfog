@@ -3,32 +3,46 @@ package com.advicetec.configuration;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import com.google.common.net.InetAddresses;
-
+/**
+ * Container class for Display Devices.
+ * 
+ * @author andres
+ *
+ */
 public class DisplayDeviceContainer extends Container 
 {
 
 	static Logger logger = LogManager.getLogger(DisplayDeviceContainer.class.getName());
 	
+	/**
+	 * SQL Statement for reading the configuration data of display devices.
+	 */
 	static String sqlSelect1 = "SELECT id, descr, ip_address, port, display_id, reference_cd FROM setup_displaydevice";
 	
-
+	/**
+	 * Constructor for the class, it takes as parameters data required to connect to the database.
+	 * @param driver	: driver string used to connect to the database.
+	 * @param server	: Ip address of the database server
+	 * @param user		: database user
+	 * @param password	: password of the user's database.
+	 */
 	public DisplayDeviceContainer(String driver, String server, String user, String password) 
 	{	
 		super(driver, server, user, password);	
 	}
 	
+	/**
+	 * Loads all display devices registered in the database into the container.
+	 * @throws SQLException This exception is triggered whenever some problem occur during connection establishment.
+	 */
 	public void loadContainer() throws SQLException
 	{
 		
@@ -91,11 +105,21 @@ public class DisplayDeviceContainer extends Container
 		
 	}
 
+	/**
+	 * Delete a display device from the container
+	 * @param uniqueID  Identifier of the display device to remove.
+	 */
 	public synchronized void deleteDisplayDevice(int uniqueID)
 	{
 		super.configuationObjects.remove(uniqueID);
 	}
 	
+	/**
+	 * Gets a display device from its alternative identifier
+	 * 
+	 * @param referenceCd  alternative identifier
+	 * @return  Display device object with the alternative identifier.
+	 */
 	public synchronized DisplayDevice getDisplayDevice(String referenceCd){
 		
 		for (int displayDeviceId : this.configuationObjects.keySet()){
@@ -108,6 +132,11 @@ public class DisplayDeviceContainer extends Container
 		return null;
 	}
 	
+	/**
+	 * Builds a display device from json object representation. Once it creates the new instance, that instance is inserted in the container
+	 * 
+	 * @param json  json representation.
+	 */
 	public synchronized void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();

@@ -2,13 +2,9 @@ package com.advicetec.iot.rest;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
-
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
@@ -16,7 +12,6 @@ import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 
-import com.advicetec.configuration.SystemConstants;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 
@@ -24,8 +19,14 @@ public class AttributeValueResource extends ServerResource
 {
 
 	/**
-	 * Returns the attribute values instance requested by the URL. 
-	 * @return The XML representation of the status, or CLIENT_ERROR_NOT_ACCEPTABLE if the unique ID is not present.
+	 * Returns a set of measured attribute values. The system expects the following parameters:
+	 * 
+	 *  	- uniqueId : measure entity requested 
+	 *  	- DttmFrom : start date-time from which the user requests the measured attribute values
+	 *  	- DttmTo   : end date-time to which the user requests requests the measured attribute values
+	 *  	- AttributeName	: name of the attribute requested
+	 *  
+	 * @return The JSON representation of the status, or CLIENT_ERROR_NOT_ACCEPTABLE if the unique ID is not present.
 	 * 
 	 * @throws Exception if problems occur making the representation.
 	 * Shouldn't occur in practice but if it does, Restlet will set the Status code. 

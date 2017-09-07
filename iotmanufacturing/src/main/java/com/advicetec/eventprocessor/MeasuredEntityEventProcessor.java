@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayEvent;
-import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
 import com.advicetec.language.ast.Symbol;
@@ -21,22 +20,48 @@ import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
+/**
+ * This class process Measure Entity events, it takes as parameter the measure entity event to be executed. 
+ * then:
+ * 
+ * 	It instantiates the behavior parser and the behavior interpreter. 
+ *  It then executes the behavior contained in the event and gets the global attributes resulting from that execution  
+ *  With the global attributes, it pushes their values as new measured attribute values in the measured entity facade and updates
+ *  the state of the measured attribute whenever it was changed.
+ *  
+ * @author Andres Marentes
+ *
+ */
 public class MeasuredEntityEventProcessor implements Processor
 {
 
 	static Logger logger = LogManager.getLogger(MeasuredEntityEventProcessor.class.getName());
+	
+	/**
+	 * Measured entity event 
+	 */
 	MeasuredEntityEvent event;
 	
+	/**
+	 * Constructor for the class. 
+	 * 
+	 * It creates a measured entity processor that executes the measured entity event given as parameter
+	 * 
+	 * @param event meaured entity event to execute.
+	 */
 	public MeasuredEntityEventProcessor(MeasuredEntityEvent event) {
 		super();
 		this.event = event;
 	}
 
+	/**
+	 * This method takes the event parameter and process the behavior.
+	 */
 	public List<DelayEvent> process() throws SQLException 
 	{
 		
 		Integer measuringEntity = this.event.getMeasuredEntity();
-		String behaviorName = this.event.getBehaviorTransformation();
+		String behaviorName = this.event.getBehaviorName();
 		
         logger.debug("process - behavior:" + behaviorName);
 		
@@ -122,12 +147,14 @@ public class MeasuredEntityEventProcessor implements Processor
 	}
 
 	/**
-	 * This function get the behavior from list of names given as parameter. 
+	 * This function gets the behavior from a list of names given as parameter. 
+	 * 
 	 * We expect to have machinegroup.machine.behaviorid as the name 
-	 * @param names
-	 * @return
+	 * 
+	 * @param names import like string containing a reference to a behavior
+	 * 
+	 * @return  the behavior which name as the list the names given by parameter.
 	 */
-	
 	public String getBehavior(List<String> names)
 	{
 		// TODO: create the method.

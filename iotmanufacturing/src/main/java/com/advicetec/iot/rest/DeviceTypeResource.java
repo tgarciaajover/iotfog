@@ -12,10 +12,20 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import com.advicetec.configuration.ConfigurationManager;
-import com.advicetec.configuration.Container;
 import com.advicetec.configuration.DeviceType;
 import com.advicetec.configuration.DeviceTypeContainer;
 
+/**
+ * This class exposes all device type instances that are configured in the device type container.
+ * 
+ * The user of this interface can retry the device type definition, inserts a new device type or deletes a registered one.
+ * 
+ * In the case of adding a new object, it verifies whether the dependent objects where previously created. If those are not created,
+ * then the system creates them in their containers. 
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class DeviceTypeResource extends ServerResource  
 {
 
@@ -24,7 +34,7 @@ public class DeviceTypeResource extends ServerResource
 	  /**
 	   * Returns the Device Type instance requested by the URL. 
 	   * 
-	   * @return The JSON representation of the Signal, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
+	   * @return The JSON representation of the Device Type, or CLIENT_ERROR_NOT_ACCEPTABLE if the 
 	   * unique ID is not present.
 	   * 
 	   * @throws Exception If problems occur making the representation. Shouldn't occur in 
@@ -59,8 +69,8 @@ public class DeviceTypeResource extends ServerResource
 	  }
 	  
 	  /**
-	   * Adds the passed Device Type to our internal database of Device Type.
-	   * @param representation The Json representation of the new Device Type to add.
+	   * Adds the given Device Type to the internal Device Type container.
+	   * @param representation The Json representation of the new Device Type to be added.
 	   * 
 	   * @return null.
 	   * 
@@ -93,7 +103,7 @@ public class DeviceTypeResource extends ServerResource
 	  }
 	  
 	  /**
-	   * Deletes the unique ID from the internal database. 
+	   * Deletes the unique device type ID from the internal Device Type container. 
 	   * @return null.
 	   */
 	  @Delete("json")
@@ -108,7 +118,4 @@ public class DeviceTypeResource extends ServerResource
 	    deviceTypeCon.deleteDeviceType(uniqueID);
 	    return null;
 	  }
-
-	
-	
 }

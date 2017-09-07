@@ -9,25 +9,39 @@ import java.util.Properties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.advicetec.configuration.Container;
-
 /**
  * This class implements a reader for properties file
- * @author user
+ * 
+ * @author Andres Marentes
  *
  */
 public abstract class Configurable {
 
 	static Logger logger = LogManager.getLogger(Configurable.class.getName());
 	
+	/**
+	 *  instance of a properties file 
+	 */
 	protected Properties properties;
 	
+	/**
+	 * Constructor for the class, it receives as parameter the name of the properties file.  
+	 * 
+	 * @param filename  properties file name 
+	 */
 	public Configurable(String filename){
 		this.properties = new Properties();
 		// Load the configuration file.
 		loadConfigurationFile(filename);
 	}
 	
+	/**
+	 * Reads the properties from the file.
+	 * 
+	 * This method looks up the file in resources directory. 
+	 * 
+	 * @param filename file name to load.
+	 */
 	private void loadConfigurationFile(String filename)
 	{
 		String filenamerel = "resources/" + filename + ".properties";
@@ -45,6 +59,13 @@ public abstract class Configurable {
 		}
 	}
 	
+	/**
+	 * Gets a property from the file.
+	 * 
+	 * @param propName  property name to be returned
+	 * 
+	 * @return String value of the property being requested.  
+	 */
 	public String getProperty (String propName)
 	{
 		return this.properties.getProperty(propName);

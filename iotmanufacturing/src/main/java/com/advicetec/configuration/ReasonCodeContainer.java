@@ -13,16 +13,41 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+/**
+ * Container for reason codes.
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class ReasonCodeContainer extends Container 
 {
 
 	static Logger logger = LogManager.getLogger(ReasonCodeContainer.class.getName());
 	
+	/**
+	 * SQL Statement for selecting the reason code configuration data.
+	 */
 	static String sqlSelect = "SELECT id, descr, classification, down, create_date, group_cd FROM setup_idlereason";
+	
+	/**
+	 * SQL Statement for selecting the canonical information of reason codes.
+	 */
 	static String sqlReasonSelect = "SELECT idlereason_ptr_id, id_compania, id_sede, id_planta, id_razon_parada FROM setup_idlereasonhostsystem WHERE idlereason_ptr_id = ";
 
+	/**
+	 * This map help to index reason codes by canonical codes. The first string corresponds to the canonical reason code key, the second to the identifier of the 
+	 * reason code assigned by the configuration database.
+	 */
 	private Map<String, Integer> canonicalMapIndex;
 	
+	/**
+	 * Constructor for the class, it takes as parameters data required to connect to the database.
+	 * 
+	 * @param driver		: driver string used to connect to the database.
+	 * @param server		: Ip address of the database server
+	 * @param user			: database user
+	 * @param password		: password of the user's database.
+	 */
 	public ReasonCodeContainer(String driver, String server, String user, String password) 
 	{	
 		super(driver, server, user, password);	
@@ -30,12 +55,25 @@ public class ReasonCodeContainer extends Container
 		canonicalMapIndex = new HashMap<String, Integer>();
 	}
 
+	/**
+	 * Gets a consolidated canonical key from its parts.
+	 * 
+	 * @param company   	canonical company code
+	 * @param location		canonical location code
+	 * @param plant			canonical plant code
+	 * @param stopReasonId	canonical reason code 
+	 * @return	a consolidated key built from its parts.
+	 */
 	private String getCanonicalKey(String company, String location, String plant, String stopReasonId)
 	{
 		return company + "-" + location + "-" + plant + "-" + stopReasonId;
 	}
 	
-	
+	/**
+	 * Loads all reason codes registered in the database into the container.
+	 * 
+	 * @throws SQLException
+	 */
 	public void loadContainer() throws SQLException
 	{
 
@@ -95,6 +133,11 @@ public class ReasonCodeContainer extends Container
 		
 	}
 
+	/**
+	 * Loads the canonical information registered in the database into the container for a particular reason code.
+	 * 
+	 * @param reasonCode  reason code to obtain its canonical information.
+	 */
 	private void loadCannonicalReasonCodes(ReasonCode reasonCode) {
 		try 
 		{
@@ -125,6 +168,11 @@ public class ReasonCodeContainer extends Container
 		
 	}
 
+	/**
+	 * Deletes a reason code from the container
+	 * 
+	 * @param uniqueID  Identifier of the reason code to remove.
+	 */
 	public void deleteReasonCode(int uniqueID)
 	{
 		
@@ -140,6 +188,13 @@ public class ReasonCodeContainer extends Container
 	
 	}
 	
+	/**
+	 * Builds a reason code from json object representation. Once it creates the new instance, that instance is inserted in the container
+	 * 
+	 * @param json  json representation.
+	 * 
+	 * @return true if it could parse and add the object in the container.
+	 */
 	public synchronized boolean fromJSON(String json){
 		
 		boolean ret = false;
@@ -186,7 +241,13 @@ public class ReasonCodeContainer extends Container
 	}
 	
 	/**
-	 * This method is for testing. 
+	 * Includes a reason code in the container. This method is for testing. 
+	 * 
+	 * @param reasonObj  Reason code object to include.
+	 * @param company   	canonical company code
+	 * @param location		canonical location code
+	 * @param plant			canonical plant code
+	 * @param reason		canonical reason code 
 	 */
 	public synchronized void insertReason(ReasonCode reasonObj, String company, String location, String plant, String reason)
 	{
@@ -194,6 +255,16 @@ public class ReasonCodeContainer extends Container
 		super.configuationObjects.put(reasonObj.getId(), reasonObj);
 	}
 
+	/**
+	 * Gets the identifier of the reason code from the canonical information 
+	 * 
+	 * @param canCompany		canonical company code
+	 * @param canLocation		canonical location code
+	 * @param canPlant			canonical plant code
+	 * @param canStopReason		canonical reason code 
+	 * 
+	 * @return Reason code identifier
+	 */
 	public Integer getReasonCodeId(String canCompany, String canLocation, String canPlant, String canStopReason) {
 		logger.info("Number of reason codes registered:" + Integer.toString(this.canonicalMapIndex.size()));
 		return this.canonicalMapIndex.get(getCanonicalKey(canCompany, canLocation, canPlant, canStopReason));

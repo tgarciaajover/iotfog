@@ -2,50 +2,72 @@ package com.advicetec.iot.rest;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Collection;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
-import org.restlet.ext.xml.DomRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.advicetec.core.Attribute;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 
 /**
- * A server resource that will handle requests regarding a specific Contact.
- * Supported operations: GET, PUT, and DELETE.
- * Supported representations: XML.
+ * This class exposes the status of a measured entity to users. The user should specify the measured
+ * entity by their canonical codes.
+ * 
+ * The user of this interface can retry the status for a measured entity.
+ *   
+ * @author Andres Marentes
  */
 public class StatusResource extends ServerResource {
 	
 	static final Logger logger = LogManager.getLogger(StateResource.class.getName());
 	
+	/**
+	 * Canonical machine identifier 
+	 */
 	private String canMachineId;
+	
+	/**
+	 * Canonical company identifier
+	 */
 	private String canCompany;
+	
+	/**
+	 * Canonical location identifier
+	 */
 	private String canLocation;
+	
+	/**
+	 * Canonical plant identifier
+	 */
 	private String canPlant;
+	
+	/**
+	 * Canonical machine group identifier
+	 */
 	private String canMachineGroup;
 
+	/**
+	 * Obtains and verifies the parameters from a JSON representation.
+	 * 
+	 * @param representation  JSON representation that maintains the parameters for the interface.
+	 * 
+	 * It does not have a return value, but it registers parameters in the class's attributes.   
+	 */
 	private void getParamsFromJson(Representation representation) {
 		
-		try {
-			// Get the information from the request json object
-			
-			// Get the Json representation of the ReasonCode.
+		try {			
+			// Gets the JSON representation of the ReasonCode.
 			JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
-			// Convert the Json representation to the Java representation.
+			// Converts the JSON representation to the Java representation.
 			JSONObject jsonobject = jsonRepresentation.getJsonObject();
-			String jsonText = jsonobject.toString();
 			
 			this.canCompany = jsonobject.getString("company");
 			this.canLocation = jsonobject.getString("location");
@@ -59,13 +81,13 @@ public class StatusResource extends ServerResource {
 		} catch (IOException e) {
 			logger.error("Error:" + e.getMessage() );
 			e.printStackTrace();
-		}
-		
+		}		
 	}
 	
 	
 	/**
-	 * Returns the Status instance requested by the URL. 
+	 * Returns the Status instance requested by the URL.
+	 *  
 	 * @return The XML representation of the status, or CLIENT_ERROR_NOT_ACCEPTABLE if the unique ID is not present.
 	 * 
 	 * @throws Exception If problems occur making the representation.
@@ -74,10 +96,10 @@ public class StatusResource extends ServerResource {
 	@Get("json")
 	public Representation getEntityStatus(Representation rep) throws Exception {
 		
-		// Create an empty representation.
+		// Creates an empty representation.
 		Representation result=null;
 		
-		// Get the contact's uniqueID from the URL.
+		// Gets the canonical codes to obtain a unique measured entity ID from the URL.
 		this.canCompany = getQueryValue("company");
 		this.canLocation = getQueryValue("location");
 		this.canPlant = getQueryValue("plant");
@@ -90,11 +112,10 @@ public class StatusResource extends ServerResource {
 
 		try {
 
-			//Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 			Integer uniqueID = MeasuredEntityManager.getInstance()
 					.getMeasuredEntityId(this.canCompany,this.canLocation,this.canPlant,this.canMachineGroup, this.canMachineId);
-			// Look for it in the Entity Manager database.
-
+			
+			// Looks for the measured entity in the entity manager.
 			if ( uniqueID == null) {
 				logger.error("Measured Entity for company:" + this.canCompany +
 						" location:" + this.canLocation + " Plant:" + this.canPlant +
@@ -109,12 +130,12 @@ public class StatusResource extends ServerResource {
 				JSONArray jsonArray = facade.getStatusJSON();
 
 				if (jsonArray.length() == 0) {
-					// The requested contact was not found, so set the Status to indicate this.
+					// The requested measured entity was not found, so we set the status to indicate this failing condition.
 					getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
 					result = new JsonRepresentation("");
 				} 
 				else {
-					// The requested contact was found, so add the Contact's XML representation to the response.
+					// The requested measured entity was found, so we add the status to the JSON response representation.
 					result = new JsonRepresentation(jsonArray);
 					// Status code defaults to 200 if we don't set it.
 				}
@@ -123,9 +144,7 @@ public class StatusResource extends ServerResource {
 		} catch (SQLException e) {
 			logger.error("SQL failure.");
 			e.printStackTrace();
-		}
-		
+		}		
 		return result;
 	}
-
 }

@@ -6,7 +6,6 @@ import org.restlet.resource.Delete;
 import org.restlet.resource.Get;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
-import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,10 +14,15 @@ import org.json.JSONObject;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.Signal;
 import com.advicetec.configuration.SignalContainer;
-import com.advicetec.configuration.SignalType;
-import com.advicetec.configuration.SignalTypeContainer;
-import com.advicetec.configuration.SignalUnit;
 
+/**
+ * This class exposes all Signals instances that are configured in the signal container.
+ * 
+ * The user of this interface can retry the signal definition, 
+ *   inserts a new signal or deletes a registered one.
+ *   
+ * @author Andres Marentes
+ */
 public class SignalResource extends ServerResource  
 {
 
@@ -36,24 +40,24 @@ public class SignalResource extends ServerResource
 	@Get("json")
 	public Representation getSignal() throws Exception {
 
-		// Create an empty JSon representation.
+		// Creates an empty JSon representation.
 		Representation result;
 
-		// Get the contact's uniqueID from the URL.
+		// Gets the signal uniqueID from the URL.
 		int uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
-		// Look for it in the Signal database.
+		// Looks for it in the Signal database.
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
 		SignalContainer signalCon = confManager.getSignalContainer();
 
 		Signal signal = (Signal) signalCon.getObject(uniqueID);
 		if (signal == null) {
-			// The requested contact was not found, so set the Status to indicate this.
+			// The requested signal was not found, so we set the status to indicate this fail condition.
 			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
 			result = new JsonRepresentation("");
 		} 
 		else {
-			// The requested contact was found, so add the Contact's XML representation to the response.
+			// The requested signal was found, so we add the signal to the resulting JSON representation
 			result = new JsonRepresentation(signal.toJson());
 			// Status code defaults to 200 if we don't set it.
 		}
@@ -62,8 +66,9 @@ public class SignalResource extends ServerResource
 	}
 
 	/**
-	 * Adds the passed Signal to our internal database of Signal.
-	 * @param representation The Json representation of the new Contact to add.
+	 * Adds the given Signal to our internal container of signals.
+	 * 
+	 * @param representation The JSON representation of the new signal to add.
 	 * 
 	 * @return null.
 	 * 
@@ -72,16 +77,16 @@ public class SignalResource extends ServerResource
 	@Put("json")
 	public Representation putSignal(Representation representation) throws Exception {
 
-		// Get the Json representation of the Signal.
+		// Gets the JSON representation of the Signal.
 		JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
-		// Convert the Json representation to the Java representation.
+		// Converts the JSON representation to the Java representation.
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 
 		logger.debug("Json:" + jsonText);
 
-		// Look for it in the Signal Database.
+		// Looks for it in the Signal Database.
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
 		SignalContainer signalCon = confManager.getSignalContainer();
 
@@ -96,7 +101,7 @@ public class SignalResource extends ServerResource
 	}
 
 	/**
-	 * Deletes the unique ID from the internal database. 
+	 * Deletes the unique signal ID from the internal database. 
 	 * @return null.
 	 */
 	@Delete("json")
@@ -111,7 +116,4 @@ public class SignalResource extends ServerResource
 		signalCon.deleteSignal(uniqueID);
 		return null;
 	}
-
-
-
 }

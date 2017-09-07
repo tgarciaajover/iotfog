@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,19 +15,53 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.advicetec.eventprocessor.ModBusTcpEvent;
+import com.advicetec.measuredentitity.MeasuredEntity;
+
 public class MonitoringDeviceContainer extends Container
 {
 
 	static Logger logger = LogManager.getLogger(MonitoringDeviceContainer.class.getName());
 	
+	/**
+	 * SQL statement to select configured data of monitoring devices. 
+	 */
 	static String sqlSelect1 = "SELECT id, device_type_id, descr, ip_address, mac_address, serial, create_date FROM setup_monitoringdevice";
+	
+	/**
+	 * SQL statement to select configured data of input output port related to monitoring devices. 
+	 */
 	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id, port_label, refresh_time_ms,  measured_entity_id FROM setup_inputoutputport";
 
+	/**
+	 * SQL statement to select modbus ports that must create new events. 
+	 */
+	static String sqlSelect3 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id and d.id = ";
+	
+	/**
+	 * Maps to make faster lookups by macaddresses. Given the mac address, it returns the identifier of the measuring device configured with that address.
+	 */
 	private Map<String, Integer> indexByMac;
+	
+	/**
+	 * Maps to make faster lookups by Ip address. Given the Ip address, it returns the identifier of the measuring device configured with that address.
+	 */
 	private Map<String, Integer> indexByIpAddress;
+	
+	/**
+	 * Maps to make faster lookups by serial. Given the serial, it returns the identifier of the measuring device configured with that serial.
+	 */
 	private Map<String, Integer> indexBySerial;
 
 	
+	/**
+	 * Constructor for the class, it takes as parameters data required to connect to the database.
+	 * 
+	 * @param driver		: driver string used to connect to the database.
+	 * @param server		: Ip address of the database server
+	 * @param user			: database user
+	 * @param password		: password of the user's database.
+	 */
 	public MonitoringDeviceContainer(String driver, String server, String user, String password) 
 	{	
 		super(driver, server, user, password);
@@ -34,6 +70,11 @@ public class MonitoringDeviceContainer extends Container
 		indexBySerial = new HashMap<String, Integer>();
 	}
 	
+	/**
+	 * Loads all measuring devices registered in the database into the container.
+	 * 
+	 * @throws SQLException
+	 */
 	public void loadContainer() throws SQLException
 	{
 
@@ -126,12 +167,24 @@ public class MonitoringDeviceContainer extends Container
 		
 	}
 
+	/**
+	 * Delete a monitoring device from the container
+	 * 
+	 * @param uniqueID  monitoring device identifier to remove.
+	 */
 	public synchronized void deleteMonitoringDevice(int uniqueID)
 	{
 		super.configuationObjects.remove(uniqueID);
 	}
 	
 	
+	/**
+	 * Obtains a measuring device configured with the parameter mac address.  
+	 * 
+	 * @param macAddress  mac address to find.
+	 * 
+	 * @return measuring device object. If the macaddress is inexistent, the null is returned.
+	 */
 	public synchronized MonitoringDevice getByMacAddress(String macAddress)
 	{
 		Integer id = this.indexByMac.get(macAddress);
@@ -142,6 +195,13 @@ public class MonitoringDeviceContainer extends Container
 		
 	}
 	
+	/**
+	 * Obtains a measuring device configured with the parameter IP address.  
+	 * 
+	 * @param ipAddress  IP address to find.
+	 * 
+	 * @return measuring device object. If the ipaddress is inexistent, the null is returned.
+	 */
 	public synchronized MonitoringDevice getByIpAddress(String ipAddress)
 	{
 		logger.debug("serach by ipaddress:" + ipAddress);
@@ -153,9 +213,16 @@ public class MonitoringDeviceContainer extends Container
 		
 	}
 
+	/**
+	 * Obtains a measuring device configured with the serial parameter.  
+	 * 
+	 * @param serial  serial to find.
+	 * 
+	 * @return measuring device object. If the serial is inexistent, the null is returned.
+	 */
 	public synchronized MonitoringDevice getBySerial(String serial)
 	{
-		logger.debug("serach by serial:" + serial);
+		logger.debug("search by serial:" + serial);
 		Integer id = this.indexBySerial.get(serial);
 		if (id != null)
 			return (MonitoringDevice) super.getObject(id);
@@ -164,12 +231,20 @@ public class MonitoringDeviceContainer extends Container
 		
 	}
 
-	public synchronized void fromJSON(String json){
+	/**
+	 * Builds a Measuring device from a json representation
+	 * 
+	 * @param json  json object representing the measuring device. 
+	 * 
+	 * If the object can be parse, then a new object is added in the container.
+	 */
+	public synchronized MonitoringDevice fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();
 		
 		//Convert object to JSON string and pretty print
-		MonitoringDevice mDeviceTemp;
+		MonitoringDevice mDeviceTemp = null;
+		
 		try {
 		
 			mDeviceTemp = mapper.readValue(json, MonitoringDevice.class);
@@ -197,7 +272,7 @@ public class MonitoringDeviceContainer extends Container
 			
 			super.configuationObjects.put(mDeviceTemp.getId(), mDeviceTemp);
 			
-			logger.info("The monitoring device with Id:" + mDeviceTemp.getId() + " was inserted");
+			logger.debug("The monitoring device with Id:" + mDeviceTemp.getId() + " was inserted");
 					
 		} catch (JsonParseException e) {
 			logger.error(e.getMessage());
@@ -209,7 +284,53 @@ public class MonitoringDeviceContainer extends Container
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
+		
+		return mDeviceTemp;
+	}
 	
+	public List<ModBusTcpEvent> getModbusEvents(MonitoringDevice monitoring) throws SQLException {
+		
+		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
+
+		try 
+		{
+			super.connect();
+			logger.debug("in getModbusEvents by measured entity");
+			
+			String sqlSelect = sqlSelect3 + String.valueOf(monitoring.getId());  
+			ResultSet rs3 = super.pst.executeQuery(sqlSelect);
+
+			while (rs3.next()) 
+			{
+				String ipaddress        	= rs3.getString("ip_address");
+				Integer measured_entity_id  = rs3.getInt("measured_entity_id");  
+				String portLabel        	= rs3.getString("port_label");
+				Integer refreshTimeMs       = rs3.getInt("refresh_time_ms");
+
+				if (refreshTimeMs > 0){
+					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(ipaddress, measured_entity_id, portLabel, refreshTimeMs);
+					if (modBusEvent != null)
+						events.add(modBusEvent);
+				} else {
+					logger.error("Refresh time is zero for Port label:" + portLabel + " which is invalid");
+				}
+			}
+			
+			rs3.close();
+
+			super.disconnect();
+
+		} catch (ClassNotFoundException e){
+			String error = "Could not find the driver class - Error" + e.getMessage(); 
+			logger.error(error);
+			e.printStackTrace();
+			throw new SQLException(error);
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		return events;
 	}
 	
 }

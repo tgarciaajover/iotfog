@@ -1,25 +1,18 @@
 package com.advicetec.iot.rest;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.stax2.ri.typed.ValueEncoderFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
-import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
@@ -31,48 +24,115 @@ import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.configuration.ReasonCodeContainer;
 import com.advicetec.core.AttributeType;
-import com.advicetec.core.TimeInterval;
 import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.eventprocessor.MeasuredEntityEvent;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.measuredentitity.MeasuringState;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
-import com.advicetec.monitorAdapter.protocolconverter.MqttDigital;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
 
+/**
+ * This class is used to process the Rest API for activity resources.
+ * 
+ * Activity resources includes production start, production stop, 
+ * resource code registration for a state in the history, and resource 
+ * registration in the current state interval.
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class ActivityRegistrationResource extends ServerResource  
 {
 	
 	static Logger logger = LogManager.getLogger(ActivityRegistrationResource.class.getName());
 
+	/**
+	 * Canonical company code
+	 */
 	private String canCompany;
+	
+	/**
+	 * Canonical company location
+	 */
 	private String canLocation;
+	
+	/**
+	 * Canonical company plant
+	 */
 	private String canPlant;
+	
+	/**
+	 * Canonical machine group
+	 */
 	private String canMachineGroup;
+	
+	/**
+	 * Canonical machine identifier
+	 */
 	private String canMachineId;
+	
+	/**
+	 * Year when the registration activity occurs. 
+	 */
 	private Integer canYear;
+	
+	/**
+	 * Month when the registration activity occurs.
+	 */
 	private Integer canMonth;
+	
+	/**
+	 * Registration activity type, it has four types:
+	 * 		S  -> Start production order
+	 * 		E  -> End production order
+	 * 		C  -> Register reason code in the state history
+	 * 		N  -> Register reason code for the current state interval. 
+	 */
 	private String canActivityType;
+	
+	/**
+	 * Canonical reason code 
+	 */
 	private String canStopReason;
+	
+	/**
+	 * Canonical production order code. 
+	 */
 	private String canProductionOrder;
+	
+	/**
+	 * start date and time for the interval being updated with the reason code. 
+	 */
 	private String canStartDttm;
 	
+	/**
+	 * Registration activity type, it has four types:
+	 * 		S  -> Start production order
+	 * 		E  -> End production order
+	 * 		C  -> Register reason code in the state history
+	 * 		N  -> Register reason code for the current state interval. 
+	 */
 	private static String[] activityTypes = {"S", "E", "C", "N"};
 	
-	private void getParamsFromJson(Representation representation) {
-		
+	/**
+	 * Obtains and verifies the parameters from a JSON representation.
+	 * 
+	 * @param representation  JSON representation that maintains the parameters for the interface.
+	 * 
+	 * It does not have a return value, but it registers the parameters in the class's attributes.   
+	 */
+	private void getParamsFromJson(Representation representation) { 
 		try {
 			
 			// Get the Json representation of the ReasonCode.
 			JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
-			// Convert the Json representation to the Java representation.
+			// Convert the Json representation to a Java representation.
 			JSONObject jsonobject = jsonRepresentation.getJsonObject();
-			String jsonText = jsonobject.toString();
 			
-			
+			// Gets the parameters required to process the interface.
 			this.canCompany = jsonobject.getString("company");
 			this.canLocation = jsonobject.getString("location");
 			this.canPlant = jsonobject.getString("plant");
@@ -80,6 +140,7 @@ public class ActivityRegistrationResource extends ServerResource
 			this.canMachineId = jsonobject.getString("machineId");
 			this.canActivityType = jsonobject.getString("activityType");
 			
+			// Verify required parameters by registration activity type
 			if (isValidActivityType(this.canActivityType)) {
 				if ((this.canActivityType.compareTo("C") == 0) || (this.canActivityType.compareTo("N") == 0)){
 					this.canStopReason = jsonobject.getString("stopReason");					
@@ -96,7 +157,6 @@ public class ActivityRegistrationResource extends ServerResource
 				}
 			}
 			
-			
 		} catch (JSONException e) {
 			logger.error("Error:" + e.getMessage() );
 			e.printStackTrace();
@@ -109,12 +169,39 @@ public class ActivityRegistrationResource extends ServerResource
 	
 	
 	/**
-	 * Adds the passed Reason Code to our internal database of Reason Codes.
-	 * @param representation The Json representation of the new Reason Code to add.
+	 * Depending on the type of register activity, it processes the request. 
 	 * 
-	 * @return null.
+	 * The request can be called in two ways:
+	 * 	 A json object with all parameters or as query parameters in the request  
+	 *   
+	 * The following are the parameters required depending on the registration activity:
 	 * 
-	 * @throws Exception If problems occur unpacking the representation.
+	 * 	Registration activity types: production Order start and end. All these field are canonical fields.
+	 *	company	
+	 *	location
+	 *	plant
+	 *	machineGroup
+	 *	machineId
+	 *	activityType
+	 *	year
+	 *	month
+	 *	productionOrder
+		
+	 * 	Registration activity types: reason code in the history and in the current state. All these field are canonical fields.
+	 *	company
+	 *	location
+	 *	plant
+	 *	machineGroup
+	 *	machineId
+	 *	activityType
+	 *  stopReason 
+	 *  startDttm
+	 *  
+	 * @param representation The Json representation of the new registration activity to process.
+	 * 
+	 * @return a reply message saying if we could process successfully or not.
+	 * 
+	 * @throws Exception It is triggered if problems occur unpacking the representation.
 	*/
 	@Put("json")
 	@Post("json")
@@ -277,9 +364,21 @@ public class ActivityRegistrationResource extends ServerResource
 		}
 	}
 	
-	
+	/** 
+	 * Method to start a production order within a measured entity. 
+	 * 
+	 * This method stops all production orders being executed in the measured entity. Likewise, 
+	 * it puts to run the production order given by parameter.  
+	 * 
+	 * It is important to say that only one production can be operating in the measured entity. In other words, we can have many
+	 * production orders assigned to the measured entity, but only one can be in operating state.  
+	 * 
+	 * @param measuredEntityFacade Measured entity where the production should be started
+	 * @param idProduction    	   Internal production order identifier
+	 * @throws SQLException	  	   It is triggered if an error occurs during the production order information retrieval  
+	 */
 	private void executeStartProduction(MeasuredEntityFacade measuredEntityFacade, int idProduction) throws SQLException{
-    	logger.info("in register production order start");
+    	logger.debug("in register production order start");
         
     	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
         	
@@ -301,7 +400,7 @@ public class ActivityRegistrationResource extends ServerResource
     		
     	} else {
     	
-    		logger.info("Production Order found, it is going to be put in execution");
+    		logger.debug("Production Order found, it is going to be put in execution");
     		
     		
     		// Stop all other executed Objects
@@ -318,10 +417,20 @@ public class ActivityRegistrationResource extends ServerResource
     	}		
 	}
 	
-	
+	/** 
+	 * Method to ends a production order within a measured entity. 
+	 * 
+	 * This method ends the production order execution in the measured entity. With the end, the user is reporting that no more 
+	 * operations are going to be executed for the production order; and therefore, the system can remove the production order,  
+	 * remove its facade, and save any pending data in caches. 
+	 * 	 
+	 * @param measuredEntityFacade	Measured entity where the production should be ended
+	 * @param idProduction			Internal production order identifier to end.
+	 * @throws SQLException			It is triggered if an error occurs during the production order information retrieval
+	 */
 	private void executeStopProduction(MeasuredEntityFacade measuredEntityFacade, Integer idProduction) throws SQLException{
 
-    	logger.info("in register production order end");
+    	logger.debug("in register production order end");
     	
     	// End of the production order
     	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
@@ -341,11 +450,17 @@ public class ActivityRegistrationResource extends ServerResource
     	getResponse().setStatus(Status.SUCCESS_OK);
 
 	}
-	
-	
+		
+	/**
+	 * Method to register a reason code for a past state interval
+	 * 
+	 * @param measuredEntityFacade	Measured entity where the state interval should be updated
+	 * @param idStopReason			Stop reason identifier to set in the state interval
+	 * @param startDttm				identifier of the interval to update.
+	 */
 	private void executeUpdateStop(MeasuredEntityFacade measuredEntityFacade, int idStopReason, String startDttm) {
 
-    	logger.info("in updating a measured entity stop");
+    	logger.debug("in updating a measured entity stop");
 
     	// Look for it in the Reason Code database.
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
@@ -366,10 +481,16 @@ public class ActivityRegistrationResource extends ServerResource
 
 	}
 	
-	
+	/**
+	 * Method to register a new stop in the measured entity. It updates the current state interval putting a reason code
+	 * for the interval.
+	 * 
+	 * @param measuredEntityFacade	Measured entity where the state interval should be updated
+	 * @param idStopReason			Stop reason identifier to set in the state interval
+	 */
 	private void executeStartNewStop(MeasuredEntityFacade measuredEntityFacade, int idStopReason){
 		
-		logger.info("in starting a measured entity stop");
+		logger.debug("in starting a measured entity stop");
 
     	// Look for it in the Reason Code database.
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
@@ -409,6 +530,13 @@ public class ActivityRegistrationResource extends ServerResource
 
 	}
 	
+	/**
+	 * Method to evaluate whether the string representing an activity type is valid or not
+	 *  
+	 * @param activityType	activity type string given as interface parameter
+	 * 
+	 * @return true if is valid, false otherwise.
+	 */
 	private boolean isValidActivityType(String activityType){
 		List<String> activities = Arrays.asList(activityTypes);
 		return activities.contains( activityType );

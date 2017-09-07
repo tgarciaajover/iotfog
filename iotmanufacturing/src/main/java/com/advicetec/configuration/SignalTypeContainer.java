@@ -16,13 +16,29 @@ public class SignalTypeContainer extends Container
 
 	static Logger logger = LogManager.getLogger(SignalTypeContainer.class.getName());
 
+	/**
+	 *  SQL statement to select the signal type configuration data  
+	 */
 	static String sqlSelect = "SELECT id, name, class_name, protocol, create_date FROM setup_signaltype";
 
+	/**
+	 * Constructor for the class, it takes as parameters data required to connect to the database.
+	 * 
+	 * @param driver		: driver string used to connect to the database.
+	 * @param server		: Ip address of the database server
+	 * @param user			: database user
+	 * @param password		: password of the user's database.
+	 */
 	public SignalTypeContainer(String driver, String server, String user, String password) 
 	{	
 		super(driver, server, user, password);	
 	}
 	
+	/**
+	 * Loads all signal types registered in the database into the container.
+	 * 
+	 * @throws SQLException
+	 */
 	public void loadContainer() throws SQLException
 	{
 
@@ -69,11 +85,21 @@ public class SignalTypeContainer extends Container
 		
 	}
 
+	/**
+	 * Delete a signal type from the container
+	 * 
+	 * @param uniqueID  Identifier of the signal to remove.
+	 */
 	public void deleteSignalType(int uniqueID)
 	{
 		super.configuationObjects.remove(uniqueID);
 	}
 	
+	/**
+	 * Builds a signal type object from Json object representation. Once it creates the new instance, it is inserted in the container
+	 * 
+	 * @param json  json representation.
+	 */
 	public void fromJSON(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();

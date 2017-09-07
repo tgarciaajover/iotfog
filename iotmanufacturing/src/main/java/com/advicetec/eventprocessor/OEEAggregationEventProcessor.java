@@ -2,7 +2,6 @@ package com.advicetec.eventprocessor;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,19 +18,44 @@ import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.utils.PeriodUtils;
-import com.advicetec.utils.PredefinedPeriod;
 
+/**
+ * This class process a OEE aggregation event, it takes as a parameter the event to execute. 
+ * To process an event of thsi type the system performs:
+ * 		1. calculates the current date
+ * 		2. calculates the current date OEE aggregation
+ * 		3. calculates the current moth OEE aggreagtion
+ * 		4. calculates the current year OEE aggregation
+ *
+ * If an aggregation was already calculated for any of these periods, then the system replace it.
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class OEEAggregationEventProcessor implements Processor
 {
 
 	static Logger logger = LogManager.getLogger(OEEAggregationEventProcessor.class.getName());
+	
+	/**
+	 * Event  Aggregation to execute
+	 */
 	AggregationEvent event;
 
+	/**
+	 * Constructor for the class. It receives as parameter the OEE aggregation event.
+	 * @param event OEE aggregation event
+	 */
 	public OEEAggregationEventProcessor(AggregationEvent event) {
 		super();
 		this.event = event;
 	}
 
+	/**
+	 * process the event.
+	 * 
+	 * In this case the list of events returned is empty. 
+	 */
 	public List<DelayEvent> process() throws SQLException 
 	{
 
@@ -48,7 +72,7 @@ public class OEEAggregationEventProcessor implements Processor
 			OEEAggregationContainer OEEContainer = manager.getOeeAggregationContainer();
 			List<OverallEquipmentEffectiveness> ret;
 			
-			logger.info("before starting to execute OEE Aggregation Event Processor");
+			logger.debug("before starting to execute OEE Aggregation Event Processor");
 			
 			// Calculates the current day
 			LocalDateTime current = LocalDateTime.now();
@@ -56,46 +80,31 @@ public class OEEAggregationEventProcessor implements Processor
 			ret = oeeAggregationCalculator.calculateDay(measuringEntity, measuredEntityType,formerDay, true, true);
 			
 			for (OverallEquipmentEffectiveness oee : ret){
-				logger.info(oee.toString());
+				logger.debug(oee.toString());
 			}
 			
-			logger.info("After executing for the day OEE Aggregation Event Processor");
+			logger.debug("After executing for the day OEE Aggregation Event Processor");
 			
-			/* Removes the information for the current day. 
-			 * We are replacing previous calculations for the current date*/
-			// OEEContainer.dbInsert(ret);
-
 			// Obtains the current month
 			LocalDateTime month = LocalDateTime.of(current.getYear(), current.getMonthValue(), 1, 0, 0, 0 );
 			ret = oeeAggregationCalculator.calculateMonth(measuringEntity, measuredEntityType,month, true, true);
 
 			for (OverallEquipmentEffectiveness oee : ret){
-				logger.info(oee.toString());
+				logger.debug(oee.toString());
 			}
 			
-			logger.info("After executing for the month OEE Aggregation Event Processor");
+			logger.debug("After executing for the month OEE Aggregation Event Processor");
 			
-			/* Removes the information for the current month. 
-			 * We are replacing previous calculations for the current month*/
-			// OEEContainer.dbDelete(ret);
-			// OEEContainer.dbInsert(ret);
-
-
 			// Obtains the current year
 			LocalDateTime year = LocalDateTime.of(current.getYear(), 1, 1, 0, 0, 0 );
 			ret = oeeAggregationCalculator.calculateYear(measuringEntity, measuredEntityType,year, true, true);
 			
 			for (OverallEquipmentEffectiveness oee : ret){
-				logger.info(oee.toString());
+				logger.debug(oee.toString());
 			}
 
-			logger.info("After executing for the year OEE Aggregation Event Processor");
+			logger.debug("After executing for the year OEE Aggregation Event Processor");
 			
-			/* Removes the information for the current year. 
-			 * We are replacing previous calculations for the current year*/
-			// OEEContainer.dbDelete(ret);
-			// OEEContainer.dbInsert(ret);
-
 		} else {
 			logger.error("Facade not found" + measuringEntity);
 		}

@@ -9,6 +9,16 @@ import org.codehaus.jackson.map.JsonDeserializer;
 
 import com.advicetec.measuredentitity.MeasuringState;
 
+/**
+ * Convert from a json element into the measuring state enumeration. The following are the conversions executed:
+ * 
+ *  	O -> Operating
+ *  	S -> Schedule Down
+ *  	U -> Unschedule Down.
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class MeasuringStateDeserializer extends JsonDeserializer<MeasuringState>
 {
 

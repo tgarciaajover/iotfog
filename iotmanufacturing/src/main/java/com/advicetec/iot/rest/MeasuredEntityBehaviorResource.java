@@ -9,17 +9,28 @@ import org.restlet.resource.ServerResource;
 import org.restlet.data.Status;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
-import com.advicetec.configuration.ConfigurationManager;
-import com.advicetec.configuration.SignalUnitContainer;
+import com.advicetec.MessageProcessor.DelayEvent;
+import com.advicetec.eventprocessor.EventManager;
+import com.advicetec.eventprocessor.MeasuredEntityEvent;
 import com.advicetec.measuredentitity.MeasuredEntityBehavior;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
+import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
+/**
+ * This class exposes measured entity behavior instances which are configured in the container.
+ * 
+ * The user of this interface can retry a measured entity behavior definition, inserts a new behavior or deletes a registered one.
+ *  
+ * @author Andres Marentes
+ *
+ */
 public class MeasuredEntityBehaviorResource extends ServerResource  
 {
 
@@ -39,35 +50,36 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 
 		logger.info("In getMeasuredEntityBehavior");
 		
-		// Create an empty JSon representation.
+		// Creates an empty JSON representation.
 		Representation result;
 
-		// Get the Measured Entity's uniqueID from the URL.
+		// Gets the Measured Entity's uniqueID from the URL.
 		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 		
-		// Get the Behavior name 
+		// Gets the Behavior name 
 		Integer behaviorId = Integer.valueOf((String)this.getRequestAttributes().get("BehaviorID"));
 
-		// Look for it in the Measured Entity database.
+		// Looks for the requested behavior in the Measured Entity database.
 		MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
 		if (measuredEntityFacade == null) {
 			String error = "Measure entity:" + Integer.toString(uniqueID) + " given is not registered"; 
 			logger.error(error);
-			// The requested contact was not found, so set the Status to indicate this.
+			// The requested measured entity was not found, so set the status to indicate this condition.
 			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 			result = new JsonRepresentation("");
-		} 
-		else {
+		} else {
 			MeasuredEntityBehavior behavior = measuredEntityFacade.getEntity().getBehavior(behaviorId);
-			// The requested contact was found, so add the Contact's XML representation to the response.
+			
 			if (behavior != null){
 				String jsonTxt = behavior.toJson();
+				// The requested behavior was found, so we send the requested behavior.
 				logger.debug(jsonTxt);
 				result = new JsonRepresentation(jsonTxt);
 			} else {
 				String error = "behavior with id:" + Integer.toString(behaviorId) + "was not found";
+				// The requested behavior was not found, so set the status to indicate this condition.
 				logger.error(error);
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 				result = new JsonRepresentation("");
@@ -79,8 +91,9 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 	}
 
 	/**
-	 * Adds the passed MeasuredEntityBehavior to our internal database of Measured Entities.
-	 * @param representation The Json representation of the new Contact to add.
+	 * Adds the given MeasuredEntityBehavior to our internal database of Measured Entities.
+	 * 
+	 * @param representation The JSON representation of the new behavior to add.
 	 * 
 	 * @return null.
 	 * 
@@ -91,25 +104,25 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 
 		logger.debug("in putMeasuredEntityBehavior");
 
-		// Create an empty JSon representation.
+		// Creates an empty JSon representation.
 		Representation result;
 
-		// Get the Json representation of the SignalUnit.
+		// Gets the JSON representation of the measured entity behavior.
 		JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
-		// Convert the Json representation to the Java representation.
+		// Converts the JSON representation to Java representation.
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 
 		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 
 		String jsonText = jsonobject.toString();
 
-		// Look for it in the Signal Unit database.
+		// Looks for the measured entity in the measured entity manager.
 		MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
 		if (measuredEntityFacade == null) {
-			// The requested contact was not found, so set the Status to indicate this.
+			// The requested measured entity was not found, so we set the status to indicate this condition.
 			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
 			result = new JsonRepresentation("");
 		} else {
@@ -119,7 +132,7 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 			if (behavior == null){
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
 			} else { 
-				// The requested contact was found, so add the Contact's XML representation to the response.
+				// The requested measured entity was found, so we add the behavior to the measured entity
 				getResponse().setStatus(Status.SUCCESS_OK);
 			}
 
@@ -130,8 +143,9 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 	}
 
 	/**
-	 * Deletes the passed MeasuredEntityBehavior in our internal database of Measured Entities.
-	 * @param Json representation of the new measured entity behavior to delete.
+	 * Deletes the given measured entity behavior in the measured entity.
+	 * 
+	 * @param Json representation of the measured entity behavior to delete.
 	 * 
 	 * @return null.
 	 * @throws SQLException 
@@ -143,32 +157,39 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 		
 		Representation result;
 		
-		// Get the Measured Entity's uniqueID from the URL.
+		// Gets the measured entity's uniqueID from the URL.
 		Integer uniqueID = Integer.valueOf((String)this.getRequestAttributes().get("uniqueID"));
 		
-		// Get the Behavior name
+		// Gets the behavior name
 		String behaviorIdStr = (String)this.getRequestAttributes().get("BehaviorID");
 		if (behaviorIdStr != null){
 			
 			try{
 				Integer behaviorId = Integer.valueOf(behaviorIdStr);
-				
-			    ConfigurationManager confManager = ConfigurationManager.getInstance();
-			    
-			    // Deletes the signal unit from all signals that has it as the unit.
-			    
-				// Look for it in the Measured Entity database.
+							     
+				// Looks for the measured entity in the container.
 				MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
 				
-				// Get the measuring entity facade. 
+				// Gets the measuring entity facade. 
 				MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 			    
+				// Removes the behavior event
+				EventManager eventManager = EventManager.getInstance();
+				
+				MeasuredEntityBehavior measuredBehavior =  measuredEntityFacade.getEntity().getBehavior(behaviorId);
+				
+				// Creates the behavior event to delete
+				MeasuredEntityEvent measuredEvent = new MeasuredEntityEvent(measuredBehavior.getName(), uniqueID, 0,0, new ArrayList<InterpretedSignal>()) ;
+				DelayEvent delEvent = new DelayEvent(measuredEvent, 0);
+				eventManager.removeEvent(delEvent);
+				
+				// Removes the behavior from the facade.
 				measuredEntityFacade.getEntity().removeBehavior(behaviorId);
 			    
 				getResponse().setStatus(Status.SUCCESS_OK);
 
 			} catch (NumberFormatException e) {
-				String error = "The value given in behaviorid is not a valid number";
+				String error = "The value given in behaviorId is not a valid number";
 				logger.error(error);
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 				

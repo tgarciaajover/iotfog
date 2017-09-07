@@ -11,12 +11,10 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Get;
-import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 
@@ -24,30 +22,73 @@ import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.utils.PeriodUtils;
 
+/**
+ * This class exposes Overall Equipment Effectiveness 
+ *  instances that are previously calculated for a measured entity.
+ * 
+ * The user of this interface can retry the OEE calculation for a measured entity in a given time interval.
+ *   
+ * @author Andres Marentes
+ */
 public class OverallEquipmentEffectivenessResource extends ServerResource {
 
 	static final Logger logger = LogManager.getLogger(OverallEquipmentEffectivenessResource.class.getName());
 
+	/**
+	 *  canonical machine identifier 
+	 */
 	private String canMachineId;
+	
+	/**
+	 * canonical company identifier
+	 */
 	private String canCompany;
+	
+	/**
+	 * canonical location identifier
+	 */
 	private String canLocation;	
+	
+	/**
+	 * canonical plant identifier
+	 */
 	private String canPlant;
+	
+	/**
+	 * canonical machine group identifier
+	 */
 	private String canMachineGroup;	
+	
+	/**
+	 * requested start date time 
+	 */
 	private String reqStartDateTime;
+	
+	/**
+	 * requested end date time
+	 */
 	private String reqEndDateTime;
+	
+	/**
+	 * 
+	 */
 	private String reqInterval;
 
+	/**
+	 * Obtains and verifies the parameters from a JSON representation.
+	 * 
+	 * @param representation  JSON representation that maintains the parameters for the interface.
+	 * 
+	 * It does not have a return value, but it registers the parameters in the class's attributes.   
+	 */
 	private void getParamsFromJson(Representation representation) {
 		
-		try {
-			// Get the information from the request json object
-			
-			// Get the Json representation of the ReasonCode.
+		try {			
+			// Gets the Json representation of the ReasonCode.
 			JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
-			// Convert the Json representation to the Java representation.
+			// Converts the Json representation to the Java representation.
 			JSONObject jsonobject = jsonRepresentation.getJsonObject();
-			String jsonText = jsonobject.toString();
 			
 			this.canMachineId = jsonobject.getString("machineId");
 			this.canCompany = jsonobject.getString("company");
@@ -64,22 +105,24 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 		} catch (IOException e) {
 			logger.error("Error:" + e.getMessage() );
 			e.printStackTrace();
-		}
-		
+		}		
 	}
 	
 	
 	/**
-	 * Handle a POST http request.<br>
-	 * @param rep 
-	 * @return Representation of Json array of downtime reasons from a device.
+	 * Get the OEE registered for a measured entity in given date time interval.
+	 * 
+	 * @param representation  Optional JSON representation of the measured entity requested and the time interval.
+	 * 
+	 * @return Representation of JSON array of OEEs in a measured entity.
+	 * 
 	 * @throws ResourceException
-	 * @throws IOException If the representation is not a valid json.
+	 * @throws IOException If the representation is not a valid JSON.
 	 */
 	@Get("json")
 	public Representation getOverallEquipmentEffectiveness(Representation representation) throws ResourceException, IOException{
 		Representation result = null;
-
+		logger.debug("in getOverallEquipmentEffectiveness");
 		this.canMachineId = getQueryValue("machineId");
 		this.canCompany = getQueryValue("company");
 		this.canLocation = getQueryValue("location");
@@ -89,7 +132,7 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 		this.reqEndDateTime = getQueryValue("endDttm");
 		this.reqInterval = getQueryValue("reqInterval");
 		
-		// json request
+		// JSON request
 		if (canMachineId == null) {
 			getParamsFromJson(representation);
 		}		
@@ -145,7 +188,20 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 		return result;
 	}
 
-
+	/**
+	 * Verifies if the requested OEE interval is valid. Valid values are: 
+	 * 	H --> Hours
+	 *  D --> Days
+	 *  M --> Months
+	 *  Y --> Years 
+	 *  
+	 * This method also verifies the coherence between the requested time interval
+	 * and the requested time granularity expressed in reqInterval field. In other words, 
+	 * for example, that the user provides a month period and request the result 
+	 * in days and not in years.  
+	 *  
+	 * @return  true if the requested interval is valid, false otherwise.
+	 */
 	private boolean validReqInterval() {
 		
 		if (this.reqInterval == null)

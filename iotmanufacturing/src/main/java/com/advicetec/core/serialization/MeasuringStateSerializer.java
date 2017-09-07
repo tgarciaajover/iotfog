@@ -10,6 +10,17 @@ import org.codehaus.jackson.map.SerializerProvider;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.measuredentitity.MeasuringState;
 
+/**
+ * Converts from the measuring state enumeration into a json object with the following values:
+ * 
+ * 		Operating 		-> O
+ * 		Schedule Down 	-> S
+ * 		Unschedule Down -> U
+ * 		Undefined		-> D
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class MeasuringStateSerializer extends JsonSerializer<MeasuringState> 
 {
 

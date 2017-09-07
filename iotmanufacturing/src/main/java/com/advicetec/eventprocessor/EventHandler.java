@@ -1,6 +1,5 @@
 package com.advicetec.eventprocessor;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
@@ -9,27 +8,55 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.MessageProcessor.MessageManager;
-import com.advicetec.language.behavior.BehaviorInterpreter;
 import com.advicetec.mpmcqueue.PriorityQueue;
-import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
 
+/**
+ * This class implements a switch in order to determine the class needed to process a particular event type.
+ * 
+ * In general it is waiting for new events in the queue, once it has an event ask for the type of event 
+ * 	and based on that creates the corresponding processing. 
+ * 
+ * There are many handlers executed as threads and listening to the queue. 
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class EventHandler implements Runnable
 {
 
 	static Logger logger = LogManager.getLogger(EventHandler.class.getName());
 
+	/**
+	 * This queue is where we listen for new events. 
+	 */
 	private PriorityQueue queue;
 
-	// This queue is to put the events.
+	/**
+	 * This queue is where we put those new events resulting from processing an event.
+	 */
 	private BlockingQueue delayQueue;
 
+	/**
+	 * Constructor for the class, it takes the two queues.
+	 * @param queue  		queue where we listen for events
+	 * @param delayedQueue	queue where we put new events
+	 */
 	public EventHandler(PriorityQueue queue, BlockingQueue delayedQueue) {
 		super();
 		this.queue = queue;
 		this.delayQueue = delayedQueue;		
 	}
 
+	/**
+	 * This is the main method of the handler, it waits for new events and processes them by creating the corresponding processor. 
+	 * For now, we can process the following event types:
+	 * 
+	 *  	MEASURING_ENTITY_EVENT - Executes a behavior
+	 *  	DISPLAY_EVENT		   - Shows a message in a display
+	 *  	MODBUS_READ_EVENT      - Reads a sensor using the modbus protocol
+	 *  	AGGREGATION_EVENT	   - Executes an aggregation.
+	 */
 	public void run() {
 
 		try {

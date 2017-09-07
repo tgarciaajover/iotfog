@@ -9,8 +9,18 @@ import org.codehaus.jackson.map.JsonDeserializer;
 
 import com.advicetec.core.AttributeOrigin;
 
+/**
+ * This class lets deserialize an attribute origin. It converts from json element into the internal attribute origin code.
+ * 
+ * @author Andres Marentes
+ *
+ */
 public class AttributeOriginDeserializer extends JsonDeserializer<AttributeOrigin> {
 
+	
+	/**
+	 * It converts from the internal attribute origin code intio json element
+	 */
 	@Override
 	public AttributeOrigin deserialize(JsonParser parser,
 			DeserializationContext arg1) throws IOException,

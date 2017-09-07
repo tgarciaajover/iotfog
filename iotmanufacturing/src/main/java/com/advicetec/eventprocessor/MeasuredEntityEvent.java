@@ -2,65 +2,110 @@ package com.advicetec.eventprocessor;
 
 import java.util.List;
 
-import com.advicetec.core.AttributeValue;
-import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class MeasuredEntityEvent extends Event 
 {
-
-	// name of the behavior transformation
-	private String behaviorTransformation;
 	
-	// Entity involved for this event.
+	/**
+	 * name of the behavior name
+	 */
+	private String behaviorName;
+	
+	/**
+	 * Entity involved for this event.
+	 */
 	private Integer entity;
 	
-	// Device where the measure was read
+	/**
+	 * Device where the measure was read
+	 */
 	private Integer device;
 	
-	// Port where the measure was read
+	/**
+	 * Port where the measure was read 
+	 */
 	private Integer port;
 	
-	// List of attributes given to the event.
+	/**
+	 * List of attributes given to the event.
+	 */
 	private List<InterpretedSignal> parameters; 
 		
+	/**
+	 * Constructor for the class 
+	 * 
+	 * @param behavior		behavior name (program) to execute
+	 * @param entity		measured entity giving the context for the program. 
+	 * @param device		measuring device where the information was registered and that triggers this behavior
+	 * @param port			port in the measuring device where the information was registered and that triggers this behavior
+	 * @param parameters	List of interpreted signals result of the transformation.
+	 */
 	public MeasuredEntityEvent(String behavior, Integer entity, Integer device, Integer port, List<InterpretedSignal> parameters) 
 	{
-		super(EventType.MEASURING_ENTITY_EVENT);
-		this.behaviorTransformation = behavior;
+		super(EventType.MEASURING_ENTITY_EVENT, 
+					EventType.MEASURING_ENTITY_EVENT.getName() + "-" + 
+						Integer.toString(entity) + "-" + behavior );
+		
+		this.behaviorName = behavior;
 		this.entity = entity;
 		this.device = device;
 		this.port = port;
 		this.parameters = parameters;
 	}
 
+	/**
+	 * Gets the measuring device where the information was registered
+	 * 
+	 * @return measuring device identifier.
+	 */
 	public Integer getDevice() {
 		return device;
 	}
 
+	/**
+	 * Gets the measuring device port where the information was registered
+	 * 
+	 * @return  measuring device port identifier.
+	 */
 	public Integer getPort() {
 		return port;
 	}
 
-	public String getBehaviorTransformation() {
-		return behaviorTransformation;
+	/**
+	 * Gets the behavior program in string 
+	 * 
+	 * @return behavior program
+	 */
+	public String getBehaviorName() {
+		return behaviorName;
 	}
 
+	/**
+	 * Gets the measured entity acting as context for the behavior program
+	 * 
+	 * @return measured entity identifier
+	 */
 	public Integer getMeasuredEntity() {
 		return entity;
 	}
-
+	
+	/**
+	 * Gets the list of parameters required to execute the behavior
+	 * 
+	 * @return Interpreted signal list.
+	 */
 	public List<InterpretedSignal> getParameters() {
 		return parameters;
 	}
 	
+	/**
+	 * Serializes the object to string
+	 * 
+	 * @return String serialization of the event.
+	 */
 	@Override
 	public String toString() {
-		return "entity=" + entity + "-" + "device=" + this.device + "-" + "Port=" + this.port + "-" + "behavior=" + behaviorTransformation;
+		return "entity=" + entity + "-" + "device=" + this.device + "-" + "Port=" + this.port + "-" + "behavior=" + behaviorName;
 	}
-
-	public String getKey() {
-		return getEvntType().getName() + "-" + this.device + "-" + this.port + "-" + behaviorTransformation;
-	}
-
 }

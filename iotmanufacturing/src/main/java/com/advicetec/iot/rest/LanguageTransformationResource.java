@@ -5,7 +5,6 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.restlet.data.Status;
-import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.ext.xml.DomRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Put;
@@ -20,30 +19,41 @@ import org.w3c.dom.Element;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.transformation.SyntaxChecking;
 
+/**
+ * This class exposes the transformation language checker. By this interface, users can verify if a program written in 
+ * the production transformation language is correct or not. 
+ * 
+ * When the program has errors, the the system sends an error list briefly explaining the causes. 
+ *  
+ * @author Andres Marentes
+ *
+ */
 public class LanguageTransformationResource extends ServerResource 
 {
 
 	static Logger logger = LogManager.getLogger(LanguageTransformationResource.class.getName());  
 	
 	/**
-	   * Returns the Status instance requested by the URL. 
-	   * @return The XML representation of the status, or CLIENT_ERROR_NOT_ACCEPTABLE if the unique ID is not present.
+	   * Returns the list of errors found.
+	   *  
+	   * @return A JSON array representation with the list of errors, or CLIENT_ERROR_BAD_REQUEST if an invalid call was made.
 	   * 
-	   * @throws Exception If problems occur making the representation.
+	   * @throws Exception If problems occur reading the representation.
+	   * 
 	   * Shouldn't occur in practice but if it does, Restlet will set the Status code. 
 	   */
 	  @Put
 	  public Representation checkSyntax(Representation representation) throws Exception {
 		  
 		  logger.debug("En Syntax Cheching");  
-		  // Create an empty XML representation.
+		  
+		  // Create an empty JSON representation.
 		  DomRepresentation input = new DomRepresentation(representation);
 		  DomRepresentation result = new DomRepresentation();
-		  // Get the contact's uniqueID from the URL.
 
 		  SyntaxChecking sintaxChecking = new SyntaxChecking();
 		  		  
-		  // Convert the XML representation to the Java representation.
+		  // Gets the program text from the JSON representation.
 		  String program = sintaxChecking.getProgram(input.getDocument());
 		  
 		  logger.debug("text:" + program);
@@ -52,8 +62,9 @@ public class LanguageTransformationResource extends ServerResource
 
 			  List<SyntaxError> errorList = sintaxChecking.process(program);
 
-			  logger.debug("termino de revisar el codigo- va a construir el xml con los errores");
-			  // Create the Document instance representing this XML.
+			  logger.debug("It finishes program checking. Built a JSON object with the list of errors");
+			  
+			  // Creates the document instance representing this JSON.
 			  DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			  DocumentBuilder builder = factory.newDocumentBuilder();
 			  Document doc = builder.newDocument();
@@ -65,14 +76,14 @@ public class LanguageTransformationResource extends ServerResource
 				  error.toXml(doc, rootElement);
 			  }
 
-			  // The requested contact was found, so add the Contact's XML representation to the response.
+			  // The request was successfully processed, so we can add the JSON array to the response.
 			  result.setDocument(doc);
 
-			  // Return the representation.  The Status code tells the client if the representation is valid.
+			  // Returns the representation. The Status code reports a valid processing.
 			  return result;
 		  } else {
 
-			  // The requested language xml has not a proper formar, so set the Status to indicate this.
+			  // The request language JSON has not a proper format, so we set the status to indicate this fact.
 			  getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
 			  return result;
 		  } 	

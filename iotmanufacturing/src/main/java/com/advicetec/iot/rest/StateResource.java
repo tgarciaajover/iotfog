@@ -19,31 +19,70 @@ import org.restlet.resource.ServerResource;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 
+/**
+ * This class exposes the state of a measured entity to users. The user should specified the measured
+ * entity by their canonical codes.
+ * 
+ * The user of this interface can retry the state for a measured entity.
+ *   
+ * @author Andres Marentes
+ */
 public class StateResource extends ServerResource {
 
 	static final Logger logger = LogManager.getLogger(StateResource.class.getName());
 
+	/**
+	 * Canonical machine identifier 
+	 */
 	private String canMachineId;
-	private String canCompany;
-	private String canLocation;
-	private String canPlant;
-	private String canMachineGroup;
-	private String reqStartDateTime;
-	private String reqEndDateTime;
 	
-		
+	/**
+	 * Canonical company identifier
+	 */
+	private String canCompany;
+	
+	/**
+	 * Canonical location identifier
+	 */
+	private String canLocation;
+	
+	/**
+	 * Canonical plant identifier
+	 */
+	private String canPlant;
+	
+	/**
+	 * Canonical machine group identifier
+	 */
+	private String canMachineGroup;
+	
+	/**
+	 * requested start date time
+	 */
+	private String reqStartDateTime;
+	
+	/**
+	 * requested end date time
+	 */
+	private String reqEndDateTime;
+
+	/**
+	 * Obtains and verifies the parameters from a JSON representation.
+	 * 
+	 * @param representation  JSON representation that maintains the parameters for the interface.
+	 * 
+	 * It does not have a return value, but it registers parameters in the class's attributes.   
+	 */
 	private void getParamsFromJson(Representation representation) {
-		
+
 		try {
-			// Get the information from the request json object
-			
-			// Get the Json representation of the ReasonCode.
+
+			// Gets the JSON representation of the State request.
 			JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
 
-			// Convert the Json representation to the Java representation.
+			// Convert the JSON representation to the Java representation.
 			JSONObject jsonobject = jsonRepresentation.getJsonObject();
-			String jsonText = jsonobject.toString();
-			
+
 			this.canMachineId = jsonobject.getString("machineId");
 			this.canCompany = jsonobject.getString("company");
 			this.canLocation = jsonobject.getString("location");
@@ -59,22 +98,24 @@ public class StateResource extends ServerResource {
 			logger.error("Error:" + e.getMessage() );
 			e.printStackTrace();
 		}
-		
 	}
 
-	
 	/**
-	 * Handle a GET http request.<br>
-	 * @param rep 
-	 * @return Representation of Json array of states from a device.
+	 * Gets states registered for a measured entity in the given date time interval.
+	 * 
+	 * @param representation  Optional JSON representation of the measured entity requested and the time interval.
+	 * 
+	 * @return Representation of JSON array of States in a measured entity.
+	 * 
 	 * @throws ResourceException
-	 * @throws IOException If the representation is not a valid json.
+	 * @throws IOException If the representation is not a valid JSON.
 	 */
 	@Get("json")
 	public Representation getEntityInterval(Representation representation) throws ResourceException, IOException{
-		
+
 		Representation result = null;
-		// get the request attributes	
+		
+		// Gets the request attributes	
 		this.canMachineId = getQueryValue("machineId");
 		this.canCompany = getQueryValue("company");
 		this.canLocation = getQueryValue("location");
@@ -82,22 +123,22 @@ public class StateResource extends ServerResource {
 		this.canMachineGroup = getQueryValue("machineGroup");
 		this.reqStartDateTime = getQueryValue("startDttm");
 		this.reqEndDateTime = getQueryValue("endDttm");
-		
+
 		if (canMachineId == null) {
 			getParamsFromJson(representation);
 		}
 		
-		
 		try {
 			Integer uniqueID = MeasuredEntityManager.getInstance()
 					.getMeasuredEntityId(this.canCompany,this.canLocation,this.canPlant,this.canMachineGroup, this.canMachineId);
-			// Look for it in the database.
 			
+			// Looks for the measured entity in the manager.
+
 			if (uniqueID == null) {
 				logger.error("Measured Entity for company:" + this.canCompany +
-							 " location:" + this.canLocation + " Plant:" + this.canPlant +
-							 "machineGroup" + this.canMachineGroup + " machineId:" + 
-							 this.canMachineId + " was not found");
+						" location:" + this.canLocation + " Plant:" + this.canPlant +
+						"machineGroup" + this.canMachineGroup + " machineId:" + 
+						this.canMachineId + " was not found");
 				result = new JsonRepresentation("");
 			}
 			MeasuredEntityFacade facade = MeasuredEntityManager.getInstance()
@@ -128,5 +169,4 @@ public class StateResource extends ServerResource {
 		}
 		return result;
 	}
-
 }

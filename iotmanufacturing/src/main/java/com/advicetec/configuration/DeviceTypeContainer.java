@@ -1,7 +1,6 @@
 package com.advicetec.configuration;
 
 import java.io.IOException;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -12,6 +11,11 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+/**
+ * Container for the Device Type data.
+ * @author Andres Marentes
+ *
+ */
 public class DeviceTypeContainer extends Container 
 {
 

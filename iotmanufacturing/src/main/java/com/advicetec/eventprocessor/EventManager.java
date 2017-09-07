@@ -18,11 +18,16 @@ import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.MessageProcessor.DelayQueueConsumer;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
-import com.advicetec.language.behavior.BehaviorDefPhase;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
 import java.util.Iterator;
 
+/**
+ * This class manages all event handlers. To manage includes: create the event handlers and put them to execute. 
+ * 
+ * @author Andres Marentes
+ *
+ */
 /**
  * @author andres
  *
@@ -36,18 +41,11 @@ public class EventManager extends Manager
 	 * Singleton Instance 
 	 */
 	private static EventManager instance=null;
-	
-	
-	/**
-	 * Reference to the configuration manager.
-	 */
-	private static ConfigurationManager confManager = null;
-	
-	
+		
 	/**
 	 * This is the reference to the queue of events to be processed.
 	 */
-	private BlockingQueue delayedQueue = null;
+	private BlockingQueue<DelayEvent> delayedQueue = null;
 	
 	
 	/**
@@ -96,7 +94,7 @@ public class EventManager extends Manager
 	private EventManager() 
 	{
 		super("EventManager");	
-		confManager = ConfigurationManager.getInstance();
+
 		this.delayedQueue = new DelayQueue<DelayEvent>();
 		
 		// This list contains the connections available to be used by any handler.
@@ -174,11 +172,11 @@ public class EventManager extends Manager
 	private LocalDateTime getActiveModbusConnection(Map.Entry<LocalDateTime,TCPMasterConnection> con) throws Exception
 	{
 		
-		logger.info("in getActiveModbusConnection");
+		logger.debug("in getActiveModbusConnection");
 		
 		LocalDateTime start = con.getKey();
 		if (start.plusNanos(con.getValue().getTimeout()* 1000000).isBefore(LocalDateTime.now())){
-			logger.info("Reconnecting to modbus slave");
+			logger.debug("Reconnecting to modbus slave");
 			con.getValue().close();
 			con.getValue().connect();
 			return LocalDateTime.now();
@@ -216,7 +214,7 @@ public class EventManager extends Manager
 			if (avilCon > 0)
 			{
 				
-				logger.info("There are avail connections - availCon: " + avilCon + " usedConnection: " + String.valueOf((usedCon)));
+				logger.debug("There are avail connections - availCon: " + avilCon + " usedConnection: " + String.valueOf((usedCon)));
 				
 				// Remove the connection from available connections
 				Map.Entry<LocalDateTime,TCPMasterConnection> ret = availableConnections.get(key).pop();
@@ -225,7 +223,7 @@ public class EventManager extends Manager
 					// Update the connection (reconnect or maintain the connection).
 					LocalDateTime start = getActiveModbusConnection(ret);
 					
-					logger.info("The available connection stated at:" + start.toString() );
+					logger.debug("The available connection stated at:" + start.toString() );
 					
 					// Create the entry.
 					Map.Entry<LocalDateTime,TCPMasterConnection> newEntry = new AbstractMap.SimpleEntry<LocalDateTime,TCPMasterConnection>(start, ret.getValue()); 
@@ -299,7 +297,7 @@ public class EventManager extends Manager
 	 * @return a reference to the queue.
 	 * 
 	 */
-	public synchronized BlockingQueue getDelayedQueue() {
+	public synchronized BlockingQueue<DelayEvent> getDelayedQueue() {
 		return this.delayedQueue;
 	}
 	
@@ -379,4 +377,13 @@ public class EventManager extends Manager
     		throw new Exception("Ip Address Not found In Connection Container:" + key);
     	}
     }
+
+    /**
+     * Delete an event from the event queue by its key. 
+     *
+     * @param key Event to delete it is deleted by comparing its key.
+     */
+    public void removeEvent(DelayEvent event) {
+    	this.delayedQueue.remove(event);
+	}
 }
