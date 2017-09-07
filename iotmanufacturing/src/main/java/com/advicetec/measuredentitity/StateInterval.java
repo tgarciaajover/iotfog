@@ -19,7 +19,11 @@ import org.codehaus.jackson.map.ObjectMapper;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.persistence.Storable;
-
+/**
+ * StateInterval models a machine/device state during an interval.
+ * @author maldofer
+ *
+ */
 @JsonIgnoreProperties({"preparedInsertText","preparedDeleteText"})
 public final class StateInterval implements Storable
 {

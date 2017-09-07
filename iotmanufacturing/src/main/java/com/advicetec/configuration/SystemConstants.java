@@ -8,4 +8,5 @@ public class SystemConstants {
 	public final static String TOKEN_SEP ="+";
 	public final static String DATE_FORMAT = "yyyy-MMM-dd";
 	public final static String TIME_FORMAT = "HH:mm:ss.SSS";
+	public final static String TIMEZONE = "UTC";
 }

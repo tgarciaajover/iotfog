@@ -5,7 +5,13 @@ import java.io.IOException;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.ObjectMapper;
-
+/**
+ * This enumeration describes possible types of business entities 
+ * able to be measured.
+ * 
+ * @author advicetec
+ *
+ */
 public enum MeasuredEntityType 
 {
 

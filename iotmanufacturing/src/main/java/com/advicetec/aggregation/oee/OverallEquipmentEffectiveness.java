@@ -71,7 +71,7 @@ public class OverallEquipmentEffectiveness implements Storable
 	public static final String SQL_Delete =	"delete from measuringentityoee where id_owner = ? and owner_type = ? and period_key = ?";
 	
 	/**
-	 * Select an specific OEE aggregation from the database. The folloing fields defines a unique OEE aggregation (id_owner, owner_type, period_key)
+	 * Select an specific OEE aggregation from the database. The following fields defines a unique OEE aggregation (id_owner, owner_type, period_key)
 	 */
 	public static final String SQL_Select = "select productive_time, qty_sched_to_produce, qty_produced, qty_defective from measuringentityoee where id_owner = ? and owner_type = ? and period_key = ?";
 	

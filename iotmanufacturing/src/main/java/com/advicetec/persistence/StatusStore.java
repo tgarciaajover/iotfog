@@ -29,32 +29,42 @@ import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 
 /**
- * This class stores the measured entity status which comprises
- * the list of attributes and the attribute values.
+ * This class keeps attributes and attribute values of a measured entity.
+ * This class represents the measured entitiy <i>Status</i>.
+ * The <i>Status</i> models the most recent values related to a measured entity.
+ * It uses lists of attributes and the attribute values.
  * 
- * @author user
+ * @author advicetec
  *
  */
 public class StatusStore {
 
-	
 	static Logger logger = LogManager.getLogger(StatusStore.class.getName());
-	
+	/**
+	 * List of attribute values
+	 */
 	private HashMap<String, AttributeValue> values;
+	/**
+	 * List of attributes
+	 */
 	private HashMap<String, Attribute> attributes; 
 
+	/**
+	 * Constructor
+	 */
 	public StatusStore(){
 		attributes = new HashMap<String, Attribute>();
 		values = new HashMap<String, AttributeValue>();
 	}
 
 	/**
+
 	 * Stores the Measured Attribute into the Status.
 	 * 
-	 * @param entityName Name or id for the measured entity.
-	 * @param attrName Name or Id for the attribute.
-	 * @param attribute Attribute Value.
+	 * @param attribute attribute object for the measured entity.
 	 * @return The previous value for that Attribute of null if there is not previous.
+	 * @throws Exception If the type or unit of the given parameter do not 
+	 * match with the Attribute already stored.
 	 */
 	public void setAttribute( Attribute attribute) throws Exception{
 
@@ -64,28 +74,27 @@ public class StatusStore {
 			Attribute old = attributes.get(attribute.getName());
 							
 			if( !attribute.getType().equals(old.getType())){
-				String error = "Error -- attribute has different unit or type";
-				logger.error(error);
-				throw new Exception(error);
+				logger.error("Error -- attribute has different unit or type");
+				throw new Exception("Error -- attribute has different unit or type");
 			} else if ((attribute.getUnit() == null) && (old.getUnit() != null)){
-				String error = "Error -- attribute has different unit or type";
-				logger.error(error);
-				throw new Exception(error);
+				logger.error("Error -- attribute has different unit or type");
+				throw new Exception("Error -- attribute has different unit or type");
 			} else if (
 					(attribute.getUnit() != null) && 
 					 (old.getUnit() != null)){
 				     boolean equal = (attribute.getUnit()).equals(old.getUnit());
 					 if (equal==false){
-						String error = "Error -- attribute has different unit or type";
-						logger.error(error);
-						throw new Exception(error);
+						logger.error("Error -- attribute has different unit or type");
+						throw new Exception("Error -- attribute has different unit or type");
 					 }
 				
 			}  else {
+				// updating the attribute value is safe
 				old.update(attribute);
 			}
-		} 
+		}
 		else { 
+			// if the attribute does not exists in the STATUS
 			// insert the value
 			attributes.put(attribute.getName(), attribute);
 		}
@@ -93,30 +102,42 @@ public class StatusStore {
 
 
 	/**
-	 * Returns a collection of Measured Attribute Values
-	 * @return
+	 * Returns a collection of Measured Attribute Values.
+	 * @return a collection of Measured Attribute Values.
 	 */
 	public Collection<Attribute> getStatus(){
 		return attributes.values();
 	}
 
-
+	/**
+	 * Sets a collection of attributes.
+	 * @param atts List of attributes.
+	 * @throws Exception If the type or unit of the given parameter do not 
+	 * match with the Attribute already stored.
+	 * @see #setAttribute
+	 */
 	public void setAttributes( Collection<Attribute> atts) throws Exception{
 		for (Attribute attribute : atts) {
 			setAttribute(attribute);
 		}
 	}
 
-	
-	public Attribute getAttribute(String name){
-		return  attributes.get(name);
-	}
 	/**
-	 * Imports a symbol table from the interpreter to the Attribute List.
-	 * @param measuringEntity
-	 * @param map 
-	 * @param attrMap
-	 * @throws Exception 
+	 * Returns an attribute object mapped to the given attribute name. 
+	 * @param attrName Attribute name to search for.
+	 * @return The specified attribute to which the given key is mapped, or 
+	 * <code>NULL</code> if this Store does not contain the given attribute name.
+	 * 
+	 */
+	public Attribute getAttribute(String attrName){
+		return  attributes.get(attrName);
+	}
+	
+	/**
+	 * Imports a symbol table from the interpreter to the cache of Attribute List.
+	 * @param symbols maps names and symbols objects from the language.
+	 * @param origin 
+	 * @throws Exception
 	 */
 	public void importSymbols( Map<String, Symbol> symbols, AttributeOrigin origin ) throws Exception {
 
