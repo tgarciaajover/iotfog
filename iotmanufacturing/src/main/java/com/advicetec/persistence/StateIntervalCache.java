@@ -36,8 +36,10 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
- * Represents a cache for storing State Interval elements.
- * This class stores the intervals where a machine/device remains in a state.
+ * Represents a cache for storing State Interval elements. This class stores 
+ * the intervals where a machine/device remains in a state. It also extends 
+ * from Configurable to read the configuration file <code>properties</code>.
+ * 
  * @see StateInterval
  * @author advicetec
  *
@@ -332,8 +334,6 @@ public class StateIntervalCache extends Configurable {
 				}
 				pst.executeBatch();
 				conn.commit();
-				if (keys == null)
-					logger.info("keys deleted");
 
 				// Discard those values obtained as they would be inserted in the database.
 				cache.invalidateAll(keys);
@@ -447,11 +447,9 @@ public class StateIntervalCache extends Configurable {
 						cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
 						cal.get(Calendar.MILLISECOND));
 
-				String formatteddTimeFrom = dTimeFrom.format(formatter);
-				String formatteddTimeTo = dTimeTo.format(formatter);
-
-				logger.debug("State interval found from:" + formatteddTimeFrom + 
-						" to:" + formatteddTimeTo);
+				logger.debug("State interval found from:" + dTimeFrom.format(formatter) + 
+						" to:" + dTimeTo.format(formatter));
+				
 				// retrieve data from the query
 				String status = rs.getString("status");
 				String reasonCode = rs.getString("reason_code");
@@ -600,7 +598,7 @@ public class StateIntervalCache extends Configurable {
 	 * @param entityId measured entity id.
 	 * @param mType describes the type of measured entity.
 	 * @param startDttm initial time to query.
-	 * @param reasonCode downtime reason.
+	 * @param reasonCode downtime reason, not NULL.
 	 * @return <code>TRUE</code> if updates any register, <code>FALSE</code>
 	 * otherwise.  
 	 */

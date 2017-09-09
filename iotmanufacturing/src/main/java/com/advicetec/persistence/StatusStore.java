@@ -58,7 +58,6 @@ public class StatusStore {
 	}
 
 	/**
-
 	 * Stores the Measured Attribute into the Status.
 	 * 
 	 * @param attribute attribute object for the measured entity.
@@ -136,33 +135,39 @@ public class StatusStore {
 	/**
 	 * Imports a symbol table from the interpreter to the cache of Attribute List.
 	 * @param symbols maps names and symbols objects from the language.
-	 * @param origin 
-	 * @throws Exception
+	 * @param origin is one of the originator of the attribute.
+	 * @throws Exception if the Status cannot insert an attribute from the given
+	 * parameter.
+	 * @see {@link AttributeOrigin}
+	 * @see {@link Symbol}
 	 */
-	public void importSymbols( Map<String, Symbol> symbols, AttributeOrigin origin ) throws Exception {
+	public void importSymbols( Map<String, Symbol> symbols, 
+			AttributeOrigin origin ) throws Exception {
 
 		logger.debug("Importing # symbols:" + symbols.size());
 		
 		for (Map.Entry<String, Symbol> entry : symbols.entrySet()) 
 		{
 			logger.debug("importing symbol:" + entry.getKey());
-			
+			// verifies each map entry
 			if(entry.getValue() instanceof AttributeSymbol){
 				AttributeSymbol attSymbol = (AttributeSymbol) entry.getValue(); 
+				// gets name, unit, and measuring 
 				String attrName = attSymbol.getName();
-
 				String attrUnitName = attSymbol.getUnitOfMeasure();
 				
-				// MeasuringUnit
 				MeasuringUnit measurinUnit = null;
 				if(symbols.containsKey(attrUnitName)){
 					if ((symbols.get(attrUnitName) instanceof UnitMeasureSymbol)){
-						UnitMeasureSymbol unitMeasureSymbol = (UnitMeasureSymbol) symbols.get(attrUnitName); 
-						measurinUnit = new MeasuringUnit(unitMeasureSymbol.getName(), unitMeasureSymbol.getDescription());
+						UnitMeasureSymbol unitMeasureSymbol = 
+								(UnitMeasureSymbol) symbols.get(attrUnitName); 
+						measurinUnit = new MeasuringUnit(
+								unitMeasureSymbol.getName(), 
+								unitMeasureSymbol.getDescription());
 					} 
 			    } 
 
-				// AttributeType
+				// sets the attribute type
 				AttributeType attributeType = null;
 				switch (attSymbol.getType()) {
 				case tINT:
@@ -185,7 +190,6 @@ public class StatusStore {
 					attributeType = AttributeType.BOOLEAN;
 					break;
 
-
 				default:
 					break;
 				}
@@ -194,6 +198,7 @@ public class StatusStore {
 				Attribute newAttr = new Attribute(attrName, attributeType, measurinUnit);
 				newAttr.setOrigin(origin);
 				newAttr.setTrend(attSymbol.getTrend());
+				// sets the new attribute into the cache.
 				setAttribute(newAttr);
 			}
 		}		
@@ -202,41 +207,56 @@ public class StatusStore {
 
 
 	/**
-	 * Adds to the STATUS a new Attribute Value.
+	 * Adds a new Attribute Value to the STATUS.
 	 * @param attributeValue The attribute value to be set.
 	 */
 	public void setAttributeValue(AttributeValue attributeValue) {
 		// check if the attribute is already in the attribute list.
 		if(!attributes.containsKey(attributeValue.getKey())){
+			// sets the attribute
 			attributes.put(attributeValue.getKey(), attributeValue.getAttr());
 		}
+		// sets the value
 		values.put(attributeValue.getKey(), attributeValue);
 	}
 
 
 	/**
-	 * Returns all attribute values stored into the status.
-	 * @return
+	 * Returns all attribute values stored into the <i>status</i>.
+	 * @return list of all attribute values stored into the <i>status</i>.
 	 */
 	public Collection<AttributeValue> getAttributeValues(){
 		return values.values();
 	}
 	
 	/**
-	 * Returns the Entity Status as JSON array.
-	 * @return
+	 * Returns a JSON array of attribute values in the Status.
+	 * @return a JSON array of attribute values in the Status.
 	 */
 	public JSONArray getJsonAtrributesValues(){
 		return new JSONArray(getAttributeValues());
 	}
 	
-	
+	/**
+	 * Returns a XML representation of the all attribute values stored into the
+	 * Status.<br>
+	 * XML has the structure: <br><code> &lt;status&gt; <br> &lt;attribute&gt; 
+	 * ... &lt;/attribute&gt; <br>&lt;/status&gt; </code>.
+	 * 
+	 * @return XML representation of the all attribute values stored in the
+	 * Status.
+	 * @throws ParserConfigurationException if there is a configuration error.
+	 * @throws JAXBException if the XML marshaling fails.
+	 */
 	public Document toXml() throws ParserConfigurationException, JAXBException{
-		 Document doc = DocumentBuilderFactory.newInstance()
+		// creates the document's root
+		Document doc = DocumentBuilderFactory.newInstance()
 				.newDocumentBuilder().newDocument();
 		Element root = doc.createElement("status");
+		// XML - Java binding with the Attribute class
 		JAXBContext jc = JAXBContext.newInstance(Attribute.class);
 		Marshaller m = jc.createMarshaller();
+		// creates a node for each value on the status
 		for (Attribute attr : attributes.values()) {
 			Node node = doc.createElement("attribute");
 			m.marshal(attr, node);
@@ -246,27 +266,39 @@ public class StatusStore {
 		return doc;
 	}
 
+	/**
+	 * Returns the attribute status length.
+	 * @return the attribute status length.
+	 */
 	public int getAttributeSize() {
 		return attributes.size();
 	}
 
 	/**
-	 * Returns the Attribute Value associated to this name.
+	 * Returns the Attribute Value associated to a given attribute name.
 	 * @param attrName AttributeValue name.
-	 * @return The correspondent attribute value or NULL if this element 
-	 * does not exist in the status.
+	 * @return the correspondent attribute value to the given attribute name 
+	 * or <code>NULL</code> if the named element does not exist in the status.
 	 */
 	public AttributeValue getAttributeValueByName(String attrName){
 		return values.get(attrName);
 	}
 
+	/**
+	 * Returns the list of values marked as trend attributes.
+	 * If the <code>attribute</code> object has the trend variable as 
+	 * <code>TRUE</code>.
+ 	 * @return the list of values marked as trend attributes.
+	 * @see Attribute#getTrend()
+	 */
 	public List<Attribute> getTrendAttributes() {
 		
 		List<Attribute> ret = new ArrayList<Attribute>();
 		for (Map.Entry<String, Attribute> pair : attributes.entrySet()) {
-			logger.info("Attribute:" + pair.getKey() + " trend:" + pair.getValue().getTrend());
+			logger.debug("Attribute:" + pair.getKey() + " trend:" + pair.getValue().getTrend());
+			// checks if the trend variable is set and adds it to the list
 			if (pair.getValue().getTrend()){
-				logger.info("inserting in the return list");
+				logger.debug("inserting in the return list");
 				ret.add(pair.getValue());
 			}
 		}

@@ -1,6 +1,5 @@
 package com.advicetec.monitorAdapter.protocolconverter;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 

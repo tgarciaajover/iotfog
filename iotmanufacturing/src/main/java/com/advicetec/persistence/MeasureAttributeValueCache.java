@@ -28,9 +28,11 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
- * This class is the cache for Measured Attribute Values. <br>
- * It is a singleton object.
- * @author user
+ * This class is the cache for Measured Attribute Values.
+ * It is a singleton object that implements a map to store attribute names and 
+ * values. It also extends from Configurable to read the configuration file 
+ * <code>properties</code>.
+ * @author advicetec
  *
  */
 public class MeasureAttributeValueCache extends Configurable {
@@ -94,7 +96,6 @@ public class MeasureAttributeValueCache extends Configurable {
 	 */
 	final private static String timestamp = "timestamp";
 	
-	final private static String timezone = "UTC";
 	/**
 	 * A cache is a map with a key and the attribute value. 
 	 */

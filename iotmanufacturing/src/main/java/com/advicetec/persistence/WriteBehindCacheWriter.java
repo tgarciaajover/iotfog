@@ -51,71 +51,69 @@ import io.reactivex.subjects.PublishSubject;
  */
 public final class WriteBehindCacheWriter<K, V> implements CacheWriter<K, V> 
 {
+	static Logger logger = LogManager.getLogger(WriteBehindCacheWriter.class.getName());
 
- static Logger logger = LogManager.getLogger(WriteBehindCacheWriter.class.getName());
-	
-  private final PublishSubject<Entry<K, V>> subject;
+	private final PublishSubject<Entry<K, V>> subject;
 
-  
-  private WriteBehindCacheWriter(Builder<K, V> builder) {
-	  	  
-    subject = PublishSubject.create();
-    subject.buffer(builder.bufferTimeNanos, TimeUnit.NANOSECONDS)
-        .map(entries -> entries.stream().collect(
-            toMap((Entry<K,V> e) -> { if (e==null){
-            							logger.error("the entry is null");
-            						  }
-            						  return (K) e.getKey(); 
-            						}, 
-                  (Entry<K,V> e) -> {
-                	  				  if (e==null){
-                	  					 logger.error("the entry is null");
-                	  				  }
-                	  				  return (V) e.getValue();
-                	  				}, builder.coalescer)))
-        .subscribe(builder.writeAction::accept);
-  }
+	private WriteBehindCacheWriter(Builder<K, V> builder) {
 
-  @Override
-  public void write(K key, V value) {
-    subject.onNext(new SimpleImmutableEntry<>(key, value));
-  }
+		subject = PublishSubject.create();
+		subject.buffer(builder.bufferTimeNanos, TimeUnit.NANOSECONDS)
+		.map(entries -> entries.stream().collect(
+				toMap((Entry<K,V> e) -> { if (e==null){
+					logger.error("the entry is null");
+				}
+				return (K) e.getKey(); 
+				}, 
+				(Entry<K,V> e) -> {
+					if (e==null){
+						logger.error("the entry is null");
+					}
+					return (V) e.getValue();
+				}, builder.coalescer)))
+				.subscribe(builder.writeAction::accept);
+	}
 
-  @Override
-  public void delete(K key, V value, RemovalCause removalCause) 
-  {
-	  logger.debug("delete:" + key);
-  }
+	@Override
+	public void write(K key, V value) {
+		subject.onNext(new SimpleImmutableEntry<>(key, value));
+	}
 
-  public static final class Builder<K, V> {
-    private Consumer<Map<K, V>> writeAction;
-    private BinaryOperator<V> coalescer;
-    private long bufferTimeNanos;
+	@Override
+	public void delete(K key, V value, RemovalCause removalCause) 
+	{
+		logger.debug("delete:" + key);
+	}
 
-    /**
-     * The duration that the calls to the cache should be buffered before calling the
-     * <code>writeAction</code>.
-     */
-    public Builder<K, V> bufferTime(long duration, TimeUnit unit) {
-      this.bufferTimeNanos = TimeUnit.NANOSECONDS.convert(duration, unit);
-      return this;
-    }
+	public static final class Builder<K, V> {
+		private Consumer<Map<K, V>> writeAction;
+		private BinaryOperator<V> coalescer;
+		private long bufferTimeNanos;
 
-    /** The callback to perform the writing to the database or repository. */
-    public Builder<K, V> writeAction(Consumer<Map<K, V>> writeAction) {
-      this.writeAction = requireNonNull(writeAction);
-      return this;
-    }
+		/**
+		 * The duration that the calls to the cache should be buffered before calling the
+		 * <code>writeAction</code>.
+		 */
+		public Builder<K, V> bufferTime(long duration, TimeUnit unit) {
+			this.bufferTimeNanos = TimeUnit.NANOSECONDS.convert(duration, unit);
+			return this;
+		}
 
-    /** The action that decides which value to take in case a key was updated multiple times. */
-    public Builder<K, V> coalesce(BinaryOperator<V> coalescer) {
-      this.coalescer = requireNonNull(coalescer);
-      return this;
-    }
+		/** The callback to perform the writing to the database or repository. */
+		public Builder<K, V> writeAction(Consumer<Map<K, V>> writeAction) {
+			this.writeAction = requireNonNull(writeAction);
+			return this;
+		}
 
-    /** Returns a {@link CacheWriter} that batches writes to the system of record. */
-    public WriteBehindCacheWriter<K, V> build() {
-      return new WriteBehindCacheWriter<>(this);
-    }
-  }
+		/** The action that decides which value to take in case a key was updated multiple times. */
+		public Builder<K, V> coalesce(BinaryOperator<V> coalescer) {
+			this.coalescer = requireNonNull(coalescer);
+			return this;
+		}
+
+		/** Returns a {@link CacheWriter} that batches writes to the system of record. */
+		public WriteBehindCacheWriter<K, V> build() {
+			return new WriteBehindCacheWriter<>(this);
+		}
+	}
 }
