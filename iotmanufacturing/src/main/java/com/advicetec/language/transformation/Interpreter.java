@@ -186,13 +186,17 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	public ASTNode visitVar_dec(TransformationGrammarParser.Var_decContext ctx) 
 	{ 
 		String id = ctx.ID().getText();
+		Symbol s = currentScope.resolve(id);
 		logger.debug("visitVar_dec" + id);
 		
 		// the declaration includes an assignment
 		if (ctx.ASG() != null)
 		{
 	        ASTNode value = this.visit(ctx.expression());
-	        Symbol s = currentScope.resolve(id);	        
+
+			if (value == null)
+				value = initializeSymbol(s);
+
 	        VerifyAssign(s, value);
 	        currentSpace.put(id, castAssign(s, value));         // store
 	        return value;
@@ -496,7 +500,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	
 	public void VerifyAssign(Symbol symbol, ASTNode value)
 	{
-			
+					
 		switch (symbol.getType())
 		{
 		case tINT:

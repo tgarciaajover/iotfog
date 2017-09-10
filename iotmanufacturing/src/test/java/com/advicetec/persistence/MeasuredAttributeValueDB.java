@@ -7,6 +7,10 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.junit.Test;
 
@@ -403,4 +407,67 @@ public class MeasuredAttributeValueDB
         }
 	}
 
+	@Test
+	public void batchInsert() throws InterruptedException
+	{
+
+		MeasuringUnit measure = new MeasuringUnit("KG", "Kilogram");  
+
+		
+
+		Attribute atr = new Attribute("velint", AttributeType.INT, measure);
+		
+		
+		MeasureAttributeValueCache attValueCache = MeasureAttributeValueCache.getInstance();
+		SortedMap<LocalDateTime,String> statesMap = new TreeMap<LocalDateTime,String>();
+		
+		int i = 0;
+		for (; i <= 4000; i++) {
+			MeasuredAttributeValue value = new MeasuredAttributeValue(atr, new Integer(i), 10, MeasuredEntityType.MACHINE, LocalDateTime.now());
+			Thread.sleep(1);
+			attValueCache.cacheStore(value);
+			statesMap.put(value.getTimeStamp(), value.getKey());
+		}
+		
+		Thread.sleep(10000);
+		
+		for (; i <= 8000; i++) {
+			MeasuredAttributeValue value = new MeasuredAttributeValue(atr, new Integer(i), 10, MeasuredEntityType.MACHINE, LocalDateTime.now());
+			Thread.sleep(1);
+			attValueCache.cacheStore(value);
+			statesMap.put(value.getTimeStamp(), value.getKey());
+		}
+
+		Thread.sleep(10000);
+
+		for (; i <= 12000; i++) {
+			MeasuredAttributeValue value = new MeasuredAttributeValue(atr, new Integer(i), 10, MeasuredEntityType.MACHINE, LocalDateTime.now());
+			Thread.sleep(1);
+			attValueCache.cacheStore(value);
+			statesMap.put(value.getTimeStamp(), value.getKey());
+		}
+
+		Thread.sleep(10000);
+
+		for (; i <= 16000; i++) {
+			MeasuredAttributeValue value = new MeasuredAttributeValue(atr, new Integer(i), 10, MeasuredEntityType.MACHINE, LocalDateTime.now());
+			Thread.sleep(1);
+			attValueCache.cacheStore(value);
+			statesMap.put(value.getTimeStamp(), value.getKey());
+		}
+
+		Thread.sleep(10000);
+
+		for (; i <= 20000; i++) {
+			MeasuredAttributeValue value = new MeasuredAttributeValue(atr, new Integer(i), 10, MeasuredEntityType.MACHINE, LocalDateTime.now());
+			Thread.sleep(1);
+			attValueCache.cacheStore(value);
+			statesMap.put(value.getTimeStamp(), value.getKey());
+		}
+		
+		System.out.println("execution finished" + LocalDateTime.now());
+
+		
+	}
+	
 }

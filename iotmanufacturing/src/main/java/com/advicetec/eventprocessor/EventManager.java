@@ -75,7 +75,7 @@ public class EventManager extends Manager
 	 * Returns the singleton instance for the class, if not created then creates the instance. 
 	 * @return Event manager singleton.
 	 */
-	public static EventManager getInstance()
+	public synchronized static EventManager getInstance()
 	{
 		if (instance==null)
 			instance = new EventManager(); 

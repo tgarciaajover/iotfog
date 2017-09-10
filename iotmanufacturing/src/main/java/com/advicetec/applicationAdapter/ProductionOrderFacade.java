@@ -1,14 +1,22 @@
 package com.advicetec.applicationAdapter;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.TimeZone;
 import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
@@ -18,6 +26,7 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import com.advicetec.configuration.ReasonCode;
+import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.TimeInterval;
@@ -100,6 +109,20 @@ public final class ProductionOrderFacade {
 	 */
 	private String actualProductionCountId;
 	
+	
+	/**
+	 * SQL to select a set of AttributeValue given owner id and type, attribute
+	 * value name, and time range. 
+	 *  
+	 */
+	final private static String sqlMeasureAttributeValueRangeSelect = "select timestamp, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time from measuredattributevalue where id_owner = ? and owner_type = ? and attribute_name = ? and timestamp >= ? and timestamp <= ?";  
+
+	/**
+	 * Column name from the query
+	 */
+	final private static String timestamp = "timestamp";
+
+
 	/**
 	 * Constructor for the object.
 	 * 
@@ -363,8 +386,7 @@ public final class ProductionOrderFacade {
 			Collection<String> keys = subMap.values();
 			String[] keyArray = keys.toArray( new String[keys.size()]);
 			
-			ArrayList<AttributeValue> newList = attValueCache.
-					getFromDatabase(this.pOrder.getId(),this.pOrder.getType(),
+			ArrayList<AttributeValue> newList = attValueCache.getFromDatabase(this.pOrder.getId(),this.pOrder.getType(),
 							status.getAttribute(attrName),from, oldest);
 			newList.addAll(getFromCache(keyArray));
 			

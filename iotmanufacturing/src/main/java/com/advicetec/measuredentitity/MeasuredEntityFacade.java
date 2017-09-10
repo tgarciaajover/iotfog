@@ -1,7 +1,12 @@
 package com.advicetec.measuredentitity;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -14,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.TimeZone;
 import java.util.TreeMap;
 
 import javax.xml.bind.JAXBException;
@@ -31,7 +37,10 @@ import org.w3c.dom.Document;
 import com.advicetec.aggregation.oee.OEEAggregationCalculator;
 import com.advicetec.aggregation.oee.OEEAggregationManager;
 import com.advicetec.aggregation.oee.OverallEquipmentEffectiveness;
+import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
+import com.advicetec.configuration.ReasonCodeContainer;
+import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeValue;
@@ -79,8 +88,8 @@ public final class MeasuredEntityFacade {
 	private String unit2PerCycles;
 	
 	// This field is the attribute name for the production counter.
-	private String actualProductionCountId;
-
+	private String actualProductionCountId;	
+	
 	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId, 
 								 String unit1PerCycles, String unit2PerCycles,  String actualProductionCountId) 
 	{
@@ -287,15 +296,13 @@ public final class MeasuredEntityFacade {
 			Collection<String> keys = subMap.values();
 			String[] keyArray = keys.toArray( new String[keys.size()]);
 
-			ArrayList<AttributeValue> newList = attValueCache.
-					getFromDatabase(entity.getId(),entity.getType(),
+			ArrayList<AttributeValue> newList = attValueCache.getFromDatabase(entity.getId(),entity.getType(),
 							status.getAttribute(attrName),from, oldest);
 			newList.addAll(getFromCache(keyArray));
 
 			return newList;
 		}
 	}
-
 
 
 	/**
@@ -1098,5 +1105,6 @@ public final class MeasuredEntityFacade {
 		
 		return ret;
 	}
+	
 }
 

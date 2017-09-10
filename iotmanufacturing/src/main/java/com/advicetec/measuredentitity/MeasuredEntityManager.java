@@ -143,7 +143,7 @@ public class MeasuredEntityManager extends Configurable {
 		
 	}
 
-	public static MeasuredEntityManager getInstance() throws SQLException{
+	public synchronized static MeasuredEntityManager getInstance() throws SQLException{
 		if(instance == null){
 			instance = new MeasuredEntityManager();
 		}
@@ -155,7 +155,7 @@ public class MeasuredEntityManager extends Configurable {
 	 * @param entity
 	 * @return TRUE if the entity already exist into the list, FALSE otherwise.
 	 */
-	private boolean entityAlreadyExists(final MeasuredEntity entity){	
+	private synchronized boolean entityAlreadyExists(final MeasuredEntity entity){	
 		for (MeasuredEntityFacade facade : entities) {
 			if(facade.getEntity().getId().equals(entity)){
 				return true;
@@ -169,7 +169,7 @@ public class MeasuredEntityManager extends Configurable {
 	 * @param entity The new measured entity.
 	 * @return
 	 */
-	public boolean addNewEntity(final MeasuredEntity entity){
+	public synchronized boolean addNewEntity(final MeasuredEntity entity){
 		if(entityAlreadyExists(entity)){
 			return false;
 		}
@@ -183,7 +183,7 @@ public class MeasuredEntityManager extends Configurable {
 	 * @param entityId The entity id to search.
 	 * @return NULL if there is not an entity with the given id.
 	 */
-	public MeasuredEntityFacade getFacadeOfEntityById(final Integer entityId){	
+	public synchronized MeasuredEntityFacade getFacadeOfEntityById(final Integer entityId){	
 		
 		logger.debug("getFacadeOfEntityById" + Integer.toString(entityId) );
 		

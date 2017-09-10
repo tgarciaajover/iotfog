@@ -12,6 +12,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
@@ -24,6 +26,7 @@ import com.advicetec.core.AttributeValue;
 import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.advicetec.utils.MapUtils;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -60,7 +63,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	 */
 	private static Integer INIT_CAPACITY = 1000;
 	/**
-	 * Cache maximun size
+	 * Cache maximun size 
 	 */
 	private static Integer MAX_SIZE = 10000;
 	/**
@@ -70,7 +73,17 @@ public class MeasureAttributeValueCache extends Configurable {
 	/**
 	 * Time the cache keeps entries before delete them.
 	 */
-	private static Integer DELETE_TIME = 60;
+	private static Integer DELETE_TIME = 60;	
+	/**
+	 * Number of threads used in order to perform inserts
+	 */
+	private static int INSERT_THREADS = 10;
+	
+	/**
+	 * Number of rows inserted within each batch
+	 */
+	private static int BATCH_ROWS = 4000;
+	
 	/**
 	 * Singleton cache instance
 	 */
@@ -83,7 +96,14 @@ public class MeasureAttributeValueCache extends Configurable {
 	 * Database prepared statement object
 	 */
 	private static PreparedStatement pst = null;
-
+	/**
+	 * A cache is a map with a key and the attribute value. 
+	 */
+	private static Cache<String, AttributeValue> cache;
+	/**
+	 * Thread pool to save data in the database.
+	 */
+	private static ExecutorService threadPool = null;
 	/**
 	 * SQL to select a set of AttributeValue given owner id and type, attribute
 	 * value name, and time range. 
@@ -95,12 +115,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	 * Column name from the query
 	 */
 	final private static String timestamp = "timestamp";
-	
-	/**
-	 * A cache is a map with a key and the attribute value. 
-	 */
-	private static Cache<String, AttributeValue> cache;
-
+		
 	/**
 	 * Constructs this cache with the parameters from .properties file.
 	 * This method also defines the shutdown hook if the process is canceled 
@@ -120,17 +135,36 @@ public class MeasureAttributeValueCache extends Configurable {
 		WRITE_TIME = Integer.valueOf(properties.getProperty("write_time"));
 		// time to delete an entry from the cache once it is store.
 		DELETE_TIME = Integer.valueOf(properties.getProperty("delete_time"));
+		
+		// Thread related information to store data into the database.
+		INSERT_THREADS = Integer.parseInt(properties.getProperty("insert_threads"));
+		BATCH_ROWS = Integer.parseInt(properties.getProperty("batch_rows"));
+		
 		logger.info("Write time:" + WRITE_TIME + "Delete Time:" + DELETE_TIME);
+		
+		threadPool = Executors.newFixedThreadPool(INSERT_THREADS);
 
-		// This part inserts any pending data in the cache to the database, in case of shutdown.
+		/**
+		 *  This part inserts any pending data in the cache to the database, in case of shutdown.
+		 */
 		Runtime.getRuntime().addShutdownHook(new Thread()
 		{
+			
+			
 			@Override
 			public void run()
 			{
-				List<String> keys = new ArrayList<>();
-				keys.addAll(cache.asMap().keySet());
-				bulkCommit(keys);
+				
+				
+				try {
+					
+					threadPool.awaitTermination(WRITE_TIME, TimeUnit.SECONDS);
+					
+				} catch (InterruptedException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+
 			}
 		});  
 
@@ -159,49 +193,9 @@ public class MeasureAttributeValueCache extends Configurable {
 						// WriteAction
 						.writeAction(entries -> {
 							if (entries.size() > 0) {
-								try {
-									// connect to database
-									Class.forName(DB_DRIVER);
-									conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-									conn.setAutoCommit(false);
-									pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
-									// prepares the statement
-									entries.forEach((k,v)-> {
-										logger.debug( "db write key:" + ((MeasuredAttributeValue)v).getKey() );
-										((MeasuredAttributeValue)v).dbInsert(pst);
-
-									});
-									// execute the insertion
-									int ret[] = pst.executeBatch();
-									logger.debug("Number of Attribute Values inserted:" + ret.length);
-									conn.commit();
-								} catch (ClassNotFoundException e) {
-									logger.error(e.getMessage());
-									e.printStackTrace();
-								} catch (SQLException e) {
-									logger.error(e.getMessage());
-									e.printStackTrace();
-								}
-
-								finally{
-									if(pst!=null){
-										try{
-											pst.close();
-										} catch (SQLException e) {
-											logger.error(e.getMessage());
-											e.printStackTrace();
-										}
-									}
-
-									if(conn!=null) {
-										try {
-											conn.close();
-										} catch (SQLException e) {
-											logger.error(e.getMessage());
-											e.printStackTrace();
-										}
-									}
-								} // finally
+								logger.info("to storage num entries:" + entries.size());
+								MeasureAttributeDatabaseStore storedatabase = new MeasureAttributeDatabaseStore(entries, DB_DRIVER, DB_URL, DB_USER, DB_PASS,BATCH_ROWS);
+								threadPool.submit(storedatabase);
 							} // if
 						}).build()) // writeAction
 						.build(); // writeBehindCache
@@ -211,7 +205,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	 * Returns a singleton instance of MeasureAttributeValueCache.
 	 * @return the singleton instance. 
 	 */
-	public static MeasureAttributeValueCache getInstance(){
+	public synchronized static MeasureAttributeValueCache getInstance(){
 		if(instance == null){
 			instance = new MeasureAttributeValueCache();
 			setCache(INIT_CAPACITY,MAX_SIZE);// default values
@@ -247,51 +241,7 @@ public class MeasureAttributeValueCache extends Configurable {
 		return cache.getIfPresent(key);
 	}
 
-	/**
-	 * Stores the Measured Attribute Value into the database.
-	 * @param value The value to be committed.
-	 */
-	public void commit(MeasuredAttributeValue value){
-		try {
-			// database connection
-			Class.forName(DB_DRIVER);
-			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-			conn.setAutoCommit(false);
-			// sql statement
-			pst = conn.prepareStatement(value.getPreparedInsertText());
-			value.dbInsert(pst);
-			// execution
-			pst.executeBatch();
-			conn.commit();
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}
-		finally{
-			if(pst!=null) {
-				try {
-					pst.close();
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
-			}
-
-			if(conn!=null) 
-			{
-				try
-				{
-					conn.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-			}
-		}
-	}
-
+	
 	/**
 	 * Returns the time of the oldest entry in the cache.
 	 * @return the time of the oldest entry in the cache.
@@ -312,6 +262,118 @@ public class MeasureAttributeValueCache extends Configurable {
 
 	}
 
+
+	/**
+	 * Turns over the database all the MeasuredAttribute values remain into cache.
+	 * 
+	 * @param keys List of keys to write into database.
+	 */
+	public void bulkCommit(List<String> keys) {
+
+		Map<String,AttributeValue> subSet = cache.getAllPresent(keys);
+		
+		// Splits the entries in batches of batchRows  
+		List<Map<String, AttributeValue>> listofMaps =
+				subSet.entrySet().stream().collect(MapUtils.mapSize(BATCH_ROWS));
+		
+		// Loop through split lists and insert in the database 
+		for (Map<String, AttributeValue> entry : listofMaps) {
+			if (entry.size() > 0){
+				try {
+					Class.forName(DB_DRIVER);
+					conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+					conn.setAutoCommit(false);
+					// prepare statement
+					pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
+
+					// Get the keys to insert in the database.
+					for (AttributeValue value :	entry.values()) {
+						if(value instanceof MeasuredAttributeValue){
+							MeasuredAttributeValue mav = (MeasuredAttributeValue) value;
+							mav.dbInsert(pst);
+						}
+					}
+					// execute the query
+					pst.executeBatch();
+					conn.commit();
+					// Remove all keys inserted in the database.
+					cache.invalidateAll(entry.keySet());
+
+				} catch (ClassNotFoundException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+				
+				finally {
+					if(pst!=null) {
+						try {
+							pst.close();
+						} catch (SQLException e) {
+							logger.error(e.getMessage());
+							e.printStackTrace();
+						}
+					}
+
+					if(conn!=null) {
+						try {
+							conn.close();
+						} catch (SQLException e) {
+							logger.error(e.getMessage());
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Gets the url used to connect to the database 
+	 * 
+	 * @return database url.
+	 */
+	public synchronized String getDB_URL() {
+		return DB_URL;
+	}
+
+	/**
+	 * Gets the database user 
+	 * @return database user
+	 */
+	public synchronized String getDB_USER() {
+		return DB_USER;
+	}
+
+	/**
+	 * Gets the database password
+	 * @return database password
+	 */
+	public synchronized String getDB_PASS() {
+		return DB_PASS;
+	}
+
+	/**
+	 * Gets the database driver
+	 * @return database driver
+	 */
+	public synchronized String getDB_DRIVER() {
+		return DB_DRIVER;
+	}
+	
+
+	public synchronized String getSqlMeasureAttributeValueRangeSelect()
+	{
+		return sqlMeasureAttributeValueRangeSelect;
+	}
+	
+	public synchronized String getTimeStampField()
+	{
+		return timestamp;
+	}
+	
 	/**
 	 * Returns a list of Attribute values from the database. The query is 
 	 * composed of the device/machine, the name of the attribute and the time
@@ -327,7 +389,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	 * 
 	 * @see MeasuredEntityType
 	 */
-	public synchronized ArrayList<AttributeValue> getFromDatabase(
+	public ArrayList<AttributeValue> getFromDatabase(
 			Integer entityId, MeasuredEntityType mType, Attribute attribute, 
 			LocalDateTime from, LocalDateTime to) {
 
@@ -341,13 +403,14 @@ public class MeasureAttributeValueCache extends Configurable {
 		TimeZone utcTimeZone = TimeZone.getTimeZone(SystemConstants.TIMEZONE);
 		cal.setTimeZone(utcTimeZone);
 
+		String timestapfield = getTimeStampField();
 		try {
 			// get the database driver
-			Class.forName(DB_DRIVER);
-			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			Class.forName(getDB_DRIVER());
+			connDB = DriverManager.getConnection(getDB_URL(), getDB_USER(), getDB_PASS());
 			connDB.setAutoCommit(false);
 			// prepare the statement
-			pstDB = connDB.prepareStatement(MeasureAttributeValueCache.sqlMeasureAttributeValueRangeSelect);
+			pstDB = connDB.prepareStatement(getSqlMeasureAttributeValueRangeSelect());
 			pstDB.setString(1, String.valueOf(entityId));
 			pstDB.setInt(2, mType.getValue());
 			pstDB.setString(3, attribute.getName());
@@ -358,7 +421,7 @@ public class MeasureAttributeValueCache extends Configurable {
 			// brings the attribute data
 			while (rs.next())
 			{
-				Timestamp dtstime = rs.getTimestamp(timestamp, cal);
+				Timestamp dtstime = rs.getTimestamp(timestapfield, cal);
 				long timestampTime = dtstime.getTime();
 				cal.setTimeInMillis(timestampTime);
 				LocalDateTime dTime = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
@@ -400,58 +463,5 @@ public class MeasureAttributeValueCache extends Configurable {
 		return list;
 	}
 
-	/**
-	 * Turns over the database all the MeasuredAttribute values remain into cache.
-	 * 
-	 * @param keys List of keys to write into database.
-	 */
-	public void bulkCommit(List<String> keys) {
-		try {
-			Class.forName(DB_DRIVER);
-			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-			conn.setAutoCommit(false);
-			// prepare statement
-			pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
-			// Get the keys to insert in the database.
-			Map<String,AttributeValue> subSet = cache.getAllPresent(keys);
-			for (AttributeValue value :	subSet.values()) {
-				if(value instanceof MeasuredAttributeValue){
-					MeasuredAttributeValue mav = (MeasuredAttributeValue) value;
-					mav.dbInsert(pst);
-				}
-			}
-			// execute the query
-			pst.executeBatch();
-			conn.commit();
-			// Remove all keys inserted in the database.
-			cache.invalidateAll(keys);
-
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}
-		finally {
-			if(pst!=null) {
-				try {
-					pst.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-			}
-
-			if(conn!=null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-			}
-		}
-	}
 
 }

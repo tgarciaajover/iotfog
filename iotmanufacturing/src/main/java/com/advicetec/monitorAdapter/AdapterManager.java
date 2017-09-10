@@ -17,7 +17,7 @@ public class AdapterManager extends Manager implements Runnable
 	private static ConfigurationManager confManager = null; 
 	private static MessageManager messManager = null;
 	
-	public static AdapterManager getInstance()
+	public synchronized static AdapterManager getInstance()
 	{
 		if (instance==null)
 			instance = new AdapterManager();
