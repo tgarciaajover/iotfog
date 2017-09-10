@@ -61,19 +61,19 @@ public class MeasureAttributeValueCache extends Configurable {
 	/**
 	 * Initial available space for entries
 	 */
-	private static Integer INIT_CAPACITY = 1000;
+	private static int INIT_CAPACITY = 1000;
 	/**
 	 * Cache maximun size 
 	 */
-	private static Integer MAX_SIZE = 10000;
+	private static long MAX_SIZE = 10000L;
 	/**
 	 * Time the cache keeps entries before write over database.
 	 */
-	private static Integer WRITE_TIME = 10;
+	private static long WRITE_TIME = 10L;
 	/**
 	 * Time the cache keeps entries before delete them.
 	 */
-	private static Integer DELETE_TIME = 60;	
+	private static long DELETE_TIME = 60L;	
 	/**
 	 * Number of threads used in order to perform inserts
 	 */
@@ -129,12 +129,14 @@ public class MeasureAttributeValueCache extends Configurable {
 		DB_URL = properties.getProperty("server");
 		DB_USER = properties.getProperty("user");
 		DB_PASS = properties.getProperty("password");
-		INIT_CAPACITY = Integer.valueOf(properties.getProperty("init_capacity"));
-		MAX_SIZE = Integer.valueOf(properties.getProperty("max_size"));
+		
+		// Cache data.
+		INIT_CAPACITY = Integer.parseInt(properties.getProperty("init_capacity"));
+		MAX_SIZE = Long.parseLong(properties.getProperty("max_size"));
 		// time to store at database
-		WRITE_TIME = Integer.valueOf(properties.getProperty("write_time"));
+		WRITE_TIME = Long.parseLong(properties.getProperty("write_time"));
 		// time to delete an entry from the cache once it is store.
-		DELETE_TIME = Integer.valueOf(properties.getProperty("delete_time"));
+		DELETE_TIME = Long.parseLong(properties.getProperty("delete_time"));
 		
 		// Thread related information to store data into the database.
 		INSERT_THREADS = Integer.parseInt(properties.getProperty("insert_threads"));
@@ -176,15 +178,15 @@ public class MeasureAttributeValueCache extends Configurable {
 	 * @param maxSize the maximum number of entries in the cache
 	 * @see Caffeine#build()
 	 */
-	public static void setCache(int initialCapacity, int maxSize){
+	public static void setCache(){
 		// cache is implemented by Caffeine
 		cache = Caffeine.newBuilder()
 				// time to delete an entry from cache
 				.expireAfterWrite(DELETE_TIME, TimeUnit.SECONDS)
 				// initial cache size
-				.initialCapacity(initialCapacity)
+				.initialCapacity(INIT_CAPACITY)
 				// max size
-				.maximumSize(maxSize)
+				.maximumSize(MAX_SIZE)
 				.writer(new WriteBehindCacheWriter.Builder<String, AttributeValue>()
 						// time before execute WriteAction over database.
 						.bufferTime(WRITE_TIME, TimeUnit.SECONDS)
@@ -208,7 +210,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	public synchronized static MeasureAttributeValueCache getInstance(){
 		if(instance == null){
 			instance = new MeasureAttributeValueCache();
-			setCache(INIT_CAPACITY,MAX_SIZE);// default values
+			setCache();// default values
 		}
 		return instance;
 	}

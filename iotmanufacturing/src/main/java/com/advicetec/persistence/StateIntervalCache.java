@@ -71,19 +71,19 @@ public class StateIntervalCache extends Configurable {
 	/**
 	 * Initial available space for entries
 	 */
-	private static Integer INIT_CAPACITY = 1000;
+	private static int INIT_CAPACITY = 1000;
 	/**
 	 * Cache limit
 	 */
-	private static Integer MAX_SIZE = 10000;
+	private static long MAX_SIZE = 10000L;
 	/**
 	 * Time the cache keeps entries before write over database.
 	 */
-	private static Integer WRITE_TIME = 10;
+	private static long WRITE_TIME = 10L;
 	/**
 	 * Time the cache keeps entries before delete them.
 	 */
-	private static Integer DELETE_TIME = 0;	
+	private static long DELETE_TIME = 600L;	
 	/**
 	 * Number of threads used in order to perform inserts
 	 */
@@ -137,15 +137,16 @@ public class StateIntervalCache extends Configurable {
 		DB_URL = properties.getProperty("server");
 		DB_USER = properties.getProperty("user");
 		DB_PASS = properties.getProperty("password");
+		
 		// cache initialization properties
 		// initial cache size
-		INIT_CAPACITY = Integer.valueOf(properties.getProperty("init_capacity"));
+		INIT_CAPACITY = Integer.parseInt(properties.getProperty("init_capacity"));
 		// limit cache size
-		MAX_SIZE = Integer.valueOf(properties.getProperty("max_size"));
+		MAX_SIZE = Long.parseLong(properties.getProperty("max_size"));
 		// time before store StateInterval into database
-		WRITE_TIME = Integer.valueOf(properties.getProperty("write_time"));
+		WRITE_TIME = Long.parseLong(properties.getProperty("write_time"));
 		// time before delete entries from the cache.
-		DELETE_TIME = Integer.valueOf(properties.getProperty("delete_time"));
+		DELETE_TIME = Long.parseLong(properties.getProperty("delete_time"));
 
 		// Thread related information to store data into the database.
 		INSERT_THREADS = Integer.parseInt(properties.getProperty("insert_threads"));
@@ -183,15 +184,15 @@ public class StateIntervalCache extends Configurable {
 	 * @param maxSize the maximum number of entries in the cache
 	 * @see Caffeine#build()
 	 */
-	public static void setCache(int initialCapacity, int maxSize){
+	public static void setCache(){
 		// cache is implemented by Caffeine
 		cache = Caffeine.newBuilder()
 				// time to delete an entry from cache
 				.expireAfterWrite(DELETE_TIME, TimeUnit.SECONDS)
 				// initial cache size
-				.initialCapacity(initialCapacity)
+				.initialCapacity(INIT_CAPACITY)
 				// limit cache size
-				.maximumSize(maxSize)
+				.maximumSize(MAX_SIZE)
 				.writer(new WriteBehindCacheWriter.Builder<String, StateInterval>()
 						// time before execute WriteAction over database.
 						.bufferTime(WRITE_TIME, TimeUnit.SECONDS)
@@ -216,7 +217,7 @@ public class StateIntervalCache extends Configurable {
 	public static synchronized StateIntervalCache getInstance(){
 		if(instance == null){
 			instance = new StateIntervalCache();
-			setCache(INIT_CAPACITY,MAX_SIZE); // default values
+			setCache(); // default values
 		}
 		return instance;
 	}
