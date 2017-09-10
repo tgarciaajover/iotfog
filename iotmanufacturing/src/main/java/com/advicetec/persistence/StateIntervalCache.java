@@ -326,69 +326,6 @@ public class StateIntervalCache extends Configurable {
 		return LocalDateTime.now().minusSeconds(DELETE_TIME);
 	}
 
-	/**
-	 * Updates a state interval into database with the given parameters. 
-	 * 
-	 * @param entityId measured entity id.
-	 * @param mType describes the type of measured entity.
-	 * @param startDttm initial time to query.
-	 * @param reasonCode downtime reason, not NULL.
-	 * @return <code>TRUE</code> if updates any register, <code>FALSE</code>
-	 * otherwise.  
-	 */
-	public synchronized boolean updateStateInterval(Integer entityId, MeasuredEntityType mType, 
-			LocalDateTime startDttm, ReasonCode reasonCode) {
-
-		logger.info("In updateStateInverval reasonCd:" + reasonCode.getId() );
-
-		boolean ret = false;
-		Connection connDB  = null; 
-		PreparedStatement pstDB = null;
-		try{
-			Class.forName(DB_DRIVER);
-			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-			connDB.setAutoCommit(false);
-			// prepares the statement
-			pstDB = connDB.prepareStatement(StateIntervalCache.sqlUpdateInterval);
-			// set parameters to the query
-			pstDB.setString(1, reasonCode.getId().toString() );
-			pstDB.setInt(2, entityId);
-			pstDB.setInt(3, mType.getValue());
-			pstDB.setTimestamp(4, Timestamp.valueOf(startDttm));
-			if (pstDB.executeUpdate() > 0){
-				ret = true;
-				connDB.commit();
-			}
-
-		}catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		} finally{
-			if(pstDB!=null){
-				try {
-					pstDB.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-			}
-
-			if(connDB!=null) {
-				try {
-					connDB.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-			}
-		}			
-
-		logger.info("In updateStateInverval return:" + ret);
-		return ret;
-	}
 
 	/**
 	 * Gets the url used to connect to the database 
@@ -453,9 +390,78 @@ public class StateIntervalCache extends Configurable {
 	}
 
 	/**
+	 * Updates a state interval into database with the given parameters.
+	 * 
+	 *  This method can work in parallel 
+	 * 
+	 * @param entityId measured entity id.
+	 * @param mType describes the type of measured entity.
+	 * @param startDttm initial time to query.
+	 * @param reasonCode downtime reason, not NULL.
+	 * @return <code>TRUE</code> if updates any register, <code>FALSE</code>
+	 * otherwise.  
+	 */
+	public boolean updateStateInterval(Integer entityId, MeasuredEntityType mType, 
+			LocalDateTime startDttm, ReasonCode reasonCode) {
+
+		logger.debug("In updateStateInverval reasonCd:" + reasonCode.getId() );
+
+		boolean ret = false;
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+		try {
+			Class.forName(getDB_DRIVER());
+			connDB = DriverManager.getConnection(getDB_URL(), getDB_USER(), getDB_PASS());
+			connDB.setAutoCommit(false);
+			// prepares the statement
+			pstDB = connDB.prepareStatement(StateIntervalCache.sqlUpdateInterval);
+			// set parameters to the query
+			pstDB.setString(1, reasonCode.getId().toString() );
+			pstDB.setInt(2, entityId);
+			pstDB.setInt(3, mType.getValue());
+			pstDB.setTimestamp(4, Timestamp.valueOf(startDttm));
+			if (pstDB.executeUpdate() > 0){
+				ret = true;
+				connDB.commit();
+			}
+
+		} catch (ClassNotFoundException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			if(pstDB!=null){
+				try {
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null) {
+				try {
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}			
+
+		logger.debug("In updateStateInverval return:" + ret);
+		return ret;
+	}
+
+	
+	/**
 	 * Returns a list of Attribute values from the database. The query is 
 	 * composed of the device/machine, the name of the attribute and the time
 	 * range (from,to).
+	 * 
+	 * This method can work in parallel
 	 * 
 	 * @param entityId measured entity id.
 	 * @param mType describes the type of measured entity.
@@ -581,6 +587,8 @@ public class StateIntervalCache extends Configurable {
 	/**
 	 * Returns a list of Downtime Reasons from database.
 	 * 
+	 * This method can work in parallel
+	 * 
 	 * @param entity measured entity id.
 	 * @param from initial time to query.
 	 * @param to final time to query.
@@ -593,7 +601,7 @@ public class StateIntervalCache extends Configurable {
 		Connection connDB  = null; 
 		PreparedStatement pstDB = null;
 
-		logger.info("in getDownTimeReasonsByInterval MeasuredEntity:" + entity.getId() + " from:" + from.toString() + " to:" + to.toString());
+		logger.debug("in getDownTimeReasonsByInterval MeasuredEntity:" + entity.getId() + " from:" + from.toString() + " to:" + to.toString());
 
 		Map<Integer,DowntimeReason> map = new HashMap<Integer,DowntimeReason>();
 
@@ -603,7 +611,7 @@ public class StateIntervalCache extends Configurable {
 			connDB = DriverManager.getConnection(getDB_URL(), getDB_USER(), getDB_PASS());
 			connDB.setAutoCommit(false);
 			pstDB = connDB.prepareStatement(getSqlDownTimeReasons());
-			pstDB.setString(1, Integer.toString(entity.getId()));
+			pstDB.setInt(1, entity.getId());
 			pstDB.setInt(2, entity.getType().getValue());
 			pstDB.setTimestamp(3, Timestamp.valueOf(from));
 			pstDB.setTimestamp(4, Timestamp.valueOf(to));
@@ -661,6 +669,7 @@ public class StateIntervalCache extends Configurable {
 				}
 			}
 		}
+		
 		return map;
 	}
 

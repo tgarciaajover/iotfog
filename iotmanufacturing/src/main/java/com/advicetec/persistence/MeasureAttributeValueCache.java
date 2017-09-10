@@ -193,7 +193,7 @@ public class MeasureAttributeValueCache extends Configurable {
 						// WriteAction
 						.writeAction(entries -> {
 							if (entries.size() > 0) {
-								logger.info("to storage num entries:" + entries.size());
+								logger.debug("to storage num entries:" + entries.size());
 								MeasureAttributeDatabaseStore storedatabase = new MeasureAttributeDatabaseStore(entries, DB_DRIVER, DB_URL, DB_USER, DB_PASS,BATCH_ROWS);
 								threadPool.submit(storedatabase);
 							} // if
@@ -393,6 +393,7 @@ public class MeasureAttributeValueCache extends Configurable {
 			Integer entityId, MeasuredEntityType mType, Attribute attribute, 
 			LocalDateTime from, LocalDateTime to) {
 
+		logger.debug("In getFromDatabase");
 		Connection connDB  = null; 
 		PreparedStatement pstDB = null;
 
@@ -411,7 +412,7 @@ public class MeasureAttributeValueCache extends Configurable {
 			connDB.setAutoCommit(false);
 			// prepare the statement
 			pstDB = connDB.prepareStatement(getSqlMeasureAttributeValueRangeSelect());
-			pstDB.setString(1, String.valueOf(entityId));
+			pstDB.setInt(1, entityId);
 			pstDB.setInt(2, mType.getValue());
 			pstDB.setString(3, attribute.getName());
 			pstDB.setTimestamp(4, Timestamp.valueOf(from));
@@ -421,6 +422,8 @@ public class MeasureAttributeValueCache extends Configurable {
 			// brings the attribute data
 			while (rs.next())
 			{
+				logger.debug("In getFromDatabase" + "current thread:" + Thread.currentThread().getName());
+				
 				Timestamp dtstime = rs.getTimestamp(timestapfield, cal);
 				long timestampTime = dtstime.getTime();
 				cal.setTimeInMillis(timestampTime);
@@ -432,6 +435,8 @@ public class MeasureAttributeValueCache extends Configurable {
 				mav.setValueFromDatabase(rs);
 				list.add(mav);
 			}
+			
+			logger.debug("Ending getFromDatabase");
 
 		} catch (ClassNotFoundException e) {
 			logger.error(e.getMessage());

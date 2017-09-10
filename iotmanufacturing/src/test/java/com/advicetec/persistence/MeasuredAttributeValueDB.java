@@ -13,6 +13,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.junit.Test;
+import org.junit.experimental.theories.Theory;
 
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeType;
@@ -468,6 +469,30 @@ public class MeasuredAttributeValueDB
 		System.out.println("execution finished" + LocalDateTime.now());
 
 		
+	}
+	
+	@Test
+	public void thread_safe_selection() throws InterruptedException
+	{
+		Integer measuredEntity = new Integer(10);  
+		MeasuringUnit measure = new MeasuringUnit("KG", "Kilogram");  
+		Attribute atr = new Attribute("velint", AttributeType.INT, measure);
+		LocalDateTime to = LocalDateTime.now();
+
+		LocalDateTime from = to.minusMonths(1);
+		ArrayList<Thread> threadlist = new ArrayList<Thread>();
+
+		for (int i = 0; i < 3;i++) {
+			Thread temp= new Thread(new ReadMeasureAttributeValues(measuredEntity, MeasuredEntityType.MACHINE, atr, from, to));
+	        temp.start();
+	        threadlist.add(temp);
+		}
+		
+		for (Thread temp : threadlist) {
+			temp.join();
+		}
+		
+		System.out.println("ending");
 	}
 	
 }
