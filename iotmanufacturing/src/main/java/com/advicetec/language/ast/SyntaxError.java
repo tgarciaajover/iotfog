@@ -9,29 +9,66 @@ import org.antlr.v4.runtime.IntStream;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+/**
+ * Class to represents a syntax error occuring in the language. 
+ * 
+ * @author Andres Marentes
+ */
 public class SyntaxError extends RecognitionException 
 {
 
-	/** The line number name where the error occurs. */
+	/** 
+	 * The line number name where the error occurs. 
+	 */
 	private static final String lineNumberElementName = "Line-number";
-	/** Character number within the line number where the error occurs. */
+	
+	/** 
+	 * Character number within the line number where the error occurs. 
+	 */
 	private static final String positionInLineElementName = "position-in-line";
-	/** Message returned for the error. */
+	
+	/** 
+	 * Message returned for the error. 
+	 */
 	private static final String messageElementName = "message";
-	/** Offending Token name. */
+	
+	/** 
+	 * Offending Token name. 
+	 */
 	private static final String offendingTokenElementName = "offending-token";
-	/** Offending Token Verbose name. */
+	
+	/** 
+	 * Offending Token Verbose name. 
+	 */
 	private static final String offendingTokenVerboseElementName = "offending-verbose-token";
-	/** Error String underlined name. */
+	
+	/** 
+	 * Error String underlined name. 
+	 */
 	private static final String errorStringUnderlinedElementName = "error-string-underlined";
 	
 	
+    /**
+     * Constructor for the class
+     * 
+     * @param message  message error
+     * @param e		   Exception triggered by the language parser 
+     */
     public SyntaxError(String message, RecognitionException e) {
         super(message, e.getRecognizer(), e.getInputStream(), (ParserRuleContext) e.getCtx());
         this.setOffendingToken(e.getOffendingToken());
         this.initCause(e);
     }
     
+    /**
+     * Constructor for the class
+     * 
+     * @param message		message error
+     * @param t				token generating the error 
+     * @param recognizer	Recognizer object to get error information  
+     * @param inputStream	string stream with the program being executed 
+     * @param ctx			parser context where occurs the error. 
+     */
     public SyntaxError(String message, Token t, Recognizer<?,?> recognizer, IntStream inputStream, ParserRuleContext ctx){
     	super(message, recognizer, inputStream, ctx);
     	this.setOffendingToken(t);

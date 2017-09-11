@@ -35,21 +35,50 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.plexus.compiler.CompilerException;
 
+/**
+ * Class used to do the first phase of the behavior interpreter.In this phase the interpreter
+ * loop through the program to define the symbols used, check if they are complete and have 
+ * the correct types. 
+ *  
+ * It also verifies that the program code satisfies the language grammar.
+ *  
+ * @author Andres Marentes
+ *
+ */
 public class BehaviorDefPhase extends BehaviorGrammarBaseListener 
 {
 
 	static Logger logger = LogManager.getLogger(BehaviorDefPhase.class.getName());
 	
+	/**
+	 * Parser for the behavior langauge
+	 */
 	private BehaviorGrammarParser parser = null;
+    /**
+	 * Scopes defined during the parse execution 
+	 */
 	private ParseTreeProperty<Scope> scopes;
+	
+	/**
+	 * Globals defined in the behavior language parsing
+	 */
 	private GlobalScope globals;
 	
-	// Define symbols in this scope
+	/**
+	 * Define symbols in the current scope being executed.
+	 */
 	private Scope currentScope;
 	
-	// Define an array for storing syntax errors.
+	/**
+	 * Define an array for storing syntax errors.
+	 */
 	private ArrayList<SyntaxError> compilationErrors;
 
+	/**
+	 * Constructor for the class, it takes as parameter the behavior grammar parser.
+	 * 
+	 * @param parser behavior grammar parser
+	 */
 	BehaviorDefPhase(BehaviorGrammarParser parser)
 	{
 		this.scopes = new ParseTreeProperty<Scope>();
@@ -58,12 +87,25 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		globals = new GlobalScope();
 	}	
 	
+	/**
+	 * Actions to perform when entering in the program code, in this case 
+	 * we set the initial scope which is the global scope.
+	 * 
+	 *  @param program context 
+	 */
 	public void enterProgram(BehaviorGrammarParser.ProgramContext ctx)
 	{
 		logger.debug("Enter program");
 		currentScope = globals;
 	}		
 
+	/**
+	 * Method to captures an error during the definition phase
+	 * 
+	 * @param t   	Token generating the error
+	 * @param ctx	Context where the error happens
+	 * @param msg	messsage error
+	 */
 	public void error(Token t, ParserRuleContext ctx, String msg) 
     {
     	String error = new String("line" + t.getLine() + "." + t.getCharPositionInLine() + msg + "\n");
@@ -71,6 +113,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
     	this.compilationErrors.add(e);
     }
 	
+	/**
+	 * Actions to perform when entering in the main program, in this case 
+	 * we create the behavior symbol and define it on the current scope.
+	 * 
+	 * @param context for the main program.
+	 */
 	public void enterMain(BehaviorGrammarParser.MainContext ctx)
 	{
 		
@@ -92,6 +140,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		currentScope = program;
 	}
 	
+	/**
+	 * Actions to perform during the loop through a dotted name 
+	 * used to create an import in the language
+	 * 
+	 * Creates the import symbol and define it on the current scope. 
+	 */
 	public void exitImport_name(BehaviorGrammarParser.Import_nameContext ctx) 
 	{ 
 		
@@ -133,7 +187,11 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		defineVar(ctx.type(), ctx.ID().getSymbol());
 	}
 
-	
+	/**
+	 * Actions to perform when starting the parser of a function declaration
+	 * 
+	 * @param function declaration context.
+	 */
 	public void enterFunction_dec(BehaviorGrammarParser.Function_decContext ctx)
 	{
 		String name = ctx.ID().getText();
@@ -156,11 +214,21 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		currentScope = function;
 	}
 	
+	/**
+	 * Method to put the current scope in the heap
+	 * @param ctx 	parser rule context
+	 * @param s		Scope to save.
+	 */
 	public void saveScope(ParserRuleContext ctx, Scope s)
 	{
 		scopes.put(ctx, s);
 	}
 	
+	/**
+	 * Actions to perform when ending the parser of a function. This happens when the ends the function processing
+	 *
+	 * In this case we put the current scope as the parent scope and removethe scope from the heap.  
+	 */
 	public void exitFunction_dec(BehaviorGrammarParser.Function_decContext ctx) 
 	{ 
 		logger.debug(currentScope);
@@ -171,6 +239,13 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		logger.debug("exitFunction_dec" + currentScope);
 	}
 
+	/**
+	 * Actions to perform when parsing a timer symbol
+	 * 
+	 * In this case the parser has to:
+	 * 		define the timer symbol verifying its correct definition
+	 * 		include the timer symbol in the current scope.
+	 */
 	public void enterTimer(BehaviorGrammarParser.TimerContext ctx) 
 	{ 
 		// by default seconds
@@ -207,6 +282,13 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		}
 	}
 
+	/**
+	 * Actions to perform when parsing a repeat symbol (the same as a timer, but it should be re-scheduled)
+	 * 
+	 * In this case the parser has to:
+	 * 		define the timer symbol verifying its correct definition
+	 * 		include the timer symbol in the current scope.
+	 */
 	public void enterRepeat(BehaviorGrammarParser.RepeatContext ctx) 
 	{ 
 		// by default seconds
@@ -242,6 +324,13 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		}
 	}
 	
+	/**
+	 * Actions to perform when parsing a display symbol
+	 * 
+	 * In this case the parser has to:
+	 * 		Create the display symbol
+	 * 		include the symbol in the current scope.
+	 */
 	public void enterDisplay(@NotNull BehaviorGrammarParser.DisplayContext ctx) 
 	{ 
 		String name = ctx.deviceId.getText(); 
@@ -257,6 +346,17 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 			
 	}	
 	
+	/**
+	 * Actions to perform when parsing a block of code. A block is a set of instructions 
+	 * starting with the symbol "{" and ending with the symbol "}".
+	 *
+	 * In this case the parser has to:
+	 * 		Create a new scope for the block context
+	 * 		store the previous context as parent of the new scope
+	 * 		Change the current scope context to the new scope 	
+	 * 
+	 * @param Block context
+	 */
 	public void enterBlock(BehaviorGrammarParser.BlockContext ctx) 
 	{ 
 		
@@ -271,6 +371,13 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		
 	}
 	
+	/**
+	 * Actions to perform when finishing parsing a block of code.
+	 *  
+	 * In this case the parser has to:
+	 *		return the current scope context to the parent scope.
+	 * 
+	 */
 	public void exitBlock(BehaviorGrammarParser.BlockContext ctx) 
 	{ 
 		logger.debug("exitBlock" + currentScope);
@@ -280,16 +387,40 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		
 	}
 	
+	/**
+	 * Actions to perform when finishing parsing a formal parameter. 
+	 * 
+	 * These are the parameters given to functions which are not the main program.
+	 *
+	 * In this case the parser has to:
+	 * 		create a variable symbol with the name and type of the parameter
+	 *      store the symbol in the current scope 
+	 * 
+	 */
 	public void exitFormalparameter(BehaviorGrammarParser.FormalparameterContext ctx) 
 	{ 
 		defineVar(ctx.type(), ctx.ID().getSymbol());
 	}
 	
+	/**
+	 * Actions to perform when finishing the parse of a variable
+	 *
+	 * In this case the parser has to:
+	 * 		create a variable with the name and type of the parameter
+     * 		store the symbol in the current scope
+	 */
 	public void exitVar_dec(BehaviorGrammarParser.Var_decContext ctx) 
 	{ 
 		defineVar(ctx.type(), ctx.ID().getSymbol());
 	}
 
+	/**
+	 * Actions to perform when finishing parsing of a unit of measure
+	 * 
+	 * In this case the parser has to:
+	 * 		define the unit of measure symbol 
+	 * 		store the symbol in the current scope
+	 */
 	public void exitUnit_dec(BehaviorGrammarParser.Unit_decContext ctx) 
 	{ 
 		defineUnit( ctx.getParent(), ctx.id1, ctx.ID().getText(),ctx.STRING().getText());	
@@ -305,6 +436,9 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		}
 	}
 	
+	/**
+	 * 
+	 */
 	public void exitVect_attrib_dec(BehaviorGrammarParser.Vect_attrib_decContext ctx) 
 	{ 
 
@@ -317,6 +451,9 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.advicetec.language.BehaviorGrammarBaseListener#exitVect_var_dec(com.advicetec.language.BehaviorGrammarParser.Vect_var_decContext)
+	 */
 	public void exitVect_var_dec(BehaviorGrammarParser.Vect_var_decContext ctx) 
 	{ 
 		logger.debug("enter in exitVect var dec- stop:" + ctx.numElements.getStopIndex() + "Start: " + ctx.numElements.getStartIndex());
@@ -328,13 +465,21 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see com.advicetec.language.BehaviorGrammarBaseListener#exitState_assign(com.advicetec.language.BehaviorGrammarParser.State_assignContext)
+	 */
 	public void exitState_assign(BehaviorGrammarParser.State_assignContext ctx) 
 	{ 
 		logger.debug("entering entering state assign");
 		defineState();
 	}
 
-	
+	/**
+	 * @param typeCtx
+	 * @param nameToken
+	 * @param numElem
+	 * @param unit
+	 */
 	public void defineAttributeArray(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, int numElem, Token unit)
 	{
 		int typeTokenType = typeCtx.start.getType();
@@ -356,6 +501,11 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	
 	}
 
+	/**
+	 * @param typeCtx
+	 * @param nameToken
+	 * @param numElem
+	 */
 	public void defineVarArray(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, int numElem)
 	{
 		int typeTokenType = typeCtx.start.getType();
@@ -370,6 +520,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	
 	}
 
+	/**
+	 * @param typeCtx
+	 * @param nameToken
+	 * @param unit
+	 * @param trend
+	 */
 	public void defineAttribute(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, Token unit, boolean trend)
 	{
 		int typeTokenType = typeCtx.start.getType();
@@ -393,6 +549,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		logger.debug("Define attribute: " + atr.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 	
+	/**
+	 * @param ctx
+	 * @param nameToken
+	 * @param unitId
+	 * @param descr
+	 */
 	public void defineUnit(ParserRuleContext ctx, Token nameToken, String unitId, String descr )
 	{
 		
@@ -410,6 +572,10 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		logger.debug("Define unit: " + unt.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 	
+	/**
+	 * @param typeCtx
+	 * @param nameToken
+	 */
 	public void defineVar(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken)
 	{
 		
@@ -434,6 +600,9 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		logger.debug("Define var: " + var.getName() + " scopeName:" + currentScope.getScopeName() + " symbols:" + currentScope);
 	}
 
+	/**
+	 * 
+	 */
 	public void defineState()
 	{
 		// Define the symbol in the global scope
@@ -443,10 +612,16 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		}
 	}
 	
+	/**
+	 * @return
+	 */
 	public GlobalScope getGlobalScope(){
 		return globals;
 	}
 	
+	/**
+	 * @return
+	 */
 	public ParseTreeProperty<Scope> getScopes(){
 		return scopes;
 	}

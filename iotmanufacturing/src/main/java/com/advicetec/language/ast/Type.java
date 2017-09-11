@@ -1,8 +1,17 @@
 package com.advicetec.language.ast;
 
+/**
+ * Interface to identify the method required by every type used in the language
+ * 
+ * @author Andres Marentes
+ *
+ */
 public interface Type 
 {
-
-	 public String getName();
-
+	 /**
+	  * Gets the name of the type
+	  * 
+	 * @return type name
+	 */
+	public String getName();
 }

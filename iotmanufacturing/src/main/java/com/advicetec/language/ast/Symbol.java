@@ -83,7 +83,7 @@ public abstract class Symbol
 	}
 
     /**
-     * Auxiliary method to remove the first and the last character from the string
+     * Auxiliary method to remove the first and the last characters from the string
      *   
      * @param s string to remove those two characters.
      * @return substring. 
