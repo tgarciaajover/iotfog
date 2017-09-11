@@ -6,8 +6,21 @@ import org.apache.logging.log4j.Logger;
 import com.advicetec.MessageProcessor.MessageManager;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
-import com.advicetec.monitorAdapter.protocolconverter.MqttDigital;
 
+/**
+ * This class implements a singleton instance to manage a pool of Adapter 
+ * Handlers.
+ * It sets the configuration from the <code>.properties</code> file, and 
+ * initializes the Adapter Handlers.
+ * <p>
+ * The <code>run</code> method creates the pool of threads assigned to 
+ * AdapterHandlers.
+ * Later the <code>AdapterHandler</code> uses this object's queue as origin 
+ * queue and <code>MessageManager</code> as destination queue.
+ * 
+ * @see MessageManager
+ * @see AdapterHandler
+ */
 public class AdapterManager extends Manager implements Runnable
 {
 
@@ -16,7 +29,10 @@ public class AdapterManager extends Manager implements Runnable
 	private static AdapterManager instance=null;
 	private static ConfigurationManager confManager = null; 
 	private static MessageManager messManager = null;
-	
+	/**
+	 * Returns the singleton instance of this manager.
+	 * @return the singleton instance of this manager.
+	 */
 	public static AdapterManager getInstance()
 	{
 		if (instance==null)
@@ -25,6 +41,11 @@ public class AdapterManager extends Manager implements Runnable
 		return instance;
 	}
 	
+	/**
+	 * Sets the configuration from the .properties file.
+	 * Creates a singleton instance of AdapterManager and also sets the 
+	 * instance of MessageManager.
+	 */
 	private AdapterManager() 
 	{
 		super("AdapterManager");	

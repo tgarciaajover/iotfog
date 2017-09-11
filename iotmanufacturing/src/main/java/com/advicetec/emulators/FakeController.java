@@ -1,4 +1,4 @@
-package com.advicetec.monitorAdapter;
+package com.advicetec.emulators;
 
 import java.sql.Timestamp;
 
@@ -12,19 +12,18 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.internal.wire.MqttPublish;
 
-import com.advicetec.monitorAdapter.protocolconverter.MqttDigital;
+import com.advicetec.monitorAdapter.AdapterManager;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
 
 /**
- * This class emulates the controller behavior by pushing MQTT messages
+ * This class emulates the Controller behavior by pushing MQTT messages
  * into the MQTT queue.
  * This class subscribes to the MQTT broker to receive messages.
- * @author user
- *
+ * 
+ * @author advicetec
  */
 public class FakeController implements MqttCallback{
-
 	
 	static Logger logger = LogManager.getLogger(FakeController.class.getName());
 	
@@ -39,7 +38,6 @@ public class FakeController implements MqttCallback{
 	
 	public FakeController(AdapterManager adapter){
 		adapterManager = adapter;
-		
 		brokerUrl="";
 		userName="";
 		password="";

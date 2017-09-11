@@ -10,25 +10,38 @@ import org.apache.logging.log4j.Logger;
 import com.advicetec.mpmcqueue.PriorityQueue;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
-import com.advicetec.persistence.StatusStore;
 
 /**
+ * This class implements a queue handler for the Message Manager.
  * This class is in charge of process the semantic transformation and
  * create a list of Attributes which later will queue to the Event Processor.
  * 
- * @author user
- *
+ * It uses two queues, one to receive messages,  <i>samples</i>, in Unified
+ * Message format; then the message queued to be attended by a specialized 
+ * processor, e.g. a <code>SampleProcessor</code>.
+ * Also, it creates a future event if the processor requires it.
+ * 
+ * @author advicetec
+ * @see UnifiedMessage
+ * @see SampleMessage
+ * @see SampleProcessor
+ * @see DelayEvent
+ * 
  */
 public class MessageHandler implements Runnable
 {
 
 	static final Logger logger = LogManager.getLogger(MessageHandler.class.getName()); 
-	
+	/**
+	 * Origin queue in Unified Message format.
+	 */
 	private PriorityQueue fromQueue;
-	
-	// This queue is to put the events.
+
+	/**
+	 * queue that holds events.
+	 */
 	private BlockingQueue toQueue;
-	
+
 
 	public MessageHandler(PriorityQueue fromQueue, BlockingQueue toQueue) {
 		super();
@@ -37,53 +50,63 @@ public class MessageHandler implements Runnable
 	}
 
 	public void run() {
-
 		try {
-
-			while (true)
-			{
+			while (true){
 				Queueable obj = (Queueable) fromQueue.pop();
-				
+
+				// interprets the unified message
 				if (obj.getType() == QueueType.UNIFIED_MESSAGE)
 				{
 					UnifiedMessage um = (UnifiedMessage) obj.getContent();
-					
+
 					switch (um.getType())
 					{
-						case SAMPLE:
-							SampleMessage sample = (SampleMessage) um;
-							SampleProcessor processor = new SampleProcessor(sample);
-							List<DelayEvent> eventsToCreate = processor.process();	
-							for ( int i=0; i < eventsToCreate.size(); i++){
-								DelayEvent event = eventsToCreate.get(i);
-								logger.debug("Event key to search:" + event.getKey());
-								if (MessageManager.getInstance().existDelayEventType(event.getKey()) == false){
-									this.toQueue.put(event);
-									MessageManager.getInstance().addDelayEventType(event.getKey());
-								} else {
-									logger.debug("event of type: "+ event.getEvent().getEvntType().getName() + " already exists in the delayed queue - key:" + event.getKey() );
-								}
-							}							
-							break;
-												
-						case BROKER_MESSAGE:
-							break;
-						
-						case INVALID:
-							break;
-					}
+					// process a message of SAMPLE type
+					case SAMPLE:
+						SampleMessage sample = (SampleMessage) um;
+						SampleProcessor processor = new SampleProcessor(sample);
+						// get a list of delayed events related to this sample message.
+						List<DelayEvent> eventsToCreate = processor.process();	
+						// creation of delayed events
+						for ( int i=0; i < eventsToCreate.size(); i++){
+							DelayEvent event = eventsToCreate.get(i);
+							logger.debug("Event key to search:" + event.getKey());
+							// queues the event if  
+							// it does not previously exists
+							if (MessageManager.getInstance().
+									existDelayEventType(event.getKey()) == false){
+								this.toQueue.put(event);
+								MessageManager.getInstance().
+								addDelayEventType(event.getKey());
+							} else {
+								logger.debug("event of type: "
+										+ event.getEvent().getEvntType().getName() +
+										"already exists in the delayed queue - key:" + 
+										event.getKey() );
+							}
+						}							
+						break;
+
+					case BROKER_MESSAGE:
+						break;
+
+					case INVALID:
+						break;
 					
+					default:
+						logger.error("Undefined Message. Cannot be processed.");
+					}
+
 				}		
-				
+
 			}
 
 		} catch (InterruptedException e) {
+			logger.error("The MessageHandler process was interrupted!");
 			e.printStackTrace();
 		} catch (SQLException e){
-			System.err.println("Container error, we cannot continue");
+			logger.error("Container error, we cannot continue");
 		}
 
 	}
-	
-	
 }

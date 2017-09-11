@@ -5,11 +5,11 @@ import java.util.List;
 import com.advicetec.MessageProcessor.UnifiedMessage;
 
 /**
- * This interface groups 
- * @author user
+ * This interface standardizes the method <code>getUnifiedMessage()</code>
+ * 
+ * @author advicetec
  *
  */
 public interface ProtocolConverter {
-
 	public List<UnifiedMessage> getUnifiedMessage() throws Exception;
 }

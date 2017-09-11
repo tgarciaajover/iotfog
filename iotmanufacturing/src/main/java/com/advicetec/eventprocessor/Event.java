@@ -5,7 +5,8 @@ import java.util.UUID;
 /**
  * Abstract class for all events. 
  * 
- * An event is any action or process that have to be processed taking information registered in the system.
+ * An event is any action or process that have to be processed taking 
+ * information registered in the system.
  * Example of events are:
  * 		execute a behavior
  * 		aggregate information 

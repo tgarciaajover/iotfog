@@ -31,50 +31,79 @@ import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 import com.advicetec.persistence.StatusStore;
 import com.advicetec.language.ast.Symbol;
 
-
+/**
+ * This class implements the <code>Processor</code> interface, and its method 
+ * <code>process</code> that takes care of the sample which comes from a measured
+ * entity.
+ * 
+ * @author advicetec
+ * @see Processor
+ * @see {@link #process()}
+ */
 public class SampleProcessor implements Processor 
 {
-
-	static final Logger logger = LogManager.getLogger(SampleProcessor.class.getName()); 
+	static final Logger logger = LogManager.getLogger(SampleProcessor.class.getName());
+	/**
+	 * Sample Message to be processed.
+	 */
 	private SampleMessage sample;
+	/**
+	 * Interpreter to 
+	 */
 	private InterpreterSw interpreter;
-	
-	
+
+	/**
+	 * Constructor.
+	 * @param sample Message of a sample to be processed.
+	 */
 	public SampleProcessor(SampleMessage sample) {
 		super();
 		this.sample = sample;
 	}
 
 
-	@Override
+	/**
+	 * Finds the Measured Entity and Program Transformation related to this sample.
+	 * Then, the transformation syntax is checked, if there are not errors, 
+	 * sample values are interpreted and processed.
+	 * Finally, symbols, attributes, and attribute values update the 
+	 * <code>STATUS</code>.
+	 * If the Event is repetitive, it should be re scheduled at some point in
+	 * the future, a new DelayedEvent is created and added to the returning list.
+	 * 
+	 * Returns a list of delayed events related to this <code>SampleMessage</code>
+	 * 
+	 * @return list of delayed events related to this object.
+	 * @see SyntaxChecking
+	 */
 	public List<DelayEvent> process() throws SQLException 
 	{
-		
 		// Finds the measuring Entity involved. The string value is always not null
 		Integer measuringEntity = sample.getmEntity();
 		Integer mearuringDevice = sample.getmDevice().getId();
 		Integer ioPort = sample.getPort().getId();
-		
+		// Finds the program Transformation related to the sample.
 		String program = sample.getMeaningTransformation();
-		
+
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade entityFacade = entityManager.getFacadeOfEntityById(measuringEntity);
-		
+
 		ArrayList<DelayEvent> ret = new ArrayList<DelayEvent>();
-		
+
 		if (entityFacade == null){
 			logger.error("Measured Entity not found - id:"+ measuringEntity );
 		} else {
-		  
+
 			SyntaxChecking sintaxChecking = new SyntaxChecking();
 			try 
 			{
 				// First, we verify the transformation.
 				List<SyntaxError> errorList = sintaxChecking.process(program);
-				
+
 				// If no errors, then process.
 				if (errorList.size() == 0){ 
-					// Then, we read parameters from message and pass them to the interpreter as global variables.
+					// Then, we read parameters from message and pass them to 
+					// the interpreter as global variables.
 					List<InterpretedSignal> list = sample.getValues();
 					InterpreterSw interpreter = new InterpreterSw();
 					interpreter.process(program,measuringEntity,list);
@@ -82,16 +111,16 @@ public class SampleProcessor implements Processor
 					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap(), AttributeOrigin.TRANSFORMATION);
 					entityFacade.importAttributeValues(interpreter.getGlobalAttributes());
 					entityFacade.setCurrentState(interpreter.getState());
-					
+
 					Map<String, Symbol> symbols =  interpreter.getGlobalScope().getSymbolMap();
-					
+
 					logger.debug("Number of Symbols returned:" + String.valueOf(symbols.size()));
-					
+
 					for (String symbolId : symbols.keySet())
 					{
-						
+
 						Symbol symbol = symbols.get(symbolId);
-						
+
 						if (symbol instanceof  ArraySymbol){
 							logger.debug("Symbol:" + symbolId + "ArraySymbol");
 						} else if (symbol instanceof  AttributeSymbol){
@@ -113,32 +142,32 @@ public class SampleProcessor implements Processor
 						} else {
 							logger.debug("Symbol:" + symbolId + "Invalid symbol");
 						}
-						
+
 						if (symbol instanceof TimerSymbol)
 						{
-								
+
 							long duetime = ((TimerSymbol) symbol).getMilliseconds();
 							boolean repeated = ((TimerSymbol) symbol).getRepeated();
-							
+
 							String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
-							
-							
+
+
 							logger.debug("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
 							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity,mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
 							event.setRepeated(repeated);
 							event.setMilliseconds(duetime);
-							
+
 							DelayEvent dEvent = new DelayEvent(event,duetime);
 							ret.add(dEvent);
 						}
 					}
-					
+
 				}
 				else {
-					logger.error("the interpreter found errors numErrors:" + errorList.size());
+					logger.error("The interpreter found " + errorList.size() +  " errors.");
 				}
-							
+
 			} catch (Exception e1) {
 				logger.error("Error:" + e1.getMessage());
 				e1.printStackTrace();
@@ -146,23 +175,20 @@ public class SampleProcessor implements Processor
 		}
 		return ret;
 	}
-	
+
 	/**
-	 * This function get the behavior from list of names given as parameter. 
-	 * We expect to have machinegroup.machine.behaviorid as the name 
-	 * @param names
-	 * @return
+	 * Return the behavior from the given list of names given as parameter. 
+	 * 
+	 * @param names machinegroup.machine.behaviorid
+	 * @return the behavior name from the given list of names given as parameter.
 	 */
-	
 	public String getBehavior(List<String> names)
 	{
 		StringBuilder behaviorName = new StringBuilder();
 		for (String name : names){
 			behaviorName.append(name); 
 		}
-		
+
 		return behaviorName.toString();
 	}
-	
-	
 }

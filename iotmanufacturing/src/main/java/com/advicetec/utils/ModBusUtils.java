@@ -1,9 +1,9 @@
 package com.advicetec.utils;
-
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.eventprocessor.ModBusTcpEventType;
+
+import org.apache.logging.log4j.LogManager;
 
 /**
  * This class implements functions for MODBUS protocols.
@@ -35,7 +35,8 @@ public class ModBusUtils {
 	private static final String DIGITAL_WRITE = "DW";
 	
 	/**
-	 * Creates the label for a measuring entity. 
+	 * Creates the label for a measuring entity with the format 
+	 * <code>M-port-registerType-unitId-registerOffset-length</code>.
 	 * 
 	 * @param type Operation type.
 	 * @param port Port number.
