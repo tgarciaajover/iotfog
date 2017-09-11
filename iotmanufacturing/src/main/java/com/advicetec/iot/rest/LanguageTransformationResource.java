@@ -1,10 +1,14 @@
 package com.advicetec.iot.rest;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.restlet.data.Status;
+import org.restlet.ext.json.JsonRepresentation;
 import org.restlet.ext.xml.DomRepresentation;
 import org.restlet.representation.Representation;
 import org.restlet.resource.Put;
@@ -34,6 +38,45 @@ public class LanguageTransformationResource extends ServerResource
 	static Logger logger = LogManager.getLogger(LanguageTransformationResource.class.getName());  
 	
 	/**
+	 * Program to evaluate
+	 */
+	private String program = null;
+
+	/**
+	 * Measured entity where the behavior is going to be evaluated.
+	 */
+	private int measuredEntity = 0;;
+	
+	private void getParamsFromJson(Representation representation) {
+		
+		try {
+
+			// Get the Json representation of the ReasonCode.
+			JsonRepresentation jsonRepresentation = new JsonRepresentation(representation);
+
+			// Convert the Json representation to the Java representation.
+			JSONObject jsonobject = jsonRepresentation.getJsonObject();
+						
+			// gets the program to be evaluated 
+			this.program = jsonobject.getString("program");
+			
+			// gets the measured entity where the program should be executed
+			this.measuredEntity = Integer.parseInt(jsonobject.getString("measured_entity"));
+
+		} catch (JSONException e) {
+			logger.error("Error:" + e.getMessage() );
+			e.printStackTrace();
+		} catch (IOException e) {
+			logger.error("Error:" + e.getMessage() );
+			e.printStackTrace();
+		} catch (NumberFormatException e) {
+			logger.error("Error:" + e.getMessage() );
+		}
+		
+	}
+	
+	
+	/**
 	   * Returns the list of errors found.
 	   *  
 	   * @return A JSON array representation with the list of errors, or CLIENT_ERROR_BAD_REQUEST if an invalid call was made.
@@ -42,25 +85,23 @@ public class LanguageTransformationResource extends ServerResource
 	   * 
 	   * Shouldn't occur in practice but if it does, Restlet will set the Status code. 
 	   */
-	  @Put
+	  @Put("json")
 	  public Representation checkSyntax(Representation representation) throws Exception {
 		  
 		  logger.debug("En Syntax Cheching");  
 		  
 		  // Create an empty JSON representation.
-		  DomRepresentation input = new DomRepresentation(representation);
 		  DomRepresentation result = new DomRepresentation();
 
 		  SyntaxChecking sintaxChecking = new SyntaxChecking();
 		  		  
-		  // Gets the program text from the JSON representation.
-		  String program = sintaxChecking.getProgram(input.getDocument());
+		  getParamsFromJson(representation);		  
 		  
 		  logger.debug("text:" + program);
 		  
 		  if (program != null){
 
-			  List<SyntaxError> errorList = sintaxChecking.process(program);
+			  List<SyntaxError> errorList = sintaxChecking.process(this.program, new Integer(this.measuredEntity) );
 
 			  logger.debug("It finishes program checking. Built a JSON object with the list of errors");
 			  
@@ -81,6 +122,7 @@ public class LanguageTransformationResource extends ServerResource
 
 			  // Returns the representation. The Status code reports a valid processing.
 			  return result;
+		  
 		  } else {
 
 			  // The request language JSON has not a proper format, so we set the status to indicate this fact.

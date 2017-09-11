@@ -135,50 +135,17 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 				logger.debug("MeasuredEntityFacade found");
 				try{
 					
-					List<Event> events = new ArrayList<Event>();
+					List<AggregationEvent> events = new ArrayList<AggregationEvent>();
 					
 					ObjectMapper mapper = new ObjectMapper();
 					MeasuredEntityScheduledEvent event = mapper.readValue(jsonText, MeasuredEntityScheduledEvent.class);
-
-					// Creates the required schedule events. We create an event by each recurrence included.  
-					if (event.getScheduledEventType().compareTo("AG") == 0) {
-						
-						String lines[] = event.getRecurrence().split("\\r?\\n");
-						
-						for (String recurrence : lines) {
-							AggregationEvent aggEvent = new AggregationEvent(measuredEntityFacade.getEntity().getId(), measuredEntityFacade.getEntity().getType(), AggregationEventType.OEE, recurrence);
-							event.addReferencedEvent(aggEvent.getId());
-							events.add(aggEvent);
-						}
-					} else {
-						logger.error("The Schedule event given cannot be processed - Type given:" +  event.getScheduledEventType() );
-					}
-					
-					// Includes the events in the delayed queue
-					int numEvent = 0;
-					for (Event evt : events){
-						long seconds = ((AggregationEvent) evt).getSecondsToNextExecution();
-						
-						logger.info("Next Recurrence to occur in: " + seconds + " seconds");
-						
-						DelayEvent dEvent = new DelayEvent(evt,seconds*1000);
-						
-						try {
-							
-							EventManager.getInstance().getDelayedQueue().put(dEvent);
-							
-						} catch (InterruptedException e) {
-							logger.error(e.getMessage());
-							e.printStackTrace();
-						}
-						
-						numEvent = numEvent + 1;
-					}
 					
 					measuredEntityFacade.getEntity().putScheduledEvent( event );
 					
-					logger.debug("Number of scheduled events that have been read:" + numEvent );
-
+					events.addAll(measuredEntityFacade.getEntity().getScheduledEvents(event.getId()));
+					
+					measuredEntityManager.scheduleAggregationEvents(events);
+					
 					getResponse().setStatus(Status.SUCCESS_OK);
 					result = new JsonRepresentation("");
 
@@ -245,7 +212,7 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 					List<Event> events = new ArrayList<Event>();
 					
 					for (String recurrence : lines) {
-						AggregationEvent aggEvent = new AggregationEvent(measuredEntityFacade.getEntity().getId(), measuredEntityFacade.getEntity().getType(), AggregationEventType.OEE, recurrence);
+						AggregationEvent aggEvent = new AggregationEvent(measuredEntityFacade.getEntity().getId(), measuredEntityFacade.getEntity().getType(), AggregationEventType.OEE, recurrence, scheduleEvent.getDayTime());
 						events.add(aggEvent);
 					}
 					

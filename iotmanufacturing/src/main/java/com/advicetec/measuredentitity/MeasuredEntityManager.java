@@ -54,17 +54,6 @@ public class MeasuredEntityManager extends Configurable {
 		
 		entities = new ArrayList<MeasuredEntityFacade>();
 		
-		// String[] machines = properties.getProperty("machines").split(",");
-		
-		String initCapacity = properties.getProperty("cache_initialCapacity");
-		String maxSize = properties.getProperty("cache_maxSize");
-		
-		// creates an instance if it is not exists
-		MeasureAttributeValueCache.getInstance();
-		// sets cache parameters
-		MeasureAttributeValueCache.setCache(
-				Integer.parseInt(initCapacity), Integer.parseInt(maxSize));
-
 		String driver = properties.getProperty("driver");
 		String server = properties.getProperty("server");
 		String user = properties.getProperty("user");
@@ -110,36 +99,14 @@ public class MeasuredEntityManager extends Configurable {
 
 		
 		// Collect scheduled events for all measured entities.
-		List<Event> scheduledEvents = new ArrayList<Event>();
+		List<AggregationEvent> scheduledEvents = new ArrayList<AggregationEvent>();
 		for (Integer i : measuredEntities.getKeys()) {
 			MeasuredEntity m = (MeasuredEntity) measuredEntities.getObject(i);
-			scheduledEvents.addAll(measuredEntities.getScheduledEvents(m));
+			scheduledEvents.addAll(m.getScheduledEvents());
 		}
 		
-		logger.info("num scheduled events:" + scheduledEvents.size());
-
-		// Put to execute all scheduled events.
-		int numEvent = 0;
-		for (Event evt : scheduledEvents){
-			long seconds = ((AggregationEvent) evt).getSecondsToNextExecution();
-			
-			logger.info("Next Recurrence to occur in: " + seconds + " seconds");
-			
-			DelayEvent dEvent = new DelayEvent(evt,seconds*1000);
-			
-			try {
-				
-				EventManager.getInstance().getDelayedQueue().put(dEvent);
-				
-			} catch (InterruptedException e) {
-				logger.error(e.getMessage());
-				e.printStackTrace();
-			}
-			
-			numEvent = numEvent + 1;
-		}
+		scheduleAggregationEvents(scheduledEvents);
 		
-		logger.info("Number of scheduled events that have been read:" + numEvent );
 		
 	}
 
@@ -202,7 +169,7 @@ public class MeasuredEntityManager extends Configurable {
 		return null;
 	}
 
-	public MeasuredEntityContainer getMeasuredEntityContainer()
+	public synchronized MeasuredEntityContainer getMeasuredEntityContainer()
 	{
 		return this.measuredEntities;
 	}
@@ -267,4 +234,32 @@ public class MeasuredEntityManager extends Configurable {
 		return true;
 	}
 	
+	
+	public synchronized void scheduleAggregationEvents(List<AggregationEvent> scheduledEvents) {
+		
+		logger.info("scheduling # event:" + scheduledEvents.size());
+		
+		// Put to execute all scheduled events.
+		int numEvent = 0;
+		for (AggregationEvent evt : scheduledEvents){
+			long seconds =  evt.getSecondsToNextExecution();
+			
+			logger.debug("Next Recurrence to occur in: " + seconds + " seconds");
+			
+			DelayEvent dEvent = new DelayEvent(evt,seconds*1000);
+			
+			try {
+				
+				EventManager.getInstance().getDelayedQueue().put(dEvent);
+				
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+			
+			numEvent = numEvent + 1;
+		}
+
+		logger.info("Number of scheduled events: " + numEvent);
+	}
 }

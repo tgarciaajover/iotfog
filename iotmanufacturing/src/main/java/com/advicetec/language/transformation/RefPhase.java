@@ -39,14 +39,16 @@ public class RefPhase extends TransformationGrammarBaseListener
 	GlobalScope globals;
 	Scope currentScope;
 	private ArrayList<SyntaxError> compilationErrors;
+	MeasuredEntityFacade entityFacade;
 	
 	
-	RefPhase(TransformationGrammarParser parser, GlobalScope globals , ParseTreeProperty<Scope> scopes)
+	RefPhase(TransformationGrammarParser parser, GlobalScope globals , ParseTreeProperty<Scope> scopes, MeasuredEntityFacade entityFacade)
 	{
 		this.scopes = scopes;
 		this.globals = globals;
 		this.parser = parser; 
 		compilationErrors = new ArrayList<SyntaxError>();
+		this.entityFacade = entityFacade;
 	}
     
 	public void error(Token t, ParserRuleContext ctx, String msg) 
@@ -72,6 +74,33 @@ public class RefPhase extends TransformationGrammarBaseListener
 		logger.debug("refPhase enter program: ");
 		currentScope = globals;
 	}	
+	
+	public void exitImport_name(TransformationGrammarParser.Import_nameContext ctx)
+	{
+		
+		int dottedNameCount = ctx.dotted_names().getChildCount();
+		
+		List<String> dottedNames = new ArrayList<String>();
+		
+		for (int i=0; i < dottedNameCount; i++) {
+			TransformationGrammarParser.Dotted_nameContext name = ctx.dotted_names().dotted_name(i);
+			if (name != null) {
+				dottedNames.add(name.getText());
+			}
+		}		
+		
+		// Verify that there exists the behaviorName in the measured entity.
+		String namePackage = String.join(".", dottedNames);
+		if (entityFacade ==null) {
+			this.error(ctx.start, ctx, "Facade was not provided for package:" + namePackage);
+			
+		} else {
+			String behaviorString = entityFacade.getEntity().getBehaviorText(namePackage);
+			if (behaviorString == null) {
+				this.error(ctx.start, ctx, " No behavior with name:" + namePackage + " in the measuredEntity" + entityFacade.getEntity().getDescr() );
+			}
+		}
+	}
 	
 	public void exitAtrib_dec(TransformationGrammarParser.Atrib_decContext ctx)
 	{ 

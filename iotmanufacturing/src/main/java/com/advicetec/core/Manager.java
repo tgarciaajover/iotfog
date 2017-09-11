@@ -15,7 +15,7 @@ public abstract class Manager extends Configurable
 	 * priority queue to maintain objects to be processed. 
 	 * A priority queue has seven different queues where priority zero is the greatest priority and six is the last one. 
 	 */
-	protected PriorityQueue queue;
+	protected PriorityQueue<Queueable> queue;
 	
 	/**
 	 * Constructor for the class, it requires the file name of the properties file to read. 
@@ -23,7 +23,7 @@ public abstract class Manager extends Configurable
 	 */
 	public Manager(String filename) {
 		super(filename);
-		this.queue = new PriorityQueue(Queueable.class);
+		this.queue = new PriorityQueue<Queueable>(Queueable.class);
 	}
 	
 	/**
@@ -31,7 +31,7 @@ public abstract class Manager extends Configurable
 	 *   
 	 * @return priority queue reference 
 	 */
-	public PriorityQueue getQueue()
+	public PriorityQueue<Queueable> getQueue()
 	{
 		return this.queue;
 	}

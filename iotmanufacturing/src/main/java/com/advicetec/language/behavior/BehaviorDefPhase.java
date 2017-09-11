@@ -91,29 +91,40 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		// Current Scope is now function scope
 		currentScope = program;
 	}
-
-	public void enterDotted_name(BehaviorGrammarParser.Dotted_nameContext ctx)
+	
+	public void exitImport_name(BehaviorGrammarParser.Import_nameContext ctx) 
 	{ 
-		logger.debug("enterDotted_name");
-		List<TerminalNode> ids = ctx.ID();
-		String id;
-				
-		if (ctx.nickname == null){
-			id = ctx.getText();
-		} else {
-			id = ctx.nickname.getText();
-		}
-				
-		ImportSymbol symbol = new ImportSymbol(id); 
 		
-		for (int i=0; i < ids.size() ; i++ )
-		{
-			String idStr = ids.get(i).getText();
-			symbol.addId(idStr);
+		logger.debug("exit import name");
+		
+		int dottedNameCount = ctx.dotted_names().getChildCount();
+		
+		List<String> dottedNames = new ArrayList<String>();
+		String nickname = null;
+		
+		for (int i=0; i < dottedNameCount; i++) {
+			BehaviorGrammarParser.Dotted_nameContext name = ctx.dotted_names().dotted_name(i);
+			if (name != null) {
+				dottedNames.add(name.getText());
+				if (name.AS() != null) {
+					logger.info(name.AS().getText());
+					nickname = name.AS().getText(); 
+				}
+			}
+		}		
+		
+		ImportSymbol symbol = null;
+		if (nickname != null) {
+			symbol =  new ImportSymbol(nickname);
+		}
+		else {
+			symbol =  new ImportSymbol(String.join(".", dottedNames));
 		}
 		
 		currentScope.define(symbol);
+		
 	}
+
 
 	
 	public void exitProgramparameter(BehaviorGrammarParser.ProgramparameterContext ctx) 

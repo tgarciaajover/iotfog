@@ -13,10 +13,8 @@ import org.apache.logging.log4j.Logger;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.DisplayDevice;
 import com.advicetec.configuration.DisplayDeviceContainer;
-import com.advicetec.iot.rest.MonitoringDeviceResource;
 import com.advicetec.language.BehaviorGrammarBaseListener;
 import com.advicetec.language.BehaviorGrammarParser;
-import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
@@ -25,6 +23,7 @@ import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.VariableSymbol;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
 
 public class BehaviorRefPhase extends BehaviorGrammarBaseListener 
 {
@@ -36,14 +35,16 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 	GlobalScope globals;
 	Scope currentScope;
 	private ArrayList<SyntaxError> compilationErrors;
+	MeasuredEntityFacade entityFacade;
 
 
-	BehaviorRefPhase(BehaviorGrammarParser parser, GlobalScope globals , ParseTreeProperty<Scope> scopes)
+	BehaviorRefPhase(BehaviorGrammarParser parser, GlobalScope globals , ParseTreeProperty<Scope> scopes, MeasuredEntityFacade entityFacade)
 	{
 		this.scopes = scopes;
 		this.globals = globals;
 		this.parser = parser;
 		compilationErrors = new ArrayList<SyntaxError>();
+		this.entityFacade = entityFacade;
 	}
 
 
@@ -71,6 +72,34 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 		currentScope = globals;
 	}	
 
+	public void exitImport_name(BehaviorGrammarParser.Import_nameContext ctx)
+	{
+		
+		int dottedNameCount = ctx.dotted_names().getChildCount();
+		
+		List<String> dottedNames = new ArrayList<String>();
+		
+		for (int i=0; i < dottedNameCount; i++) {
+			BehaviorGrammarParser.Dotted_nameContext name = ctx.dotted_names().dotted_name(i);
+			if (name != null) {
+				dottedNames.add(name.getText());
+			}
+		}		
+		
+		// Verify that there exists the behaviorName in the measured entity.
+		String namePackage = String.join(".", dottedNames);
+		if (entityFacade ==null) {
+			this.error(ctx.start, ctx, " Facade was not provided for package:" + namePackage);
+			
+		} else {
+			String behaviorString = entityFacade.getEntity().getBehaviorText(namePackage);
+			if (behaviorString == null) {
+				this.error(ctx.start, ctx, " No behavior with name:" + namePackage + " in the measuredEntity" + entityFacade.getEntity().getDescr() );
+			}
+		}
+	}
+
+	
 	public void enterFunction_dec(BehaviorGrammarParser.Function_decContext ctx)
 	{
 		currentScope = scopes.get(ctx);		

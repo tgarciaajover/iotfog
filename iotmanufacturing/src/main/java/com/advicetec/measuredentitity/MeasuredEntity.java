@@ -32,6 +32,8 @@ import com.advicetec.core.AttributeValue;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
+import com.advicetec.eventprocessor.AggregationEvent;
+import com.advicetec.eventprocessor.AggregationEventType;
 
 /**
  * Represents the resulting the measuring process.
@@ -378,6 +380,57 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	public synchronized MeasuredEntityScheduledEvent getScheduledEvent (Integer id){
 		return this.scheduledEvents.get(id);
 	}
+	
+	public synchronized List<AggregationEvent> getScheduledEvents(){
+	
+		List<AggregationEvent> ret = new ArrayList<AggregationEvent>();
+				
+		for (Integer key: this.scheduledEvents.keySet()) {
+			MeasuredEntityScheduledEvent scheduledEvent = this.scheduledEvents.get(key);
+			// According to the type of event, we create the instance class.
+
+			if (scheduledEvent.getScheduledEventType().equals("AG")) {
+
+				String lines[] = scheduledEvent.getRecurrence().split("\\r?\\n");
+
+				for (String recurrence : lines) {
+					AggregationEvent aggEvent = new AggregationEvent(getId(), getType(), AggregationEventType.OEE, recurrence, scheduledEvent.getDayTime());
+					ret.add(aggEvent);
+				}
+			} else {
+				logger.error("The Schedule event given is not being handled - Type given:" +  scheduledEvent.getScheduledEventType() );
+			}
+		}
+		
+		return ret;
+
+	}
+
+	public synchronized List<AggregationEvent> getScheduledEvents(Integer id){
+		
+		List<AggregationEvent> ret = new ArrayList<AggregationEvent>();
+				
+		MeasuredEntityScheduledEvent scheduledEvent  = getScheduledEvent(id);
+		
+		if (scheduledEvent != null) {
+			// According to the type of event, we create the instance class.
+
+			if (scheduledEvent.getScheduledEventType().equals("AG")) {
+
+				String lines[] = scheduledEvent.getRecurrence().split("\\r?\\n");
+
+				for (String recurrence : lines) {
+					AggregationEvent aggEvent = new AggregationEvent(getId(), getType(), AggregationEventType.OEE, recurrence, scheduledEvent.getDayTime());
+					ret.add(aggEvent);
+				}
+			} else {
+				logger.error("The Schedule event given is not being handled - Type given:" +  scheduledEvent.getScheduledEventType() );
+			}
+		}
+		
+		return ret;
+	}
+
 	
 	public synchronized MeasuredEntityBehavior behaviorFromJSON(String json)
 	{

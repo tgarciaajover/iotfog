@@ -50,7 +50,7 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
 	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
 	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
-	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, create_date, last_updttm FROM setup_measuredentityscheduledevent WHERE measure_entity_id =";
+	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, day_time, create_date, last_updttm FROM setup_measuredentityscheduledevent WHERE measure_entity_id =";
 	static String sqlSelect7 = "SELECT count(*) from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'Q' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
 	
 	static String sqlMachineSelect = "SELECT * FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
@@ -146,7 +146,12 @@ public class MeasuredEntityContainer extends Container
 				}
 			}
 
-
+			// loop through the measured entities and load scheduled events
+			for( Integer id : this.configuationObjects.keySet()){
+				MeasuredEntity measuredEntity = (MeasuredEntity) this.configuationObjects.get(id);
+				loadScheduledEvents(measuredEntity);
+			}
+			
 			super.disconnect();
 
 
@@ -466,6 +471,53 @@ public class MeasuredEntityContainer extends Container
 		}
 	}
 
+	public void loadScheduledEvents(MeasuredEntity entity){
+		
+		try 
+		{
+
+			super.connect();
+			logger.debug("in get Scheduled Events:" );
+			
+			String sqlSelect = sqlSelect6 + String.valueOf(entity.getId());
+			logger.debug("sqlSelect machines :" + sqlSelect);
+			ResultSet rs6 = super.pst.executeQuery(sqlSelect);
+
+			while (rs6.next()) 
+			{
+				
+				String scheduleEventType   	= rs6.getString("scheduled_event_type");
+				String descr  				= rs6.getString("descr");  
+				String recurrences        	= rs6.getString("recurrences");
+				Time day_time				= rs6.getTime("day_time");
+				Timestamp createDate 		= rs6.getTimestamp("create_date");
+				
+				MeasuredEntityScheduledEvent measuredEvent = new MeasuredEntityScheduledEvent(entity.getId(), scheduleEventType );
+				measuredEvent.setDescr(descr);
+				measuredEvent.setRecurrence(recurrences);
+				measuredEvent.setDayTime(day_time.toLocalTime());
+				measuredEvent.setCreateDate(createDate.toLocalDateTime());
+								
+				entity.putScheduledEvent(measuredEvent);
+				
+			}
+
+			rs6.close();
+
+			super.disconnect();
+
+		} catch (ClassNotFoundException e){
+			String error = "Could not find the driver class - Error" + e.getMessage(); 
+			logger.error(error);
+			e.printStackTrace();
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+				
+	}
+	
+	
 	public MeasuredEntity fromJSON(String json) {
 
 		ObjectMapper mapper = new ObjectMapper();
@@ -548,68 +600,6 @@ public class MeasuredEntityContainer extends Container
 		return events;
 	}
 	
-	public List<Event> getScheduledEvents(MeasuredEntity entity){
-		
-		List<Event> events = new ArrayList<Event>();
-
-		try 
-		{
-
-			super.connect();
-			logger.debug("in get Scheduled Events:" );
-			
-			String sqlSelect = sqlSelect6 + String.valueOf(entity.getId());
-			logger.debug("sqlSelect machines :" + sqlSelect);
-			ResultSet rs6 = super.pst.executeQuery(sqlSelect);
-
-			while (rs6.next()) 
-			{
-				
-				String scheduleEventType   	= rs6.getString("scheduled_event_type");
-				String descr  				= rs6.getString("descr");  
-				String recurrences        	= rs6.getString("recurrences");
-				Timestamp createDate 		= rs6.getTimestamp("create_date");
-				
-				MeasuredEntityScheduledEvent measuredEvent = new MeasuredEntityScheduledEvent(entity.getId(), scheduleEventType );
-				measuredEvent.setDescr(descr);
-				measuredEvent.setRecurrence(recurrences);
-				measuredEvent.setCreateDate(createDate.toLocalDateTime());
-				
-				// According to the type of event, we create the instance class.
-				
-				if (scheduleEventType.compareTo("AG") == 0) {
-					
-					String lines[] = recurrences.split("\\r?\\n");
-					
-					for (String recurrence : lines) {
-						AggregationEvent aggEvent = new AggregationEvent(entity.getId(), entity.getType(), AggregationEventType.OEE, recurrence);
-						measuredEvent.addReferencedEvent(aggEvent.getId());
-						events.add(aggEvent);
-					}
-				} else {
-					logger.error("The Schedule event given is not being handled - Type given:" +  scheduleEventType );
-				}
-				
-				entity.putScheduledEvent(measuredEvent);
-				
-			}
-
-			rs6.close();
-
-			super.disconnect();
-
-		} catch (ClassNotFoundException e){
-			String error = "Could not find the driver class - Error" + e.getMessage(); 
-			logger.error(error);
-			e.printStackTrace();
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}
-		
-		return events;
-		
-	}
 	
 	public Integer getCanonicalObject(String company, String location, String plant, String machineGroup, String machineId) 
 	{

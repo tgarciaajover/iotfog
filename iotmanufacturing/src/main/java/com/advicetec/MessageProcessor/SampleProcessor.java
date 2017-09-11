@@ -70,7 +70,7 @@ public class SampleProcessor implements Processor
 			try 
 			{
 				// First, we verify the transformation.
-				List<SyntaxError> errorList = sintaxChecking.process(program);
+				List<SyntaxError> errorList = sintaxChecking.process(program, measuringEntity);
 				
 				// If no errors, then process.
 				if (errorList.size() == 0){ 

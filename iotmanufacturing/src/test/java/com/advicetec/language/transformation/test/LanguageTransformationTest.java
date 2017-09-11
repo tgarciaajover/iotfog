@@ -46,7 +46,7 @@ public class LanguageTransformationTest
 			byte[] encoded = Files.readAllBytes(Paths.get(program));
 			program2 = new String(encoded,"UTF8"); 
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
+			System.err.println(e1.getMessage());
 			e1.printStackTrace();
 		}
 		
@@ -66,7 +66,7 @@ public class LanguageTransformationTest
 		try 
 		{
 			// First, we verify the transformation.
-			List<SyntaxError> errorList = sintaxChecking.process(program2);
+			List<SyntaxError> errorList = sintaxChecking.process(program2, entityId);
 			
 			// If no errors, then process.
 			if (errorList.size() == 0){ 
@@ -112,7 +112,7 @@ public class LanguageTransformationTest
 		
 			
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			System.err.println(e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -125,10 +125,12 @@ public class LanguageTransformationTest
 
 		System.out.println("Syntax Check:" + program);
 		
+		Integer entityId = 1;
+		
 		SyntaxChecking interpreter = new SyntaxChecking();
 		try 
 		{
-			List<SyntaxError> errorList = interpreter.process(program);
+			List<SyntaxError> errorList = interpreter.process(program, entityId);
 			
 			assertEquals("the number of errors is not the expected value: 2",(int) 2, (int) errorList.size() );
 
@@ -138,7 +140,7 @@ public class LanguageTransformationTest
 	        }
 	        
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			System.err.println(e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -152,10 +154,12 @@ public class LanguageTransformationTest
 
 		System.out.println("Syntax Check:" + program);
 		
+		Integer entityId = 1;
+		
 		SyntaxChecking interpreter = new SyntaxChecking();
 		try 
 		{
-			List<SyntaxError> errorList = interpreter.process(program);
+			List<SyntaxError> errorList = interpreter.process(program, entityId);
 			
 			assertEquals("the number of errors is not the expected value: 2",(int) 2, (int) errorList.size() );
 
@@ -165,7 +169,7 @@ public class LanguageTransformationTest
 	        }
 	        
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			System.err.println(e.getMessage());
 			e.printStackTrace();
 		}
 	}

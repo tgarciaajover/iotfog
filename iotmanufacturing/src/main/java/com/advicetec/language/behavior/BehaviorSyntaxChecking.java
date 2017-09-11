@@ -18,6 +18,9 @@ import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.ast.CollectionErrorListener;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
+import com.advicetec.language.transformation.RefPhase;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
+import com.advicetec.measuredentitity.MeasuredEntityManager;
 
 public class BehaviorSyntaxChecking 
 {
@@ -51,7 +54,7 @@ public class BehaviorSyntaxChecking
 		return  getElementTextContent(doc, PROGRAM);		
 	}
     
-    public List<SyntaxError> process(String program) throws Exception 
+    public List<SyntaxError> process(String program, Integer measuredEntity ) throws Exception 
     {
     	List<SyntaxError> listErrors;
     	
@@ -85,8 +88,10 @@ public class BehaviorSyntaxChecking
         // listErrors = collector.getErrors();
         
         // create next phase and feed symbol table info from def to ref phase
-
-        BehaviorRefPhase ref = new BehaviorRefPhase(parser, def.getGlobalScope(), def.getScopes());
+        MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
+        MeasuredEntityFacade facade = entityManager.getFacadeOfEntityById(measuredEntity); 
+                
+        BehaviorRefPhase ref = new BehaviorRefPhase(parser, def.getGlobalScope(), def.getScopes(), facade);
         walker.walk(ref, tree);
         
         listErrors = collector.getErrors();

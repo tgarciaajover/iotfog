@@ -131,16 +131,26 @@ public class MeasureAttributeValueCache extends Configurable {
 		DB_PASS = properties.getProperty("password");
 		
 		// Cache data.
-		INIT_CAPACITY = Integer.parseInt(properties.getProperty("init_capacity"));
-		MAX_SIZE = Long.parseLong(properties.getProperty("max_size"));
+		if (properties.getProperty("init_capacity") != null)
+			INIT_CAPACITY = Integer.parseInt(properties.getProperty("init_capacity"));
+		
+		if (properties.getProperty("max_size") != null)
+			MAX_SIZE = Long.parseLong(properties.getProperty("max_size"));
+		
 		// time to store at database
-		WRITE_TIME = Long.parseLong(properties.getProperty("write_time"));
+		if (properties.getProperty("write_time") != null)
+			WRITE_TIME = Long.parseLong(properties.getProperty("write_time"));
 		// time to delete an entry from the cache once it is store.
-		DELETE_TIME = Long.parseLong(properties.getProperty("delete_time"));
+		
+		if (properties.getProperty("delete_time") != null)
+			DELETE_TIME = Long.parseLong(properties.getProperty("delete_time"));
 		
 		// Thread related information to store data into the database.
-		INSERT_THREADS = Integer.parseInt(properties.getProperty("insert_threads"));
-		BATCH_ROWS = Integer.parseInt(properties.getProperty("batch_rows"));
+		if (properties.getProperty("insert_threads") != null)
+			INSERT_THREADS = Integer.parseInt(properties.getProperty("insert_threads"));
+		
+		if (properties.getProperty("batch_rows") != null)
+			BATCH_ROWS = Integer.parseInt(properties.getProperty("batch_rows"));
 		
 		logger.info("Write time:" + WRITE_TIME + "Delete Time:" + DELETE_TIME);
 		

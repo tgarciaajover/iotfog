@@ -1,5 +1,7 @@
 package com.advicetec.aggregation.oee;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -51,25 +53,50 @@ public class OEEAggregationContainer extends Container
 	 */
 	public void dbInsert(List<OverallEquipmentEffectiveness> list)
 	{
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+
 		try{
-			super.connect_prepared(OverallEquipmentEffectiveness.SQL_Insert);
-			
+
+			Class.forName(getDriver());
+		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB.setAutoCommit(false);
+
+		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_Insert);
+		    			
 			for (OverallEquipmentEffectiveness oee : list){
-				oee.dbInsert((PreparedStatement) this.pst);
+				oee.dbInsert(pstDB);
 			}
 	
-	    	int ret[] = pst.executeBatch();
-	    	super.commit();
-	    	logger.debug("Number of commands executed by insert: " + ret.length);
-			super.disconnect();
+	    	int ret[] = pstDB.executeBatch();
+	    	connDB.commit();
+	    	logger.debug("Number of OEE inserted: " + ret.length);
 
-		} catch (ClassNotFoundException e){
+		} catch (ClassNotFoundException e) {
 			String error = "Could not find the driver class - Error: " + e.getMessage(); 
 			logger.error(error);
 			e.printStackTrace();
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
+		} finally {
+			if(pstDB!=null){
+				try{
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null){
+				try	{
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 	
@@ -78,23 +105,52 @@ public class OEEAggregationContainer extends Container
 	 * @param list: list of OEE to delete. 
 	 */
 	public void dbDelete(List<OverallEquipmentEffectiveness> list){
-		try{
-			super.connect_prepared(OverallEquipmentEffectiveness.SQL_Delete);
+
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+
+		try {
+
+			Class.forName(getDriver());
+		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB.setAutoCommit(false);
+			
+		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_Delete);
+			
 			for (OverallEquipmentEffectiveness oee : list){
-				oee.dbDelete((PreparedStatement) this.pst);
+				oee.dbDelete(pstDB);
 			}
-			int ret[] = pst.executeBatch();
-	    	super.commit();
-	    	logger.debug("Number of commands executed by Delete: " + ret.length);
-			super.disconnect();
-		} catch (ClassNotFoundException e){
+			int ret[] = pstDB.executeBatch();
+			connDB.commit();
+	    	logger.debug("Number of OEE deleted: " + ret.length);
+
+		} catch (ClassNotFoundException e) {
 			String error = "Could not find the driver class - Error: " + e.getMessage(); 
 			logger.error(error);
 			e.printStackTrace();
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
+		} finally {
+			if(pstDB!=null){
+				try{
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null){
+				try	{
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
 		}
+
 	}
 	
 	/**
@@ -107,7 +163,7 @@ public class OEEAggregationContainer extends Container
 	 * @param parQueryTo: End Dttm for the intervals
 	 * @return: List of predefined intervals for the hour.
 	 */
-	public synchronized List<OverallEquipmentEffectiveness> intervalsByHour(
+	public List<OverallEquipmentEffectiveness> intervalsByHour(
 			Integer owner,MeasuredEntityType ownerType, 
 			String periodKey, String parQueryFrom, String parQueryTo) {
 		
@@ -126,11 +182,19 @@ public class OEEAggregationContainer extends Container
 		double qtyDefective = 0;
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-				
+
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+		
 		try 
 		{
 			
-			super.connect_prepared(OverallEquipmentEffectiveness.SQL_LT_HOUR);
+
+		    Class.forName(getDriver());
+		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB.setAutoCommit(false);
+			
+		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_LT_HOUR);
 
 			int lineIndx = parQueryFrom.lastIndexOf("-");
 			parQueryFrom = parQueryFrom.substring(0, lineIndx)+" "+parQueryFrom.substring(lineIndx + 1);
@@ -140,26 +204,26 @@ public class OEEAggregationContainer extends Container
 			
 			logger.debug(" from:" + parQueryFrom + " to:" + parQueryTo);
 			
-			((PreparedStatement)super.pst).setInt(1, owner);
-			((PreparedStatement)super.pst).setInt(2, ownerType.getValue());      // owner_type
-			((PreparedStatement)super.pst).setTimestamp(3, Timestamp.valueOf(parQueryFrom));   		// period key
+			pstDB.setInt(1, owner);
+			pstDB.setInt(2, ownerType.getValue());      // owner_type
+			pstDB.setTimestamp(3, Timestamp.valueOf(parQueryFrom));   		// period key
 			
-			((PreparedStatement)super.pst).setTimestamp(4, Timestamp.valueOf(parQueryTo));
-			((PreparedStatement)super.pst).setInt(5, owner);
-			((PreparedStatement)super.pst).setInt(6, ownerType.getValue());
-			((PreparedStatement)super.pst).setTimestamp(7, Timestamp.valueOf(parQueryFrom));   		
-			((PreparedStatement)super.pst).setTimestamp(8, Timestamp.valueOf(parQueryTo));
-			((PreparedStatement)super.pst).setTimestamp(9, Timestamp.valueOf(parQueryTo));
-			((PreparedStatement)super.pst).setInt(10, owner);
-			((PreparedStatement)super.pst).setInt(11, ownerType.getValue());
-			((PreparedStatement)super.pst).setTimestamp(12, Timestamp.valueOf(parQueryFrom));   		
-			((PreparedStatement)super.pst).setTimestamp(13, Timestamp.valueOf(parQueryFrom));
-			((PreparedStatement)super.pst).setTimestamp(14, Timestamp.valueOf(parQueryTo));
+			pstDB.setTimestamp(4, Timestamp.valueOf(parQueryTo));
+			pstDB.setInt(5, owner);
+			pstDB.setInt(6, ownerType.getValue());
+			pstDB.setTimestamp(7, Timestamp.valueOf(parQueryFrom));   		
+			pstDB.setTimestamp(8, Timestamp.valueOf(parQueryTo));
+			pstDB.setTimestamp(9, Timestamp.valueOf(parQueryTo));
+			pstDB.setInt(10, owner);
+			pstDB.setInt(11, ownerType.getValue());
+			pstDB.setTimestamp(12, Timestamp.valueOf(parQueryFrom));   		
+			pstDB.setTimestamp(13, Timestamp.valueOf(parQueryFrom));
+			pstDB.setTimestamp(14, Timestamp.valueOf(parQueryTo));
 			
 			ConfigurationManager manager = ConfigurationManager.getInstance();
 			ReasonCodeContainer reasonCont =  manager.getReasonCodeContainer();
 
-			ResultSet rs = ((PreparedStatement)super.pst).executeQuery();
+			ResultSet rs = pstDB.executeQuery();
 
 			while (rs.next()) {
 								
@@ -211,7 +275,7 @@ public class OEEAggregationContainer extends Container
 				if (state == MeasuringState.OPERATING) {
 					
 					actualProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.SECONDS);
-					logger.info("from date:" + fromDatetime.format(formatter) + " to date:" + toDatetime.format(formatter) + " act_prod_time:" + actualProductiveTime);
+					logger.debug("from date:" + fromDatetime.format(formatter) + " to date:" + toDatetime.format(formatter) + " act_prod_time:" + actualProductiveTime);
 				
 				} else if (state == MeasuringState.SCHEDULEDOWN)  {
 					
@@ -233,7 +297,7 @@ public class OEEAggregationContainer extends Container
 					logger.error("Invalid measuring state" + state.getName());
 				}
 				
-				logger.info("PeriodProductiveTime:" + periodProductiveTime + " actualproductivetime:" + 
+				logger.debug("PeriodProductiveTime:" + periodProductiveTime + " actualproductivetime:" + 
 						actualProductiveTime +" productiveTime:" + productiveTime + " reducedTime:" + reducedTime);
 
 				
@@ -252,8 +316,6 @@ public class OEEAggregationContainer extends Container
 					qtyDefective += (rowQtyDefective * percentage);
 				}
 			}
-
-			super.disconnect();
 			
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
@@ -262,6 +324,26 @@ public class OEEAggregationContainer extends Container
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}			
+
+		finally{
+			if(pstDB!=null){
+				try{
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null){
+				try	{
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
 
 		
 		LocalDateTime from = Timestamp.valueOf(parQueryFrom).toLocalDateTime();
@@ -273,7 +355,7 @@ public class OEEAggregationContainer extends Container
 		eff.setQtyProduced(qtyProduced);
 		eff.setQtyDefective(qtyDefective);
 		list.add(eff);
-		logger.info("The oee calculated is: " +  eff.toString());
+		logger.debug("The oee calculated is: " +  eff.toString());
 		return list;
 	}
 
@@ -293,13 +375,23 @@ public class OEEAggregationContainer extends Container
 		
 		List<OverallEquipmentEffectiveness> list = new ArrayList<OverallEquipmentEffectiveness>();
 
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+
 		try 
 		{
+
+		    Class.forName(getDriver());
+		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB.setAutoCommit(false);
+			
 			if (getDriver().compareTo("org.postgresql.Driver") == 0){
-				super.connect_prepared(OverallEquipmentEffectiveness.SQL_LIKE_POSTGRES);
+
+				pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_LIKE_POSTGRES);
 				
 			} else if (getDriver().compareTo("com.microsoft.sqlserver.jdbc.SQLServerDriver") == 0){
-				super.connect_prepared(OverallEquipmentEffectiveness.SQL_LIKE_SQLSERVER);
+
+				pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_LIKE_SQLSERVER);
 				
 			} else {
 				logger.error("Unrecognized driver, we cannot decide the appropiate SQL Statment for driver given");
@@ -307,11 +399,11 @@ public class OEEAggregationContainer extends Container
 			}
 			
 			
-			((PreparedStatement)super.pst).setInt(1, owner);
-			((PreparedStatement)super.pst).setInt(2, ownerType.getValue());      // owner_type
-			((PreparedStatement)super.pst).setString(3, parQueryFrom );   		// period key
+			pstDB.setInt(1, owner);
+			pstDB.setInt(2, ownerType.getValue());      // owner_type
+			pstDB.setString(3, parQueryFrom );   		// period key
 
-			ResultSet rs = ((PreparedStatement)super.pst).executeQuery();
+			ResultSet rs = pstDB.executeQuery();
 
 			while (rs.next()) {
 
@@ -334,8 +426,6 @@ public class OEEAggregationContainer extends Container
 					logger.error("Cannot create the period with key:"+periodKey);
 				}
 			}
-
-			super.disconnect();
 			
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
@@ -344,6 +434,26 @@ public class OEEAggregationContainer extends Container
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}			
+
+		finally{
+			if(pstDB!=null){
+				try{
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null){
+				try	{
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
 
 		return list;
 	}
@@ -356,25 +466,31 @@ public class OEEAggregationContainer extends Container
 	 * @param predefinedPeriod: predefined period prefix to find.
 	 * @return: True if the database contains the predefined period key, false otherwise.  
 	 */
-	public synchronized boolean existPeriodOEE(Integer owner, MeasuredEntityType ownerType, PredefinedPeriod predefinedPeriod) 
+	public boolean existPeriodOEE(Integer owner, MeasuredEntityType ownerType, PredefinedPeriod predefinedPeriod) 
 	{
 
 		boolean ret = false;
+
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+		
 		try 
 		{
-
-	    	super.connect_prepared(OverallEquipmentEffectiveness.SQL_EXISTS);
+		    Class.forName(getDriver());
+		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB.setAutoCommit(false);
+		    
+		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_EXISTS);
 	    	
-			((PreparedStatement)super.pst).setInt(1, owner);
-			((PreparedStatement)super.pst).setInt(2, ownerType.getValue());          		// owner_type
-			((PreparedStatement)super.pst).setString(3, predefinedPeriod.getKey() );   			// period key
+		    pstDB.setInt(1, owner);
+		    pstDB.setInt(2, ownerType.getValue());          		// owner_type
+		    pstDB.setString(3, predefinedPeriod.getKey() );   			// period key
 
-			ResultSet rs = ((PreparedStatement)super.pst).executeQuery();
+			ResultSet rs = pstDB.executeQuery();
 
 			while (rs.next()) {
 				ret = true;
 			}
-			super.disconnect();
 
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
@@ -382,7 +498,28 @@ public class OEEAggregationContainer extends Container
 		} catch (ClassNotFoundException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		}			
+		}		
+		
+		finally {
+			if(pstDB!=null){
+				try{
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null){
+				try	{
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+
 		return ret;
 	}
 	
@@ -396,6 +533,7 @@ public class OEEAggregationContainer extends Container
 	public List<OverallEquipmentEffectiveness> getOEEList(Integer owner, 
 			MeasuredEntityType ownerType, PredefinedPeriod predefinedPeriod) 
 	{
+				
 		String parQueryFrom = "";
 		String parQueryTo = "";
 		if(predefinedPeriod.getType() == PredefinedPeriodType.HOUR){
@@ -430,20 +568,27 @@ public class OEEAggregationContainer extends Container
 	 * @param predefinedPeriod: : predefined period prefix to find.
 	 * @return The OEE object which predefined period was given as parameter
 	 */
-	public synchronized OverallEquipmentEffectiveness getPeriodOEE(Integer owner, 
+	public OverallEquipmentEffectiveness getPeriodOEE(Integer owner, 
 			MeasuredEntityType ownerType, PredefinedPeriod predefinedPeriod) {
 		OverallEquipmentEffectiveness eff = null;
+
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+
 		try 
 		{
-			
-			super.connect_prepared(OverallEquipmentEffectiveness.SQL_Select);
-			
-			((PreparedStatement)super.pst).setInt(1, owner);
-			((PreparedStatement)super.pst).setInt(2, ownerType.getValue());          		// owner_type
-			((PreparedStatement)super.pst).setString(3, predefinedPeriod.getKey() );   		// period key
 
+		    Class.forName(getDriver());
+		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB.setAutoCommit(false);
+		    
+		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_Select);
+			
+		    pstDB.setInt(1, owner);
+		    pstDB.setInt(2, ownerType.getValue());          		// owner_type
+		    pstDB.setString(3, predefinedPeriod.getKey() );   		// period key
 
-			ResultSet rs = ((PreparedStatement)super.pst).executeQuery();
+			ResultSet rs = pstDB.executeQuery();
 
 			while (rs.next()) {
 
@@ -459,7 +604,6 @@ public class OEEAggregationContainer extends Container
 				eff.setQtyDefective(qtyDefective);
 				break;
 			}
-			super.disconnect();
 			
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
@@ -467,7 +611,26 @@ public class OEEAggregationContainer extends Container
 		} catch (ClassNotFoundException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
+		} finally {
+			if(pstDB!=null){
+				try{
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null){
+				try	{
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
 		}
+		
 		return eff;
 	}
 }

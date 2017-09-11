@@ -81,17 +81,6 @@ public class ProductionOrderManager extends Configurable {
 		
 		pOrders = new HashMap<Integer, ProductionOrderFacade>();
 		
-		// String[] machines = properties.getProperty("machines").split(",");
-		
-		String initCapacity = properties.getProperty("cache_initialCapacity");
-		String maxSize = properties.getProperty("cache_maxSize");
-		
-		// creates an instance if it is not exists
-		MeasureAttributeValueCache.getInstance();
-		// sets cache parameters
-		MeasureAttributeValueCache.setCache(
-				Integer.parseInt(initCapacity), Integer.parseInt(maxSize));
-
 		String driver = properties.getProperty("driver");
 		String server = properties.getProperty("server");
 		String user = properties.getProperty("user");
@@ -109,7 +98,7 @@ public class ProductionOrderManager extends Configurable {
 	 * @return ProductionOrderManager instance
 	 * @throws SQLException - This exception is returned when we can not establish the connection to the database.
 	 */
-	public static ProductionOrderManager getInstance() throws SQLException{
+	public synchronized static ProductionOrderManager getInstance() throws SQLException{
 		if(instance == null){
 			instance = new ProductionOrderManager();
 		}
@@ -121,7 +110,7 @@ public class ProductionOrderManager extends Configurable {
 	 * @param production order object to test.
 	 * @return TRUE if the production order already exist into the list, FALSE otherwise.
 	 */
-	private boolean pOrderAlreadyExists(final ProductionOrder pOrder){
+	private synchronized boolean pOrderAlreadyExists(final ProductionOrder pOrder){
 		if (pOrder != null) {
 			return this.pOrders.containsKey(pOrder.getId());
 		} else {
@@ -135,7 +124,7 @@ public class ProductionOrderManager extends Configurable {
 	 * @param entity The new production order to control.
 	 * @return true if it could insert the production order, false otherwise.
 	 */
-	public boolean addProductionOrder(ProductionOrder pOrder){
+	public synchronized boolean addProductionOrder(ProductionOrder pOrder){
 		if(pOrderAlreadyExists(pOrder)){
 			return false;
 		}
@@ -153,14 +142,14 @@ public class ProductionOrderManager extends Configurable {
 	 * @param pOrderId The production order id to search.
 	 * @return NULL if there is not a production order with the given id.
 	 */
-	public ProductionOrderFacade getFacadeOfPOrderById(final Integer pOrderId){
+	public synchronized ProductionOrderFacade getFacadeOfPOrderById(final Integer pOrderId){
 		return this.pOrders.get(pOrderId);
 	}
 
 	/**
 	 * @return Return a reference to the production order container.
 	 */
-	public ProductionOrderContainer getProductionOrderContainer()
+	public synchronized ProductionOrderContainer getProductionOrderContainer()
 	{
 		return this.productionOrders;
 	}
@@ -170,7 +159,7 @@ public class ProductionOrderManager extends Configurable {
 	 * 
 	 * @param idProduccion Id of the production order to remove.
 	 */
-	public void removeFacade(Integer idProduccion)
+	public synchronized void removeFacade(Integer idProduccion)
 	{
 		
     	ProductionOrderFacade productionOrderFacade = this.pOrders.remove(idProduccion);
@@ -195,7 +184,7 @@ public class ProductionOrderManager extends Configurable {
 	 * 
 	 * @return Returns the identifier of a production order from its canonical data
 	 */
-	public Integer getProductionOrderId(String company, String location, String plant, String machineGroup,
+	public synchronized Integer getProductionOrderId(String company, String location, String plant, String machineGroup,
 			String machineId, int year, int month, String productionOrder) {
 		return  this.productionOrders.getCanonicalObject(company, location, plant, machineGroup, machineId, year, month, productionOrder);
 	}

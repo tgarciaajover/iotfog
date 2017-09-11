@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseListener;
 import com.advicetec.language.TransformationGrammarParser;
+import com.advicetec.language.TransformationGrammarParser.Dotted_nameContext;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.DisplaySymbol;
 import com.advicetec.language.ast.GlobalScope;
@@ -27,6 +28,7 @@ import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.language.behavior.BehaviorDefPhase;
 import com.advicetec.language.transformation.SyntaxChecking;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
 
 import org.antlr.v4.runtime.Token;
 import org.apache.logging.log4j.LogManager;
@@ -86,27 +88,37 @@ public class DefPhase extends TransformationGrammarBaseListener
 
 	}
 		
-	public void enterDotted_name(TransformationGrammarParser.Dotted_nameContext ctx)
+	public void exitImport_name(TransformationGrammarParser.Import_nameContext ctx) 
 	{ 
-		logger.debug("enterDotted_name");
-		List<TerminalNode> ids = ctx.ID();
-		String id;
-				
-		if (ctx.nickname == null){
-			id = ctx.getText();
-		} else {
-			id = ctx.nickname.getText();
-		}
-				
-		ImportSymbol symbol = new ImportSymbol(id); 
 		
-		for (int i=0; i < ids.size() ; i++ )
-		{
-			String idStr = ids.get(i).getText();
-			symbol.addId(idStr);
+		logger.debug("exit import name");
+		
+		int dottedNameCount = ctx.dotted_names().getChildCount();
+		
+		List<String> dottedNames = new ArrayList<String>();
+		String nickname = null;
+		
+		for (int i=0; i < dottedNameCount; i++) {
+			TransformationGrammarParser.Dotted_nameContext name = ctx.dotted_names().dotted_name(i);
+			if (name != null) {
+				dottedNames.add(name.getText());
+				if (name.AS() != null) {
+					logger.info(name.AS().getText());
+					nickname = name.AS().getText(); 
+				}
+			}
+		}		
+		
+		ImportSymbol symbol = null;
+		if (nickname != null) {
+			symbol =  new ImportSymbol(nickname);
+		}
+		else {
+			symbol =  new ImportSymbol(String.join(".", dottedNames));
 		}
 		
 		currentScope.define(symbol);
+		
 	}
 	
 	public void saveScope(ParserRuleContext ctx, Scope s)
