@@ -4,11 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,7 +15,6 @@ import com.advicetec.configuration.DisplayDevice;
 import com.advicetec.configuration.DisplayDeviceContainer;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseListener;
-import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
@@ -25,23 +22,52 @@ import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
-import com.advicetec.language.behavior.BehaviorRefPhase;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
-import com.advicetec.measuredentitity.MeasuredEntityManager;
 
 public class RefPhase extends TransformationGrammarBaseListener 
 {
 
 	static Logger logger = LogManager.getLogger(RefPhase.class.getName());
 	
+	/**
+	 * Parser for the transformation grammar.
+	 */
 	TransformationGrammarParser parser = null;
-	ParseTreeProperty<Scope> scopes;
+	
+	/**
+	 * Global scope, which is filled by the parser
+	 */
 	GlobalScope globals;
+
+	/**
+	 * The definition for the rest of scopes
+	 */	
+	ParseTreeProperty<Scope> scopes;
+	
+	/**
+	 * Reference to the current scope.
+	 */
 	Scope currentScope;
+
+	/**
+	 * List of errors compiled during syntax checking
+	 */
 	private ArrayList<SyntaxError> compilationErrors;
+
+	/**
+	 * Measure entity facade where the behavior is being checked.
+	 */
 	MeasuredEntityFacade entityFacade;
 	
 	
+	/**
+	 * Constructor for the class 
+	 * 
+	 * @param parser   		transformation grammar parser.
+	 * @param globals		Global scope previously calculated in the definition phase
+	 * @param scopes		Reference to the rest of scopes previously calculated in the definition phase
+	 * @param entityFacade	Measure entity facade where the behavior is being checked.
+	 */
 	RefPhase(TransformationGrammarParser parser, GlobalScope globals , ParseTreeProperty<Scope> scopes, MeasuredEntityFacade entityFacade)
 	{
 		this.scopes = scopes;
@@ -51,6 +77,13 @@ public class RefPhase extends TransformationGrammarBaseListener
 		this.entityFacade = entityFacade;
 	}
     
+	/**
+	 * Register an error in the list of errors 
+	 * 
+	 * @param t		token where the error occurs
+	 * @param ctx	context where the error occurs
+	 * @param msg	message error
+	 */
 	public void error(Token t, ParserRuleContext ctx, String msg) 
     {
     	String error;
@@ -64,17 +97,28 @@ public class RefPhase extends TransformationGrammarBaseListener
     	this.compilationErrors.add(e);
     }
 	
+	/**
+	 * Gets the list of errors
+	 *  
+	 * @return	error list
+	 */
 	public List<SyntaxError> getErrors()
 	{
 		return this.compilationErrors;
 	}
 	
+	/**
+	 * Establishes the current scope as the global scope
+	 */
 	public void enterProgram(TransformationGrammarParser.ProgramContext ctx)
 	{
 		logger.debug("refPhase enter program: ");
 		currentScope = globals;
 	}	
 	
+	/**
+	 * Verifies that the behavior imported is defined in the facade.
+	 */
 	public void exitImport_name(TransformationGrammarParser.Import_nameContext ctx)
 	{
 		
@@ -102,6 +146,9 @@ public class RefPhase extends TransformationGrammarBaseListener
 		}
 	}
 	
+	/**
+	 * Verifies that the attribute is registered as a symbol
+	 */
 	public void exitAtrib_dec(TransformationGrammarParser.Atrib_decContext ctx)
 	{ 
 
@@ -120,6 +167,9 @@ public class RefPhase extends TransformationGrammarBaseListener
 		}
 	}
 		
+	/**
+	 * Verifies that an import symbol is defined for the behavior being referenced by the timer 
+	 */
 	public void enterTimer(TransformationGrammarParser.TimerContext ctx) 
 	{ 
 		if (ctx.pack == null){
@@ -148,6 +198,9 @@ public class RefPhase extends TransformationGrammarBaseListener
 		}
 	}
 	
+	/**
+	 * Verifies that an import symbol is defined for the behavior being referenced by the repeat 
+	 */
 	public void enterRepeat(TransformationGrammarParser.RepeatContext ctx) 
 	{ 
 		if (ctx.pack == null){
@@ -176,6 +229,9 @@ public class RefPhase extends TransformationGrammarBaseListener
 		}
 	}
 	
+	/**
+	 * Verifies that a display symbol is defined for the display being referenced 
+	 */
 	public void enterDisplay(TransformationGrammarParser.DisplayContext ctx) 
 	{
         ConfigurationManager manager = ConfigurationManager.getInstance();
@@ -190,6 +246,9 @@ public class RefPhase extends TransformationGrammarBaseListener
         }
 	}
 	
+	/**
+	 * Sets the current scope as the scope of the block. 
+	 */
 	public void enterBlock(TransformationGrammarParser.BlockContext ctx)
 	{
 		logger.debug("refPhase enter Block: ");
@@ -197,6 +256,9 @@ public class RefPhase extends TransformationGrammarBaseListener
 		currentScope = scopes.get(ctx); 
 	}
 	
+	/**
+	 * Sets the current scope as the parent scope of the block. 
+	 */
 	public void exitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{
 		logger.debug("refPhase exist Block: ");
@@ -205,6 +267,9 @@ public class RefPhase extends TransformationGrammarBaseListener
 
     }
 	
+	/**
+	 * Verifies that the variable has been defined 
+	 */
 	public void exitVar(TransformationGrammarParser.VarContext ctx) 
 	{ 
 				
@@ -225,6 +290,9 @@ public class RefPhase extends TransformationGrammarBaseListener
 		}
 	}
 	
+	/**
+	 * Verifies that the referenced symbol on the assignment has been defined 
+	 */
 	public void exitAssign(TransformationGrammarParser.AssignContext ctx) 
 	{ 
 		String id = ctx.ID().getText();

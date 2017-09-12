@@ -39,6 +39,15 @@ import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuringState;
 
+/**
+ * This class corresponds to the interpreter for the behavior language. 
+ * 
+ * The interpreter first makes a definition phase. In this phase all the symbols are defined in their corresponding scopes. 
+ * Afterwards, it performs the interpretation phase where the values for the symbols are calculated.  
+ *   
+ * @author Andres Marentes
+ *
+ */
 public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 {
 
@@ -300,7 +309,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}	
 
 	/**
-	 * Interpret an attribute declaration.
+	 * Interpret an assign attribute declaration.
 	 * 
 	 * It does:
 	 * 		Look for the attribute symbol in the symbol table
@@ -795,7 +804,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**  
-	 * This method convert from a type to another type.
+	 * This method converts from a symbol's type to another type.
 	 * 
 	 * If the conversion cannot be performed, then it triggers a RunTimeException.
 	 */
@@ -1077,7 +1086,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a parentheses expression
+	 * Visits a parentheses expression
 	 * 
 	 * @return the ASTNode representing the evaluation of the expression inside the parentheses.
 	 */
@@ -1089,7 +1098,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a multiplication, division, or module expression
+	 * Visits a multiplication, division, or module expression
 	 * 
 	 * @return the ASTNode representing the evaluation of the expression
 	 */
@@ -1154,7 +1163,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a add or subtraction expression
+	 * Visits an add or subtraction expression
 	 * 
 	 * @return the ASTNode representing the evaluation of the expression
 	 */
@@ -1209,7 +1218,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a exponent expression
+	 * Visits an exponent expression
 	 * 
 	 * @return the ASTNode representing the evaluation of the expression
 	 */
@@ -1243,7 +1252,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a relational operation (less than, greater than, less than equal, greater than equal ) expression
+	 * Visits a relational operation (less than, greater than, less than equal, greater than equal ) expression
 	 * 
 	 * @return the ASTNode representing the evaluation of the expression
 	 */
@@ -1368,7 +1377,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit the equals expression
+	 * Visits an equals expression
 	 * 
 	 * @return the ASTNode representing the evaluation of the expression
 	 */
@@ -1444,7 +1453,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit AND expression
+	 * Visits an AND expression
 	 * 
 	 * @return the ASTNode representing the evaluation of the expression
 	 */
@@ -1480,7 +1489,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit OR expression
+	 * Visits an OR expression
 	 * 
 	 * @return the ASTNode representing the evaluation of the expression
 	 */
@@ -1512,7 +1521,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit A Token expression
+	 * Visits a Token expression
 	 * 
 	 * @return the ASTNode representing the evaluation of the expression
 	 */
@@ -1556,7 +1565,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}	
 
 	/**
-	 * Visit A substring expression 
+	 * Visits a substring expression 
 	 * 
 	 * @return the ASTNode representing the the substring result
 	 */
@@ -1604,7 +1613,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit an expression verifying if a text start with another text
+	 * Visits an expression verifying if a text start with another text
 	 * 
 	 * @return the ASTNode representing the evaluation
 	 */
@@ -1635,7 +1644,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	} 
 
 	/**
-	 * Visit the repeat expression
+	 * Visits a repeat expression
 	 * 
 	 * 		Verifies that the import is defined in the symbol table
 	 * 		Defines a timer in the global symbol table
@@ -1683,7 +1692,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit the timer expression
+	 * Visits a timer expression
 	 * 
 	 * 		Verifies that the import is defined in the symbol table
 	 * 		Defines a timer in the global symbol table
@@ -1725,7 +1734,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 
 	/**
-	 * Visit a set of sentences
+	 * Visits a set of sentences
 	 * 
 	 * 		executes one by one all the sentences included.
 	 * 
@@ -1752,7 +1761,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a call sentence
+	 * Visits a call sentence
 	 * 
 	 * 		creates a new memory space 
 	 * 		stores the current memory space
@@ -1853,7 +1862,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit an IF sentence
+	 * Visits an IF sentence
 	 * 
 	 * 		Evaluates the expression inside the if and based on that evaluation 
 	 * 		executes the corresponding block of instructions.
@@ -1892,7 +1901,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a log sentence
+	 * Visits a log sentence
 	 * 
 	 * 		Register a log 
 	 * 
@@ -1906,7 +1915,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}    
 
 	/**
-	 * Visit a unary minus expression
+	 * Visits an unary minus expression
 	 * 
 	 * 		multiplies by -1 the expression
 	 * 
@@ -1932,7 +1941,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a not expression
+	 * Visits a NOT expression
 	 * 
 	 * 		makes a not of the expression
 	 * 
@@ -1956,7 +1965,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a date expression
+	 * Visits a date expression
 	 * 
 	 * 		takes a string and convert it in localdate.
 	 * 
@@ -1979,7 +1988,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a time expression
+	 * Visits a time expression
 	 * 
 	 * 		takes a string and convert it in localtime.
 	 * 
@@ -2001,7 +2010,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a datetime expression
+	 * Visits a datetime expression
 	 * 
 	 * 		takes a string and convert it in localdatetime.
 	 * 
@@ -2024,7 +2033,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
-	 * Visit a program parameter
+	 * Visits a program parameter
 	 * 
 	 * 		takes the value given and put it in the global memory space
 	 * 

@@ -34,7 +34,7 @@ public class BehaviorSyntaxChecking
 	static Logger logger = LogManager.getLogger(BehaviorSyntaxChecking.class.getName());
 	
     /**
-     * Symbols type set 
+     * Symbols' type set 
      * 
      * @param tokenType Token type
      * @return			type of symbol

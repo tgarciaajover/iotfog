@@ -51,7 +51,7 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 	ParseTreeProperty<Scope> scopes;
 	
 	/**
-	 * Global scope is filled by the parser
+	 * Global scope, which is filled by the parser
 	 */
 	GlobalScope globals;
 	
@@ -89,7 +89,7 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 	}
 
 	/**
-	 * Register and error in the list of errors 
+	 * Register an error in the list of errors 
 	 * 
 	 * @param t		token where the error occurs
 	 * @param ctx	context where the error occurs
@@ -310,7 +310,7 @@ public class BehaviorRefPhase extends BehaviorGrammarBaseListener
 	}
 	
 	/**
-	 * Verifies that the symbol referenced in the assignment has been defined 
+	 * Verifies that the referenced symbol on the assignment has been defined 
 	 */
 	public void exitAssign(BehaviorGrammarParser.AssignContext ctx) 
 	{ 

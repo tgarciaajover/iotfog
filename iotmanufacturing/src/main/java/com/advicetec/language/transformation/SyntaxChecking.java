@@ -18,11 +18,18 @@ import com.advicetec.language.TransformationGrammarLexer;
 import com.advicetec.language.ast.CollectionErrorListener;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
-import com.advicetec.language.behavior.BehaviorRefPhase;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 
-public class SyntaxChecking 
+/**
+ * This class corresponds to the transformation language checker. 
+ * 
+ * The checker first makes a definition phase. In this phase all symbols are defined in their corresponding scopes. 
+ * Afterwards, it performs the validation phase where symbol references are verified.  
+ *   
+ * @author Andres Marentes
+ *
+ */public class SyntaxChecking 
 {
 	
 	static Logger logger = LogManager.getLogger(SyntaxChecking.class.getName());
@@ -30,6 +37,12 @@ public class SyntaxChecking
 	/**  XML Tag given*/
 	private static final String PROGRAM = "program";
 	
+    /**
+     * Symbols' type set 
+     * 
+     * @param tokenType Token type
+     * @return			type of symbol
+     */
 	public static Symbol.Type getType(int tokenType) {
 
         switch ( tokenType ) 
@@ -46,13 +59,18 @@ public class SyntaxChecking
         return Symbol.Type.tINVALID;
 
     }
-    
-	public String getProgram(Document doc)
-	{
-		return  getElementTextContent(doc, PROGRAM);		
-	}
-	
-    public List<SyntaxError> process(String program, Integer measuredEntity ) throws Exception 
+    	
+    /**
+     * Checks the transformation text given as parameter in program 
+     *  
+     *   It checks the grammar.  
+     *   
+     * @param program		transformation text to interpret
+     * @param entityId		measure entity id for which the behavior is going to be run. 				
+	 *
+     * @throws Exception	Run time exceptions generated during the behavior checking.
+     */
+	public List<SyntaxError> process(String program, Integer measuredEntity ) throws Exception 
     {
 
     	List<SyntaxError> listErrors;
@@ -108,25 +126,5 @@ public class SyntaxChecking
         return listErrors;
        
     }    
-
-    /**
-     * Helper method that returns the text content of an interior element of this XML document. 
-     * @param doc The XML document. 
-     * @param elementName The element name whose text content is to be retrieved.
-     * @return The text content
-     */
-    private String getElementTextContent(Document doc, String elementName) {
-    	NodeList nodeList = (NodeList) doc.getElementsByTagName(elementName);
-    	if (nodeList != null){
-    		Element element = (Element) nodeList.item(0);
-    		if (element != null){
-    			return element.getTextContent();
-    		} else {
-    			return null;
-    		}
-    	} else {
-    		return null;
-    	}
-    }
 
 }

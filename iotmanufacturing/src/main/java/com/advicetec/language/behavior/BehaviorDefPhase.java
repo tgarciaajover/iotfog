@@ -33,8 +33,7 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * Class used to do the first phase of the behavior interpreter.In this phase the interpreter
- * loop through the program to define the symbols used, check if they are complete and have 
- * the correct types. 
+ * loop through the program to define the symbols used. 
  *  
  * It also verifies that the program code satisfies the language grammar.
  *  
@@ -47,7 +46,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	static Logger logger = LogManager.getLogger(BehaviorDefPhase.class.getName());
 	
 	/**
-	 * Parser for the behavior langauge
+	 * Parser for the behavior language
 	 */
 	private BehaviorGrammarParser parser = null;
     /**
@@ -56,7 +55,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	private ParseTreeProperty<Scope> scopes;
 	
 	/**
-	 * Globals defined in the behavior language parsing
+	 * Globals defined during the behavior language parsing
 	 */
 	private GlobalScope globals;
 	
@@ -100,7 +99,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	 * 
 	 * @param t   	Token generating the error
 	 * @param ctx	Context where the error happens
-	 * @param msg	messsage error
+	 * @param msg	message error
 	 */
 	public void error(Token t, ParserRuleContext ctx, String msg) 
     {
@@ -177,7 +176,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 
 	/** 
-	 * Actions to perform at the end of the program parameter parse 
+	 * Actions to perform at the end of the program parameter parser
 	 * 
 	 * @param get the program parameter context
 	 * 
@@ -428,6 +427,13 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		defineUnit( ctx.getParent(), ctx.id1, ctx.ID().getText(),ctx.STRING().getText());	
 	}
 
+	/**
+	 * Actions to perform when finishing the parse of an attribute declaration
+	 *
+	 * In this case the parser has to:
+	 * 		create a attribute with the name and type of the parameter
+     * 		store the symbol in the global scope
+	 */
 	public void exitAtrib_dec(BehaviorGrammarParser.Atrib_decContext ctx) 
 	{ 
 		if (ctx.TREND() == null){
@@ -625,8 +631,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 
 	/**
-	 * Defines the state the symbol table.
-	 * 
+	 * Defines the state in the symbol table.
 	 */
 	public void defineState()
 	{
@@ -647,7 +652,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 	
 	/**
-	 * gets a reference to scopes
+	 * gets a reference to all scopes apart from the global
 	 * 
 	 * @return scopes
 	 */

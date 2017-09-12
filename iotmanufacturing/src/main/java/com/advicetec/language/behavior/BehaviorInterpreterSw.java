@@ -30,9 +30,9 @@ import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 /**
- * This class corresponds to the interpreter the behavior language. 
+ * This class corresponds to the interpreter interface for the behavior language. 
  * 
- * The interpreter first makes a definition phase. In this phase all the symbols are defined in their corresponding scopes. 
+ * The interpreter first makes a definition phase. In this phase all symbols are defined in their corresponding scopes. 
  * Afterwards, it performs the interpretation phase where the values for the symbols are calculated.  
  *   
  * @author Andres Marentes
@@ -42,7 +42,15 @@ public class BehaviorInterpreterSw
 {
 
 	static Logger logger = LogManager.getLogger(BehaviorInterpreterSw.class.getName());
+	
+	/**
+	 *  instance to the definition phase object 
+	 */
 	private BehaviorDefPhase defPhase = null;
+	
+	/**
+	 * instance to the interpreter phase object
+	 */
 	private BehaviorInterpreter interpreter = null; 
 	
     public static Symbol.Type getType(int tokenType) {
