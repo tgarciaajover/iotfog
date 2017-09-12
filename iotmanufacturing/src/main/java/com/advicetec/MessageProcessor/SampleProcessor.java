@@ -120,10 +120,11 @@ public class SampleProcessor implements Processor
 							long duetime = ((TimerSymbol) symbol).getMilliseconds();
 							boolean repeated = ((TimerSymbol) symbol).getRepeated();
 							
-							String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
+							List<String> importNames = ((TimerSymbol) symbol).getCompleteName();
+							logger.debug("import name from the transformation: " + String.join(".", importNames));
+							String behavior = getBehavior(importNames);
 							
-							
-							logger.debug("Symbol:" + symbolId + "behavior:" + behavior);
+							logger.debug("Symbol:" + symbolId + " behavior:" + behavior);
 							// We don't send parameters to the event. 
 							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity,mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
 							event.setRepeated(repeated);

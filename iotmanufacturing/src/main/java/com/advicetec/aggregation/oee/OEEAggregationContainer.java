@@ -1,5 +1,6 @@
 package com.advicetec.aggregation.oee;
 
+import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +27,7 @@ import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.measuredentitity.MeasuringState;
 import com.advicetec.utils.PredefinedPeriod;
 import com.advicetec.utils.PredefinedPeriodType;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 /**
  * Container for the OEE aggregation data.
@@ -37,16 +40,59 @@ public class OEEAggregationContainer extends Container
 	static Logger logger = LogManager.getLogger(OEEAggregationContainer.class.getName());
 
 	/**
+	 * Connection pool for managing database connections.
+	 */
+	private ComboPooledDataSource cpds = null;
+	
+	
+	/**
 	 * Class's constructor 
 	 * @param driverStr: driver string used to connect to the database.
 	 * @param server: Ip address of the database server 
 	 * @param user: database user
 	 * @param password: password of the user's database.
 	 */
-	public OEEAggregationContainer(String driverStr, String server, String user, String password) {
+	public OEEAggregationContainer(String driverStr, String server, String user, String password, int minDbThreadPool, int maxDbThreadPool) {
 		super(driverStr, server, user, password);
-	}
 
+		try{
+			// Establishes the pool of connection to the database
+			cpds = new ComboPooledDataSource();
+			cpds.setDriverClass( driverStr );
+			cpds.setJdbcUrl( server );
+			cpds.setUser(user);                                  
+			cpds.setPassword(password); 
+			
+			// the settings below are optional -- c3p0 can work with defaults
+			cpds.setMinPoolSize(minDbThreadPool);                                     
+			cpds.setAcquireIncrement(5);
+			cpds.setMaxPoolSize(maxDbThreadPool);
+
+			// This part inserts any pending data in the cache to the database in case of shutdown.  
+			Runtime.getRuntime().addShutdownHook(new Thread()
+			{
+				@Override
+				public void run()
+				{	
+					System.out.println("closing the database connection pool");
+					if (cpds != null){
+						cpds.close();
+					}
+				}
+			}); 
+			
+			
+		} catch (PropertyVetoException e1) {
+			logger.error(e1.getMessage());
+			e1.printStackTrace();
+			System.exit(0);
+		}             			
+	}
+	
+	public synchronized Connection getConnection() throws SQLException{
+		return cpds.getConnection();
+	}
+	
 	/**
 	 * Inserts into database the list of OEE values.
 	 * @param list  List OEE to insert in the database.
@@ -58,8 +104,7 @@ public class OEEAggregationContainer extends Container
 
 		try{
 
-			Class.forName(getDriver());
-		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB = getConnection();
 		    connDB.setAutoCommit(false);
 
 		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_Insert);
@@ -72,10 +117,6 @@ public class OEEAggregationContainer extends Container
 	    	connDB.commit();
 	    	logger.debug("Number of OEE inserted: " + ret.length);
 
-		} catch (ClassNotFoundException e) {
-			String error = "Could not find the driver class - Error: " + e.getMessage(); 
-			logger.error(error);
-			e.printStackTrace();
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -111,8 +152,7 @@ public class OEEAggregationContainer extends Container
 
 		try {
 
-			Class.forName(getDriver());
-		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB = getConnection();
 		    connDB.setAutoCommit(false);
 			
 		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_Delete);
@@ -124,10 +164,6 @@ public class OEEAggregationContainer extends Container
 			connDB.commit();
 	    	logger.debug("Number of OEE deleted: " + ret.length);
 
-		} catch (ClassNotFoundException e) {
-			String error = "Could not find the driver class - Error: " + e.getMessage(); 
-			logger.error(error);
-			e.printStackTrace();
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -188,10 +224,7 @@ public class OEEAggregationContainer extends Container
 		
 		try 
 		{
-			
-
-		    Class.forName(getDriver());
-		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB = getConnection();
 		    connDB.setAutoCommit(false);
 			
 		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_LT_HOUR);
@@ -320,12 +353,7 @@ public class OEEAggregationContainer extends Container
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}			
-
-		finally{
+		} finally{
 			if(pstDB!=null){
 				try{
 					pstDB.close();
@@ -380,9 +408,7 @@ public class OEEAggregationContainer extends Container
 
 		try 
 		{
-
-		    Class.forName(getDriver());
-		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB = getConnection();
 		    connDB.setAutoCommit(false);
 			
 			if (getDriver().compareTo("org.postgresql.Driver") == 0){
@@ -430,12 +456,7 @@ public class OEEAggregationContainer extends Container
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}			
-
-		finally{
+		} finally{
 			if(pstDB!=null){
 				try{
 					pstDB.close();
@@ -476,8 +497,7 @@ public class OEEAggregationContainer extends Container
 		
 		try 
 		{
-		    Class.forName(getDriver());
-		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB = getConnection();
 		    connDB.setAutoCommit(false);
 		    
 		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_EXISTS);
@@ -495,12 +515,7 @@ public class OEEAggregationContainer extends Container
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}		
-		
-		finally {
+		} finally {
 			if(pstDB!=null){
 				try{
 					pstDB.close();
@@ -577,9 +592,7 @@ public class OEEAggregationContainer extends Container
 
 		try 
 		{
-
-		    Class.forName(getDriver());
-		    connDB = DriverManager.getConnection(getServer(), getUser(), getPassword());
+		    connDB = getConnection();
 		    connDB.setAutoCommit(false);
 		    
 		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_Select);
@@ -606,9 +619,6 @@ public class OEEAggregationContainer extends Container
 			}
 			
 		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		} finally {

@@ -1,5 +1,6 @@
 package com.advicetec.persistence;
 
+import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -38,6 +39,7 @@ import com.advicetec.measuredentitity.StateInterval;
 import com.advicetec.utils.MapUtils;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 /**
  * Represents a cache for storing State Interval elements. This class stores 
@@ -125,6 +127,15 @@ public class StateIntervalCache extends Configurable {
 	 */
 	private static ExecutorService threadPool = null;
 
+	private static int MIN_DB_THREAD_POOL = 5;
+	
+	private static int MAX_DB_THREAD_POOL = 30; 
+	
+	/**
+	 * Connection pool for managing database connections.
+	 */
+	private static ComboPooledDataSource cpds = null;
+
 
 	/**
 	 * Constructs this cache with the parameters from .properties file.
@@ -132,6 +143,8 @@ public class StateIntervalCache extends Configurable {
 	private StateIntervalCache(){
 		// loads values from StateIntervalCache.properties
 		super("StateIntervalCache");
+		
+		try{
 		// database connection properties
 		DB_DRIVER = properties.getProperty("driver");
 		DB_URL = properties.getProperty("server");
@@ -163,6 +176,25 @@ public class StateIntervalCache extends Configurable {
 			BATCH_ROWS = Integer.parseInt(properties.getProperty("batch_rows"));
 
 		threadPool = Executors.newFixedThreadPool(INSERT_THREADS);
+
+		if (properties.getProperty("min_db_thread_pool") != null)
+			MIN_DB_THREAD_POOL = Integer.parseInt(properties.getProperty("min_db_thread_pool"));
+
+		if (properties.getProperty("max_db_thread_pool") != null)
+			MAX_DB_THREAD_POOL = Integer.parseInt(properties.getProperty("max_db_thread_pool"));
+
+		// Establishes the pool of connection to the database
+		cpds = new ComboPooledDataSource();
+		cpds.setDriverClass( DB_DRIVER );
+		cpds.setJdbcUrl( DB_URL );
+		cpds.setUser(DB_USER);                                  
+		cpds.setPassword(DB_PASS); 
+		
+		// the settings below are optional -- c3p0 can work with defaults
+		cpds.setMinPoolSize(MIN_DB_THREAD_POOL);                                     
+		cpds.setAcquireIncrement(5);
+		cpds.setMaxPoolSize(MAX_DB_THREAD_POOL);
+
 		
 		// depends on database driver, assigns the needed query.
 		if (StateIntervalCache.DB_DRIVER.compareTo("org.postgresql.Driver") == 0){
@@ -178,14 +210,28 @@ public class StateIntervalCache extends Configurable {
 			{
 				try {
 					
+					System.out.println("closing the thread pool");
 					threadPool.awaitTermination(WRITE_TIME, TimeUnit.SECONDS);
+					
+					System.out.println("closing the database connection pool");
+					if (cpds != null){
+						cpds.close();
+					}
+					
 					
 				} catch (InterruptedException e) {
 					logger.error(e.getMessage());
 					e.printStackTrace();
 				}
 			}
-		});  		
+		}); 
+
+		} catch (PropertyVetoException e1) {
+			logger.error(e1.getMessage());
+			e1.printStackTrace();
+			System.exit(0);
+		}             
+
 	}
 
 	/**
@@ -212,8 +258,13 @@ public class StateIntervalCache extends Configurable {
 						.writeAction(entries -> {
 							if (entries.size() > 0) {
 								logger.info("to storage num entries:" + entries.size());
-								StateIntervalDatabaseStore storedatabase = new StateIntervalDatabaseStore(entries, DB_DRIVER, DB_URL, DB_USER, DB_PASS,BATCH_ROWS);
+								try {
+								StateIntervalDatabaseStore storedatabase = new StateIntervalDatabaseStore(entries, getConnection(),BATCH_ROWS);
 								threadPool.submit(storedatabase);
+								} catch (SQLException e) {
+									logger.error("error storing attributes in the database" + "error:" + e.getMessage());
+									e.printStackTrace();
+								}								
 							}
 						}).build())
 						.build();
@@ -281,8 +332,7 @@ public class StateIntervalCache extends Configurable {
 			
 			if (entry.size() > 0){
 				try {
-					Class.forName(DB_DRIVER);
-					conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+					conn = getConnection();
 					conn.setAutoCommit(false);
 					// prepare statement
 					pst = conn.prepareStatement(StateInterval.SQL_Insert);
@@ -297,7 +347,7 @@ public class StateIntervalCache extends Configurable {
 					// Discard those values obtained as they would be inserted in the database.
 					cache.invalidateAll(entry.keySet());
 
-				} catch (ClassNotFoundException | SQLException e) {
+				} catch ( SQLException e) {
 					logger.error("Error: "+ e.getMessage());
 					e.printStackTrace();
 				}
@@ -370,7 +420,11 @@ public class StateIntervalCache extends Configurable {
 	public synchronized String getDB_DRIVER() {
 		return DB_DRIVER;
 	}
-	
+
+	public synchronized static Connection getConnection() throws SQLException{
+		return cpds.getConnection();
+	}
+
 	/**
 	 * Updates a state interval into cache with the given parameters. 
 	 * @param stateKey key of downtime reason code to update.
@@ -421,8 +475,7 @@ public class StateIntervalCache extends Configurable {
 		Connection connDB  = null; 
 		PreparedStatement pstDB = null;
 		try {
-			Class.forName(getDB_DRIVER());
-			connDB = DriverManager.getConnection(getDB_URL(), getDB_USER(), getDB_PASS());
+			connDB = getConnection();
 			connDB.setAutoCommit(false);
 			// prepares the statement
 			pstDB = connDB.prepareStatement(StateIntervalCache.sqlUpdateInterval);
@@ -436,9 +489,6 @@ public class StateIntervalCache extends Configurable {
 				connDB.commit();
 			}
 
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -500,8 +550,8 @@ public class StateIntervalCache extends Configurable {
 		cal.setTimeZone(utcTimeZone);
 
 		try {
-			Class.forName(getDB_DRIVER());
-			connDB = DriverManager.getConnection(getDB_URL(), getDB_USER(), getDB_PASS());
+			
+			connDB = getConnection();
 			connDB.setAutoCommit(false);
 			pstDB = connDB.prepareStatement(getSqlStatusIntervalRangeSelect());
 			pstDB.setInt(1, entityId);
@@ -565,9 +615,7 @@ public class StateIntervalCache extends Configurable {
 				list.add(sInt);
 
 			}
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
+
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -618,8 +666,7 @@ public class StateIntervalCache extends Configurable {
 
 		try{
 			// database connection 
-			Class.forName(getDB_DRIVER());
-			connDB = DriverManager.getConnection(getDB_URL(), getDB_USER(), getDB_PASS());
+			connDB = getConnection();
 			connDB.setAutoCommit(false);
 			pstDB = connDB.prepareStatement(getSqlDownTimeReasons());
 			pstDB.setInt(1, entity.getId());
@@ -652,9 +699,7 @@ public class StateIntervalCache extends Configurable {
 					}
 				}
 			}
-		}catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
+
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -682,7 +727,5 @@ public class StateIntervalCache extends Configurable {
 		}
 		
 		return map;
-	}
-
-	
+	}	
 }

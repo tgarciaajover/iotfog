@@ -1,5 +1,6 @@
 package com.advicetec.measuredentitity;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -91,7 +92,7 @@ public final class MeasuredEntityFacade {
 	private String actualProductionCountId;	
 	
 	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId, 
-								 String unit1PerCycles, String unit2PerCycles,  String actualProductionCountId) 
+								 String unit1PerCycles, String unit2PerCycles,  String actualProductionCountId)
 	{
 		this.entity = entity;
 		this.status = new StatusStore();
@@ -540,8 +541,9 @@ public final class MeasuredEntityFacade {
 	 * @param from Start date.
 	 * @param to End date.
 	 * @return Json Array of states.
+	 * @throws PropertyVetoException 
 	 */
-	public synchronized JSONArray getJsonStates(LocalDateTime from, LocalDateTime to){
+	public synchronized JSONArray getJsonStates(LocalDateTime from, LocalDateTime to) {
 		logger.debug("getJsonStates" + " from: " + from.toString() + " to: " + to.toString());
 		JSONArray array = null;
 		String cannonicalMachine = "";
@@ -587,6 +589,7 @@ public final class MeasuredEntityFacade {
 	 * @param from
 	 * @param to
 	 * @return
+	 * @throws PropertyVetoException 
 	 */
 	public synchronized JSONArray getJsonTrend(String trendVar,LocalDateTime from, LocalDateTime to){
 		JSONArray array = null;

@@ -1,11 +1,13 @@
 package com.advicetec.applicationAdapter;
 
+import java.beans.PropertyVetoException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import com.advicetec.core.Configurable;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 
@@ -123,8 +125,9 @@ public class ProductionOrderManager extends Configurable {
 	 * 
 	 * @param entity The new production order to control.
 	 * @return true if it could insert the production order, false otherwise.
+	 * @throws PropertyVetoException 
 	 */
-	public synchronized boolean addProductionOrder(ProductionOrder pOrder){
+	public synchronized boolean addProductionOrder(ProductionOrder pOrder) throws PropertyVetoException{
 		if(pOrderAlreadyExists(pOrder)){
 			return false;
 		}

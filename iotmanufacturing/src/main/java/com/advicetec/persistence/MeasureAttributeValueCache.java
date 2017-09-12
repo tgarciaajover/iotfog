@@ -1,5 +1,6 @@
 package com.advicetec.persistence;
 
+import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -29,6 +30,7 @@ import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.utils.MapUtils;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 /**
  * This class is the cache for Measured Attribute Values.
@@ -106,24 +108,36 @@ public class MeasureAttributeValueCache extends Configurable {
 	private static ExecutorService threadPool = null;
 	/**
 	 * SQL to select a set of AttributeValue given owner id and type, attribute
-	 * value name, and time range. 
-	 *  
-	 */
+	 * value name, and time range.  
+	 */	
 	final private static String sqlMeasureAttributeValueRangeSelect = "select timestamp, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time from measuredattributevalue where id_owner = ? and owner_type = ? and attribute_name = ? and timestamp >= ? and timestamp <= ?";  
 
 	/**
 	 * Column name from the query
 	 */
 	final private static String timestamp = "timestamp";
-		
+	
+	private static int MIN_DB_THREAD_POOL = 5;
+	
+	private static int MAX_DB_THREAD_POOL = 30; 
+	
+	/**
+	 * Connection pool for managing database connections.
+	 */
+	private static ComboPooledDataSource cpds = null;
+	
 	/**
 	 * Constructs this cache with the parameters from .properties file.
 	 * This method also defines the shutdown hook if the process is canceled 
 	 * and writes all data from the cache to the database.
+	 * @throws PropertyVetoException 
 	 */
 	private MeasureAttributeValueCache()
 	{
 		super("MeasureAttributeValueCache");
+
+		try {
+
 		// loads values from MeasureAttributeValueCache.properties
 		DB_DRIVER = properties.getProperty("driver");
 		DB_URL = properties.getProperty("server");
@@ -156,6 +170,24 @@ public class MeasureAttributeValueCache extends Configurable {
 		
 		threadPool = Executors.newFixedThreadPool(INSERT_THREADS);
 
+		if (properties.getProperty("min_db_thread_pool") != null)
+			MIN_DB_THREAD_POOL = Integer.parseInt(properties.getProperty("min_db_thread_pool"));
+
+		if (properties.getProperty("max_db_thread_pool") != null)
+			MAX_DB_THREAD_POOL = Integer.parseInt(properties.getProperty("max_db_thread_pool"));
+
+		// Establishes the pool of connection to the database
+		cpds = new ComboPooledDataSource();
+		cpds.setDriverClass( DB_DRIVER );
+		cpds.setJdbcUrl( DB_URL );
+		cpds.setUser(DB_USER);                                  
+		cpds.setPassword(DB_PASS); 
+		
+		// the settings below are optional -- c3p0 can work with defaults
+		cpds.setMinPoolSize(MIN_DB_THREAD_POOL);                                     
+		cpds.setAcquireIncrement(5);
+		cpds.setMaxPoolSize(MAX_DB_THREAD_POOL);
+		
 		/**
 		 *  This part inserts any pending data in the cache to the database, in case of shutdown.
 		 */
@@ -169,8 +201,13 @@ public class MeasureAttributeValueCache extends Configurable {
 				
 				
 				try {
-					
+					System.out.println("closing the thread pool");
 					threadPool.awaitTermination(WRITE_TIME, TimeUnit.SECONDS);
+					
+					System.out.println("closing the database connection pool");
+					if (cpds != null){
+						cpds.close();
+					}
 					
 				} catch (InterruptedException e) {
 					logger.error(e.getMessage());
@@ -179,6 +216,12 @@ public class MeasureAttributeValueCache extends Configurable {
 
 			}
 		});  
+
+		} catch (PropertyVetoException e1) {
+			logger.error(e1.getMessage());
+			e1.printStackTrace();
+			System.exit(0);
+		}             
 
 	}
 
@@ -194,9 +237,9 @@ public class MeasureAttributeValueCache extends Configurable {
 				// time to delete an entry from cache
 				.expireAfterWrite(DELETE_TIME, TimeUnit.SECONDS)
 				// initial cache size
-				.initialCapacity(INIT_CAPACITY)
+				.initialCapacity(10_000)
 				// max size
-				.maximumSize(MAX_SIZE)
+				.maximumSize(100_000)
 				.writer(new WriteBehindCacheWriter.Builder<String, AttributeValue>()
 						// time before execute WriteAction over database.
 						.bufferTime(WRITE_TIME, TimeUnit.SECONDS)
@@ -206,8 +249,14 @@ public class MeasureAttributeValueCache extends Configurable {
 						.writeAction(entries -> {
 							if (entries.size() > 0) {
 								logger.debug("to storage num entries:" + entries.size());
-								MeasureAttributeDatabaseStore storedatabase = new MeasureAttributeDatabaseStore(entries, DB_DRIVER, DB_URL, DB_USER, DB_PASS,BATCH_ROWS);
-								threadPool.submit(storedatabase);
+								MeasureAttributeDatabaseStore storedatabase;
+								try {
+									storedatabase = new MeasureAttributeDatabaseStore(entries, getConnection() ,BATCH_ROWS);
+									threadPool.submit(storedatabase);
+								} catch (SQLException e) {
+									logger.error("error storing attributes in the database" + "error:" + e.getMessage());
+									e.printStackTrace();
+								}
 							} // if
 						}).build()) // writeAction
 						.build(); // writeBehindCache
@@ -216,6 +265,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	/**
 	 * Returns a singleton instance of MeasureAttributeValueCache.
 	 * @return the singleton instance. 
+	 * @throws PropertyVetoException 
 	 */
 	public synchronized static MeasureAttributeValueCache getInstance(){
 		if(instance == null){
@@ -292,8 +342,7 @@ public class MeasureAttributeValueCache extends Configurable {
 		for (Map<String, AttributeValue> entry : listofMaps) {
 			if (entry.size() > 0){
 				try {
-					Class.forName(DB_DRIVER);
-					conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+					conn = getConnection();
 					conn.setAutoCommit(false);
 					// prepare statement
 					pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
@@ -311,9 +360,6 @@ public class MeasureAttributeValueCache extends Configurable {
 					// Remove all keys inserted in the database.
 					cache.invalidateAll(entry.keySet());
 
-				} catch (ClassNotFoundException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
 				} catch (SQLException e) {
 					logger.error(e.getMessage());
 					e.printStackTrace();
@@ -386,6 +432,10 @@ public class MeasureAttributeValueCache extends Configurable {
 		return timestamp;
 	}
 	
+	public synchronized static Connection getConnection() throws SQLException{
+		return cpds.getConnection();
+	}
+	
 	/**
 	 * Returns a list of Attribute values from the database. The query is 
 	 * composed of the device/machine, the name of the attribute and the time
@@ -410,6 +460,7 @@ public class MeasureAttributeValueCache extends Configurable {
 		PreparedStatement pstDB = null;
 
 		ArrayList<AttributeValue> list = new ArrayList<AttributeValue>();
+		
 		ResultSet rs = null;
 
 		Calendar cal = Calendar.getInstance();
@@ -418,9 +469,9 @@ public class MeasureAttributeValueCache extends Configurable {
 
 		String timestapfield = getTimeStampField();
 		try {
-			// get the database driver
-			Class.forName(getDB_DRIVER());
-			connDB = DriverManager.getConnection(getDB_URL(), getDB_USER(), getDB_PASS());
+			
+			// get the database connection from the pool
+			connDB = getConnection();
 			connDB.setAutoCommit(false);
 			// prepare the statement
 			pstDB = connDB.prepareStatement(getSqlMeasureAttributeValueRangeSelect());
@@ -450,33 +501,32 @@ public class MeasureAttributeValueCache extends Configurable {
 			
 			logger.debug("Ending getFromDatabase");
 
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		}
-		finally{
+		} finally{
+			if (rs!=null){
+				try{
+					logger.debug("result set close");
+					rs.close();
+				} catch (SQLException e) {  }
+			}
+			
 			if(pstDB!=null){
 				try{
+					logger.debug("prepared statement close");
 					pstDB.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
+				} catch (SQLException e) { 	}
 			}
 
 			if(connDB!=null){
 				try	{
+					logger.debug("close connection");
 					connDB.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
+				} catch (SQLException e) { 	}
 			}
 		}
-
+		
 		return list;
 	}
 

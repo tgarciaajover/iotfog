@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
+
 import com.advicetec.language.BehaviorGrammarBaseListener;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.ast.ArrayAttributeSymbol;
@@ -171,6 +172,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 			symbol =  new ImportSymbol(String.join(".", dottedNames));
 		}
 		
+		for (int i=0; i < dottedNames.size() ; i++ )
+		{
+			String idStr = dottedNames.get(i);
+			symbol.addId(idStr);
+		}
+
 		currentScope.define(symbol);
 		
 	}

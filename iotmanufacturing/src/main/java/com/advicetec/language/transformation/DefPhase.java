@@ -167,6 +167,12 @@ import org.apache.logging.log4j.Logger;
 			symbol =  new ImportSymbol(String.join(".", dottedNames));
 		}
 		
+		for (int i=0; i < dottedNames.size() ; i++ )
+		{
+			String idStr = dottedNames.get(i);
+			symbol.addId(idStr);
+		}
+		
 		currentScope.define(symbol);
 		
 	}

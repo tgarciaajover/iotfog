@@ -29,34 +29,14 @@ public class StateIntervalDatabaseStore implements Runnable {
 	private PreparedStatement pst = null;
 
 	/**
-	 * Database url
-	 */
-	private String DB_URL = null;
-	/**
-	 * Database user
-	 */
-	private String DB_USER = null;
-	/**
-	 * Database password
-	 */
-	private String DB_PASS = null;
-	/**
-	 * Database driver
-	 */
-	private String DB_DRIVER = null;
-
-	/**
 	 * Default number of rows per batch  
 	 */
 	private int batchRows = 4000;
 	
-	public StateIntervalDatabaseStore(Map<String, StateInterval> entries, String driver, String dbUrl, String user, String password, int batchRows)
+	public StateIntervalDatabaseStore(Map<String, StateInterval> entries, Connection connection, int batchRows)
 	{
 		this.entries = entries;
-		this.DB_DRIVER = driver;
-		this.DB_URL = dbUrl;
-		this.DB_USER = user;
-		this.DB_PASS = password;
+		this.conn = connection;
 		this.batchRows = batchRows;
 	}
 	
@@ -78,8 +58,6 @@ public class StateIntervalDatabaseStore implements Runnable {
 
 				logger.info("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
 				// connect to database
-				Class.forName(DB_DRIVER);
-				conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 				conn.setAutoCommit(false);
 				pst = conn.prepareStatement(StateInterval.SQL_Insert);
 				// prepares the statement
@@ -92,9 +70,7 @@ public class StateIntervalDatabaseStore implements Runnable {
 				int ret[] = pst.executeBatch();
 				logger.debug("Number of State Intervals inserted:" + ret.length);
 				conn.commit();
-			} catch (ClassNotFoundException e) {
-				logger.error(e.getMessage());
-				e.printStackTrace();
+
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
 				e.printStackTrace();

@@ -30,35 +30,15 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 	private PreparedStatement pst = null;
 
 	/**
-	 * Database url
-	 */
-	private String DB_URL = null;
-	/**
-	 * Database user
-	 */
-	private String DB_USER = null;
-	/**
-	 * Database password
-	 */
-	private String DB_PASS = null;
-	/**
-	 * Database driver
-	 */
-	private String DB_DRIVER = null;
-
-	/**
 	 * Default number of rows per batch  
 	 */
 	private int batchRows = 4000;
 	
-	public MeasureAttributeDatabaseStore(Map<String, AttributeValue> entries, String driver, String dbUrl, String user, String password, int batchRows)
+	public MeasureAttributeDatabaseStore(Map<String, AttributeValue> entries, Connection connection, int batchRows)
 	{
 		this.entries = entries;
-		this.DB_DRIVER = driver;
-		this.DB_URL = dbUrl;
-		this.DB_USER = user;
-		this.DB_PASS = password;
 		this.batchRows = batchRows;
+		this.conn = connection;
 	}
 	
 
@@ -78,8 +58,6 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 
 				logger.info("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
 				// connect to database
-				Class.forName(DB_DRIVER);
-				conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 				conn.setAutoCommit(false);
 				pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
 				// prepares the statement
@@ -92,9 +70,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 				int ret[] = pst.executeBatch();
 				logger.debug("Number of Attribute Values inserted:" + ret.length);
 				conn.commit();
-			} catch (ClassNotFoundException e) {
-				logger.error(e.getMessage());
-				e.printStackTrace();
+
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
 				e.printStackTrace();
@@ -103,6 +79,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 			finally{
 				if(pst!=null){
 					try{
+						logger.info("closing prepared statement");
 						pst.close();
 					} catch (SQLException e) {
 						logger.error(e.getMessage());
@@ -112,6 +89,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 
 				if(conn!=null) {
 					try {
+						logger.info("closing connection");
 						conn.close();
 					} catch (SQLException e) {
 						logger.error(e.getMessage());

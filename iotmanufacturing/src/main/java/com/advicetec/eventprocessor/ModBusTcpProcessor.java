@@ -76,12 +76,12 @@ public class ModBusTcpProcessor implements Processor {
 		eventManager = EventManager.getInstance();
 		ArrayList<DelayEvent> retEvts = new ArrayList<DelayEvent>();
 		Map<String, Object> dictionary = new HashMap<String, Object>();
-		
+		TCPMasterConnection con = null;
 		try {
 			// Obtains the connection 
 			// TCPMasterConnection con = eventManager.getModbusConnection(event.getIpAddress(), event.getPort());
 			InetAddress addr =  InetAddress.getByName(event.getIpAddress()); //the slave's address
-			TCPMasterConnection con = new TCPMasterConnection(addr);
+			con = new TCPMasterConnection(addr);
 			con.setPort(event.getPort());
 			con.connect();			
 
@@ -199,12 +199,15 @@ public class ModBusTcpProcessor implements Processor {
 
 			}
 			// eventManager.releaseModbusConnection(event.getIpAddress(), event.getPort(), con);
-			con.close();
 			
 		} catch (UnknownHostException e) {
 			logger.error("Error creating the connection with the modbus slave for ipaddress:" + event.getIpAddress() + " port:" + Integer.toString(event.getPort()));
 		} catch (Exception e){
 			logger.error("Error in modbus slave for ipaddress:" + event.getIpAddress() + " port:" + Integer.toString(event.getPort()) + "error reported:" + e.getMessage());
+		} finally {
+			
+			if (con != null)
+				con.close();
 		}
 		
 		logger.debug("Nbr Events created:" + retEvts.size());

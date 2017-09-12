@@ -20,6 +20,7 @@ import com.advicetec.core.AttributeType;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.core.MeasuringUnit;
 import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class MeasuredAttributeValueDB 
 {
@@ -30,11 +31,24 @@ public class MeasuredAttributeValueDB
 	{
 		Connection conn  = null; 
         PreparedStatement pst = null;
+        ComboPooledDataSource cpds = null;
 		
         try
         {
-			Class.forName("org.postgresql.Driver");
-			conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/iotajover", "iotajover", "iotajover");
+        	
+
+        	cpds = new ComboPooledDataSource();
+			cpds.setDriverClass( "com.microsoft.sqlserver.jdbc.SQLServerDriver" ); //loads the jdbc driver            
+			cpds.setJdbcUrl( "jdbc:sqlserver://172.35.5.117:1433;instanceName=./SQLExpress;DatabaseName=iotajoverfog;" );
+			cpds.setUser("iotsql");                                  
+			cpds.setPassword("sqliot2017.");                                  
+				
+			// the settings below are optional -- c3p0 can work with defaults
+			cpds.setMinPoolSize(5);                                     
+			cpds.setAcquireIncrement(5);
+			cpds.setMaxPoolSize(20);
+        	
+			conn = cpds.getConnection();
 			
 			conn.setAutoCommit(false);
 			
@@ -51,9 +65,8 @@ public class MeasuredAttributeValueDB
 			
 			value.dbInsert(pst);
 			pst.executeBatch();
-			
 			conn.commit();
-			
+						
         } catch(Exception e){
         	e.printStackTrace();
         } finally{
@@ -61,7 +74,8 @@ public class MeasuredAttributeValueDB
             {
                 try
                 {
-                    pst.close();
+                    System.out.println("closing the prepare statement");
+                	pst.close();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -71,11 +85,17 @@ public class MeasuredAttributeValueDB
             {
                 try
                 {
-                    conn.close();
+                	System.out.println("closing the connection");
+                	conn.close();
+                	System.out.println("is closed: " + conn.isClosed());
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
             }
+            
+            if (cpds != null)
+            	cpds.close();
+
         }
 	}
 	
@@ -476,13 +496,13 @@ public class MeasuredAttributeValueDB
 	{
 		Integer measuredEntity = new Integer(10);  
 		MeasuringUnit measure = new MeasuringUnit("KG", "Kilogram");  
-		Attribute atr = new Attribute("velint", AttributeType.INT, measure);
+		Attribute atr = new Attribute("vel", AttributeType.DOUBLE, measure);
 		LocalDateTime to = LocalDateTime.now();
 
 		LocalDateTime from = to.minusMonths(1);
 		ArrayList<Thread> threadlist = new ArrayList<Thread>();
 
-		for (int i = 0; i < 3;i++) {
+		for (int i = 0; i < 12;i++) {
 			Thread temp= new Thread(new ReadMeasureAttributeValues(measuredEntity, MeasuredEntityType.MACHINE, atr, from, to));
 	        temp.start();
 	        threadlist.add(temp);

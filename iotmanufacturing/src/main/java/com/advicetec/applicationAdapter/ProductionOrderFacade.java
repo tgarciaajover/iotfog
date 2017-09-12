@@ -1,5 +1,6 @@
 package com.advicetec.applicationAdapter;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -25,6 +26,7 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
+
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.Attribute;
@@ -131,8 +133,9 @@ public final class ProductionOrderFacade {
 	 * @param unit1PerCycles	: field used to convert from cycles to a first product unit.
 	 * @param unit2PerCycles	: field used to convert from cycles to a second product unit.
 	 * @param actualProductionCountId : actual rate registered from the sensor.
+	 * @throws PropertyVetoException 
 	 */
-	public ProductionOrderFacade(ProductionOrder pOrder, String productionRateId, String unit1PerCycles, String unit2PerCycles, String actualProductionCountId) 
+	public ProductionOrderFacade(ProductionOrder pOrder, String productionRateId, String unit1PerCycles, String unit2PerCycles, String actualProductionCountId) throws PropertyVetoException 
 	{
 		this.pOrder = pOrder;
 		this.status = new StatusStore();

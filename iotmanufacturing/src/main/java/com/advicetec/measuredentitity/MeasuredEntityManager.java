@@ -1,5 +1,6 @@
 package com.advicetec.measuredentitity;
 
+import java.beans.PropertyVetoException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -135,6 +136,7 @@ public class MeasuredEntityManager extends Configurable {
 	 * Inserts a new entity in the list and creates its facade.
 	 * @param entity The new measured entity.
 	 * @return
+	 * @throws PropertyVetoException 
 	 */
 	public synchronized boolean addNewEntity(final MeasuredEntity entity){
 		if(entityAlreadyExists(entity)){
