@@ -36,15 +36,12 @@ import com.advicetec.eventprocessor.AggregationEvent;
 import com.advicetec.eventprocessor.AggregationEventType;
 
 /**
- * Represents the resulting the measuring process.
- * It stores the values into cache.
+ * Represents an entity being monitored by the measuring process.
  * 
- * @author user
- *
- */
-
-/**
- * @author andres
+ * It stores values being tracked in caches.
+ * It stores states being registered in caches.
+ * 
+ * @author Advicetec
  *
  */
 @JsonTypeInfo(
@@ -58,60 +55,120 @@ public abstract class MeasuredEntity extends ConfigurationObject
 {
 	
 	static final Logger logger = LogManager.getLogger(MeasuredEntity.class.getName());
-	static Integer MAX_INTERVAL_TIME = 300; // Value measured in seconds. 
 	
+	/**
+	 * maximum state interval measured in seconds
+	 */
+	static Integer MAX_INTERVAL_TIME = 300; 
+	
+	/**
+	 * Code assigned to the measured entity to make easier the user interface. 
+	 */
 	@JsonProperty("code")
 	protected String code;
 	
+	/**
+	 * Measured entity type  
+	 */
 	@JsonIgnore
 	protected MeasuredEntityType type; 
 
+	/**
+	 * Date and time when the instance was created.  
+	 */
 	@JsonProperty("create_date") 
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
 	private LocalDateTime createDate;
 
+	/**
+	 * Last date and time when the instance was updated  
+	 */
 	@JsonProperty("last_updttm") 
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
 	private LocalDateTime lastUpdttm;
 	
+	/**
+	 * Description given to the measured entity 
+	 */
 	@JsonProperty("descr")
 	protected String descr;
 
+	/**
+	 * Set of behavior registered to the measured entity 
+	 */
 	@JsonIgnore
 	protected List<MeasuredEntityBehavior> behaviors;
     
+	/**
+	 * Set of state behavior registered to this measured entity 
+	 * 
+	 * State behaviors are programs executed when the measured entity changes its state 
+	 */
 	@JsonIgnore
 	protected List<MeasuredEntityStateBehavior> stateBehaviors;
 	
+	/**
+	 * State transitions for the state machine that is executed to control the measured entity state. 
+	 */
 	@JsonIgnore
 	protected List<MeasuredEntityStateTransition> stateTransitions;
 	
+    /**
+     * start date-time of the current interval.
+     */
     @JsonIgnore
-    protected LocalDateTime startDateTimeStatus;	// last time interval
+    protected LocalDateTime startDateTimeStatus;
     
+    /**
+     * state of the current interval.
+     */
     @JsonIgnore
-    protected MeasuringState currentState;	// current state
+    protected MeasuringState currentState;
 
+    /**
+     * the reason code for the current state.
+     */
     @JsonIgnore
-    protected ReasonCode currentReason;	// current Reason Code for the Status.
+    protected ReasonCode currentReason;
 
+    /**
+     * List of executed entities being processed in this measured entity
+     */
     @JsonIgnore
     protected Map<Integer, ExecutedEntity> executedEntities;
     
+    /**
+     * List of attributes registered in this executed entity
+     */
     @JsonIgnore
     protected List<Attribute> attributes;
 
+    /**
+     * List of attribute values registered in this executed entity
+     */
     @JsonIgnore
     protected List<AttributeValue> attributeValues;
     
+    /**
+     * maximum amount of seconds that an interval can be open.
+     */
     @JsonIgnore
     protected Integer maxTimeForInterval;
     
+    /**
+     * List of scheduled events registered for this measured entity. 
+     * They are stores as a map to make it easy for reading and writing   
+     */
     @JsonIgnore
     protected Map<Integer, MeasuredEntityScheduledEvent> scheduledEvents;
     
+    /**
+     * Constructor for the class 
+     * @param id	internal unique identifier
+     * @param type	type of measured entity
+     */
     public MeasuredEntity( Integer id, MeasuredEntityType type) 
     {
 		super(id);
@@ -132,19 +189,38 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		
 	}
 
+    /**
+     * Gets the code defined for the measured entity
+     *  
+     * @return  measured entity code
+     */
     public synchronized String getCode() {
 		return code;
 	}
 
+	/**
+	 * Sets the measured entity's code
+	 * @param code	measured entity's code
+	 */
 	public synchronized void setCode(String code) {
 		this.code = code;
 	}
 
+	/**
+	 * Gets the measured entity type
+	 * 
+	 * @return	measured entity type
+	 */
 	public synchronized MeasuredEntityType getType()
     {
     	return this.type;
     }
     	
+	/**
+	 * Gets the maximum interval time 
+	 * 
+	 * @return	maximum interval time
+	 */
 	public synchronized Integer getMaxTimeForInterval() {
 		return maxTimeForInterval;
 	}
@@ -154,55 +230,113 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	}
     
 	/**
-	 * Creates and returns a MessageAttributeValue 
-	 * @param attribute The atribute
-	 * @param value The value.
-	 * @param timeStamp 
-	 * @return 
+	 * Creates and returns a MessageAttributeValue
+	 *  
+	 * @param attribute  Attribute for which is created a new value  
+	 * @param value 	 The value of this new measured attribute value
+	 * @param timeStamp  Date and time when the new measured attribute value is created.
+	 * 
+	 * @return the new measured attribute value created
 	 */
     public synchronized MeasuredAttributeValue getMeasureAttributeValue(Attribute attribute, Object value, LocalDateTime timeStamp)
     {
     	return new MeasuredAttributeValue(attribute, value, getId(), getType(), timeStamp);
     }
     
+    /**
+     * Gets the list of attributes 
+     * 
+     * @return attribute list
+     */
     @JsonIgnore
     public synchronized List<Attribute> getAttributeList(){
     	return attributes;
     }
     
+    /**
+     * Register a new attribute in the measured entity
+     * 
+     * @param attrMeasureEntity  attribute to register
+     * 
+     * @return true if successful, false otherwise.
+     */
     @JsonIgnore
     public synchronized boolean registerAttribute(Attribute attrMeasureEntity){
     	return attributes.add(attrMeasureEntity);
     }
     
+    /**
+     * Performs the equals operator with another measured entity 
+     * 
+     * We implement equals comparing only their corresponding ids.
+     * 
+     * @param other	the measured entity to compare
+     *  
+     * @return true if they are equal, false otherwise
+     */
     public synchronized boolean equals(MeasuredEntity other){
     	return getId().equals( other.getId());
     }
 	
+	/**
+	 * Gets the creation date-time
+	 *  
+	 * @return date-time when the measured entity was created
+	 */
 	public synchronized LocalDateTime getCreateDate() {
 		return createDate;
 	}
 	
+	/**
+	 * Sets the creation date-time
+	 * 
+	 * @param create_date	date-time when the measured entity was created
+	 */
 	public synchronized void setCreateDate(LocalDateTime create_date) {
 		this.createDate = create_date;
 	}
 	
-	public LocalDateTime getLastUpdttm() {
+	/**
+	 * Gets the last update date-time 
+	 *  
+	 * @return last date-time when the measured entity was updated
+	 */
+	public synchronized LocalDateTime getLastUpdttm() {
 		return lastUpdttm;
 	}
 
-	public void setLastUpdttm(LocalDateTime lastUpdttm) {
+	/**
+	 * Sets the last update date-time 
+	 *  
+	 * @param lastUpdttm	last date-time when the measured entity was updated
+	 */
+	public synchronized void setLastUpdttm(LocalDateTime lastUpdttm) {
 		this.lastUpdttm = lastUpdttm;
 	}
 
+	/**
+	 * Gets the description of the measured entity
+	 * 
+	 * @return 	measured entity description
+	 */
 	public synchronized String getDescr() {
 		return descr;
 	}
 	
+	/**
+	 * Sets the measured entity description
+	 * 
+	 * @param descr	measured entity description
+	 */
 	public synchronized void setDescr(String descr) {
 		this.descr = descr;
 	}	
 	
+	/**
+	 * Serialize the measure entity to JSON.
+	 * 
+	 * @return a JSON representation
+	 */
 	public synchronized String toJson()
 	{
 		ObjectMapper mapper = new ObjectMapper();
@@ -227,6 +361,14 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return jsonInString;
 	}
 
+	/**
+	 * Adds a behavior to the measured entity
+	 * 
+	 * @param id				internal behavior identifier  
+	 * @param name				name of the behavior
+	 * @param descr				behavior description
+	 * @param behavior_text		behavior text
+	 */
 	public synchronized void putBehavior(Integer id,String name, String descr, String behavior_text)
 	{
 		boolean inserted = false; 
@@ -251,6 +393,11 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		}
 	}
 	
+	/**
+	 * Deletes a behavior from the measured entity
+	 *  
+	 * @param id 	internal behavior identifier
+	 */
 	public synchronized void removeBehavior(Integer id)
 	{
 		for (int i = 0; i < this.behaviors.size(); i++){
@@ -262,6 +409,11 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		}		
 	}
 
+	/**
+	 * Deletes a scheduled event from the measured entity 
+	 * 
+	 * @param id	internal identifier given to the scheduled event.
+	 */
 	public synchronized void removeScheduledEvent(Integer id)
 	{
 		this.scheduledEvents.remove(id);
@@ -269,6 +421,11 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		// TODO: remove the event from the queue. 
 	}
 	
+	/**
+	 * Adds a new state behavior tom the measured entity
+	 * 
+	 * @param measuredEntityStateBehavior	Measured state behavior entity to add.
+	 */
 	public synchronized void putStateBehavior(MeasuredEntityStateBehavior measuredEntityStateBehavior)
 	{
 		logger.debug("Put State Behavior" + Integer.toString(this.stateBehaviors.size()));
@@ -292,6 +449,11 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		logger.debug("Method end. Num State Behavior" + Integer.toString(this.stateBehaviors.size()));
 	}
 	
+	/**
+	 * Adds a new Schedule event to the measured entity  
+	 * 	
+	 * @param measuredEntityScheduledEvent	schedule event to add 
+	 */
 	public synchronized void putScheduledEvent(MeasuredEntityScheduledEvent measuredEntityScheduledEvent)
 	{
 		logger.debug("Put Scheduled Event" + Integer.toString(this.scheduledEvents.size() ));
@@ -302,6 +464,15 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		
 	}
 	
+	/**
+	 * Adds a new state transition to the measured entity  
+	 * 
+	 * @param id				internal unique identifier for the state transition
+	 * @param stateFrom			State from 
+	 * @param reasonCodeFrom	state to
+	 * @param behavior			behavior to execute
+	 * @param createDate		create date-time
+	 */
 	public synchronized void putStateTransition(Integer id, MeasuringState stateFrom, Integer reasonCodeFrom, Integer behavior, LocalDateTime createDate)
 	{
 		logger.debug("Put State Transition");
@@ -324,6 +495,12 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		
 	}
 	
+	/**
+	 * Gets a behavior by name
+	 * @param name	name of the behavior to return
+	 * 
+	 * @return	The behavior text or null if not found	
+	 */
 	public synchronized String getBehaviorText(String name)
 	{
 		logger.debug("MeasuredEntity:" + getId() + "behavior:" + name);
@@ -337,6 +514,12 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 
+	/**
+	 * Gets the state behavior text by type 
+	 * @param stateBehaviorType	 state behavior type required.
+	 * 
+	 * @return	The state behavior text or null if not found
+	 */
 	public synchronized String getStateBehaviorText(String stateBehaviorType)
 	{
 		logger.debug("State Behavior:" + stateBehaviorType);
@@ -350,6 +533,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 	
+	/**
+	 * Gets a state behavior registered by its unique internal identifier 
+	 * 
+	 * @param id	state behavior unique internal identifier
+	 * 
+	 * @return		MeasuredEntityStateBehavior instance of found , or null otherwise
+	 */
 	public synchronized MeasuredEntityStateBehavior getStateBehavior(Integer id)
 	{
 		logger.debug("get State Behavior:" + Integer.toString(id));
@@ -365,6 +555,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 	
+	/**
+	 * Gets an state transition by its unique internal identifier
+	 * 
+	 * @param id	state transition unique internal identifier
+	 * 
+	 * @return		state transition instance if found, or null
+	 */
 	public synchronized MeasuredEntityStateTransition getStateTransition(Integer id)
 	{
 		for (int i = 0; i < this.stateTransitions.size(); i++){
@@ -377,10 +574,22 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 	
+	/**
+	 * Gets an scheduled event by its unique internal identifier
+	 * 
+	 * @param id	scheduled event unique internal identifier
+	 * 
+	 * @return	scheduled event instance is found, null otherwise
+	 */
 	public synchronized MeasuredEntityScheduledEvent getScheduledEvent (Integer id){
 		return this.scheduledEvents.get(id);
 	}
 	
+	/**
+	 * Gets the list of aggregation events to put in the event list
+	 * 
+	 * @return List of aggregation events to schedule.
+	 */
 	public synchronized List<AggregationEvent> getScheduledEvents(){
 	
 		List<AggregationEvent> ret = new ArrayList<AggregationEvent>();
@@ -406,6 +615,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	}
 
+	/**
+	 * Gets the aggregation event by its unique internal identifier
+	 * 
+	 * @param id	aggregation event unique internal identifier
+	 * 
+	 * @return		a list of aggregation events.
+	 */
 	public synchronized List<AggregationEvent> getScheduledEvents(Integer id){
 		
 		List<AggregationEvent> ret = new ArrayList<AggregationEvent>();
@@ -432,6 +648,10 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	}
 
 	
+	/**
+	 * @param json
+	 * @return
+	 */
 	public synchronized MeasuredEntityBehavior behaviorFromJSON(String json)
 	{
 		ObjectMapper mapper = new ObjectMapper();
@@ -568,41 +788,41 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	}
 
     @JsonIgnore
-    public void startInterval(LocalDateTime dateTime,  MeasuringState newState, ReasonCode rCode) {
+    public synchronized void startInterval(LocalDateTime dateTime,  MeasuringState newState, ReasonCode rCode) {
     	currentState = newState;
     	currentReason= rCode;
     	startDateTimeStatus = dateTime;
     }
     
-    public void setCurrentReasonCode(ReasonCode rCode){
+    public synchronized void setCurrentReasonCode(ReasonCode rCode){
     	currentReason= rCode;
     }
     
     @JsonIgnore
-    public MeasuringState getCurrentState(){
+    public synchronized MeasuringState getCurrentState(){
     	return this.currentState;
     }
     
     @JsonIgnore
-    public ReasonCode getCurrentReason()
+    public synchronized ReasonCode getCurrentReason()
     {
     	return this.currentReason;
     }
     
     @JsonIgnore
-    public LocalDateTime getCurrentStatDateTime()
+    public synchronized LocalDateTime getCurrentStatDateTime()
     {
     	return this.startDateTimeStatus;
     }
 
-    public void addExecutedEntity(ExecutedEntity executedEntity)
+    public synchronized void addExecutedEntity(ExecutedEntity executedEntity)
     {
     	logger.debug("Measure entity Id:" + getId() + " Adding executed Entity:" + executedEntity.getId());
     	
     	this.executedEntities.put(executedEntity.getId(), executedEntity);
     }
     
-    public void stopExecuteEntities()
+    public synchronized void stopExecuteEntities()
     {
     	
     	ProductionOrderManager productionOrderManager;
@@ -623,17 +843,16 @@ public abstract class MeasuredEntity extends ConfigurationObject
     }
     
     @JsonIgnore
-    public ExecutedEntity getExecutedEntity(Integer id){
+    public synchronized ExecutedEntity getExecutedEntity(Integer id){
     	return this.executedEntities.get(id);
     }
     
-    public void removeExecutedEntity(Integer id){
+    public synchronized void removeExecutedEntity(Integer id){
     	this.executedEntities.remove(id);
     }
 
-    
     @JsonIgnore
-    public ExecutedEntity getCurrentExecutedEntity()
+    public synchronized ExecutedEntity getCurrentExecutedEntity()
     {
     	
     	for (Integer id : this.executedEntities.keySet()){
@@ -646,7 +865,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     }
     
     @JsonIgnore
-    public Double getProductionRate(String productionRateId)
+    public synchronized Double getProductionRate(String productionRateId)
     {
     	
     	// First, it obtains the production rate from the executed entities (production order). 
@@ -684,7 +903,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     }
 
     @JsonIgnore
-    public AttributeValue getAttributeValue(String name){
+    public synchronized AttributeValue getAttributeValue(String name){
     	
     	logger.debug("Starting getAttributeValue - attribute:" + name);  
     	
@@ -701,7 +920,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
     }
     
     @JsonIgnore
-    public String getBehaviorText(MeasuringState state, Integer idRazonParada) {
+    public synchronized String getBehaviorText(MeasuringState state, Integer idRazonParada) {
 		int behaviorId = 0; 
 		for (int i = 0; i < this.stateTransitions.size(); i++){
 			MeasuredEntityStateTransition measuredEntityStateTransition = this.stateTransitions.get(i);
@@ -720,7 +939,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	}
 
     @JsonIgnore
-    public AttributeValue getAttributeFromExecutedObject(String attributeId) {
+    public synchronized AttributeValue getAttributeFromExecutedObject(String attributeId) {
 		logger.debug("Starting getAttributeFromExecutedObject - measure entity id:" + getId() + " attribute:" + attributeId + " executed entities:" + this.executedEntities.size());
 		
 		for (Integer id : this.executedEntities.keySet()){
@@ -734,7 +953,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	}
 	
     @JsonIgnore
-    public String getCanonicalIdentifier()
+    public synchronized String getCanonicalIdentifier()
 	{
 		return null;
 	}
@@ -743,7 +962,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	 * This function verifies if the current interval state should be calculated and saved 
 	 * @return
 	 */
-	public boolean startNewInterval() {
+	public synchronized boolean startNewInterval() {
 		
 		if (getCurrentStatDateTime().plusSeconds(getMaxTimeForInterval()).isBefore(LocalDateTime.now()))
 			return true;
@@ -752,17 +971,17 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	}
 	
     @JsonIgnore
-    public List<AttributeValue> getAttributeValueList(){
+    public synchronized List<AttributeValue> getAttributeValueList(){
     	return attributeValues;
     }
 
     @JsonIgnore
-    public boolean registerAttributeValue(AttributeValue value){
+    public synchronized boolean registerAttributeValue(AttributeValue value){
     	return attributeValues.add(value);
     }
 
     @JsonIgnore
-	public Double getConversion1(String conversion1) {
+	public synchronized Double getConversion1(String conversion1) {
     	// First, it obtains the production rate from the executed entities (production order). 
 		try {
 			for (Integer id : this.executedEntities.keySet()){
@@ -799,7 +1018,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	}
 
     @JsonIgnore
-	public Double getConversion2(String conversion2) {
+	public synchronized Double getConversion2(String conversion2) {
     	// First, it obtains the production rate from the executed entities (production order). 
 		try {
 			for (Integer id : this.executedEntities.keySet()){
@@ -847,7 +1066,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	}
 
-	public void removeStateTransition(Integer transitionId) {
+	public synchronized void removeStateTransition(Integer transitionId) {
 
 		for (int i = 0; i < this.stateTransitions.size(); i++){
 			MeasuredEntityStateTransition transition = this.stateTransitions.get(i);
@@ -857,6 +1076,4 @@ public abstract class MeasuredEntity extends ConfigurationObject
 			}
 		}		
 	}
-
-
 }
