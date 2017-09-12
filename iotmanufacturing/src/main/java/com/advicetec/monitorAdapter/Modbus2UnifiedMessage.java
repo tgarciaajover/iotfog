@@ -44,12 +44,12 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	@Override
 	public List<UnifiedMessage> getUnifiedMessage() throws Exception {
 
-		logger.debug("entering getUnifiedMessage" + "port:" + Integer.toString(port) + "type: " + this.type + " uid:" + this.uid + " offset: " + this.offSet + "count: " + this.count);
+		logger.debug("entering getUnifiedMessage" + "port:" + Integer.toString(this.port) + "type: " + this.type + " uid:" + this.uid + " offset: " + this.offSet + "count: " + this.count);
 		
 		ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
 		
 		String portLabel = ModBusUtils.buildPortLabel(this.type, this.port, this.uid, this.offSet, this.count);
-		
+
 		if (portLabel == null){
 			return theList;
 		} else {

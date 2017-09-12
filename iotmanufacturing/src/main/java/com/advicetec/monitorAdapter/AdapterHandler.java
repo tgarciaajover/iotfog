@@ -92,7 +92,7 @@ public class AdapterHandler implements Runnable
 					}catch ( Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-						logger.error("cannot queue unified messages from :" + dictionary.get("IPAddress") + dictionary.get("UID") );
+						logger.error("cannot queue unified messages from :" + dictionary.get("IPAddress") + " UID: " + dictionary.get("UID") );
 					} 
 				}
 

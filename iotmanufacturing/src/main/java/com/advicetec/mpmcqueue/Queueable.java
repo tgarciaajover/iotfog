@@ -1,5 +1,7 @@
 package com.advicetec.mpmcqueue;
 
+import java.time.LocalDateTime;
+
 /**
  * This is a wrapper class that creates an homogeneous object to queue and pop.
  * The wrapper defines a kind of object with a <code>QueueType</code>
@@ -14,10 +16,12 @@ public class Queueable
 	 */
 	private QueueType type;
 	private Object content;
+	private LocalDateTime createDate;
 	/**
 	 * Returns the type of object under this wrap.
 	 * @return the type of object under this wrap.
 	 */
+
 	public QueueType getType() {
 		return type;
 	}
@@ -57,8 +61,13 @@ public class Queueable
 		super();
 		this.type = type;
 		this.content = content;
+		this.createDate = LocalDateTime.now();
 	}
 
+	public LocalDateTime getDateTime(){
+		return this.createDate;
+	}
+	
 	public String toString(){
 		return "type: " + type + " content: " + content;
 	}
