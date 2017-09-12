@@ -77,8 +77,12 @@ public class ModBusTcpProcessor implements Processor {
 		Map<String, Object> dictionary = new HashMap<String, Object>();
 		
 		try {
-			// TODO: AM change this part. 
-			TCPMasterConnection con = eventManager.getModbusConnection(event.getIpAddress(), event.getPort());
+			// Obtains the connection 
+			// TCPMasterConnection con = eventManager.getModbusConnection(event.getIpAddress(), event.getPort());
+			InetAddress addr =  InetAddress.getByName(event.getIpAddress()); //the slave's address
+			TCPMasterConnection con = new TCPMasterConnection(addr);
+			con.setPort(event.getPort());
+			con.connect();
 			
 			if (con == null){
 				logger.error("No Tcp Connection could be established with" + " IpAddress:" + event.getIpAddress() + " port:" + event.getPort() );
@@ -194,10 +198,13 @@ public class ModBusTcpProcessor implements Processor {
 						break;
 					case INVALID:
 						break;
-					 			
+
+						
 				} 
-			
-				eventManager.releaseModbusConnection(event.getIpAddress(), event.getPort(), con);
+
+				// eventManager.releaseModbusConnection(event.getIpAddress(), event.getPort(), con);
+				con.close();
+
 			}
 			
 		} catch (UnknownHostException e) {
