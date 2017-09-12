@@ -4,18 +4,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Stack;
 import java.util.StringTokenizer;
 
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
-import org.antlr.v4.runtime.Token;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,9 +20,7 @@ import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarBaseVisitor;
 import com.advicetec.language.BehaviorGrammarParser;
-import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.ASTNode;
-import com.advicetec.language.ast.ArrayAttributeSymbol;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.BehaviorSpace;
@@ -41,7 +35,6 @@ import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.StateSymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.TimerSymbol;
-import com.advicetec.language.ast.Type;
 import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuringState;
@@ -52,18 +45,54 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	static Logger logger = LogManager.getLogger(BehaviorInterpreter.class.getName());
 
 
-	GlobalScope globalScope; // Global scope is filled by the parser
-	ParseTreeProperty<Scope> scopes;  // The definition for the rest of scopes
+	/**
+	 * Global scope is filled by the parser
+	 */
+	GlobalScope globalScope; 
+	
+	/**
+	 * The definition for the rest of scopes
+	 */
+	ParseTreeProperty<Scope> scopes;  
+	
+	/**
+	 * Reference to the current scope.
+	 */
 	Scope currentScope;
+	
+	/**
+	 * Measured entity facade defining the context for behavior execution.   
+	 */
 	MeasuredEntityFacade facade;
 
+	/**
+	 * Global memory space 
+	 */
 	MemorySpace globals;
+	
+	/**
+	 * Current memory space
+	 */
 	MemorySpace currentSpace;
+	
+	/**
+	 * Stack of functions that have been called at any time. 
+	 */
 	Stack<FunctionSpace> stack; // call stack
 
-	// used to compare floating point numbers
+	/**
+	 * Used to compare floating point numbers
+	 */
 	public static final double SMALL_VALUE = 0.00000000001;
 
+	/**
+	 * Constructor for the behavior interpreter
+	 * 
+	 * @param _globalScope  Global scope where the symbols are defined
+	 * @param _globals    	Global memory space where values are going to be stored.
+	 * @param scopes		Scopes defined through the whole execution
+	 * @param facade		Measure entity facade where the behavior is being executed.
+	 */
 	BehaviorInterpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, MeasuredEntityFacade facade)
 	{
 		// Variable for symbol definition.
@@ -78,12 +107,24 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		logger.debug("Interpreter Constructor");
 	}
 
+	/**
+	 * Interpret and execute the program.
+	 * 
+	 * It does:
+	 * 		Loop and interpret the main context. 
+	 */
 	public ASTNode visitProgram(BehaviorGrammarParser.ProgramContext ctx) 
 	{ 
 		logger.debug("visitProgram:" );
 		return this.visit(ctx.main()); 
 	}
 
+	/**
+	 * Interpret and execute the main function.
+	 * 
+	 * It does:
+	 * 		Loop and interpret all lines of code
+	 */
 	@Override 
 	public ASTNode visitMain(BehaviorGrammarParser.MainContext ctx) 
 	{ 
@@ -174,6 +215,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Interpret a variable declaration.
+	 * 
+	 * It does:
+	 * 		Look for the variable in the symbol table
+	 * 		Assign a value to the variable and store the value in the current memory space
+	 */
 	@Override 
 	public ASTNode visitVar_dec(BehaviorGrammarParser.Var_decContext ctx) 
 	{ 
@@ -200,6 +248,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}
 	}
 
+	/**
+	 * Interpret a unit of measure declaration.
+	 * 
+	 * It does:
+	 * 		Look for the unit of measure in the symbol table
+	 * 		Assign a void value in the global space. 
+	 */
 	public ASTNode visitUnit_dec(BehaviorGrammarParser.Unit_decContext ctx) 
 	{ 
 		logger.debug("visit Unit dec");
@@ -209,6 +264,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;	
 	}
 
+	/**
+	 * Interpret an attribute declaration.
+	 * 
+	 * It does:
+	 * 		Look for the attribute symbol in the symbol table
+	 * 		Assign a value in the global space. It checks that the type is consistent. 
+	 */
 	public ASTNode visitAtrib_dec(BehaviorGrammarParser.Atrib_decContext ctx) 
 	{ 
 		String id = ctx.id1.getText();
@@ -237,7 +299,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		
 	}	
 
-
+	/**
+	 * Interpret an attribute declaration.
+	 * 
+	 * It does:
+	 * 		Look for the attribute symbol in the symbol table
+	 * 		Assign a value in the global space. It checks that the type is consistent. 
+	 */
 	public ASTNode AssignAttribute(AttributeSymbol toAssign, BehaviorGrammarParser.Atrib_decContext ctx)
 	{
 
@@ -310,6 +378,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Interpret the status.
+	 * 
+	 * It does:
+	 * 		Look for the status symbol in the symbol table
+	 * 		Get the current value in the status from the facade.
+	 * 		Returns the value as an ASTNode 
+	 */
 	public ASTNode visitStatus(BehaviorGrammarParser.StatusContext ctx) 
 	{ 
 		String attributeId = ctx.ID().getText();
@@ -330,6 +406,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 			return new ASTNode(value.getValue());
 	}
 
+	/**
+	 * Interpret the measured entity state.
+	 * 
+	 * It does:
+	 * 		Look for the state symbol in the symbol table
+	 * 		Get the current state from the facade
+	 * 		According with the current state returns the corresponding ASTNode 
+	 */
 	public ASTNode visitState(BehaviorGrammarParser.StateContext ctx) 
 	{ 
 		String id = "state"; 
@@ -362,6 +446,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Interpret the state assignment, In this statement the measured entity takes another state. 
+	 * 
+	 * It does:
+	 * 		Look for the state symbol in the symbol table
+	 * 		Get the state from the memory space
+	 * 		Assign the new state 
+	 */
 	public ASTNode visitState_assign(BehaviorGrammarParser.State_assignContext ctx) 
 	{ 
 		String id = "state";
@@ -408,6 +500,15 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Interpret the vector variable declaration 
+	 * 
+	 * It does:
+	 * 		Look for the array symbol in the symbol table
+	 * 		Create the array in the memory space
+	 * 		Assign an initial value 
+	 * 		Return Void as ASTNode
+	 */
 	public ASTNode visitVect_var_dec(BehaviorGrammarParser.Vect_var_decContext ctx) 
 	{ 
 
@@ -472,9 +573,15 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;
 	}
 
-
-
-
+	/**
+	 * Interpret the vector attribute declaration 
+	 * 
+	 * It does:
+	 * 		Look for the array symbol in the symbol table
+	 * 		Create the array in the global memory space
+	 * 		Assign an initial value 
+	 * 		Return Void as ASTNode
+	 */
 	@Override 
 	public ASTNode visitVect_attrib_dec(BehaviorGrammarParser.Vect_attrib_decContext ctx) 
 	{ 		
@@ -537,6 +644,12 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;
 	}
 
+	/**
+	 * auxiliary Method to initialize a symbol according with its type 
+	 * 
+	 * @param Symbol to be initialized
+	 * @return The ASTNode to initialize the symbol.
+	 */
 	public ASTNode initializeSymbol(Symbol symbol)
 	{
 
@@ -587,7 +700,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
-
+	/**
+	 * Interpret the assign, we can assign a variable or an attribute. 
+	 * Other symbols should generate an error.
+	 *  
+	 * This method verifies the type of the value being assigned 
+	 * and the type of the variable or attribute.
+	 */
 	@Override 
 	public ASTNode visitAssign(BehaviorGrammarParser.AssignContext ctx) 
 	{ 
@@ -621,6 +740,12 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**  
+	 * This method verifies the type of the value being assigned 
+	 * and the type of the variable or attribute.
+	 * 
+	 * If discrepancies exist then it triggers a RunTimeException.
+	 */
 	public void VerifyAssign(Symbol symbol, ASTNode value)
 	{
 
@@ -669,7 +794,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}	
 	}
 
-
+	/**  
+	 * This method convert from a type to another type.
+	 * 
+	 * If the conversion cannot be performed, then it triggers a RunTimeException.
+	 */
 	public ASTNode castAssign(Symbol symbol, ASTNode value)
 	{
 
@@ -739,7 +868,9 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}	
 	}
 
-
+	/**
+	 * This method interprets the array assignment
+	 */
 	@Override 
 	public ASTNode visitAssign_vec(BehaviorGrammarParser.Assign_vecContext ctx) 
 	{ 
@@ -754,7 +885,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		int numElements = ((ArraySymbol) vec).getNumElements();
 		int numElement = Integer.valueOf(ctx.numElement.getText());
 
-		// Verifies that the element to assign must be between and numElements -1.
+		// Verifies that the element to assign must be between 0 and numElements -1.
 		if ((numElement < 0) || (numElement >= numElements))
 		{
 			throw new RuntimeException("The element number provided is out of range");
@@ -814,6 +945,9 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;
 	}	
 
+	/**
+	 * Visits a variable. It looks for the value of a variable registered in the current memory space 
+	 */
 	@Override 
 	public ASTNode visitVar(BehaviorGrammarParser.VarContext ctx) 
 	{ 
@@ -831,6 +965,9 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return value;
 	}
 
+	/**
+	 * Visits a round symbol. Rounds the value according to the rules specified.  
+	 */
 	public ASTNode visitRound(BehaviorGrammarParser.RoundContext ctx) 
 	{ 
 		ASTNode value = this.visit(ctx.expression());
@@ -857,6 +994,10 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}
 	}
 
+	/**
+	 * Visits a return symbol. To return a value from a function we throws it value, so the caller
+	 * can catch it as an exception.  
+	 */
 	@Override 
 	public ASTNode visitRef_return(BehaviorGrammarParser.Ref_returnContext ctx) 
 	{ 
@@ -865,35 +1006,65 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		throw sharedReturnValue;
 	}
 
+	/**
+	 * Visit a text representing an integer
+	 * 
+	 * @return the ASTNode representing the integer.
+	 */
 	@Override 
 	public ASTNode visitInteger(BehaviorGrammarParser.IntegerContext ctx) 
 	{ 
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 
+	/**
+	 * Visit a text representing an year
+	 * 
+	 * @return the ASTNode representing the year.
+	 */
 	@Override
 	public ASTNode visitYear(BehaviorGrammarParser.YearContext ctx) 
 	{ 
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 
+	/**
+	 * Visit a text representing a digit
+	 * 
+	 * @return the ASTNode representing the digit.
+	 */
 	public ASTNode visitDigit(BehaviorGrammarParser.DigitContext ctx) 
 	{ 
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 
+	/**
+	 * Visit a text representing a float
+	 * 
+	 * @return the ASTNode representing the float.
+	 */
 	@Override 
 	public ASTNode visitFloat(BehaviorGrammarParser.FloatContext ctx) 
 	{ 
 		return new ASTNode(Double.valueOf(ctx.getText()));
 	}
 
+	/**
+	 * Visit a text representing a boolean
+	 * 
+	 * @return the ASTNode representing the boolean.
+	 */
 	@Override 
 	public ASTNode visitBoolean(BehaviorGrammarParser.BooleanContext ctx) 
 	{ 
 		return new ASTNode(Boolean.valueOf(ctx.getText()));
 	}
 
+	/**
+	 * Visit a text representing a string 
+	 * 
+	 * @return the ASTNode representing the string.
+	 */
 	@Override 
 	public ASTNode visitStr(BehaviorGrammarParser.StrContext ctx) 
 	{ 
@@ -905,6 +1076,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return new ASTNode(str);
 	}
 
+	/**
+	 * Visit a parentheses expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression inside the parentheses.
+	 */
 	@Override 
 	public ASTNode visitParens(BehaviorGrammarParser.ParensContext ctx) 
 	{ 
@@ -912,6 +1088,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return this.visit(ctx.expression()); 
 	}
 
+	/**
+	 * Visit a multiplication, division, or module expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitMult(BehaviorGrammarParser.MultContext ctx) 
 	{ 
@@ -972,6 +1153,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}
 	}
 
+	/**
+	 * Visit a add or subtraction expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitAddSub(BehaviorGrammarParser.AddSubContext ctx) 
 	{ 
@@ -1022,6 +1208,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Visit a exponent expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitExpon(BehaviorGrammarParser.ExponContext ctx) 
 	{ 
@@ -1051,6 +1242,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Visit a relational operation (less than, greater than, less than equal, greater than equal ) expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitRelationalExpr(BehaviorGrammarParser.RelationalExprContext ctx) 
 	{ 
@@ -1171,6 +1367,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}
 	}
 
+	/**
+	 * Visit the equals expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitEqualityExpr(BehaviorGrammarParser.EqualityExprContext ctx) 
 	{ 
@@ -1242,6 +1443,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}
 	}
 
+	/**
+	 * Visit AND expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitAndExpr(BehaviorGrammarParser.AndExprContext ctx) 
 	{ 
@@ -1273,6 +1479,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Visit OR expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitOrExpr(BehaviorGrammarParser.OrExprContext ctx) 
 	{ 
@@ -1300,6 +1511,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}
 	}
 
+	/**
+	 * Visit A Token expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	public ASTNode visitToken(BehaviorGrammarParser.TokenContext ctx) 
 	{ 
 
@@ -1339,6 +1555,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;
 	}	
 
+	/**
+	 * Visit A substring expression 
+	 * 
+	 * @return the ASTNode representing the the substring result
+	 */
 	public ASTNode visitSubstring(BehaviorGrammarParser.SubstringContext ctx) 
 	{ 
 		BehaviorGrammarParser.ExpressionContext stringEq1 =  ctx.ex1;
@@ -1382,6 +1603,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return new ASTNode(ret);
 	}
 
+	/**
+	 * Visit an expression verifying if a text start with another text
+	 * 
+	 * @return the ASTNode representing the evaluation
+	 */
 	public ASTNode visitStartWith(BehaviorGrammarParser.StartwithContext ctx) 
 	{ 
 
@@ -1408,6 +1634,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	} 
 
+	/**
+	 * Visit the repeat expression
+	 * 
+	 * 		Verifies that the import is defined in the symbol table
+	 * 		Defines a timer in the global symbol table
+	 * 
+	 * @return the ASTNode VOID
+	 */
 	public ASTNode visitRepeat(BehaviorGrammarParser.RepeatContext ctx) 
 	{ 
 		String name = ctx.ID().getText();
@@ -1448,6 +1682,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;
 	}
 
+	/**
+	 * Visit the timer expression
+	 * 
+	 * 		Verifies that the import is defined in the symbol table
+	 * 		Defines a timer in the global symbol table
+	 * 
+	 * @return the ASTNode VOID
+	 */
 	public ASTNode visitTimer(BehaviorGrammarParser.TimerContext ctx) 
 	{ 
 		String name = ctx.ID().getText();
@@ -1482,6 +1724,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 
+	/**
+	 * Visit a set of sentences
+	 * 
+	 * 		executes one by one all the sentences included.
+	 * 
+	 * @return the ASTNode VOID
+	 */
 	@Override 
 	public ASTNode visitBlock(BehaviorGrammarParser.BlockContext ctx) 
 	{ 
@@ -1502,6 +1751,16 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Visit a call sentence
+	 * 
+	 * 		creates a new memory space 
+	 * 		stores the current memory space
+	 * 		Give to the function the required parameters
+	 * 		Call the function and waits for its result
+	 * 
+	 * @return the ASTNode representing the function result  
+	 */
 	@Override 
 	public ASTNode visitCall(BehaviorGrammarParser.CallContext ctx) 
 	{ 
@@ -1593,8 +1852,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
-
-
+	/**
+	 * Visit an IF sentence
+	 * 
+	 * 		Evaluates the expression inside the if and based on that evaluation 
+	 * 		executes the corresponding block of instructions.
+	 * 
+	 * @return the ASTNode VOID
+	 */
 	@Override
 	public ASTNode visitIf_stat(BehaviorGrammarParser.If_statContext ctx) {
 
@@ -1626,6 +1891,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;
 	}
 
+	/**
+	 * Visit a log sentence
+	 * 
+	 * 		Register a log 
+	 * 
+	 * @return the ASTNode VOID
+	 */
 	@Override
 	public ASTNode visitLog(BehaviorGrammarParser.LogContext  ctx) {
 		ASTNode value = this.visit(ctx.expression());
@@ -1633,6 +1905,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return value;
 	}    
 
+	/**
+	 * Visit a unary minus expression
+	 * 
+	 * 		multiplies by -1 the expression
+	 * 
+	 * @return the ASTNode representing the finla result.
+	 */
 	@Override 
 	public ASTNode visitUnaryMinusExpr(BehaviorGrammarParser.UnaryMinusExprContext ctx) 
 	{ 
@@ -1652,6 +1931,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}
 	}
 
+	/**
+	 * Visit a not expression
+	 * 
+	 * 		makes a not of the expression
+	 * 
+	 * @return the ASTNode representing the final result.
+	 */
 	@Override 
 	public ASTNode visitNotExpr(BehaviorGrammarParser.NotExprContext ctx) 
 	{ 
@@ -1669,6 +1955,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		}
 	}
 
+	/**
+	 * Visit a date expression
+	 * 
+	 * 		takes a string and convert it in localdate.
+	 * 
+	 * @return the ASTNode representing the final result.
+	 */
 	@Override 
 	public ASTNode visitDate(BehaviorGrammarParser.DateContext ctx) 
 	{ 
@@ -1685,6 +1978,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		} 
 	}
 
+	/**
+	 * Visit a time expression
+	 * 
+	 * 		takes a string and convert it in localtime.
+	 * 
+	 * @return the ASTNode representing the final result.
+	 */
 	@Override 
 	public ASTNode visitTime(BehaviorGrammarParser.TimeContext ctx) 
 	{ 
@@ -1700,6 +2000,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		} 
 	}
 
+	/**
+	 * Visit a datetime expression
+	 * 
+	 * 		takes a string and convert it in localdatetime.
+	 * 
+	 * @return the ASTNode representing the final result.
+	 */
 	@Override 
 	public ASTNode visitDatetime(BehaviorGrammarParser.DatetimeContext ctx) 
 	{ 
@@ -1716,6 +2023,13 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		} 
 	}
 
+	/**
+	 * Visit a program parameter
+	 * 
+	 * 		takes the value given and put it in the global memory space
+	 * 
+	 * @return the ASTNode of the value given
+	 */
 	public ASTNode visitProgramparameters(BehaviorGrammarParser.ProgramparameterContext ctx) 
 	{ 
 		String id = ctx.getText();
@@ -1729,6 +2043,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return value;
 	}
 
+	/**
+	 * Visit the count over the time expression.
+	 * 
+	 * This method is evaluated depending on the type of attribute given as parameter.
+	 * Please see below how we calculate for each type 
+	 * 
+	 * @return the ASTNode of the value calculated
+	 */
 	public ASTNode visitCount_over_time(BehaviorGrammarParser.Count_over_timeContext ctx) 
 	{ 
 		// Obtain parameters given.
@@ -1842,6 +2164,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Visit the max over the time expression.
+	 * 
+	 * This method is evaluated depending on the type of attribute given as parameter.
+	 * Please see below how we calculate for each type 
+	 * 
+	 * @return the ASTNode of the value calculated
+	 */
 	public ASTNode visitMax_over_time(BehaviorGrammarParser.Max_over_timeContext ctx) 
 	{ 
 		// Obtain parameters given.
@@ -1962,7 +2292,9 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return new ASTNode(maxValue);
 	}
 
-	/** Return scope holding id's value; current func space or global. */
+	/** 
+	 * Return scope holding id's value; current func space or global. 
+	 */
 	public MemorySpace getSpaceWithSymbol(String id) 
 	{
 		if (stack.size()>0 && stack.peek().get(id)!=null) { // in top stack?
@@ -1972,10 +2304,20 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		return null;                                        // nowhere
 	}
 
+	/**
+	 * Gets the reference to the global space
+	 * 
+	 * @return Global space
+	 */
 	public MemorySpace getGlobalSpace(){
 		return globals;
 	}
 
+	/**
+	 * Gets the reference to the global scope
+	 * 
+	 * @return Global scope
+	 */
 	public GlobalScope getGlobalScope(){
 		return globalScope;
 	}

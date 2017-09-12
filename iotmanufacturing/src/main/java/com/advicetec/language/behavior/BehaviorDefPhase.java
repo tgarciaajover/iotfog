@@ -8,11 +8,8 @@ import java.util.concurrent.TimeUnit;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
-import org.antlr.v4.runtime.tree.TerminalNode;
-
 import com.advicetec.language.BehaviorGrammarBaseListener;
 import com.advicetec.language.BehaviorGrammarParser;
-import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.ArrayAttributeSymbol;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
@@ -33,7 +30,6 @@ import com.advicetec.language.ast.BehaviorSymbol;
 import org.antlr.v4.runtime.Token;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.codehaus.plexus.compiler.CompilerException;
 
 /**
  * Class used to do the first phase of the behavior interpreter.In this phase the interpreter
@@ -141,8 +137,9 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 	
 	/**
-	 * Actions to perform during the loop through a dotted name 
-	 * used to create an import in the language
+	 * Actions to perform at the end of import statement
+	 * 
+	 * used to create an import symbol in the language
 	 * 
 	 * Creates the import symbol and define it on the current scope. 
 	 */
@@ -179,8 +176,13 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		
 	}
 
-
-	
+	/** 
+	 * Actions to perform at the end of the program parameter parse 
+	 * 
+	 * @param get the program parameter context
+	 * 
+	 * Defines a variables in the symbol table.
+	 */
 	public void exitProgramparameter(BehaviorGrammarParser.ProgramparameterContext ctx) 
 	{ 
 		// The parameter does not have a unit of measure defined in the language.
@@ -437,7 +439,11 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 	
 	/**
+	 * Actions to perform when finishing parsing an attribute vector.
 	 * 
+	 * In this case the parser has to:
+	 * 		define the attribute vector symbol 
+	 * 		store the symbol in the current scope
 	 */
 	public void exitVect_attrib_dec(BehaviorGrammarParser.Vect_attrib_decContext ctx) 
 	{ 
@@ -451,8 +457,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.advicetec.language.BehaviorGrammarBaseListener#exitVect_var_dec(com.advicetec.language.BehaviorGrammarParser.Vect_var_decContext)
+	/**
+	 * Actions to perform when finishing parsing a variable vector.
+	 * 
+	 * In this case the parser has to:
+	 * 		define the variable vector symbol 
+	 * 		store the symbol in the current scope
 	 */
 	public void exitVect_var_dec(BehaviorGrammarParser.Vect_var_decContext ctx) 
 	{ 
@@ -465,8 +475,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see com.advicetec.language.BehaviorGrammarBaseListener#exitState_assign(com.advicetec.language.BehaviorGrammarParser.State_assignContext)
+	/**
+	 * Actions to perform when assigning the measured entity state.
+	 *
+	 * In this case the parser has to:
+	 * 		define the state symbol 
+	 * 		store the symbol in the current scope
 	 */
 	public void exitState_assign(BehaviorGrammarParser.State_assignContext ctx) 
 	{ 
@@ -475,10 +489,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 
 	/**
-	 * @param typeCtx
-	 * @param nameToken
-	 * @param numElem
-	 * @param unit
+	 * Define an attribute array in the symbol table. 
+	 * 
+	 * @param typeCtx    context attribute type 
+	 * @param nameToken	 Name of the attribute array 
+	 * @param numElem	 Number of elements 
+	 * @param unit		 Unit of measure to assign to the attribute array
 	 */
 	public void defineAttributeArray(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, int numElem, Token unit)
 	{
@@ -502,9 +518,11 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 
 	/**
-	 * @param typeCtx
-	 * @param nameToken
-	 * @param numElem
+	 * Define an variable array in the symbol table.
+	 *  
+	 * @param typeCtx		context variable type 	
+	 * @param nameToken		Name of the variable array 
+	 * @param numElem		Number of elements 
 	 */
 	public void defineVarArray(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, int numElem)
 	{
@@ -521,10 +539,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 
 	/**
-	 * @param typeCtx
-	 * @param nameToken
-	 * @param unit
-	 * @param trend
+	 * Defines an attribute in the symbol table.
+	 * 
+	 * @param typeCtx		context attribute type 	
+	 * @param nameToken		Name of the attribute 
+	 * @param unit			Unit of measure to assign to the attribute
+	 * @param trend			if the trend attribute is trend or not
 	 */
 	public void defineAttribute(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken, Token unit, boolean trend)
 	{
@@ -550,10 +570,12 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 	
 	/**
-	 * @param ctx
-	 * @param nameToken
-	 * @param unitId
-	 * @param descr
+	 * Defines a unit of measure in the symbol table.
+	 * 
+	 * @param ctx			unit of measure context
+	 * @param nameToken		Name of the unit of measure
+	 * @param unitId		unit of measure		
+	 * @param descr			description
 	 */
 	public void defineUnit(ParserRuleContext ctx, Token nameToken, String unitId, String descr )
 	{
@@ -573,8 +595,10 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 	
 	/**
-	 * @param typeCtx
-	 * @param nameToken
+	 * Defines a variable in the symbol table.
+	 * 
+	 * @param typeCtx		context variable
+	 * @param nameToken		name of the variable
 	 */
 	public void defineVar(BehaviorGrammarParser.TypeContext typeCtx, Token nameToken)
 	{
@@ -601,6 +625,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 
 	/**
+	 * Defines the state the symbol table.
 	 * 
 	 */
 	public void defineState()
@@ -613,14 +638,18 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	}
 	
 	/**
-	 * @return
+	 * Gets a reference to the global scope 
+	 * 
+	 * @return Global scope
 	 */
 	public GlobalScope getGlobalScope(){
 		return globals;
 	}
 	
 	/**
-	 * @return
+	 * gets a reference to scopes
+	 * 
+	 * @return scopes
 	 */
 	public ParseTreeProperty<Scope> getScopes(){
 		return scopes;
