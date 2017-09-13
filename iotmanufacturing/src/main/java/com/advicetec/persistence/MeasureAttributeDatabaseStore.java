@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
@@ -11,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.core.AttributeValue;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
-import com.advicetec.utils.MapUtils;
 
 public class MeasureAttributeDatabaseStore implements Runnable {
 	
@@ -42,18 +42,35 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 	}
 	
 
+	public static List<List< AttributeValue>> split(Map<String, AttributeValue> map, int limit){
+	    
+		List<List<AttributeValue>> ret = new ArrayList<List<AttributeValue>>();
+		
+		List<AttributeValue> items = new ArrayList<AttributeValue>(map.values());
+		
+	    int pages = (int) Math.ceil((double) items.size() / limit);
+	    
+	    logger.info("Pages:" + pages + "Items:" + items.size());
+	    for (int i = 0; i < pages; i++) {
+	        List<AttributeValue> sub = items.subList(i * limit, ((i+1) * limit > items.size() ? items.size() : (i+1) * limit));
+	        logger.info("Num items in sublist:" + sub.size());
+	        ret.add(sub);
+	    }
+	    
+	    return ret;
+	}
+
 	
 	@Override
 	public void run() {
 
 		logger.info("Starting Executing database insert MeasuringAttributeValue" + " current Thread:" + Thread.currentThread().getName());
 		// Splits the entries in batches of batchRows  
-		List<Map<String, AttributeValue>> listofMaps =
-				entries.entrySet().stream().collect(MapUtils.mapSize(batchRows));
+		List<List<AttributeValue>> lists = split(entries, batchRows);
 
-		logger.info("Number of list:" + listofMaps.size() + " current Thread:" + Thread.currentThread().getName());
+		logger.info("Number of list:" + lists.size() + " current Thread:" + Thread.currentThread().getName());
 		// Loop through split lists and insert in the database 
-		for (Map<String, AttributeValue> entry : listofMaps) {
+		for (List<AttributeValue> entry : lists) {
 			try {
 
 				logger.info("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
@@ -61,7 +78,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 				conn.setAutoCommit(false);
 				pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
 				// prepares the statement
-				entry.forEach((k,v)-> {
+				entry.forEach((v)-> {
 					logger.debug( "db write key:" + ((MeasuredAttributeValue)v).getKey() );
 					((MeasuredAttributeValue)v).dbInsert(pst);
 

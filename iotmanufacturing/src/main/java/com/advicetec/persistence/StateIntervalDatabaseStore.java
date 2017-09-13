@@ -4,13 +4,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.advicetec.core.AttributeValue;
 import com.advicetec.measuredentitity.StateInterval;
-import com.advicetec.utils.MapUtils;
 
 public class StateIntervalDatabaseStore implements Runnable {
 	
@@ -40,20 +41,35 @@ public class StateIntervalDatabaseStore implements Runnable {
 		this.batchRows = batchRows;
 	}
 	
-
+	public static List<List< StateInterval>> split(Map<String, StateInterval> map, int limit){
+	    
+		List<List<StateInterval>> ret = new ArrayList<List<StateInterval>>();
+		
+		List<StateInterval> items = new ArrayList<StateInterval>(map.values());
+		
+	    int pages = (int) Math.ceil((double) items.size() / limit);
+	    
+	    logger.info("Pages:" + pages + "Items:" + items.size());
+	    for (int i = 0; i < pages; i++) {
+	        List<StateInterval> sub = items.subList(i * limit, ((i+1) * limit > items.size() ? items.size() : (i+1) * limit));
+	        logger.info("Num items in sublist:" + sub.size());
+	        ret.add(sub);
+	    }
+	    
+	    return ret;
+	}
 	
 	@Override
 	public void run() {
 
 		logger.info("Starting Executing database insert State Interval" + " current Thread:" + Thread.currentThread().getName());
 		// Splits the entries in batches of batchRows  
-		List<Map<String, StateInterval>> listofMaps =
-				entries.entrySet().stream().collect(MapUtils.mapSize(batchRows));
+		List<List<StateInterval>> lists = split(entries, batchRows);
 
-		logger.info("Number of list:" + listofMaps.size() + " current Thread:" + Thread.currentThread().getName());
+		logger.info("Number of list:" + lists.size() + " current Thread:" + Thread.currentThread().getName());
 		
 		// Loop through split lists and insert in the database 
-		for (Map<String, StateInterval> entry : listofMaps) {
+		for (List<StateInterval> entry : lists) {
 			try {
 
 				logger.info("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
@@ -61,7 +77,7 @@ public class StateIntervalDatabaseStore implements Runnable {
 				conn.setAutoCommit(false);
 				pst = conn.prepareStatement(StateInterval.SQL_Insert);
 				// prepares the statement
-				entry.forEach((k,v)-> {
+				entry.forEach((v)-> {
 					logger.debug( "db write key:" + ((StateInterval)v).getKey() );
 					((StateInterval)v).dbInsert(pst);
 

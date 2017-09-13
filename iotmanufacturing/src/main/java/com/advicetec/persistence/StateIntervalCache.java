@@ -36,7 +36,6 @@ import com.advicetec.measuredentitity.Machine;
 import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuringState;
 import com.advicetec.measuredentitity.StateInterval;
-import com.advicetec.utils.MapUtils;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
@@ -324,11 +323,10 @@ public class StateIntervalCache extends Configurable {
 		Map<String,StateInterval> subSet = cache.getAllPresent(keys);
 
 		// Splits the entries in batches of batchRows  
-		List<Map<String, StateInterval>> listofMaps =
-						subSet.entrySet().stream().collect(MapUtils.mapSize(BATCH_ROWS));
+		List<List<StateInterval>> lists = StateIntervalDatabaseStore.split(subSet,BATCH_ROWS);
 
 		// Loop through split lists and insert in the database 
-		for (Map<String, StateInterval> entry : listofMaps) {
+		for (List<StateInterval> entry : lists) {
 			
 			if (entry.size() > 0){
 				try {
@@ -336,16 +334,18 @@ public class StateIntervalCache extends Configurable {
 					conn.setAutoCommit(false);
 					// prepare statement
 					pst = conn.prepareStatement(StateInterval.SQL_Insert);
-
+					
+					List<String> keysToInvalidate = new ArrayList<String>();
 					// Store the values in the database.
-					for (StateInterval interval :entry.values()) {
+					for (StateInterval interval :entry) {
 						interval.dbInsert(pst);
+						keysToInvalidate.add(interval.getKey());
 					}
 					pst.executeBatch();
 					conn.commit();
 
 					// Discard those values obtained as they would be inserted in the database.
-					cache.invalidateAll(entry.keySet());
+					cache.invalidateAll(keysToInvalidate);
 
 				} catch ( SQLException e) {
 					logger.error("Error: "+ e.getMessage());

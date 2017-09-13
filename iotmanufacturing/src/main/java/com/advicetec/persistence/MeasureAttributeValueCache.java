@@ -27,7 +27,6 @@ import com.advicetec.core.AttributeValue;
 import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
-import com.advicetec.utils.MapUtils;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
@@ -335,22 +334,23 @@ public class MeasureAttributeValueCache extends Configurable {
 		Map<String,AttributeValue> subSet = cache.getAllPresent(keys);
 		
 		// Splits the entries in batches of batchRows  
-		List<Map<String, AttributeValue>> listofMaps =
-				subSet.entrySet().stream().collect(MapUtils.mapSize(BATCH_ROWS));
+		List<List<AttributeValue>> lists = MeasureAttributeDatabaseStore.split(subSet, BATCH_ROWS);
 		
 		// Loop through split lists and insert in the database 
-		for (Map<String, AttributeValue> entry : listofMaps) {
+		for (List<AttributeValue> entry : lists) {
 			if (entry.size() > 0){
 				try {
 					conn = getConnection();
 					conn.setAutoCommit(false);
 					// prepare statement
 					pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
-
+					
+					List<String> keysToInvalidate = new ArrayList<String>();
 					// Get the keys to insert in the database.
-					for (AttributeValue value :	entry.values()) {
+					for (AttributeValue value :	entry) {
 						if(value instanceof MeasuredAttributeValue){
 							MeasuredAttributeValue mav = (MeasuredAttributeValue) value;
+							keysToInvalidate.add(mav.getKey());
 							mav.dbInsert(pst);
 						}
 					}
@@ -358,7 +358,7 @@ public class MeasureAttributeValueCache extends Configurable {
 					pst.executeBatch();
 					conn.commit();
 					// Remove all keys inserted in the database.
-					cache.invalidateAll(entry.keySet());
+					cache.invalidateAll(keysToInvalidate);
 
 				} catch (SQLException e) {
 					logger.error(e.getMessage());
