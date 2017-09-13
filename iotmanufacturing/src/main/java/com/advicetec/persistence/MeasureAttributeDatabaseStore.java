@@ -34,11 +34,10 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 	 */
 	private int batchRows = 4000;
 	
-	public MeasureAttributeDatabaseStore(Map<String, AttributeValue> entries, Connection connection, int batchRows)
+	public MeasureAttributeDatabaseStore(Map<String, AttributeValue> entries, int batchRows)
 	{
 		this.entries = entries;
 		this.batchRows = batchRows;
-		this.conn = connection;
 	}
 	
 
@@ -75,6 +74,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 
 				logger.info("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
 				// connect to database
+				conn = MeasureAttributeValueCache.getConnection();
 				conn.setAutoCommit(false);
 				pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
 				// prepares the statement
@@ -91,9 +91,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
 				e.printStackTrace();
-			}
-
-			finally{
+			} finally{
 				if(pst!=null){
 					try{
 						logger.info("closing prepared statement");
@@ -103,7 +101,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 						e.printStackTrace();
 					}
 				}
-
+				
 				if(conn!=null) {
 					try {
 						logger.info("closing connection");
@@ -113,8 +111,10 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 						e.printStackTrace();
 					}
 				}
+
 			}
 		}
+		
 		
 		logger.info("Ending Executing database insert MeasuringAttributeValue" + " current Thread:" + Thread.currentThread().getName());
 	}

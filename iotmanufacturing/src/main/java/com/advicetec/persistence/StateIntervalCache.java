@@ -257,13 +257,8 @@ public class StateIntervalCache extends Configurable {
 						.writeAction(entries -> {
 							if (entries.size() > 0) {
 								logger.info("to storage num entries:" + entries.size());
-								try {
-								StateIntervalDatabaseStore storedatabase = new StateIntervalDatabaseStore(entries, getConnection(),BATCH_ROWS);
+								StateIntervalDatabaseStore storedatabase = new StateIntervalDatabaseStore(entries,BATCH_ROWS);
 								threadPool.submit(storedatabase);
-								} catch (SQLException e) {
-									logger.error("error storing attributes in the database" + "error:" + e.getMessage());
-									e.printStackTrace();
-								}								
 							}
 						}).build())
 						.build();

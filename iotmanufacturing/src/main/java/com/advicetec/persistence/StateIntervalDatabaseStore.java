@@ -34,10 +34,9 @@ public class StateIntervalDatabaseStore implements Runnable {
 	 */
 	private int batchRows = 4000;
 	
-	public StateIntervalDatabaseStore(Map<String, StateInterval> entries, Connection connection, int batchRows)
+	public StateIntervalDatabaseStore(Map<String, StateInterval> entries, int batchRows)
 	{
 		this.entries = entries;
-		this.conn = connection;
 		this.batchRows = batchRows;
 	}
 	
@@ -74,6 +73,7 @@ public class StateIntervalDatabaseStore implements Runnable {
 
 				logger.info("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
 				// connect to database
+				conn = StateIntervalCache.getConnection();
 				conn.setAutoCommit(false);
 				pst = conn.prepareStatement(StateInterval.SQL_Insert);
 				// prepares the statement

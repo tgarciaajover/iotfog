@@ -249,13 +249,8 @@ public class MeasureAttributeValueCache extends Configurable {
 							if (entries.size() > 0) {
 								logger.debug("to storage num entries:" + entries.size());
 								MeasureAttributeDatabaseStore storedatabase;
-								try {
-									storedatabase = new MeasureAttributeDatabaseStore(entries, getConnection() ,BATCH_ROWS);
-									threadPool.submit(storedatabase);
-								} catch (SQLException e) {
-									logger.error("error storing attributes in the database" + "error:" + e.getMessage());
-									e.printStackTrace();
-								}
+								storedatabase = new MeasureAttributeDatabaseStore(entries, BATCH_ROWS);
+								threadPool.submit(storedatabase);
 							} // if
 						}).build()) // writeAction
 						.build(); // writeBehindCache
