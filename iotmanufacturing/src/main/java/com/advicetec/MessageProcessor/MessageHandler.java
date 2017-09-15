@@ -42,6 +42,9 @@ public class MessageHandler implements Runnable
 
 			while (true)
 			{
+				
+				logger.debug("Elements in the message adapter:" + fromQueue.size()[6]);
+				
 				Queueable obj = (Queueable) fromQueue.pop();
 				
 				if (obj.getType() == QueueType.UNIFIED_MESSAGE)

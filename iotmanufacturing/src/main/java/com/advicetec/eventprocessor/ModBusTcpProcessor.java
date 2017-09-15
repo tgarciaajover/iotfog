@@ -77,6 +77,7 @@ public class ModBusTcpProcessor implements Processor {
 		ArrayList<DelayEvent> retEvts = new ArrayList<DelayEvent>();
 		Map<String, Object> dictionary = new HashMap<String, Object>();
 		TCPMasterConnection con = null;
+		
 		try {
 			// Obtains the connection 
 			// TCPMasterConnection con = eventManager.getModbusConnection(event.getIpAddress(), event.getPort());
@@ -84,7 +85,7 @@ public class ModBusTcpProcessor implements Processor {
 			con = new TCPMasterConnection(addr);
 			con.setPort(event.getPort());
 			con.connect();			
-
+			
 			ModbusTCPTransaction trans = null; //the transaction
 			logger.debug("event type to process : " + event.getType().getName());
 			switch (event.getType())
@@ -206,8 +207,10 @@ public class ModBusTcpProcessor implements Processor {
 			logger.error("Error in modbus slave for ipaddress:" + event.getIpAddress() + " port:" + Integer.toString(event.getPort()) + "error reported:" + e.getMessage());
 		} finally {
 			
-			if (con != null)
+			if (con != null){
+				logger.debug("modbus connection closed");
 				con.close();
+			}
 		}
 		
 		logger.debug("Nbr Events created:" + retEvts.size());

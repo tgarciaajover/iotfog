@@ -162,6 +162,21 @@ public class EventHandler implements Runnable
 
 	}
 	
+	public void runPurgeFacadeEvent(PurgeFacadeCacheMapsEvent event) throws SQLException, InterruptedException {
+		
+		PurgeFacadeCacheMapsEventProcessor processor = new PurgeFacadeCacheMapsEventProcessor(event);
+		List<DelayEvent> eventsToCreate = processor.process();
+		
+		for ( int i=0; i < eventsToCreate.size(); i++){
+			DelayEvent newEvent = eventsToCreate.get(i);
+			this.delayQueue.put(newEvent);
+		}
+		logger.debug("Finished executing Purge Facade Event - delayeEvents:" + eventsToCreate.size());
+		
+		repeat(event);
+		
+	}
+	
 	/**
 	 * This is the main method of the handler, it waits for new events and processes them by creating the corresponding processor. 
 	 * For now, we can process the following event types:
@@ -181,15 +196,17 @@ public class EventHandler implements Runnable
 				Queueable obj = (Queueable) queue.pop();
 				Event evnt = (Event) obj.getContent();
 
+				logger.debug("elements in queue:" + queue.size()[6] );
+
 				boolean reserved = EventManager.getInstance().blockProcessingHandler(evnt.getEvntType());
 
 				if (reserved == false) {
-					if (EventManager.getInstance().getProcessingLimit(evnt.getEvntType()) != 0) { 
+					// if (EventManager.getInstance().getProcessingLimit(evnt.getEvntType()) != 0) { 
 						// We have to enqueue the event because the maximum number of handers has been reached.
-						queue.enqueue(6, obj);
-					} else {
-						logger.warn("The event type" + evnt.getEvntType().getName() + " cannot be processed by configuration- we remove the event from the queue" );
-					}
+						// queue.enqueue(6, obj);
+					//} else {
+					//	logger.warn("The event type" + evnt.getEvntType().getName() + " cannot be processed by configuration- we remove the event from the queue" );
+					// }
 
 				} else {
 
@@ -217,7 +234,11 @@ public class EventHandler implements Runnable
 
 						runTestEvent( (TestEvent) evnt);
 
-					} else {
+					} else if (evnt.getEvntType() == EventType.PURGE_FACADE_MAPS){
+						
+						runPurgeFacadeEvent((PurgeFacadeCacheMapsEvent) evnt);
+					}
+					else {
 						logger.error("This event cannot be processed" + evnt.getEvntType().getName());
 					}
 

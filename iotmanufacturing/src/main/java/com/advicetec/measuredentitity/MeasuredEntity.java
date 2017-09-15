@@ -614,7 +614,7 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return ret;
 
 	}
-
+		
 	/**
 	 * Gets the aggregation event by its unique internal identifier
 	 * 

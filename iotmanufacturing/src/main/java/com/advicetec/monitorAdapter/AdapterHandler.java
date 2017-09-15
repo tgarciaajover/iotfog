@@ -38,6 +38,9 @@ public class AdapterHandler implements Runnable
 
 			while (true)
 			{
+				
+				logger.debug("Elements in the monitor adapter:" + fromQueue.size()[6]);
+				
 				Queueable queueable = (Queueable) fromQueue.pop();
 				logger.debug("a queueable object was found");
 
@@ -90,12 +93,10 @@ public class AdapterHandler implements Runnable
 							}
 						}
 					}catch ( Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 						logger.error("cannot queue unified messages from :" + dictionary.get("IPAddress") + " UID: " + dictionary.get("UID") );
 					} 
 				}
-
 			}
 
 		} catch (InterruptedException e) {

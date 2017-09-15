@@ -65,9 +65,14 @@ public enum EventType
 	TEST(9,"Test"),
 	
 	/**
+	 * Event to purge maps controlling caches. 
+	 */
+	PURGE_FACADE_MAPS(10, "Purge_Facade_Maps"),
+	
+	/**
 	 * Invalid event. 
 	 */
-	INVALID(10,"Invalid_Event");
+	INVALID(11,"Invalid_Event");
 
 	/**
 	 * Unique code defining the event type 

@@ -33,8 +33,8 @@ public class Queue<T>
 	final Condition notFull = lock.newCondition();
 	final Condition notEmpty = lock.newCondition();
 
-	// it should be a power of two. In this case: 2^18.
-	private static final int MAX_QUEUE_LEN = 262144;
+	// it should be a power of two. In this case: 2^13.
+	private static final int MAX_QUEUE_LEN = 8192;
 
 	// the mask to be used to calculate the queue size.
 	private static final int Q_MASK = MAX_QUEUE_LEN - 1;
