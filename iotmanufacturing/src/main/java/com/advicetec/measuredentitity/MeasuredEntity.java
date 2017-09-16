@@ -649,8 +649,11 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	
 	/**
-	 * @param json
-	 * @return
+	 * Inserts a behavior from JSON object.
+	 *  
+	 * @param json  Json object representing the behavior to insert.
+	 * 
+	 * @return  The MeasuredEntityBehavior object that was created.
 	 */
 	public synchronized MeasuredEntityBehavior behaviorFromJSON(String json)
 	{
@@ -681,6 +684,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	}
 
+	/**
+	 * Creates a state behavior object from JSON.
+	 * 
+	 * @param json Json Object representing the behavior to insert.
+	 * 
+	 * @return The measured entity state behavior that was created.
+	 */
 	public synchronized MeasuredEntityStateBehavior stateBehaviorFromJSON(String json)
 	{
 		ObjectMapper mapper = new ObjectMapper();
@@ -710,6 +720,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	}
 	
+	/**
+	 * Get the behavior object from its name
+	 *  
+	 * @param name name of the behavior to find
+	 * 
+	 * @return  Measured Entity Behavior Object or null if the behavior was not found. 
+	 */
 	public synchronized MeasuredEntityBehavior getBehavior(String name)
 	{
 		logger.debug("behavior:" + name);
@@ -723,6 +740,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 
+	/**
+	 * Get the behavior object from its internal identifier
+	 * 
+	 * @param id  internal identifier of the behavior object to return
+	 * 
+	 * @return Measured Entity Behavior Object or null if the behavior was not found. 
+	 */
 	public synchronized MeasuredEntityBehavior getBehavior(Integer id)
 	{
 		logger.debug("behavior:" + id);
@@ -736,6 +760,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 	
+	/**
+	 * Get the STATE behavior object from the state behavior type
+	 * 
+	 * @param stateBehaviorType  state behavior type to return 
+	 *   
+	 * @return  Measured Entity State Behavior or null if the behavior was not found. 
+	 */
 	public synchronized MeasuredEntityStateBehavior getStateBehavior(String stateBehaviorType)
 	{
 		logger.debug("State Behavior:" + stateBehaviorType);
@@ -748,19 +779,28 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		}
 		return null;
 	}
-	
-	
+
+	/**
+	 * Remove all behaviors registered in the measured entity
+	 */
 	public synchronized void removeBehaviors()
 	{
 		this.behaviors.clear();
 	}
 
+	/**
+	 * Remove all state behavior registered in the measured entity 
+	 */
 	public synchronized void removeStateBehaviors()
 	{
 		this.stateBehaviors.clear();
 	}
 
-	
+	/**
+	 * Update the measured entity copy the information from another measured entity
+	 * 
+	 * @param measuredEntity  measured entity definition to copy.
+	 */
 	public synchronized void updateEntityConfiguration(MeasuredEntity measuredEntity) {
 
 		logger.debug("Update Entity Configuration - MeasuredEntity" + measuredEntity);
@@ -781,12 +821,16 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		{
 			putStateBehavior(measuredEntity.stateBehaviors.get(i) );			
 		}
-		
-		if (measuredEntity instanceof Machine){
-			
-		}
+
 	}
 
+    /**
+     * Registers the start of a new interval in the measured entity
+     *   
+     * @param dateTime 	date and time when this interval should start
+     * @param newState	state given to the machine 
+     * @param rCode		Reason code for the interval
+     */
     @JsonIgnore
     public synchronized void startInterval(LocalDateTime dateTime,  MeasuringState newState, ReasonCode rCode) {
     	currentState = newState;
@@ -794,27 +838,52 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	startDateTimeStatus = dateTime;
     }
     
+    /**
+     * Establishes the reason code for the current interval
+     * 
+     * @param rCode  reason code to set.
+     */
     public synchronized void setCurrentReasonCode(ReasonCode rCode){
     	currentReason= rCode;
     }
     
+    /**
+     * Gets the state for the current interval.
+     * 
+     * @return current interval state.
+     */
     @JsonIgnore
     public synchronized MeasuringState getCurrentState(){
     	return this.currentState;
     }
     
+    /**
+     * Gets the reason code for the current interval. 
+     * 
+     * @return	 current interval reason
+     */
     @JsonIgnore
     public synchronized ReasonCode getCurrentReason()
     {
     	return this.currentReason;
     }
     
+    /**
+     * Gets the date and time when the current interval started 
+     * 
+     * @return The date and time when the current interval started
+     */
     @JsonIgnore
     public synchronized LocalDateTime getCurrentStatDateTime()
     {
     	return this.startDateTimeStatus;
     }
 
+    /**
+     * Adds an executed entity to this measured entity
+     * 
+     * @param executedEntity executed entity to add.
+     */
     public synchronized void addExecutedEntity(ExecutedEntity executedEntity)
     {
     	logger.debug("Measure entity Id:" + getId() + " Adding executed Entity:" + executedEntity.getId());
@@ -822,6 +891,9 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	this.executedEntities.put(executedEntity.getId(), executedEntity);
     }
     
+    /**
+     *  Stops all executed entities being processed in this measured entity 
+     */
     public synchronized void stopExecuteEntities()
     {
     	
@@ -842,15 +914,31 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		
     }
     
+    /**
+     * Gets the executed entity being performed by its unique identifier 
+     * 
+     * @param id	unique internal identifier of the executed entity to return. 
+     * @return		executed entity object 
+     */
     @JsonIgnore
     public synchronized ExecutedEntity getExecutedEntity(Integer id){
     	return this.executedEntities.get(id);
     }
     
+    /**
+     * Removes the executed entity with the identifier given as parameter
+     * 
+     * @param id unique internal identifier of the executed entity.
+     */
     public synchronized void removeExecutedEntity(Integer id){
     	this.executedEntities.remove(id);
     }
 
+    /**
+     * Obtains the executed entity being processed in the measured entity 
+     * 
+     * @return  current executed entity being processed.
+     */
     @JsonIgnore
     public synchronized ExecutedEntity getCurrentExecutedEntity()
     {
@@ -864,6 +952,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	return null;
     }
     
+    /**
+     * Gets the production rate from this measured entity.
+     * 
+     * @param productionRateId  production rate field identifier
+     *  
+     * @return the production rate assigned, if the field is not found, then returns null.
+     */
     @JsonIgnore
     public synchronized Double getProductionRate(String productionRateId)
     {
@@ -902,6 +997,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
     	}
     }
 
+    /**
+     * Gets an attribute value by name 
+     * 
+     * @param name name of the attribute which value should be returned
+     * 
+     * @return  Attribute name or null if not found.
+     */
     @JsonIgnore
     public synchronized AttributeValue getAttributeValue(String name){
     	
@@ -919,6 +1021,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
     }
     
+    /**
+     * Gets the status behavior by state and reason code 
+     * 
+     * @param state  			measuring entity state  
+     * @param idRazonParada		reason code
+     * @return	state behavior or null if not found.
+     */
     @JsonIgnore
     public synchronized String getBehaviorText(MeasuringState state, Integer idRazonParada) {
 		int behaviorId = 0; 
@@ -938,6 +1047,13 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return null;
 	}
 
+    /**
+     * Gets an attribute from the executed object being executed
+     * 
+     * @param  Name of the attribute to get.
+     * 
+     * @return attribute in the executed entity or null if not found. 
+     */
     @JsonIgnore
     public synchronized AttributeValue getAttributeFromExecutedObject(String attributeId) {
 		logger.debug("Starting getAttributeFromExecutedObject - measure entity id:" + getId() + " attribute:" + attributeId + " executed entities:" + this.executedEntities.size());
@@ -960,7 +1076,8 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	/**
 	 * This function verifies if the current interval state should be calculated and saved 
-	 * @return
+	 * 
+	 * @return true if we should start a new interval, false otherwise.
 	 */
 	public synchronized boolean startNewInterval() {
 		
@@ -970,17 +1087,36 @@ public abstract class MeasuredEntity extends ConfigurationObject
 		return false;
 	}
 	
-    @JsonIgnore
+    /**
+     * Gets the attribute list registered in the measured entity
+     * 
+     * @return List of attributes registered.
+     */
+	@JsonIgnore
     public synchronized List<AttributeValue> getAttributeValueList(){
     	return attributeValues;
     }
 
-    @JsonIgnore
+    /**
+     * Registers a new attribute value in the measured entity
+     * 
+     * @param value  attribute value to register
+     * 
+     * @return true if the insert was successful, false otherwise
+     */
+	@JsonIgnore
     public synchronized boolean registerAttributeValue(AttributeValue value){
     	return attributeValues.add(value);
     }
 
-    @JsonIgnore
+    /**
+     * Gets the conversion one from the measured entity
+     * 
+     * @param conversion1 field name of the conversion one
+     * 
+     * @return conversion one or null if not found as attribute.
+     */
+	@JsonIgnore
 	public synchronized Double getConversion1(String conversion1) {
     	// First, it obtains the production rate from the executed entities (production order). 
 		try {
@@ -1017,7 +1153,14 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	}
 
-    @JsonIgnore
+    /**
+     * Gets the conversion two from the measured entity
+     * 
+     * @param conversion2  field name of the conversion two
+     * 
+     * @return  conversion two or null if not found as attribute.
+     */
+	@JsonIgnore
 	public synchronized Double getConversion2(String conversion2) {
     	// First, it obtains the production rate from the executed entities (production order). 
 		try {
@@ -1054,6 +1197,11 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	}
 
+	/**
+	 * Removes the state behavior from the measured entity by its unique identifier 
+	 * 
+	 * @param behaviorId  unique identifier of the state behavior
+	 */
 	public synchronized void removeStateBehavior(Integer behaviorId) {
 
 		for (int i = 0; i < this.stateBehaviors.size(); i++){
@@ -1066,6 +1214,11 @@ public abstract class MeasuredEntity extends ConfigurationObject
 
 	}
 
+	/**
+	 * Removes an state transition from the measured entity by its unique identifier 
+	 * 
+	 * @param transitionId	unique identifier of the state transition
+	 */
 	public synchronized void removeStateTransition(Integer transitionId) {
 
 		for (int i = 0; i < this.stateTransitions.size(); i++){
