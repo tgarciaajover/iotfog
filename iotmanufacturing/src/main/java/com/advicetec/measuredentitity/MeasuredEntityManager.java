@@ -46,6 +46,9 @@ public class MeasuredEntityManager extends Configurable {
 	
 	// This field is the attribute name for the production counter.
 	private String actualProductionCountId;
+
+	// This field establishes how often we have to remove the cache entries (seconds).
+	private Integer purgeFacadeCacheMapEntries;
 	
 	private MeasuredEntityManager() throws SQLException{
 		
@@ -65,6 +68,12 @@ public class MeasuredEntityManager extends Configurable {
 		this.unit2PerCycles = properties.getProperty("machineUnit2PerCycles");
 		this.actualProductionCountId = properties.getProperty("actualProductionCountField");
 
+		if (properties.getProperty("PurgeFacadeCacheMapEntries") != null) {
+			this.purgeFacadeCacheMapEntries =Integer.getInteger(properties.getProperty("PurgeFacadeCacheMapEntries"));
+		} else {
+			this.purgeFacadeCacheMapEntries = new Integer(10); // By default 10 seconds.
+		}
+		
 		measuredEntities = new MeasuredEntityContainer(driver, server, user, password);
 		measuredEntities.loadContainer();
 		
@@ -72,7 +81,7 @@ public class MeasuredEntityManager extends Configurable {
 			MeasuredEntity m = (MeasuredEntity) measuredEntities.getObject(i);
 			MeasuredEntityFacade f = new MeasuredEntityFacade(m, this.productionRateId, 
 																this.unit1PerCycles, this.unit2PerCycles, 
-																this.actualProductionCountId);
+																this.actualProductionCountId, this.purgeFacadeCacheMapEntries);
 			entities.add(f);
 		}
 		
@@ -144,7 +153,7 @@ public class MeasuredEntityManager extends Configurable {
 		}
 		return entities.add(new MeasuredEntityFacade(entity, this.productionRateId, 
 							this.unit1PerCycles, this.unit2PerCycles, 
-							this.actualProductionCountId));
+							this.actualProductionCountId,this.purgeFacadeCacheMapEntries));
 	}
 	
 	/**

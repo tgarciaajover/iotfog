@@ -98,8 +98,11 @@ public final class MeasuredEntityFacade {
 	// This field is the attribute name for the production counter.
 	private String actualProductionCountId;	
 	
+	// This field establishes how often we have to remove the cache entries (seconds).
+	private Integer purgeFacadeCacheMapEntries;
+	
 	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId, 
-								 String unit1PerCycles, String unit2PerCycles,  String actualProductionCountId)
+								 String unit1PerCycles, String unit2PerCycles,  String actualProductionCountId, Integer purgeFacadeCacheMapEntries)
 	{
 		this.entity = entity;
 		this.status = new StatusStore();
@@ -113,10 +116,11 @@ public final class MeasuredEntityFacade {
 		this.unit1PerCycles = unit1PerCycles;
 		this.unit2PerCycles = unit2PerCycles;
 		this.actualProductionCountId = actualProductionCountId;
+		this.purgeFacadeCacheMapEntries = purgeFacadeCacheMapEntries;
 		
 		PurgeFacadeCacheMapsEvent purgeEvent = new PurgeFacadeCacheMapsEvent(entity.getId(), entity.getType());
 		purgeEvent.setRepeated(true);
-		purgeEvent.setMilliseconds(10000);
+		purgeEvent.setMilliseconds(purgeFacadeCacheMapEntries * 1000);
 		
 		try {
 			
@@ -337,7 +341,7 @@ public final class MeasuredEntityFacade {
 	public synchronized void deleteOldValues(LocalDateTime oldest){
 		for(SortedMap<LocalDateTime, String> internalMap : attMap.values()){
 			// replace the map with the last entries. 
-			Set<LocalDateTime> keysToDelete = internalMap.tailMap(oldest).keySet();
+			Set<LocalDateTime> keysToDelete = internalMap.headMap(oldest).keySet();
 			for (LocalDateTime datetime : keysToDelete){
 				internalMap.remove(datetime);
 			}
@@ -346,7 +350,7 @@ public final class MeasuredEntityFacade {
 
 
 	public synchronized void deleteOldStates(LocalDateTime oldest){
-		Set<LocalDateTime> keysToDelete = statesMap.tailMap(oldest).keySet();
+		Set<LocalDateTime> keysToDelete = statesMap.headMap(oldest).keySet();
 		for (LocalDateTime datetime : keysToDelete){
 			statesMap.remove(datetime);
 		}
