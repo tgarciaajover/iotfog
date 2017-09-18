@@ -120,7 +120,7 @@ public final class MeasuredEntityFacade {
 		
 		PurgeFacadeCacheMapsEvent purgeEvent = new PurgeFacadeCacheMapsEvent(entity.getId(), entity.getType());
 		purgeEvent.setRepeated(true);
-		purgeEvent.setMilliseconds(purgeFacadeCacheMapEntries * 1000);
+		purgeEvent.setMilliseconds(this.purgeFacadeCacheMapEntries * 1000);
 		
 		try {
 			
