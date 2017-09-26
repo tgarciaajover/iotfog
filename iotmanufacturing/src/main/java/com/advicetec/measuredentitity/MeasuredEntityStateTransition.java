@@ -16,7 +16,12 @@ import com.advicetec.core.serialization.LocalDateTimeSerializer;
 import com.advicetec.core.serialization.MeasuringStateSerializer;
 import com.advicetec.core.serialization.MeasuringStateDeserializer;
 
-
+/**
+ * This class models transition between two Measured states.
+ * 
+ * @author advicetec
+ * @see MeasuringState
+ */
 public class MeasuredEntityStateTransition extends ConfigurationObject 
 {
 

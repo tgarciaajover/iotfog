@@ -1,9 +1,8 @@
 package com.advicetec.measuredentitity;
 
 /**
- * This class models Downtime Reason for the plan 
+ * This class models a Downtime Reason for the production plan. 
  * @author advicetec
- *
  */
 public class DowntimeReason {
 	/**
@@ -15,15 +14,15 @@ public class DowntimeReason {
 	 */
 	private Integer occurrences;
 	/**
-	 * Duration in minutes.
+	 * Duration in minutes of this downtime.
 	 */
 	private Double minDuration;
 	/**
-	 * Canonical machine id
+	 * Canonical machine id that experiments the downtime.
 	 */
 	private String machine;
 	/**
-	 * Canonical description
+	 * Canonical downtime description
 	 */
 	private String description;
 	

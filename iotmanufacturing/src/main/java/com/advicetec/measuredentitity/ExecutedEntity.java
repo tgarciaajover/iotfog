@@ -29,7 +29,7 @@ import com.advicetec.core.serialization.LocalDateTimeSerializer;
  * 		ProductionOrder.
  * 
  * @author Advicetec
- *
+ * @see P
  */
 @JsonTypeInfo(
 	    use = JsonTypeInfo.Id.NAME,
@@ -117,8 +117,8 @@ public class ExecutedEntity extends ConfigurationObject
     /**
      * Gets an attribute by name
      * 
-     * @param name	name of the attribute to return
-     * @return	an attribute with the name given as parameter, or null if not found.
+     * @param name attribute name to return
+     * @return attribute with the name given as parameter, or NULL if not found.
      */
     @JsonIgnore
     public Attribute getAttribute(String name){
@@ -134,10 +134,10 @@ public class ExecutedEntity extends ConfigurationObject
     }
     
     /**
-     * Gets an attribute value by name of the attribute
+     * Returns the value of an attribute by the given name.
      * 
-     * @param name		name of the attribute to return
-     * @return			The attribute value with the name given as parameter, or null if not found.
+     * @param name	attribute name to return.
+     * @return	Attribute value with the name given as parameter, or NULL if not found.
      */
     public AttributeValue getAttributeValue(String name){
     	
@@ -156,9 +156,9 @@ public class ExecutedEntity extends ConfigurationObject
     }
     
     /**
-     * Gets the list of attributes registered
+     * Returns the list of attributes registered to this entity.
      * 
-     * @return attribute list
+     * @return attribute list registered to this entity.
      */
     @JsonIgnore
     public List<Attribute> getAttributeList(){
@@ -166,19 +166,19 @@ public class ExecutedEntity extends ConfigurationObject
     }
     
     /**
-     * Registers a new attribute in the executed object
+     * Registers a new attribute in this entity.
      * 
-     * @param attrribute  attribute to register
-     * @return			  true if the operation was successful, false otherwise.
+     * @param attrribute a new attribute to register.
+     * @return	TRUE if the attribute was successfully registered, FALSE otherwise.
      */
     public boolean registerAttribute(Attribute attrribute){
     	return attributes.add(attrribute);
     }
     
     /**
-     * Performs the equals operator with another executed entity 
-     * @param other		The other executed entity to compare against  
-     * @return			True if both entities are equal, false otherwise 
+     * Indicates if this entity is equals to some another executed entity. 
+     * @param other	The other executed entity to compare against  
+     * @return	TRUE if both, the given and this entities are equal, FALSE otherwise. 
      */
     @JsonIgnore
     public boolean equals(ExecutedEntity other){
@@ -188,7 +188,7 @@ public class ExecutedEntity extends ConfigurationObject
     	if (getId() != other.getId())
     		return false;
     	
-    	// Check that both orders have the same attributes.  
+    	// Check if both orders have the same attributes.  
 		for (int i = 0; i < this.attributes.size(); i++){
 			Attribute attr = other.getAttribute(this.attributes.get(i).getName());
 			if ((attr == null) || (attr.equals(this.attributes.get(i)) == false)){
@@ -196,21 +196,20 @@ public class ExecutedEntity extends ConfigurationObject
 			}
 		}
 
-    	// Check that both orders have the same attributes values.  
+    	// Check if both orders have the same attributes values.  
 		for (int i = 0; i < this.attributeValues.size(); i++){
 			AttributeValue attr = other.getAttributeValue(this.attributes.get(i).getName());
 			if ((attr == null) || (attr.equals(this.attributeValues.get(i)) == false)){
 				return false;
 			}
 		}
-
     	return true;
     }
 
     /**
-     * Gets the list of attribute values registered
+     * Returns the list of attribute values registered to this entity.
      * 
-     * @return attribute value list
+     * @return attribute value list.
      */
     @JsonIgnore
     public List<AttributeValue> getAttributeValueList(){
@@ -218,11 +217,10 @@ public class ExecutedEntity extends ConfigurationObject
     }
 
     /**
-     * Registers an attribute value in the entity
+     * Registers an attribute value to this entity.
      * 
-     * @param value  attribute value to register
-     * 
-     * @return		true if the operation was successful, false otherwise.
+     * @param value updated attribute value to register.
+     * @return TRUE if the attribute value was successfully registered, FALSE otherwise.
      */
     @JsonIgnore
     public boolean registerAttributeValue(AttributeValue value){
@@ -230,9 +228,10 @@ public class ExecutedEntity extends ConfigurationObject
     }
     
     /**
-     * Gets its type
+     * Returns the type of this entity.
      * 
-     * @return type of executed entity
+     * @return type of executed entity.
+     * @see MeasuredEntityType
      */
     @JsonIgnore
     public MeasuredEntityType getType(){
@@ -240,10 +239,10 @@ public class ExecutedEntity extends ConfigurationObject
     }
         
     /**
-     * Starts a new state interval in the entity
+     * Registers the start of a new state interval in the entity.
      * 
-     * @param newState	The state of the new interval
-     * @param rCode		the reason code for the new interval
+     * @param newState The state of the new interval.
+     * @param rCode	the reason code for the new interval.
      */
     @JsonIgnore
     public void startInterval(MeasuringState newState, ReasonCode rCode) {
@@ -255,7 +254,7 @@ public class ExecutedEntity extends ConfigurationObject
     /**
      * Gets the entity's current state 
      * 
-     * @return	current state
+     * @return the entity's current state.
      */
     @JsonIgnore
     public MeasuringState getCurrentState(){
@@ -265,7 +264,7 @@ public class ExecutedEntity extends ConfigurationObject
     /**
      * Gets the entity's current state reason
      * 
-     * @return	current reason code
+     * @return	current reason code.
      */
     @JsonIgnore
     public ReasonCode getCurrentReason(){
@@ -273,9 +272,9 @@ public class ExecutedEntity extends ConfigurationObject
     }
     
     /**
-     * Gets the date and time when the current state interval start
+     * Gets the date and time when the current state interval started.
      *  
-     * @return start date and time for the current state interval
+     * @return the start date and time for the current state interval.
      */
     @JsonIgnore
     public LocalDateTime getCurrentStatDateTime(){
@@ -283,7 +282,7 @@ public class ExecutedEntity extends ConfigurationObject
     }
 
 	/**
-	 * Sets the canonical key for this entity in the host system
+	 * Sets the canonical key for this entity in the host system.
 	 * 
 	 * @param canonicalKey canonical key in the host system.
 	 */

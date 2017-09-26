@@ -21,30 +21,25 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.advicetec.configuration.Container;
-import com.advicetec.configuration.DeviceType;
-import com.advicetec.configuration.IOSignalDeviceType;
-import com.advicetec.configuration.Signal;
-import com.advicetec.configuration.SignalUnitContainer;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
-import com.advicetec.eventprocessor.AggregationEvent;
-import com.advicetec.eventprocessor.AggregationEventType;
-import com.advicetec.eventprocessor.Event;
-import com.advicetec.eventprocessor.ModBusTcpDiscreteDataInputEvent;
-import com.advicetec.eventprocessor.ModBusTcpDiscreteDataOutputEvent;
 import com.advicetec.eventprocessor.ModBusTcpEvent;
-import com.advicetec.eventprocessor.ModBusTcpEventType;
-import com.advicetec.eventprocessor.ModBusTcpInputRegisterEvent;
-import com.advicetec.eventprocessor.ModBusTcpReadHoldingRegisterEvent;
-import com.advicetec.utils.ModBusUtils;
 
+/**
+ * This class models the data container for Measured Entities.
+ * It supports the interaction with the database.
+ * 
+ * @author advicetec
+ * @see Container
+ */
 public class MeasuredEntityContainer extends Container 
 {
 
 	static Logger logger = LogManager.getLogger(MeasuredEntityContainer.class.getName());
 
+	// String queries for data selection from databases
 	static String sqlSelect1 = "SELECT id, code, descr, create_date, type FROM setup_measuredentity";
 	static String sqlSelect2 = "SELECT id, name, descr, behavior_text, create_date, last_updttm, measure_entity_id FROM setup_measuredentitybehavior WHERE measure_entity_id = ";
 	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
@@ -52,18 +47,39 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
 	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, day_time, create_date, last_updttm FROM setup_measuredentityscheduledevent WHERE measure_entity_id =";
 	static String sqlSelect7 = "SELECT count(*) from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'Q' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
-	
+
 	static String sqlMachineSelect = "SELECT * FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
 
+	/**
+	 * Maps ids from database and names in this model.
+	 */
 	private Map<String, Integer> canonicalMapIndex;
 
+	/**
+	 * Constructor of this container. 
+	 * 
+	 * @param driver SQL driver.
+	 * @param server address to the server.
+	 * @param user credential's user.
+	 * @param password credential's password.
+	 */
 	public MeasuredEntityContainer(String driver, String server, String user, String password) {
 		super(driver, server, user, password);
-		
+
 		canonicalMapIndex = new HashMap<String, Integer>();
 	}
 
+	/**
+	 * Builds the canonical key from the given parameters.
+	 * 
+	 * @param company Identifier for the company.
+	 * @param location Identifier for the location.
+	 * @param plant Identifier for the plant.
+	 * @param machineGroup Identifier for the group of machines. 
+	 * @param machineId  Identifier for the machine
+	 * @return the canonical key from the given parameters.
+	 */
 	private String getCanonicalKey(String company, String location, String plant, String machineGroup, String machineId)
 	{
 		if (machineId != null)
@@ -71,18 +87,24 @@ public class MeasuredEntityContainer extends Container
 		else
 			return company + "-" + location + "-" + plant;
 	}
-	
+
+	/**
+	 * Loads information from the setup database and creates a set of 
+	 * MeasuredEntity objects.
+	 * Later, loads behaviors, state behaviors, state transitions, machine data
+	 * and scheduled events.
+	 * 
+	 * @throws SQLException if there are error trying to connect the database.
+	 * @see {@link MeasuredEntity}
+	 */
 	public void loadContainer() throws SQLException
 	{
-
 		try 
 		{
-
 			super.connect();
 			super.configuationObjects.clear();
 
 			ResultSet rs1 = super.pst.executeQuery(sqlSelect1);
-
 			while (rs1.next())
 			{
 				Integer id     			= rs1.getInt("id");  
@@ -109,7 +131,7 @@ public class MeasuredEntityContainer extends Container
 				measuredEntity.setDescr(descr);
 				measuredEntity.setCode(code);
 				measuredEntity.setCreateDate(timestamp.toLocalDateTime());
-			    				
+
 				super.configuationObjects.put(id, measuredEntity);
 
 			}
@@ -139,7 +161,7 @@ public class MeasuredEntityContainer extends Container
 				MeasuredEntity measuredEntity = (MeasuredEntity) this.configuationObjects.get(id);
 				if (measuredEntity.getType() == MeasuredEntityType.MACHINE){
 					// load machine information
-				   loadMachineInformation((Machine)measuredEntity);
+					loadMachineInformation((Machine)measuredEntity);
 				}else if(measuredEntity.getType() == MeasuredEntityType.PLANT){
 					// load plant information
 					loadPlantInformation((Plant)measuredEntity);
@@ -151,7 +173,7 @@ public class MeasuredEntityContainer extends Container
 				MeasuredEntity measuredEntity = (MeasuredEntity) this.configuationObjects.get(id);
 				loadScheduledEvents(measuredEntity);
 			}
-			
+
 			super.disconnect();
 
 
@@ -166,11 +188,18 @@ public class MeasuredEntityContainer extends Container
 			e.printStackTrace();        	
 			throw new SQLException(error);
 		}
-
 	}
 
+
+	/**
+	 * Reads information from the database and sets those data into the 
+	 * Plant object given by parameter.
+	 * 
+	 * @param plant object to store read data.
+	 * @see Plant
+	 */
 	private void loadPlantInformation(Plant plant) {
-		
+
 		try 
 		{
 			String sqlSelect = sqlPlantSelect + String.valueOf(plant.getId());  
@@ -181,16 +210,14 @@ public class MeasuredEntityContainer extends Container
 				String company 		 = rs.getString("id_compania");
 				String location      = rs.getString("id_sede");
 				String plant_id 	 = rs.getString("id_planta");
-				
-				
+
 				plant.setCannonicalCompany(company);
 				plant.setCannonicalLocation(location);
 				plant.setCannonicalPlant(plant_id);
-				
+
 				logger.debug("registering plant " + getCanonicalKey(company, location, plant_id, null, null));
 				canonicalMapIndex.put(getCanonicalKey(company, location, plant_id, null, null) , plant.getId());
 			}
-
 			rs.close();
 
 		} catch (SQLException e) {
@@ -199,6 +226,12 @@ public class MeasuredEntityContainer extends Container
 		}
 	}
 
+	/**
+	 * Reads behavior from the database and sets those data into the 
+	 * MeasuredEntity object given by parameter.
+	 * 
+	 * @param entity object to store read data.
+	 */
 	public void loadBehaviors(MeasuredEntity entity)
 	{
 		try 
@@ -224,6 +257,12 @@ public class MeasuredEntityContainer extends Container
 
 	}
 
+	/**
+	 * Reads state behavior from the database and sets those data into the 
+	 * MeasuredEntity object given by parameter.
+	 * 
+	 * @param entity object to store read data.
+	 */
 	public void loadStateBehaviors(MeasuredEntity entity)
 	{
 		try 
@@ -242,7 +281,7 @@ public class MeasuredEntityContainer extends Container
 				measuredEntityStateBehavior.setDescr(descr);
 				measuredEntityStateBehavior.setBehaviorText(behaviorText);
 
-				
+
 				entity.putStateBehavior(measuredEntityStateBehavior);
 			}
 
@@ -255,6 +294,12 @@ public class MeasuredEntityContainer extends Container
 
 	}
 
+	/**
+	 * Reads state transitions from the database and sets those data into the 
+	 * MeasuredEntity object given by parameter.
+	 * 
+	 * @param entity object to store read data.
+	 */
 	public void loadStateTransitions(MeasuredEntity entity)
 	{
 		try 
@@ -293,7 +338,13 @@ public class MeasuredEntityContainer extends Container
 			e.printStackTrace();
 		}
 	}
-		
+
+	/**
+	 * Reads machine information from the database and sets those data into the 
+	 * Machine object given by parameter.
+	 * 
+	 * @param machine to store read data.
+	 */
 	private void loadMachineInformation(Machine machine){
 		try 
 		{
@@ -316,16 +367,16 @@ public class MeasuredEntityContainer extends Container
 				machine.setCannonicalMachineId(machine_id);
 
 				String[] fixedFieldNames = {"measuredentity_ptr_id", "id_compania", "id_sede", "id_planta", "id_grupo_maquina", "id_maquina"};  
-				
+
 				logger.debug("registering machine " + getCanonicalKey(company, location, plant, machineGroup, machine_id) + " Id:" + Integer.toString(machine.getId()) );
 
 				for (int i = 1; i <= rsmd.getColumnCount(); i++) {
 					int type = rsmd.getColumnType(i);
 					String name = rsmd.getColumnName(i);
 					if (!(Arrays.asList(fixedFieldNames).contains(name))) {
-						
+
 						logger.debug("Registering attribute: " + name + " in machine:" + String.valueOf(machine.getId()) );
-						
+
 						switch (type) {
 
 						case java.sql.Types.TINYINT:
@@ -459,7 +510,7 @@ public class MeasuredEntityContainer extends Container
 
 					}
 				}
-								
+
 				canonicalMapIndex.put(getCanonicalKey(company, location, plant, machineGroup,  machine_id) , machine.getId());
 			}
 
@@ -471,35 +522,40 @@ public class MeasuredEntityContainer extends Container
 		}
 	}
 
+	/**
+	 * Reads scheduled events from the database and sets those data into the 
+	 * MeasuredEntity object given by parameter.
+	 * @param entity to store read data.
+	 */
 	public void loadScheduledEvents(MeasuredEntity entity){
-		
+
 		try 
 		{
 
 			super.connect();
 			logger.debug("in get Scheduled Events:" );
-			
+
 			String sqlSelect = sqlSelect6 + String.valueOf(entity.getId());
 			logger.debug("sqlSelect machines :" + sqlSelect);
 			ResultSet rs6 = super.pst.executeQuery(sqlSelect);
 
 			while (rs6.next()) 
 			{
-				
+
 				String scheduleEventType   	= rs6.getString("scheduled_event_type");
 				String descr  				= rs6.getString("descr");  
 				String recurrences        	= rs6.getString("recurrences");
 				Time day_time				= rs6.getTime("day_time");
 				Timestamp createDate 		= rs6.getTimestamp("create_date");
-				
+
 				MeasuredEntityScheduledEvent measuredEvent = new MeasuredEntityScheduledEvent(entity.getId(), scheduleEventType );
 				measuredEvent.setDescr(descr);
 				measuredEvent.setRecurrence(recurrences);
 				measuredEvent.setDayTime(day_time.toLocalTime());
 				measuredEvent.setCreateDate(createDate.toLocalDateTime());
-								
+
 				entity.putScheduledEvent(measuredEvent);
-				
+
 			}
 
 			rs6.close();
@@ -514,10 +570,15 @@ public class MeasuredEntityContainer extends Container
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
-				
+
 	}
-	
-	
+
+	/**
+	 * Deserializes a JSON string and builds a MeasuredEntity.
+	 * 
+	 * @param json String representation of a MeasuredEntity in JSON format.
+	 * @return the MeasuredEntity object from the JSON string given by parameter
+	 */
 	public MeasuredEntity fromJSON(String json) {
 
 		ObjectMapper mapper = new ObjectMapper();
@@ -553,8 +614,15 @@ public class MeasuredEntityContainer extends Container
 
 		return null;
 	}	
-	
-	
+
+	/**
+	 * Reads Modbus Events from the configuration database, then creates those 
+	 * ModbusEvents objects and include them into a list.
+	 * 
+	 * @return a list of ModbusEvents read from the database.
+	 * @throws SQLException if there is an error with the SQL driver.
+	 * @see {@link ModBusTcpEvent}
+	 */
 	public List<ModBusTcpEvent> getModBusEvents( ) throws SQLException {
 
 		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
@@ -564,7 +632,7 @@ public class MeasuredEntityContainer extends Container
 
 			super.connect();
 			logger.info("in getModbusEvents:" );
-			
+
 			String sqlSelect = sqlSelect5;  
 			ResultSet rs5 = super.pst.executeQuery(sqlSelect);
 
@@ -596,35 +664,47 @@ public class MeasuredEntityContainer extends Container
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
-		
+
 		return events;
 	}
-	
-	
+
+	/**
+	 * Returns the object identifier from the given parameters.
+	 * 
+	 * @param company Identifier of the company
+	 * @param location Identifier of the location
+	 * @param plant Identifier of the plant
+	 * @param machineGroup Identifier of the group of machines.
+	 * @param machineId Identifier of the machine
+	 * @return the object identifier from the given parameters, or NULL if the object does not exist.
+	 */
 	public Integer getCanonicalObject(String company, String location, String plant, String machineGroup, String machineId) 
 	{
-		
 		logger.info("Number of measuredEntities registered:" + Integer.toString(this.canonicalMapIndex.size()));
 		return this.canonicalMapIndex.get(getCanonicalKey(company, location, plant, machineGroup, machineId));
 	}
 
+	/**
+	 * This method counts the number of ports that uses MQTT protocol.
+	 * If the number of ports that uses MQTT is greater than zero returns TRUE.
+	 * @return TRUE if there are ports that uses MQTT protocol, FALSE otherwise.
+	 */
 	public boolean requireMQTT() {
-		
+
 		boolean ret = false;
 		try 
 		{
-
 			super.connect();
 
 			logger.info("in requireMQTT:");
-			
+
 			String sqlSelect = sqlSelect7;  
 			ResultSet rs7 = super.pst.executeQuery(sqlSelect);
 
 			while (rs7.next()) 
 			{
 				// The number of ports configured with MQTT is greater than 0.
-				Integer count   	= rs7.getInt(1);
+				Integer count  = rs7.getInt(1);
 				if (count > 0){
 					ret = true;
 					logger.info("MQTT is required");
@@ -645,22 +725,25 @@ public class MeasuredEntityContainer extends Container
 
 		return ret;
 	}
-	
+
+	/**
+	 * Removes an object given its identifier.
+	 * @return TRUE if the object existed and was removed, 
+	 * FALSE if the object did not exist.
+	 */
 	public boolean removeObject(Integer uid){
-		Map.Entry pairToDelete = null;
-		Iterator it = this.canonicalMapIndex.entrySet().iterator();
-	    while (it.hasNext()) {
-	        Map.Entry pair = (Map.Entry)it.next();
-	        if (uid.equals( (Integer) pair.getValue())){
-	        	pairToDelete = pair;
-	        	break;
-	        }
-	    }
-	    
-	    if (pairToDelete != null){
-	    	return this.canonicalMapIndex.remove(pairToDelete.getKey(), pairToDelete.getValue());
-	    }
-	    
-	    return false;
+		Map.Entry<String,Integer> pairToDelete = null;
+		Iterator<Map.Entry<String,Integer>> it = this.canonicalMapIndex.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<String,Integer> pair = it.next();
+			if (uid.equals( (Integer) pair.getValue())){
+				pairToDelete = pair;
+				break;
+			}
+		}
+		if (pairToDelete != null){
+			return this.canonicalMapIndex.remove(pairToDelete.getKey(), pairToDelete.getValue());
+		}
+		return false;
 	}
 }

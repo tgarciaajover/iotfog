@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonCreator;
@@ -106,7 +107,12 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	}
 
 	/**
-	 * Inserts an instance of this class in the database through the prepare statement given as parameter
+	 * Inserts an instance of this class in the database through the prepare 
+	 * statement given as parameter.
+	 * Data inserted into database with format: 
+	 * [parent,timestamp,owner_type,name_attribute,value]
+	 * 
+	 * @param pstmt prepared statement to insert into database.
 	 */
 	public void dbInsert(PreparedStatement pstmt) {
 				
@@ -114,7 +120,7 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 		{
 			pstmt.setInt(1, getGenerator());							// Set the parent
 			pstmt.setTimestamp(2, Timestamp.valueOf(getTimeStamp()));   // stores datetime in the default timezone.
-			pstmt.setInt(3, getGeneratorType().getValue());          		// owner_type
+			pstmt.setInt(3, getGeneratorType().getValue());          	// owner_type
 			pstmt.setString(4, getAttr().getName());      			// Attribute Name
 			switch ( getAttr().getType() )
 			{
@@ -194,19 +200,20 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 				
 			}
 
+			// adds this prepared statement to the batch.
 			pstmt.addBatch();		
 
 		} catch (SQLException e) {
 			Logger logger = LogManager.getLogger(MeasuredAttributeValue.class.getName());
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		}   							// id_owner
+		}   						
 	}
 
 	/**
-	 * Gets the measured attribute value from the database
+	 * Gets the measured attribute value from the database from a given result set.
 	 * 
-	 * @param rs result sets executed to return the measure attribute value.
+	 * @param rs result set executed to return the measure attribute value.
 	 */
 	public void setValueFromDatabase(ResultSet rs)
 	{
@@ -254,7 +261,10 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	}
 
 	/**
-	 *  Deletes an instance of this class in the database through the prepare statement given as parameter
+	 *  Deletes an instance of this class from the database through the prepare 
+	 *  statement given as parameter.
+	 *  
+	 *  @param pstmt prepared statement to delete from database.
 	 */
 	public void dbDelete(PreparedStatement pstmt) {
 
@@ -270,22 +280,22 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 			Logger logger = LogManager.getLogger(MeasuredAttributeValue.class.getName());
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		}   							// id_owner		
+		}  		
 	}
 
 
 	/**
-	 * Replaces the value
+	 * Replaces the value of this measured attribute value.
 	 *   
-	 * @param value value to assign
+	 * @param value new value to update.
 	 */
 	public void setValue(Object value){
 		this.value = value;
 	}
 	
 	/**
-	 * Serializer to string
-	 * 
+	 * Serializes this Measured Attribute value to string.
+	 * @return a string representation of this Measured Attribute Value.
 	 */
 	public String toString(){
 		StringBuilder sb = new StringBuilder(super.toString());
@@ -294,7 +304,8 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 	}
 
 	/**
-	 * Serializer to json
+	 * Serializes to json string.
+	 * @return a JSON string of this measured attribute value.
 	 */
 	public String toJson(){
 		String json = null;

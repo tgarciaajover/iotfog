@@ -4,7 +4,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,9 +15,9 @@ import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.BehaviorSymbol;
 import com.advicetec.language.ast.FunctionSymbol;
-import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.ScopedSymbol;
+import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.TransformationSymbol;
@@ -28,8 +27,6 @@ import com.advicetec.language.transformation.SyntaxChecking;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
-import com.advicetec.persistence.StatusStore;
-import com.advicetec.language.ast.Symbol;
 
 /**
  * This class implements the <code>Processor</code> interface, and its method 
@@ -98,10 +95,10 @@ public class SampleProcessor implements Processor
 			try 
 			{
 				// First, we verify the transformation.
-				List<SyntaxError> errorList = sintaxChecking.process(program);
+				//List<SyntaxError> errorList = sintaxChecking.process(program);
 
 
-				//List<SyntaxError> errorList = sintaxChecking.process(program, measuringEntity);
+				List<SyntaxError> errorList = sintaxChecking.process(program, measuringEntity);
 				// If no errors, then process.
 				if (errorList.size() == 0){ 
 					// Then, we read parameters from message and pass them to 
