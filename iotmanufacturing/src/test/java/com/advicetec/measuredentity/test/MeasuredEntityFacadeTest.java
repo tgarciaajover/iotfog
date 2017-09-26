@@ -167,4 +167,10 @@ public class MeasuredEntityFacadeTest
 		}
 
 	}
+	
+	@Test
+	public void Test_State_Cache_References_Delete() {
+		
+	}
+	
 }

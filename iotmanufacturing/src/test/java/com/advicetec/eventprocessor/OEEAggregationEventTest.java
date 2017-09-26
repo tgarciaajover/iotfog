@@ -1,6 +1,7 @@
 package com.advicetec.eventprocessor;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,10 +10,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -29,9 +33,11 @@ public class OEEAggregationEventTest {
 		
 		String recurrence = "RRULE:FREQ=DAILY";
 		
+		LocalTime locatime = LocalTime.MIDNIGHT;
+		
 		OEEAggregationEventProcessor oeeEventProcessor = 
 				new OEEAggregationEventProcessor(new AggregationEvent(111,
-						MeasuredEntityType.MACHINE, AggregationEventType.OEE, recurrence));
+						MeasuredEntityType.MACHINE, AggregationEventType.OEE, recurrence, locatime));
 		try {
 			
 			List<DelayEvent> list = oeeEventProcessor.process();
@@ -80,11 +86,12 @@ public class OEEAggregationEventTest {
 				DelayEvent evnt = iterator.next();
 				
 				if (evnt.getEvent().getEvntType() == EventType.AGGREGATION_EVENT){
+					System.out.println("seconds to start: " + evnt.getDelay(TimeUnit.SECONDS));
 					numEvents--;
 				}
 			}
 			
-			assertEquals("The number of events is not those configured - diference:", new Integer(0), numEvents );
+			assertTrue( numEvents <= 0);
 
 			
 		} catch (ClassNotFoundException e) {
@@ -117,7 +124,51 @@ public class OEEAggregationEventTest {
 				}
 			}
 		}
+	}
+	
+	@Test public void executionOEEAggregation() throws SQLException, InterruptedException{
 
+		
+		MeasuredEntityManager manager = MeasuredEntityManager.getInstance();
+
+		EventManager eventManager = EventManager.getInstance();
+		List<AggregationEvent> events = new ArrayList<AggregationEvent>();
+		
+		 
+		int numEvents = 0;
+		Iterator<DelayEvent> iterator = eventManager.getDelayedQueue().iterator();
+		while (iterator.hasNext()){
+			DelayEvent evnt = iterator.next();
+			
+			if (evnt.getEvent().getEvntType() == EventType.AGGREGATION_EVENT){
+				eventManager.getDelayedQueue().remove(evnt);
+
+				AggregationEvent event = (AggregationEvent) evnt.getEvent();
+				events.add(event);
+				numEvents++;
+			}
+		}
+
+		assertTrue( numEvents > 0);
+
+		// Process the events
+		for (AggregationEvent event : events) { 
+			EventHandler handler = new EventHandler(eventManager.getQueue(), eventManager.getDelayedQueue());
+			handler.runAggregationEvent(event);
+		}
+		
+		// Verifies how many events are after processing
+		iterator = eventManager.getDelayedQueue().iterator();
+		while (iterator.hasNext()){
+			DelayEvent evnt = iterator.next();
+			
+			if (evnt.getEvent().getEvntType() == EventType.AGGREGATION_EVENT){
+				System.out.println("seconds to start: " + evnt.getDelay(TimeUnit.SECONDS));
+				numEvents--;
+			}
+		}
+		
+		assertTrue( numEvents <= 0);
 		
 	}
 }

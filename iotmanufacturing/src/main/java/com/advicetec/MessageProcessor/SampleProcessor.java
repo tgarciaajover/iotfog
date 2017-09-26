@@ -100,6 +100,8 @@ public class SampleProcessor implements Processor
 				// First, we verify the transformation.
 				List<SyntaxError> errorList = sintaxChecking.process(program);
 
+
+				//List<SyntaxError> errorList = sintaxChecking.process(program, measuringEntity);
 				// If no errors, then process.
 				if (errorList.size() == 0){ 
 					// Then, we read parameters from message and pass them to 
@@ -148,10 +150,10 @@ public class SampleProcessor implements Processor
 
 							long duetime = ((TimerSymbol) symbol).getMilliseconds();
 							boolean repeated = ((TimerSymbol) symbol).getRepeated();
-
+							
 							String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
-
-
+							
+							
 							logger.debug("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
 							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity,mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());

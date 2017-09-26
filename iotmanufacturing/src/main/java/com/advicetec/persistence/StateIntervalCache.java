@@ -1,5 +1,6 @@
 package com.advicetec.persistence;
 
+import java.beans.PropertyVetoException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -14,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 
@@ -24,6 +27,7 @@ import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.configuration.ReasonCodeContainer;
 import com.advicetec.configuration.SystemConstants;
+import com.advicetec.core.AttributeValue;
 import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.core.TimeInterval;
@@ -34,6 +38,7 @@ import com.advicetec.measuredentitity.MeasuringState;
 import com.advicetec.measuredentitity.StateInterval;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 /**
  * Represents a cache for storing State Interval elements. This class stores 
@@ -67,19 +72,27 @@ public class StateIntervalCache extends Configurable {
 	/**
 	 * Initial available space for entries
 	 */
-	private static Integer INIT_CAPACITY = 1000;
+	private static int INIT_CAPACITY = 1000;
 	/**
 	 * Cache limit
 	 */
-	private static Integer MAX_SIZE = 10000;
+	private static long MAX_SIZE = 10000L;
 	/**
 	 * Time the cache keeps entries before write over database.
 	 */
-	private static Integer WRITE_TIME = 10;
+	private static long WRITE_TIME = 10L;
 	/**
 	 * Time the cache keeps entries before delete them.
 	 */
-	private static Integer DELETE_TIME = 0;
+	private static long DELETE_TIME = 600L;	
+	/**
+	 * Number of threads used in order to perform inserts
+	 */
+	private static int INSERT_THREADS = 10;
+	/**
+	 * Number of rows inserted within each batch
+	 */
+	private static int BATCH_ROWS = 4000;
 	/**
 	 * Singleton cache instance
 	 */
@@ -96,7 +109,6 @@ public class StateIntervalCache extends Configurable {
 	 * SQL expression for multiple database driver.
 	 */
 	private String sqlDownTimeReasons;
-
 	/**
 	 * SQL to select a set of Status Interval given a time range and owner_id. 
 	 */
@@ -109,6 +121,20 @@ public class StateIntervalCache extends Configurable {
 	 * A cache is a map with a key and the stateInterval. 
 	 */		
 	private static Cache<String, StateInterval> cache;
+	/**
+	 * Thread pool to save data in the database.
+	 */
+	private static ExecutorService threadPool = null;
+
+	private static int MIN_DB_THREAD_POOL = 5;
+	
+	private static int MAX_DB_THREAD_POOL = 30; 
+	
+	/**
+	 * Connection pool for managing database connections.
+	 */
+	private static ComboPooledDataSource cpds = null;
+
 
 	/**
 	 * Constructs this cache with the parameters from .properties file.
@@ -116,21 +142,59 @@ public class StateIntervalCache extends Configurable {
 	private StateIntervalCache(){
 		// loads values from StateIntervalCache.properties
 		super("StateIntervalCache");
+		
+		try{
 		// database connection properties
 		DB_DRIVER = properties.getProperty("driver");
 		DB_URL = properties.getProperty("server");
 		DB_USER = properties.getProperty("user");
 		DB_PASS = properties.getProperty("password");
+		
 		// cache initialization properties
 		// initial cache size
-		INIT_CAPACITY = Integer.valueOf(properties.getProperty("init_capacity"));
+		if (properties.getProperty("init_capacity") != null)
+			INIT_CAPACITY = Integer.parseInt(properties.getProperty("init_capacity"));
+		
 		// limit cache size
-		MAX_SIZE = Integer.valueOf(properties.getProperty("max_size"));
+		if (properties.getProperty("max_size") != null)
+			MAX_SIZE = Long.parseLong(properties.getProperty("max_size"));
+		
 		// time before store StateInterval into database
-		WRITE_TIME = Integer.valueOf(properties.getProperty("write_time"));
+		if (properties.getProperty("write_time") != null)
+			WRITE_TIME = Long.parseLong(properties.getProperty("write_time"));
+		
 		// time before delete entries from the cache.
-		DELETE_TIME = Integer.valueOf(properties.getProperty("delete_time"));
+		if (properties.getProperty("delete_time") != null)
+			DELETE_TIME = Long.parseLong(properties.getProperty("delete_time"));
 
+		// Thread related information to store data into the database.
+		if (properties.getProperty("insert_threads") != null)
+			INSERT_THREADS = Integer.parseInt(properties.getProperty("insert_threads"));
+		
+		if (properties.getProperty("batch_rows") != null)
+			BATCH_ROWS = Integer.parseInt(properties.getProperty("batch_rows"));
+
+		threadPool = Executors.newFixedThreadPool(INSERT_THREADS);
+
+		if (properties.getProperty("min_db_thread_pool") != null)
+			MIN_DB_THREAD_POOL = Integer.parseInt(properties.getProperty("min_db_thread_pool"));
+
+		if (properties.getProperty("max_db_thread_pool") != null)
+			MAX_DB_THREAD_POOL = Integer.parseInt(properties.getProperty("max_db_thread_pool"));
+
+		// Establishes the pool of connection to the database
+		cpds = new ComboPooledDataSource();
+		cpds.setDriverClass( DB_DRIVER );
+		cpds.setJdbcUrl( DB_URL );
+		cpds.setUser(DB_USER);                                  
+		cpds.setPassword(DB_PASS); 
+		
+		// the settings below are optional -- c3p0 can work with defaults
+		cpds.setMinPoolSize(MIN_DB_THREAD_POOL);                                     
+		cpds.setAcquireIncrement(5);
+		cpds.setMaxPoolSize(MAX_DB_THREAD_POOL);
+
+		
 		// depends on database driver, assigns the needed query.
 		if (StateIntervalCache.DB_DRIVER.compareTo("org.postgresql.Driver") == 0){
 			sqlDownTimeReasons = "SELECT reason_code, COUNT(*) AS counter, SUM(DATE_PART('minute',datetime_to - datetime_from)) AS duration FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? AND ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? AND datetime_to <= ?)) GROUP BY reason_code";
@@ -143,11 +207,30 @@ public class StateIntervalCache extends Configurable {
 			@Override
 			public void run()
 			{
-				List<String> keys = new ArrayList<>();
-				keys.addAll(cache.asMap().keySet());
-				bulkCommit(keys);
+				try {
+					
+					System.out.println("closing the thread pool");
+					threadPool.awaitTermination(WRITE_TIME, TimeUnit.SECONDS);
+					
+					System.out.println("closing the database connection pool");
+					if (cpds != null){
+						cpds.close();
+					}
+					
+					
+				} catch (InterruptedException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
 			}
-		});  		
+		}); 
+
+		} catch (PropertyVetoException e1) {
+			logger.error(e1.getMessage());
+			e1.printStackTrace();
+			System.exit(0);
+		}             
+
 	}
 
 	/**
@@ -156,15 +239,15 @@ public class StateIntervalCache extends Configurable {
 	 * @param maxSize the maximum number of entries in the cache
 	 * @see Caffeine#build()
 	 */
-	public static void setCache(int initialCapacity, int maxSize){
+	public static void setCache(){
 		// cache is implemented by Caffeine
 		cache = Caffeine.newBuilder()
 				// time to delete an entry from cache
 				.expireAfterWrite(DELETE_TIME, TimeUnit.SECONDS)
 				// initial cache size
-				.initialCapacity(initialCapacity)
+				.initialCapacity(INIT_CAPACITY)
 				// limit cache size
-				.maximumSize(maxSize)
+				.maximumSize(MAX_SIZE)
 				.writer(new WriteBehindCacheWriter.Builder<String, StateInterval>()
 						// time before execute WriteAction over database.
 						.bufferTime(WRITE_TIME, TimeUnit.SECONDS)
@@ -173,48 +256,9 @@ public class StateIntervalCache extends Configurable {
 						// WriteAction
 						.writeAction(entries -> {
 							if (entries.size() > 0) {
-								logger.debug("In writeaction:" + entries.size());
-								try {
-									// connect to database
-									Class.forName(DB_DRIVER);
-									conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-									conn.setAutoCommit(false);
-									pst = conn.prepareStatement(StateInterval.SQL_Insert);
-									// prepares the statement
-									entries.forEach((k,v)-> {
-										((StateInterval)v).dbInsert(pst);
-									});
-									// execute the insertion
-									int ret[] = pst.executeBatch();
-									logger.debug("Number of State Intervals inserted:" + ret.length);
-									conn.commit();
-								} catch (ClassNotFoundException e) {
-									logger.error(e.getMessage());
-									e.printStackTrace();
-								} catch (SQLException e) {
-									logger.error(e.getMessage());
-									e.printStackTrace();
-								}
-
-								finally{
-									if(pst!=null) {
-										try {
-											pst.close();
-										} catch (SQLException e) {
-											logger.error(e.getMessage());
-											e.printStackTrace();
-										}
-									}
-
-									if(conn!=null) {
-										try {
-											conn.close();
-										} catch (SQLException e) {
-											logger.error(e.getMessage());
-											e.printStackTrace();
-										}
-									}
-								}
+								logger.info("to storage num entries:" + entries.size());
+								StateIntervalDatabaseStore storedatabase = new StateIntervalDatabaseStore(entries,BATCH_ROWS);
+								threadPool.submit(storedatabase);
 							}
 						}).build())
 						.build();
@@ -225,10 +269,10 @@ public class StateIntervalCache extends Configurable {
 	 * Returns a singleton instance of StateIntervalCache.
 	 * @return the singleton instance. 
 	 */
-	public static StateIntervalCache getInstance(){
+	public static synchronized StateIntervalCache getInstance(){
 		if(instance == null){
 			instance = new StateIntervalCache();
-			setCache(INIT_CAPACITY,MAX_SIZE); // default values
+			setCache(); // default values
 		}
 		return instance;
 	}
@@ -263,54 +307,6 @@ public class StateIntervalCache extends Configurable {
 
 
 	/**
-	 * Stores a single State Interval into the database.
-	 * @param stateInterval value to commit into database.
-	 */
-	public void commit(StateInterval stateInterval){
-		try {
-			// database connection
-			Class.forName(DB_DRIVER);
-			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-			conn.setAutoCommit(false);
-			// sql statement
-			pst = conn.prepareStatement(stateInterval.getPreparedInsertText());
-			stateInterval.dbInsert(pst);
-			// execution
-			pst.executeBatch();
-			conn.commit();
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		}
-		finally{
-			if(pst!=null)
-			{
-				try
-				{
-					pst.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-			}
-
-			if(conn!=null) 
-			{
-				try
-				{
-					conn.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-			}
-		}
-	}
-
-	/**
 	 * Turns over the database all State Interval values remain into cache.
 	 * @param keys List of keys to write into database.
 	 */
@@ -318,53 +314,60 @@ public class StateIntervalCache extends Configurable {
 
 		logger.debug("In bulk commit Db Url:" + DB_URL + 
 				"Number of elements to remove from cache:" + keys.size());
-		try {
-			Class.forName(DB_DRIVER);
-			conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-			conn.setAutoCommit(false);
-			// prepare statement
-			pst = conn.prepareStatement(StateInterval.SQL_Insert);
-			// Get the values to put in the database. 
-			Map<String,StateInterval> subSet = cache.getAllPresent(keys);
 
-			if (subSet != null){
-				// Store the values in the database.
-				for (StateInterval interval :subSet.values()) {
-					interval.dbInsert(pst);
-				}
-				pst.executeBatch();
-				conn.commit();
+		Map<String,StateInterval> subSet = cache.getAllPresent(keys);
 
-				// Discard those values obtained as they would be inserted in the database.
-				cache.invalidateAll(keys);
-			} else {
-				logger.info("Elements are not found in the cache");
-			}
+		// Splits the entries in batches of batchRows  
+		List<List<StateInterval>> lists = StateIntervalDatabaseStore.split(subSet,BATCH_ROWS);
 
-		} catch (ClassNotFoundException | SQLException e) {
-			logger.error("Error: "+ e.getMessage());
-			e.printStackTrace();
-		}
-		finally{
-			if(pst!=null)
-			{
-				try
-				{
-					pst.close();
-				} catch (SQLException e) {
+		// Loop through split lists and insert in the database 
+		for (List<StateInterval> entry : lists) {
+			
+			if (entry.size() > 0){
+				try {
+					conn = getConnection();
+					conn.setAutoCommit(false);
+					// prepare statement
+					pst = conn.prepareStatement(StateInterval.SQL_Insert);
+					
+					List<String> keysToInvalidate = new ArrayList<String>();
+					// Store the values in the database.
+					for (StateInterval interval :entry) {
+						interval.dbInsert(pst);
+						keysToInvalidate.add(interval.getKey());
+					}
+					pst.executeBatch();
+					conn.commit();
+
+					// Discard those values obtained as they would be inserted in the database.
+					cache.invalidateAll(keysToInvalidate);
+
+				} catch ( SQLException e) {
 					logger.error("Error: "+ e.getMessage());
 					e.printStackTrace();
 				}
-			}
+				finally{
+					if(pst!=null)
+					{
+						try
+						{
+							pst.close();
+						} catch (SQLException e) {
+							logger.error("Error: "+ e.getMessage());
+							e.printStackTrace();
+						}
+					}
 
-			if(conn!=null) 
-			{
-				try
-				{
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Error: "+ e.getMessage());
-					e.printStackTrace();
+					if(conn!=null) 
+					{
+						try
+						{
+							conn.close();
+						} catch (SQLException e) {
+							logger.error("Error: "+ e.getMessage());
+							e.printStackTrace();
+						}
+					}
 				}
 			}
 		}
@@ -381,9 +384,140 @@ public class StateIntervalCache extends Configurable {
 
 
 	/**
+	 * Gets the url used to connect to the database 
+	 * 
+	 * @return database url.
+	 */
+	public synchronized String getDB_URL() {
+		return DB_URL;
+	}
+
+	/**
+	 * Gets the database user 
+	 * @return database user
+	 */
+	public synchronized String getDB_USER() {
+		return DB_USER;
+	}
+
+	/**
+	 * Gets the database password
+	 * @return database password
+	 */
+	public synchronized String getDB_PASS() {
+		return DB_PASS;
+	}
+
+	/**
+	 * Gets the database driver
+	 * @return database driver
+	 */
+	public synchronized String getDB_DRIVER() {
+		return DB_DRIVER;
+	}
+
+	public synchronized static Connection getConnection() throws SQLException{
+		return cpds.getConnection();
+	}
+
+	/**
+	 * Updates a state interval into cache with the given parameters. 
+	 * @param stateKey key of downtime reason code to update.
+	 * @param reasonCode downtime reason code to update.
+	 * @return <code>TRUE</code> if the given downtime reason code is successfully
+	 * updated, <code>FALSE</code> otherwise.
+	 */
+	public synchronized boolean updateCacheStateInterval(String stateKey, ReasonCode reasonCode) {
+
+		logger.debug("In updateCacheStateInterval");
+		
+		StateInterval stateInterval = cache.getIfPresent(stateKey);
+		if (stateInterval == null){		
+			return false;
+		} else {
+			stateInterval.setReason(reasonCode); 
+			cache.put(stateKey, stateInterval);
+			return true;
+		}
+	}
+	
+	public synchronized String getSqlStatusIntervalRangeSelect() {
+		return sqlStatusIntervalRangeSelect;
+	}
+	
+	public synchronized String getSqlDownTimeReasons() {
+		return sqlDownTimeReasons;
+	}
+
+	/**
+	 * Updates a state interval into database with the given parameters.
+	 * 
+	 *  This method can work in parallel 
+	 * 
+	 * @param entityId measured entity id.
+	 * @param mType describes the type of measured entity.
+	 * @param startDttm initial time to query.
+	 * @param reasonCode downtime reason, not NULL.
+	 * @return <code>TRUE</code> if updates any register, <code>FALSE</code>
+	 * otherwise.  
+	 */
+	public boolean updateStateInterval(Integer entityId, MeasuredEntityType mType, 
+			LocalDateTime startDttm, ReasonCode reasonCode) {
+
+		logger.debug("In updateStateInverval reasonCd:" + reasonCode.getId() );
+
+		boolean ret = false;
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+		try {
+			connDB = getConnection();
+			connDB.setAutoCommit(false);
+			// prepares the statement
+			pstDB = connDB.prepareStatement(StateIntervalCache.sqlUpdateInterval);
+			// set parameters to the query
+			pstDB.setString(1, reasonCode.getId().toString() );
+			pstDB.setInt(2, entityId);
+			pstDB.setInt(3, mType.getValue());
+			pstDB.setTimestamp(4, Timestamp.valueOf(startDttm));
+			if (pstDB.executeUpdate() > 0){
+				ret = true;
+				connDB.commit();
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			if(pstDB!=null){
+				try {
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null) {
+				try {
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}			
+
+		logger.debug("In updateStateInverval return:" + ret);
+		return ret;
+	}
+
+	
+	/**
 	 * Returns a list of Attribute values from the database. The query is 
 	 * composed of the device/machine, the name of the attribute and the time
 	 * range (from,to).
+	 * 
+	 * This method can work in parallel
 	 * 
 	 * @param entityId measured entity id.
 	 * @param mType describes the type of measured entity.
@@ -395,7 +529,7 @@ public class StateIntervalCache extends Configurable {
 	 * @see StateInterval
 	 * @see MeasuredEntityType
 	 */
-	public synchronized ArrayList<StateInterval> getFromDatabase(
+	public ArrayList<StateInterval> getFromDatabase(
 			Integer entityId, MeasuredEntityType mType,
 			LocalDateTime from, LocalDateTime to) {
 
@@ -411,10 +545,10 @@ public class StateIntervalCache extends Configurable {
 		cal.setTimeZone(utcTimeZone);
 
 		try {
-			Class.forName(DB_DRIVER);
-			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			
+			connDB = getConnection();
 			connDB.setAutoCommit(false);
-			pstDB = connDB.prepareStatement(StateIntervalCache.sqlStatusIntervalRangeSelect);
+			pstDB = connDB.prepareStatement(getSqlStatusIntervalRangeSelect());
 			pstDB.setInt(1, entityId);
 			pstDB.setInt(2, mType.getValue());
 			pstDB.setTimestamp(3, Timestamp. valueOf(from));
@@ -476,9 +610,7 @@ public class StateIntervalCache extends Configurable {
 				list.add(sInt);
 
 			}
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
+
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -505,9 +637,11 @@ public class StateIntervalCache extends Configurable {
 		return list;	
 	}
 
-
+	
 	/**
 	 * Returns a list of Downtime Reasons from database.
+	 * 
+	 * This method can work in parallel
 	 * 
 	 * @param entity measured entity id.
 	 * @param from initial time to query.
@@ -515,23 +649,22 @@ public class StateIntervalCache extends Configurable {
 	 * @return a list of downtime reason from the database. If the query does 
 	 * not return data, this method returns an empty list.
 	 */
-	public synchronized Map<Integer,DowntimeReason> getDownTimeReasonsByInterval(
+	public Map<Integer,DowntimeReason> getDownTimeReasonsByInterval(
 			MeasuredEntity entity,LocalDateTime from, LocalDateTime to) {
 
 		Connection connDB  = null; 
 		PreparedStatement pstDB = null;
 
-		logger.info("in getDownTimeReasonsByInterval MeasuredEntity:" + entity.getId() + " from:" + from.toString() + " to:" + to.toString());
+		logger.debug("in getDownTimeReasonsByInterval MeasuredEntity:" + entity.getId() + " from:" + from.toString() + " to:" + to.toString());
 
 		Map<Integer,DowntimeReason> map = new HashMap<Integer,DowntimeReason>();
 
 		try{
 			// database connection 
-			Class.forName(DB_DRIVER);
-			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
+			connDB = getConnection();
 			connDB.setAutoCommit(false);
-			pstDB = connDB.prepareStatement(this.sqlDownTimeReasons);
-			pstDB.setString(1, Integer.toString(entity.getId()));
+			pstDB = connDB.prepareStatement(getSqlDownTimeReasons());
+			pstDB.setInt(1, entity.getId());
 			pstDB.setInt(2, entity.getType().getValue());
 			pstDB.setTimestamp(3, Timestamp.valueOf(from));
 			pstDB.setTimestamp(4, Timestamp.valueOf(to));
@@ -561,9 +694,7 @@ public class StateIntervalCache extends Configurable {
 					}
 				}
 			}
-		}catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
+
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -589,91 +720,7 @@ public class StateIntervalCache extends Configurable {
 				}
 			}
 		}
-		return map;
-	}
-
-	/**
-	 * Updates a state interval into database with the given parameters. 
-	 * 
-	 * @param entityId measured entity id.
-	 * @param mType describes the type of measured entity.
-	 * @param startDttm initial time to query.
-	 * @param reasonCode downtime reason, not NULL.
-	 * @return <code>TRUE</code> if updates any register, <code>FALSE</code>
-	 * otherwise.  
-	 */
-	public synchronized boolean updateStateInterval(Integer entityId, MeasuredEntityType mType, 
-			LocalDateTime startDttm, ReasonCode reasonCode) {
-
-		logger.info("In updateStateInverval reasonCd:" + reasonCode.getId() );
-
-		boolean ret = false;
-		Connection connDB  = null; 
-		PreparedStatement pstDB = null;
-		try{
-			Class.forName(DB_DRIVER);
-			connDB = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-			connDB.setAutoCommit(false);
-			// prepares the statement
-			pstDB = connDB.prepareStatement(StateIntervalCache.sqlUpdateInterval);
-			// set parameters to the query
-			pstDB.setString(1, reasonCode.getId().toString() );
-			pstDB.setInt(2, entityId);
-			pstDB.setInt(3, mType.getValue());
-			pstDB.setTimestamp(4, Timestamp.valueOf(startDttm));
-			if (pstDB.executeUpdate() > 0){
-				ret = true;
-				connDB.commit();
-			}
-
-		}catch (ClassNotFoundException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
-			e.printStackTrace();
-		} finally{
-			if(pstDB!=null){
-				try {
-					pstDB.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-			}
-
-			if(connDB!=null) {
-				try {
-					connDB.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-			}
-		}			
-
-		logger.info("In updateStateInverval return:" + ret);
-		return ret;
-	}
-
-	/**
-	 * Updates a state interval into cache with the given parameters. 
-	 * @param stateKey key of downtime reason code to update.
-	 * @param reasonCode downtime reason code to update.
-	 * @return <code>TRUE</code> if the given downtime reason code is successfully
-	 * updated, <code>FALSE</code> otherwise.
-	 */
-	public synchronized boolean updateCacheStateInterval(String stateKey, ReasonCode reasonCode) {
-
-		logger.debug("In updateCacheStateInterval");
 		
-		StateInterval stateInterval = cache.getIfPresent(stateKey);
-		if (stateInterval == null){		
-			return false;
-		} else {
-			stateInterval.setReason(reasonCode); 
-			cache.put(stateKey, stateInterval);
-			return true;
-		}
-	}
+		return map;
+	}	
 }

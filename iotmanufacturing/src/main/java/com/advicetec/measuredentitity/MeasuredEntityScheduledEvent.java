@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalTime;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,6 +20,9 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
+import com.advicetec.core.serialization.LocalTimeSerializer;
+import com.advicetec.core.serialization.LocalTimeDeserializer;
+
 
 public class MeasuredEntityScheduledEvent extends  ConfigurationObject
 {
@@ -34,6 +38,11 @@ public class MeasuredEntityScheduledEvent extends  ConfigurationObject
 	@JsonProperty("recurrences")
 	String recurrence;
 
+	@JsonProperty("day_time")
+	@JsonSerialize(using = LocalTimeSerializer.class)
+	@JsonDeserialize(using = LocalTimeDeserializer.class)	
+	LocalTime dayTime;
+	
 	@JsonProperty("create_date") 
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
@@ -62,6 +71,14 @@ public class MeasuredEntityScheduledEvent extends  ConfigurationObject
 
 	public void setRecurrence(String recurrence) {
 		this.recurrence = recurrence;
+	}
+	
+	public LocalTime getDayTime() {
+		return dayTime;
+	}
+
+	public void setDayTime(LocalTime dayTime) {
+		this.dayTime = dayTime;
 	}
 
 	public String getScheduledEventType() {
@@ -122,6 +139,6 @@ public class MeasuredEntityScheduledEvent extends  ConfigurationObject
 		}
 		
 		return jsonInString;
-	}	
-	
+	}
+		
 }

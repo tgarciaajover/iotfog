@@ -1,5 +1,6 @@
 package com.advicetec.measuredentitity;
 
+import java.beans.PropertyVetoException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +46,9 @@ public class MeasuredEntityManager extends Configurable {
 	
 	// This field is the attribute name for the production counter.
 	private String actualProductionCountId;
+
+	// This field establishes how often we have to remove the cache entries (seconds).
+	private Integer purgeFacadeCacheMapEntries;
 	
 	private MeasuredEntityManager() throws SQLException{
 		
@@ -54,17 +58,6 @@ public class MeasuredEntityManager extends Configurable {
 		
 		entities = new ArrayList<MeasuredEntityFacade>();
 		
-		// String[] machines = properties.getProperty("machines").split(",");
-		
-		String initCapacity = properties.getProperty("cache_initialCapacity");
-		String maxSize = properties.getProperty("cache_maxSize");
-		
-		// creates an instance if it is not exists
-		MeasureAttributeValueCache.getInstance();
-		// sets cache parameters
-		MeasureAttributeValueCache.setCache(
-				Integer.parseInt(initCapacity), Integer.parseInt(maxSize));
-
 		String driver = properties.getProperty("driver");
 		String server = properties.getProperty("server");
 		String user = properties.getProperty("user");
@@ -75,6 +68,12 @@ public class MeasuredEntityManager extends Configurable {
 		this.unit2PerCycles = properties.getProperty("machineUnit2PerCycles");
 		this.actualProductionCountId = properties.getProperty("actualProductionCountField");
 
+		if (properties.getProperty("PurgeFacadeCacheMapEntries") != null) {
+			this.purgeFacadeCacheMapEntries =Integer.getInteger(properties.getProperty("PurgeFacadeCacheMapEntries"));
+		} else {
+			this.purgeFacadeCacheMapEntries = new Integer(10); // By default 10 seconds.
+		}
+		
 		measuredEntities = new MeasuredEntityContainer(driver, server, user, password);
 		measuredEntities.loadContainer();
 		
@@ -82,7 +81,7 @@ public class MeasuredEntityManager extends Configurable {
 			MeasuredEntity m = (MeasuredEntity) measuredEntities.getObject(i);
 			MeasuredEntityFacade f = new MeasuredEntityFacade(m, this.productionRateId, 
 																this.unit1PerCycles, this.unit2PerCycles, 
-																this.actualProductionCountId);
+																this.actualProductionCountId, this.purgeFacadeCacheMapEntries);
 			entities.add(f);
 		}
 		
@@ -110,40 +109,18 @@ public class MeasuredEntityManager extends Configurable {
 
 		
 		// Collect scheduled events for all measured entities.
-		List<Event> scheduledEvents = new ArrayList<Event>();
+		List<AggregationEvent> scheduledEvents = new ArrayList<AggregationEvent>();
 		for (Integer i : measuredEntities.getKeys()) {
 			MeasuredEntity m = (MeasuredEntity) measuredEntities.getObject(i);
-			scheduledEvents.addAll(measuredEntities.getScheduledEvents(m));
+			scheduledEvents.addAll(m.getScheduledEvents());
 		}
 		
-		logger.info("num scheduled events:" + scheduledEvents.size());
-
-		// Put to execute all scheduled events.
-		int numEvent = 0;
-		for (Event evt : scheduledEvents){
-			long seconds = ((AggregationEvent) evt).getSecondsToNextExecution();
-			
-			logger.info("Next Recurrence to occur in: " + seconds + " seconds");
-			
-			DelayEvent dEvent = new DelayEvent(evt,seconds*1000);
-			
-			try {
-				
-				EventManager.getInstance().getDelayedQueue().put(dEvent);
-				
-			} catch (InterruptedException e) {
-				logger.error(e.getMessage());
-				e.printStackTrace();
-			}
-			
-			numEvent = numEvent + 1;
-		}
+		scheduleAggregationEvents(scheduledEvents);
 		
-		logger.info("Number of scheduled events that have been read:" + numEvent );
 		
 	}
 
-	public static MeasuredEntityManager getInstance() throws SQLException{
+	public synchronized static MeasuredEntityManager getInstance() throws SQLException{
 		if(instance == null){
 			instance = new MeasuredEntityManager();
 		}
@@ -155,7 +132,7 @@ public class MeasuredEntityManager extends Configurable {
 	 * @param entity
 	 * @return TRUE if the entity already exist into the list, FALSE otherwise.
 	 */
-	private boolean entityAlreadyExists(final MeasuredEntity entity){	
+	private synchronized boolean entityAlreadyExists(final MeasuredEntity entity){	
 		for (MeasuredEntityFacade facade : entities) {
 			if(facade.getEntity().getId().equals(entity)){
 				return true;
@@ -168,14 +145,15 @@ public class MeasuredEntityManager extends Configurable {
 	 * Inserts a new entity in the list and creates its facade.
 	 * @param entity The new measured entity.
 	 * @return
+	 * @throws PropertyVetoException 
 	 */
-	public boolean addNewEntity(final MeasuredEntity entity){
+	public synchronized boolean addNewEntity(final MeasuredEntity entity){
 		if(entityAlreadyExists(entity)){
 			return false;
 		}
 		return entities.add(new MeasuredEntityFacade(entity, this.productionRateId, 
 							this.unit1PerCycles, this.unit2PerCycles, 
-							this.actualProductionCountId));
+							this.actualProductionCountId,this.purgeFacadeCacheMapEntries));
 	}
 	
 	/**
@@ -183,7 +161,7 @@ public class MeasuredEntityManager extends Configurable {
 	 * @param entityId The entity id to search.
 	 * @return NULL if there is not an entity with the given id.
 	 */
-	public MeasuredEntityFacade getFacadeOfEntityById(final Integer entityId){	
+	public synchronized MeasuredEntityFacade getFacadeOfEntityById(final Integer entityId){	
 		
 		logger.debug("getFacadeOfEntityById" + Integer.toString(entityId) );
 		
@@ -202,7 +180,7 @@ public class MeasuredEntityManager extends Configurable {
 		return null;
 	}
 
-	public MeasuredEntityContainer getMeasuredEntityContainer()
+	public synchronized MeasuredEntityContainer getMeasuredEntityContainer()
 	{
 		return this.measuredEntities;
 	}
@@ -267,4 +245,32 @@ public class MeasuredEntityManager extends Configurable {
 		return true;
 	}
 	
+	
+	public synchronized void scheduleAggregationEvents(List<AggregationEvent> scheduledEvents) {
+		
+		logger.info("scheduling # event:" + scheduledEvents.size());
+		
+		// Put to execute all scheduled events.
+		int numEvent = 0;
+		for (AggregationEvent evt : scheduledEvents){
+			long seconds =  evt.getSecondsToNextExecution();
+			
+			logger.debug("Next Recurrence to occur in: " + seconds + " seconds");
+			
+			DelayEvent dEvent = new DelayEvent(evt,seconds*1000);
+			
+			try {
+				
+				EventManager.getInstance().getDelayedQueue().put(dEvent);
+				
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+			
+			numEvent = numEvent + 1;
+		}
+
+		logger.info("Number of scheduled events: " + numEvent);
+	}
 }

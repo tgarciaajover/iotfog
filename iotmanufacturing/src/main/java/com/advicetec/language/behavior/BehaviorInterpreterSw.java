@@ -1,12 +1,8 @@
 package com.advicetec.language.behavior;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -15,12 +11,10 @@ import org.antlr.v4.runtime.tree.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.advicetec.core.AttributeValue;
 import com.advicetec.language.BehaviorGrammarLexer;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.ArrayAttributeSymbol;
-import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.BehaviorSymbol;
 import com.advicetec.language.ast.DisplaySymbol;
@@ -35,11 +29,28 @@ import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
+/**
+ * This class corresponds to the interpreter interface for the behavior language. 
+ * 
+ * The interpreter first makes a definition phase. In this phase all symbols are defined in their corresponding scopes. 
+ * Afterwards, it performs the interpretation phase where the values for the symbols are calculated.  
+ *   
+ * @author Andres Marentes
+ *
+ */
 public class BehaviorInterpreterSw 
 {
 
 	static Logger logger = LogManager.getLogger(BehaviorInterpreterSw.class.getName());
+	
+	/**
+	 *  instance to the definition phase object 
+	 */
 	private BehaviorDefPhase defPhase = null;
+	
+	/**
+	 * instance to the interpreter phase object
+	 */
 	private BehaviorInterpreter interpreter = null; 
 	
     public static Symbol.Type getType(int tokenType) {
@@ -68,10 +79,14 @@ public class BehaviorInterpreterSw
     }
     
     /**
-     * 
-     * @param program
-     * @param parameters
-     * @throws Exception
+     * Interprets the behavior text given as parameter in program 
+     *  
+     *   It checks the grammar and interprets the code.  
+     *   
+     * @param program		behavior text to interpret
+     * @param entityId		measure entity id for which the behavior is going to be run. 				
+     * @param parameters	List of parameters required for the behavior execution.
+     * @throws Exception	Run time exceptions generated during the behavior execution.
      */
     @SuppressWarnings("deprecation")
 	public void process(String program, Integer entityId, List<InterpretedSignal> parameters) throws Exception 
@@ -180,6 +195,7 @@ public class BehaviorInterpreterSw
     
     /**
      * Returns attributes and the state from the language global space.
+     * 
      * @return  Map string (symbol name) value (object)
      */
     public Map<String, ASTNode> getGlobalAttributes()
@@ -210,6 +226,7 @@ public class BehaviorInterpreterSw
 
     /**
      * Returns attributes and the state from the language global space.
+     * 
      * @return  Map string (symbol name) value (object)
      */
     public Map<String, ASTNode> getState()
@@ -232,7 +249,11 @@ public class BehaviorInterpreterSw
     	return ret;
     }
 
-    
+    /**
+     * Gets the global scope, it returns null if the definition phase was not executed,    
+     * 
+     * @return global scope
+     */
     public GlobalScope getGlobalScope(){
     	if (defPhase == null)
     		return null;
@@ -240,6 +261,11 @@ public class BehaviorInterpreterSw
     	return defPhase.getGlobalScope();
     }
     
+    /**
+     * Gets the global space, it returns null if the interpretation phase was not executed,
+     * 
+     * @return global space
+     */
     public MemorySpace getGlobalSpace(){
     	if (interpreter == null)
     		return null;

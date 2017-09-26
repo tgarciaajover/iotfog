@@ -1,11 +1,9 @@
 package com.advicetec.language.transformation;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -32,11 +30,28 @@ import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
+/**
+ * This class corresponds to the interpreter interface for the transformation language. 
+ * 
+ * The interpreter first makes a definition phase. In this phase all symbols are defined in their corresponding scopes. 
+ * Afterwards, it performs the interpretation phase where the symbols' values are calculated.  
+ *   
+ * @author Andres Marentes
+ *
+ */
 public class InterpreterSw 
 {	
 	
 	static Logger logger = LogManager.getLogger(InterpreterSw.class.getName());
+	
+	/**
+	 *  instance to the definition phase object 
+	 */
 	private DefPhase defPhase;
+	
+	/**
+	 * instance to the interpreter phase object
+	 */
 	private Interpreter interpreter;
 	
     public static Symbol.Type getType(int tokenType) {
@@ -63,10 +78,15 @@ public class InterpreterSw
     }
     
     /**
+     * Interprets the transformation text given as parameter in program 
+     *  
+     *   It checks the grammar and interprets the code.  
+     *   
+     * @param program		transformation text to interpret
+     * @param entityId		measure entity id for which the behavior is going to be run. 				
+     * @param parameters	List of parameters required for the behavior execution.
      * 
-     * @param program
-     * @param parameters
-     * @throws Exception
+     * @throws Exception	Run time exceptions generated during the behavior execution.
      */
     public void process(String program, Integer entityId, List<InterpretedSignal> parameters) throws Exception 
     {
@@ -183,6 +203,7 @@ public class InterpreterSw
     
     /**
      * Returns attributes and the state from the language global space.
+     * 
      * @return  Map string (symbol name) value (object)
      */
     public Map<String, ASTNode> getGlobalAttributes()
@@ -209,6 +230,7 @@ public class InterpreterSw
 
     /**
      * Returns attributes and the state from the language global space.
+     * 
      * @return  Map string (symbol name) value (object)
      */
     public Map<String, ASTNode> getState()
@@ -227,11 +249,20 @@ public class InterpreterSw
     	return ret;
     }
 
-    
+    /**
+     * Gets the global scope, it returns null if the definition phase was not executed,    
+     * 
+     * @return global scope
+     */
     public GlobalScope getGlobalScope(){
     	return defPhase.getGlobalScope();
     }
     
+    /**
+     * Gets the global space, it returns null if the interpretation phase was not executed,
+     * 
+     * @return global space
+     */
     public MemorySpace getGlobalSpace(){
     	return interpreter.getGlobalSpace();
     }

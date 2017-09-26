@@ -10,9 +10,6 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Calendar;
-import java.util.TimeZone;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.annotate.JsonCreator;
@@ -30,20 +27,47 @@ import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
 import com.advicetec.persistence.Storable;
 
+/**
+ * This class represents an value taken by a measured entity attribute.
+ * 
+ * These are the values calculated by the transformation and behavior languages.
+ * 
+ * @author Advicetec
+ *
+ */
 @JsonIgnoreProperties({"preparedInsertText","preparedDeleteText"})
 @JsonTypeName("MeasuredAttributeValue")
 public class MeasuredAttributeValue extends AttributeValue implements Storable
 {
 
+	/**
+	 * Date and time when the value was created. 
+	 */
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
 	LocalDateTime timeStamp;
 
+	
+	/**
+	 * SQL statement used to insert a measured entity value in the database. 
+	 */
 	@JsonIgnore
 	public final static String SQL_Insert = "INSERT INTO measuredattributevalue(id_owner, timestamp, owner_type, attribute_name, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time) " + " VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+
+	/**
+	 * SQL statement used to delete a measured entity value in the database. 
+	 */
 	@JsonIgnore
 	public final static String SQL_Delete = "DELETE INTO measuredattributevalue(id_owner, timestamp, owner_type, attribute_name) " + " VALUES (?,?,?,?)";
 
+	/**
+	 * Constructor for the class, it takes in the parameters all values required to set the attributes in the object.
+	 * @param type			Attribute for which we are creating a new value
+	 * @param value			Value to assign 
+	 * @param parent		Measured entity for whom this value is registered.
+	 * @param parentType	Type of measured entity for whom this value is registered.
+	 * @param timeStamp		Creation date-time of this value 
+	 */
 	@JsonCreator
 	public MeasuredAttributeValue(
 			@JsonProperty("attr")Attribute type, 
@@ -56,22 +80,34 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 		this.timeStamp = timeStamp;
 	}
 
-	
+	/**
+	 * Gets the creation date-time
+	 *  
+	 * @return	creation date-time
+	 */
 	public LocalDateTime getTimeStamp() 
 	{
 		return timeStamp;
 	}
 
+	/**
+	 * Gets the SQL insert prepared statement  
+	 */
 	@JsonIgnore
 	public String getPreparedInsertText() {
 		return SQL_Insert;
 	}
 
+	/**
+	 * Gets the SQL delete prepared statement
+	 */
 	public String getPreparedDeleteText() {
 		return SQL_Delete;
 	}
 
-
+	/**
+	 * Inserts an instance of this class in the database through the prepare statement given as parameter
+	 */
 	public void dbInsert(PreparedStatement pstmt) {
 				
 		try 
@@ -152,7 +188,8 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 				pstmt.setTime(11, Time.valueOf((LocalTime) getValue()));          // value_time
 				break;
 			default:
-				// TODO: Error case
+				Logger logger = LogManager.getLogger(ExecutedEntity.class.getName());  
+				logger.error("invalid measured attribute value type " + getAttr().getType().getName() );
 				break;
 				
 			}
@@ -166,6 +203,11 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 		}   							// id_owner
 	}
 
+	/**
+	 * Gets the measured attribute value from the database
+	 * 
+	 * @param rs result sets executed to return the measure attribute value.
+	 */
 	public void setValueFromDatabase(ResultSet rs)
 	{
 		try{
@@ -198,7 +240,8 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 				setValue(rs.getTime("value_time").toLocalTime());
 				break;
 			default:
-				// TODO error case.
+				Logger logger = LogManager.getLogger(ExecutedEntity.class.getName());  
+				logger.error("invalid measured attribute value type " + getAttr().getType().getName() );
 				break;
 
 			}		
@@ -206,10 +249,13 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 			Logger logger = LogManager.getLogger(MeasuredAttributeValue.class.getName());
 			logger.error(e.getMessage());
 			e.printStackTrace();
-		}   							// id_owner
+		}   							
 
 	}
 
+	/**
+	 *  Deletes an instance of this class in the database through the prepare statement given as parameter
+	 */
 	public void dbDelete(PreparedStatement pstmt) {
 
 		try 
@@ -227,20 +273,29 @@ public class MeasuredAttributeValue extends AttributeValue implements Storable
 		}   							// id_owner		
 	}
 
-	public void toCache(){
 
-	}
-
+	/**
+	 * Replaces the value
+	 *   
+	 * @param value value to assign
+	 */
 	public void setValue(Object value){
 		this.value = value;
 	}
 	
+	/**
+	 * Serializer to string
+	 * 
+	 */
 	public String toString(){
 		StringBuilder sb = new StringBuilder(super.toString());
 		sb.append(", timestamp: ").append(timeStamp.toString());
 		return sb.toString();
 	}
 
+	/**
+	 * Serializer to json
+	 */
 	public String toJson(){
 		String json = null;
 		ObjectMapper mapper = new ObjectMapper();

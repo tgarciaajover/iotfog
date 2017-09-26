@@ -162,6 +162,7 @@ public abstract class Container
 		}
 		
 		Class.forName(this.driver);
+		
 		conn = DriverManager.getConnection(this.server, this.user, this.password);
 
 		conn.setAutoCommit(false);
@@ -218,6 +219,42 @@ public abstract class Container
                 e.printStackTrace();
             }
         }	
+	}
+	
+	/**
+	 * Gets the database driver
+	 * 
+	 * @return database driver
+	 */
+	public synchronized String getDbDriver() {
+		return this.driver;
+	}
+	
+	/**
+	 * Gets the url used to connect to the database 
+	 * 
+	 * @return database url.
+	 */
+	public synchronized String getServer() {
+		return this.server;
+	}
+	
+	/**
+	 * Gets the database user 
+	 * 
+	 * @return databasr user
+	 */
+	public synchronized String getUser() {
+		return this.user;
+	}
+	
+	/**
+	 * Gets the database password
+	 * 
+	 * @return database password
+	 */
+	public synchronized String getPassword() {
+		return this.password;
 	}
 	
 	/**

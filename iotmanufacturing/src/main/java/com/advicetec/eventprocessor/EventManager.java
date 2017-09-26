@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
@@ -18,6 +19,7 @@ import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.MessageProcessor.DelayQueueConsumer;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
+import com.advicetec.mpmcqueue.QueueType;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
 import java.util.Iterator;
@@ -70,12 +72,27 @@ public class EventManager extends Manager
 	 * This hashmap contains the used connections for the duple (ipadress, key) in the key of the hashmap.
 	 */
 	private Map<String, Stack<Map.Entry<LocalDateTime,TCPMasterConnection>>> usedConnections = null;
-		
+	
+	/**
+	 * This map maintains the number of current handlers being executed by type of Event
+	 */	
+	private Map<EventType, Integer> numActiveHandlers;
+
+	/**
+	 * This map maintains the number of maximum handlers that can be executed for a type of Event
+	 */
+	private Map<EventType, Integer> maximimActiveHandlers;
+	
+	/**
+	 *  Number of handlers that should be started to process events.
+	 */
+	private int numHandlers = 10;
+	
 	/**
 	 * Returns the singleton instance for the class, if not created then creates the instance. 
 	 * @return Event manager singleton.
 	 */
-	public static EventManager getInstance()
+	public synchronized static EventManager getInstance()
 	{
 		if (instance==null)
 			instance = new EventManager(); 
@@ -93,9 +110,25 @@ public class EventManager extends Manager
 	 */
 	private EventManager() 
 	{
+		
 		super("EventManager");	
 
+		logger.info("Constructor Event Manager");
+
 		this.delayedQueue = new DelayQueue<DelayEvent>();
+
+		
+		String numProcessHandlers = getProperty("NumProcessHandlers");
+		if (numProcessHandlers != null){
+			try {
+				
+				numHandlers = Integer.parseInt(numProcessHandlers);
+
+			} catch (NumberFormatException e) {
+				logger.error("The value given in NumProcessHandlers is not a valid number");
+				System.exit(0);
+			}
+		}
 		
 		// This list contains the connections available to be used by any handler.
 		this.availableConnections = new HashMap<String, Stack<Map.Entry<LocalDateTime,TCPMasterConnection>>>();
@@ -121,8 +154,22 @@ public class EventManager extends Manager
 			logger.error("timeout field not established in event manager config file");
 			System.exit(0);			
 		}
-		
+
 		logger.info("timeout given:" + String.valueOf(timeOut));
+
+		// Reads the maximum handlers by type of event.
+		this.maximimActiveHandlers = new HashMap<EventType, Integer>();		
+		for (Entry<Integer, EventType> eventType : EventType.getList()) { 
+			String limitStr = getProperty(eventType.getValue().getName());
+			if (limitStr != null) {
+				int limit = Integer.parseInt(limitStr);
+				this.maximimActiveHandlers.put(eventType.getValue(), new Integer(limit));
+			}
+		}
+		
+		// Initialize the map of current count active handlers
+		numActiveHandlers = new HashMap<EventType, Integer>();
+		
 		
 	}	
 
@@ -134,32 +181,18 @@ public class EventManager extends Manager
 	{
 		logger.info("Starting Event Manager run");
 		
-		String numProcessHandlers = getProperty("NumProcessHandlers");
-		if (numProcessHandlers != null){
-			try
-			{
-				int number = Integer.valueOf(numProcessHandlers);
-				
-				List<Thread> listThread =  new ArrayList<Thread>();
+		List<Thread> listThread =  new ArrayList<Thread>();
 	
-				for (int i = 0; i < number; i++) 
-				{
-					Thread t = new Thread(new EventHandler(instance.getQueue(), this.delayedQueue));
-					t.start();
-					listThread.add(t);
-				}
-	
-				Thread delayConsumer = new Thread(new DelayQueueConsumer("EventConsumer", this.delayedQueue));
-				delayConsumer.start();
-
-			} catch (NumberFormatException e) {
-				logger.error("The value given in NumProcessHandlers is not a valid number");
-				System.exit(0);		
-			}
-		} else {
-			logger.error("NumProcessHandlers field not established in event manager config file");
-			System.exit(0);
+		for (int i = 0; i < numHandlers; i++) 
+		{
+			Thread t = new Thread(new EventHandler(instance.getQueue(), this.delayedQueue));
+			t.start();
+			listThread.add(t);
 		}
+
+		Thread delayConsumer = new Thread(new DelayQueueConsumer("EventConsumer", this.delayedQueue));
+		delayConsumer.start();
+
 		logger.info("Ending Event Manager run");
 	}	
 
@@ -280,7 +313,7 @@ public class EventManager extends Manager
 					
 				} catch (Exception e) {
 					logger.error("could not to connect with the modbus slave with ipaddress" + ipAddress + " port:" + Integer.toString(port));
-					e.printStackTrace();
+					// e.printStackTrace();
 					return null;
 				}
 				
@@ -383,7 +416,89 @@ public class EventManager extends Manager
      *
      * @param key Event to delete it is deleted by comparing its key.
      */
-    public void removeEvent(DelayEvent event) {
+    public synchronized void removeEvent(DelayEvent event) {
     	this.delayedQueue.remove(event);
 	}
+    
+    public synchronized boolean blockProcessingHandler(EventType type) {
+    	
+    	Integer oldNumHandlers = (Integer) this.numActiveHandlers.get(type);
+    	Integer maximum = this.maximimActiveHandlers.get(type);
+    	
+    	if (maximum == null) {
+    		// No Maximum has been specified
+    	
+	    	if (oldNumHandlers == null) {
+	    		this.numActiveHandlers.put(type, new Integer(1));
+	    	} else {
+	    		this.numActiveHandlers.put(type, new Integer (oldNumHandlers.intValue()+1) );
+	    	}
+	    	
+	    	return true;
+	    	
+    	} else {
+    		if (maximum.intValue() == 0) {
+    			// This kind of event cannot be processed.
+    			return false;
+    		} else {
+    			// This kind of event can be processed with a limit
+    			if (oldNumHandlers == null) {
+    				// It has not been processed before, then insert the entry and return as reserved
+    				this.numActiveHandlers.put(type, new Integer(1));
+    				return true;
+    			} else {
+    				if (oldNumHandlers.intValue() + 1 <= maximum.intValue()) {
+    					// we are within the limits  
+    					this.numActiveHandlers.put(type, new Integer (oldNumHandlers.intValue()+1) );
+    					return true;
+    				} else {
+    					// The maximum has been reached.
+    					return false;
+    				}	
+    			}
+    		}
+    	}
+    }
+    
+    public synchronized void releaseProcessingHandler(EventType type) {
+    	
+    	Integer oldNumHandlers = (Integer) this.numActiveHandlers.get(type);
+    	
+    	if (oldNumHandlers != null) {
+    		this.numActiveHandlers.put(type, new Integer (oldNumHandlers.intValue()-1) );
+    	}
+    	
+    	logger.debug("In release process" + oldNumHandlers);
+    }
+    
+    public synchronized int getActiveProcessingHandlers(EventType type) {
+    	Integer oldNumHandlers = (Integer) this.numActiveHandlers.get(type);
+    	
+    	if (oldNumHandlers == null) {
+    		return 0;
+    	} else {
+    		return oldNumHandlers.intValue();
+    	}
+    }
+    
+    public synchronized void setProcessingLimit(EventType type, int value) {
+    	
+    	Integer maximum = this.maximimActiveHandlers.get(type);
+    	if (maximum == null) {
+    		this.maximimActiveHandlers.put(type, new Integer(value));
+    	} else {
+    		this.maximimActiveHandlers.replace(type, new Integer(value));
+    	}
+    }
+    
+    public synchronized int getProcessingLimit(EventType type) {
+    	
+    	Integer maximum = this.maximimActiveHandlers.get(type);
+    	if (maximum == null) {
+    		return numHandlers;
+    	} else {
+    		return maximum.intValue();
+    	}
+    	
+    }
 }

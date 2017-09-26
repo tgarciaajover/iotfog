@@ -1,5 +1,8 @@
 package com.advicetec.aggregation.oee;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,6 +24,10 @@ public class OEEAggregationManager  extends Configurable {
 	 * Singleton Instance 
 	 */
 	private static OEEAggregationManager instance = null;
+
+	private static int MIN_DB_THREAD_POOL = 5;
+	
+	private static int MAX_DB_THREAD_POOL = 30; 
 	
 	/**
 	 * Reference to the OEE aggregation container. Through this object we can insert, update, and delete OEE aggregations.
@@ -42,9 +49,15 @@ public class OEEAggregationManager  extends Configurable {
 		String user = properties.getProperty("user");
 		String password = properties.getProperty("password");
 
-		oeeAggregations = new OEEAggregationContainer(driver, server, user, password);
-	}
+		if (properties.getProperty("min_db_thread_pool") != null)
+			MIN_DB_THREAD_POOL = Integer.parseInt(properties.getProperty("min_db_thread_pool"));
 
+		if (properties.getProperty("max_db_thread_pool") != null)
+			MAX_DB_THREAD_POOL = Integer.parseInt(properties.getProperty("max_db_thread_pool"));
+		
+		oeeAggregations = new OEEAggregationContainer(driver, server, user, password, MIN_DB_THREAD_POOL, MAX_DB_THREAD_POOL);
+	}
+	
 	/**
 	 * @return OEEAggregationManager instance
 	 */

@@ -51,7 +51,16 @@ public class MessageHandler implements Runnable
 
 	public void run() {
 		try {
+<<<<<<< HEAD
 			while (true){
+=======
+
+			while (true)
+			{
+				
+				logger.debug("Elements in the message adapter:" + fromQueue.size()[6]);
+				
+>>>>>>> branch 'master' of https://maldofer@bitbucket.org/advicetec/iotmanufacturing.git
 				Queueable obj = (Queueable) fromQueue.pop();
 
 				// interprets the unified message

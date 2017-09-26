@@ -21,6 +21,7 @@ public class PeriodUtils
 	static int MAX_SECONDS = 59;
 	static Logger logger = LogManager.getLogger(PeriodUtils.class.getName());
 	
+	public static int SECONDSPERHOUR = 3600;
 	public static int HOURSPERDAY = 24;
 	public static int HOURSPERMONTH = HOURSPERDAY * 30;
 	public static int HOURSPERYEAR = HOURSPERMONTH * 12;

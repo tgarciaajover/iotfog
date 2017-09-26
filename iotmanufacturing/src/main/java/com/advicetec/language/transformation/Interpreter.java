@@ -7,9 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Stack;
 import java.util.StringTokenizer;
 
@@ -20,14 +18,11 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.AttributeValue;
-import com.advicetec.core.IotInit;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseVisitor;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.AttributeSymbol;
-import com.advicetec.language.ast.FunctionSpace;
-import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.MemorySpace;
@@ -42,6 +37,15 @@ import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuringState;
 
+/**
+ * This class corresponds to the interpreter for the transformation language. 
+ * 
+ * The interpreter first makes a definition phase. In this phase all the symbols are defined in their corresponding scopes. 
+ * Afterwards, it performs the interpretation phase where the values for the symbols are calculated.  
+ *   
+ * @author Andres Marentes
+ *
+ */
 public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 {
  	
@@ -61,18 +65,54 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	            }
 	        };
 	
-	GlobalScope globalScope; // Global scope is filled by the parser
-	ParseTreeProperty<Scope> scopes;  // The definition for the rest of scopes
+	/**
+	* Global scope is filled by the parser
+	*/
+	GlobalScope globalScope;
+	
+	/**
+	 * The definition for the rest of scopes
+	 */
+	ParseTreeProperty<Scope> scopes;
+	
+	/**
+	 * Reference to the current scope.
+	 */
 	Scope currentScope;
+
+	/**
+	 * Measured entity facade defining the context for behavior execution.   
+	 */
 	MeasuredEntityFacade facade;
 	
+	/**
+	 * Global memory space 
+	 */
 	MemorySpace globals;
+
+	/**
+	 * Current memory space
+	 */
 	MemorySpace currentSpace;
+
+	/**
+	 * Stack of functions that have been called at any time. 
+	 */
 	Stack<TransformationSpace> stack; // call stack
 	
-	// used to compare floating point numbers
+	/**
+	 * Used to compare floating point numbers
+	 */
     public static final double SMALL_VALUE = 0.00000000001;
 
+	/**
+	 * Constructor for the transformation interpreter
+	 * 
+	 * @param _globalScope  Global scope where the symbols are defined
+	 * @param _globals    	Global memory space where values are going to be stored.
+	 * @param scopes		Scopes defined through the whole execution
+	 * @param facade		Measure entity facade where the transformation is being executed.
+	 */
 	public Interpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, MeasuredEntityFacade facade)
 	{
 		// Variable for symbol definition.
@@ -87,7 +127,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		logger.debug("Interpreter Constructor");
 	}
-	
+
+	/**
+	 * Interpret and execute the program.
+	 * 
+	 * It does:
+	 * 		Loop and interpret the main context. 
+	 */
 	@Override
 	public ASTNode visitProgram(TransformationGrammarParser.ProgramContext ctx) 
 	{ 
@@ -96,6 +142,12 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 	}
 	
+	/**
+	 * Interpret and execute the main function.
+	 * 
+	 * It does:
+	 * 		Loop and interpret all lines of code
+	 */
 	public ASTNode visitMain(TransformationGrammarParser.MainContext ctx) 
 	{ 
 		logger.debug("visitMain:" );
@@ -182,17 +234,28 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
 	}
 	
+	/**
+	 * Interpret a variable declaration.
+	 * 
+	 * It does:
+	 * 		Look for the variable in the symbol table
+	 * 		Assign a value to the variable and store the value in the current memory space
+	 */
 	@Override 
 	public ASTNode visitVar_dec(TransformationGrammarParser.Var_decContext ctx) 
 	{ 
 		String id = ctx.ID().getText();
+		Symbol s = currentScope.resolve(id);
 		logger.debug("visitVar_dec" + id);
 		
 		// the declaration includes an assignment
 		if (ctx.ASG() != null)
 		{
 	        ASTNode value = this.visit(ctx.expression());
-	        Symbol s = currentScope.resolve(id);	        
+
+			if (value == null)
+				value = initializeSymbol(s);
+
 	        VerifyAssign(s, value);
 	        currentSpace.put(id, castAssign(s, value));         // store
 	        return value;
@@ -204,6 +267,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		}
 	}
 	
+	/**
+	 * Interpret a unit of measure declaration.
+	 * 
+	 * It does:
+	 * 		Look for the unit of measure in the symbol table
+	 * 		Assign a void value in the global space. 
+	 */
 	public ASTNode visitUnit_dec(TransformationGrammarParser.Unit_decContext ctx) 
 	{ 
 		logger.debug("visit Unit dec");
@@ -213,6 +283,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;	
 	}
 
+	/**
+	 * Interpret an attribute declaration.
+	 * 
+	 * It does:
+	 * 		Look for the attribute symbol in the symbol table
+	 * 		Assign a value in the global space. It checks that the type is consistent. 
+	 */
 	public ASTNode visitAtrib_dec(TransformationGrammarParser.Atrib_decContext ctx) 
 	{ 
 		String id = ctx.id1.getText();
@@ -239,6 +316,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		}			
 	}	
 	
+	/**
+	 * Interpret an assign attribute declaration.
+	 * 
+	 * It does:
+	 * 		Look for the attribute symbol in the symbol table
+	 * 		Assign a value in the global space. It checks that the type is consistent. 
+	 */
 	public ASTNode AssignAttribute(AttributeSymbol toAssign, TransformationGrammarParser.Atrib_decContext ctx)
 	{
 		
@@ -312,6 +396,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 	}
 
+	/**
+	 * Interpret the status.
+	 * 
+	 * It does:
+	 * 		Look for the status symbol in the symbol table
+	 * 		Get the current value in the status from the facade.
+	 * 		Returns the value as an ASTNode 
+	 */
 	public ASTNode visitStatus(TransformationGrammarParser.StatusContext ctx) 
 	{ 
 		String attributeId = ctx.ID().getText(); 
@@ -333,6 +425,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 				
 	}
 	
+	/**
+	 * Interpret the measured entity state.
+	 * 
+	 * It does:
+	 * 		Look for the state symbol in the symbol table
+	 * 		Get the current state from the facade
+	 * 		According with the current state returns the corresponding ASTNode 
+	 */
 	public ASTNode visitState(TransformationGrammarParser.StateContext ctx) 
 	{ 
 		String id = "state"; 
@@ -365,6 +465,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		 
 	}
 
+	/**
+	 * Interpret the state assignment, In this statement the measured entity takes another state. 
+	 * 
+	 * It does:
+	 * 		Look for the state symbol in the symbol table
+	 * 		Get the state from the memory space
+	 * 		Assign the new state 
+	 */
 	public ASTNode visitState_assign(TransformationGrammarParser.State_assignContext ctx) 
 	{ 
 		String id = "state";
@@ -411,6 +519,12 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 				 
 	}
 	
+	/**
+	 * auxiliary Method to initialize a symbol according with its type 
+	 * 
+	 * @param Symbol to be initialized
+	 * @return The ASTNode to initialize the symbol.
+	 */
 	public ASTNode initializeSymbol(Symbol symbol)
 	{
 		
@@ -454,6 +568,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
 	}
 	
+	/**
+	 * Interpret the assign, we can assign a variable or an attribute. 
+	 * Other symbols should generate an error.
+	 *  
+	 * This method verifies the type of the value being assigned 
+	 * and the type of the variable or attribute.
+	 */
 	@Override 
 	public ASTNode visitAssign(TransformationGrammarParser.AssignContext ctx) 
 	{ 
@@ -494,9 +615,15 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         return value;
 	}
 	
+	/**  
+	 * This method verifies the type of the value being assigned 
+	 * and the type of the variable or attribute.
+	 * 
+	 * If discrepancies exist then it triggers a RunTimeException.
+	 */
 	public void VerifyAssign(Symbol symbol, ASTNode value)
 	{
-			
+					
 		switch (symbol.getType())
 		{
 		case tINT:
@@ -542,6 +669,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		}	
 	}
 
+	/**  
+	 * This method converts from a symbol's type to another type.
+	 * 
+	 * If the conversion cannot be performed, then it triggers a RunTimeException.
+	 */
 	public ASTNode castAssign(Symbol symbol, ASTNode value)
 	{
 
@@ -621,6 +753,9 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		}	
 	}
 		
+	/**
+	 * Visits a variable. It looks for the value of a variable registered in the current memory space 
+	 */
 	@Override 
 	public ASTNode visitVar(TransformationGrammarParser.VarContext ctx) 
 	{ 
@@ -637,6 +772,9 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         return value;
 	}
 
+	/**
+	 * Visits a round symbol. Rounds the value according to the rules specified.  
+	 */
 	public ASTNode visitRound(TransformationGrammarParser.RoundContext ctx) 
 	{ 
 		ASTNode value = this.visit(ctx.expression());
@@ -663,6 +801,10 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		}
 	}
 		
+	/**
+	 * Visits a return symbol. To return a value from a function we throws it value, so the caller
+	 * can catch it as an exception.  
+	 */
 	@Override 
 	public ASTNode visitRef_return(TransformationGrammarParser.Ref_returnContext ctx) 
 	{ 
@@ -678,6 +820,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return this.visit(ctx.startwith());
 	}
 	
+	/**
+	 * Visit a text representing an integer
+	 * 
+	 * @return the ASTNode representing the integer.
+	 */
 	@Override 
 	public ASTNode visitInteger(TransformationGrammarParser.IntegerContext ctx) 
 	{ 
@@ -685,6 +832,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 
+	/**
+	 * Visit a text representing an year
+	 * 
+	 * @return the ASTNode representing the year.
+	 */
 	@Override
 	public ASTNode visitYear(TransformationGrammarParser.YearContext ctx) 
 	{ 
@@ -692,18 +844,33 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 	
+	/**
+	 * Visit a text representing a digit
+	 * 
+	 * @return the ASTNode representing the digit.
+	 */
 	public ASTNode visitDigit(TransformationGrammarParser.DigitContext ctx) 
 	{ 
 		logger.debug("visitDigit");
 		return new ASTNode(Integer.valueOf(ctx.getText()));
 	}
 	
+	/**
+	 * Visit a text representing a float
+	 * 
+	 * @return the ASTNode representing the float.
+	 */
 	public ASTNode visitFloat(TransformationGrammarParser.FloatContext ctx) 
 	{ 
 		logger.debug("visitFloat");
 		return new ASTNode(Double.valueOf(ctx.getText()));
 	}
 	
+	/**
+	 * Visit a text representing a boolean
+	 * 
+	 * @return the ASTNode representing the boolean.
+	 */
 	@Override 
 	public ASTNode visitBoolean(TransformationGrammarParser.BooleanContext ctx) 
 	{ 
@@ -712,6 +879,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return new ASTNode(Boolean.valueOf(ctx.getText()));
 	}
 
+	/**
+	 * Visit a text representing a string 
+	 * 
+	 * @return the ASTNode representing the string.
+	 */
 	@Override 
 	public ASTNode visitStr(TransformationGrammarParser.StrContext ctx) 
 	{ 
@@ -726,6 +898,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	    return new ASTNode(str);
 	}
 	
+	/**
+	 * Visit a parentheses expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression inside the parentheses.
+	 */
 	@Override 
 	public ASTNode visitParens(TransformationGrammarParser.ParensContext ctx) 
 	{ 
@@ -734,6 +911,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return this.visit(ctx.expression()); 
 	}
 	
+	/**
+	 * Visits a multiplication, division, or module expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitMult(TransformationGrammarParser.MultContext ctx) 
 	{ 
@@ -792,6 +974,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         }
 	}
 
+	/**
+	 * Visits an add or subtraction expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitAddSub(TransformationGrammarParser.AddSubContext ctx) 
 	{ 
@@ -842,6 +1029,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Visits an exponent expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitExpon(TransformationGrammarParser.ExponContext ctx) 
 	{ 
@@ -871,6 +1063,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
     	}        
 	}
 	
+	/**
+	 * Visits a relational operation (less than, greater than, less than equal, greater than equal ) expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitRelationalExpr(TransformationGrammarParser.RelationalExprContext ctx) 
 	{ 
@@ -990,6 +1187,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         }
 	}
 	
+	/**
+	 * Visits an equals expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitEqualityExpr(TransformationGrammarParser.EqualityExprContext ctx) 
 	{ 
@@ -1062,6 +1264,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         }
 	}
 	
+	/**
+	 * Visits an AND expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitAndExpr(TransformationGrammarParser.AndExprContext ctx) 
 	{ 
@@ -1093,6 +1300,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
 	}
 	
+	/**
+	 * Visits an OR expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	@Override 
 	public ASTNode visitOrExpr(TransformationGrammarParser.OrExprContext ctx) 
 	{ 
@@ -1120,6 +1332,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
     	}
 	}
 	
+	/**
+	 * Visits a Token expression
+	 * 
+	 * @return the ASTNode representing the evaluation of the expression
+	 */
 	public ASTNode visitToken(TransformationGrammarParser.TokenContext ctx) 
 	{ 
 				
@@ -1165,6 +1382,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;
     }
 	
+	/**
+	 * Visits a substring expression 
+	 * 
+	 * @return the ASTNode representing the the substring result
+	 */
 	public ASTNode visitSubstring(TransformationGrammarParser.SubstringContext ctx) 
 	{ 
 		TransformationGrammarParser.ExpressionContext stringEq1 =  ctx.ex1;
@@ -1202,6 +1424,11 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return new ASTNode(ret);
 	}
 
+	/**
+	 * Visits an expression verifying if a text start with another text
+	 * 
+	 * @return the ASTNode representing the evaluation
+	 */
 	@Override
 	public ASTNode visitStartwith(TransformationGrammarParser.StartwithContext ctx)
 	{ 
@@ -1228,6 +1455,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
     } 	
 	
+	/**
+	 * Visits a repeat expression
+	 * 
+	 * 		Verifies that the import is defined in the symbol table
+	 * 		Defines a timer in the global symbol table
+	 * 
+	 * @return the ASTNode VOID
+	 */
 	public ASTNode visitRepeat(TransformationGrammarParser.RepeatContext ctx) 
 	{ 
 		String name = ctx.ID().getText();
@@ -1268,6 +1503,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;
 	}
 
+	/**
+	 * Visits a timer expression
+	 * 
+	 * 		Verifies that the import is defined in the symbol table
+	 * 		Defines a timer in the global symbol table
+	 * 
+	 * @return the ASTNode VOID
+	 */
 	public ASTNode visitTimer(TransformationGrammarParser.TimerContext ctx) 
 	{ 
 		String name = ctx.ID().getText();
@@ -1301,6 +1544,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		return ASTNode.VOID;
 	}
 	
+	/**
+	 * Visits a set of sentences
+	 * 
+	 * 		executes one by one all the sentences included.
+	 * 
+	 * @return the ASTNode VOID
+	 */
 	@Override 
 	public ASTNode visitBlock(TransformationGrammarParser.BlockContext ctx) 
 	{ 
@@ -1321,7 +1571,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
 	}
 
-    // if override
+	/**
+	 * Visits an IF sentence
+	 * 
+	 * 		Evaluates the expression inside the if and based on that evaluation 
+	 * 		executes the corresponding block of instructions.
+	 * 
+	 * @return the ASTNode VOID
+	 */
     @Override
     public ASTNode visitIf_stat(TransformationGrammarParser.If_statContext ctx) 
     {
@@ -1354,7 +1611,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         return ASTNode.VOID;
     }
 
-    // log override
+	/**
+	 * Visits a log sentence
+	 * 
+	 * 		Register a log 
+	 * 
+	 * @return the ASTNode VOID
+	 */
     @Override
     public ASTNode visitLog(TransformationGrammarParser.LogContext  ctx) {
         ASTNode value = this.visit(ctx.expression());
@@ -1362,6 +1625,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         return value;
     }    
     
+	/**
+	 * Visits an unary minus expression
+	 * 
+	 * 		multiplies by -1 the expression
+	 * 
+	 * @return the ASTNode representing the finla result.
+	 */
     @Override 
     public ASTNode visitUnaryMinusExpr(TransformationGrammarParser.UnaryMinusExprContext ctx) 
     { 
@@ -1375,6 +1645,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
     	}
     }
     
+	/**
+	 * Visits a NOT expression
+	 * 
+	 * 		makes a not of the expression
+	 * 
+	 * @return the ASTNode representing the final result.
+	 */
     @Override 
     public ASTNode visitNotExpr(TransformationGrammarParser.NotExprContext ctx) 
     { 
@@ -1392,6 +1669,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
     	 }
     }
 
+	/**
+	 * Visits a date expression
+	 * 
+	 * 		takes a string and convert it in localdate.
+	 * 
+	 * @return the ASTNode representing the final result.
+	 */
 	@Override 
 	public ASTNode visitDate(TransformationGrammarParser.DateContext ctx) 
 	{ 
@@ -1408,6 +1692,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	     } 
 	}
 
+	/**
+	 * Visits a time expression
+	 * 
+	 * 		takes a string and convert it in localtime.
+	 * 
+	 * @return the ASTNode representing the final result.
+	 */
 	@Override 
 	public ASTNode visitTime(TransformationGrammarParser.TimeContext ctx) 
 	{ 
@@ -1423,6 +1714,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	     } 
 	}
 
+	/**
+	 * Visits a datetime expression
+	 * 
+	 * 		takes a string and convert it in localdatetime.
+	 * 
+	 * @return the ASTNode representing the final result.
+	 */
 	@Override 
 	public ASTNode visitDatetime(TransformationGrammarParser.DatetimeContext ctx) 
 	{ 
@@ -1444,6 +1742,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	    } 
 	}
     
+	/**
+	 * Visits a program parameter
+	 * 
+	 * 		takes the value given and put it in the global memory space
+	 * 
+	 * @return the ASTNode of the value given
+	 */
 	public ASTNode visitFormalparameters(TransformationGrammarParser.ProgramparameterContext ctx) 
 	{ 
 		String id = ctx.getText();
@@ -1457,7 +1762,9 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         return value;
 	}
 	
-    /** Return scope holding id's value; current func space or global. */
+	/** 
+	 * Return scope holding id's value; current func space or global. 
+	 */
     public MemorySpace getSpaceWithSymbol(String id) 
     {
         if (stack.size()>0 && stack.peek().get(id)!=null) { // in top stack?
@@ -1467,10 +1774,20 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
         return null;                                        // nowhere
     }
 
+	/**
+	 * Gets the reference to the global space
+	 * 
+	 * @return Global space
+	 */
 	public MemorySpace getGlobalSpace(){
 		return globals;
 	}
 	
+	/**
+	 * Gets the reference to the global scope
+	 * 
+	 * @return Global scope
+	 */
 	public GlobalScope getGlobalScope(){
 		return globalScope;
 	}

@@ -66,7 +66,7 @@ public class ConfigurationManager extends Configurable
     /**
      * @return Get the instance of the Configuration Manager
      */
-    public static ConfigurationManager getInstance()
+    public synchronized static ConfigurationManager getInstance()
     {
     	if (instance == null){
     		instance = new ConfigurationManager();

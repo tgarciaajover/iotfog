@@ -22,6 +22,15 @@ import com.advicetec.core.AttributeValue;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
 
+/**
+ * This class represents any object being executed (produced) in a measured entity. 
+ * 
+ * Examples of classes inheriting from this class are:
+ * 		ProductionOrder.
+ * 
+ * @author Advicetec
+ *
+ */
 @JsonTypeInfo(
 	    use = JsonTypeInfo.Id.NAME,
 	    include = JsonTypeInfo.As.PROPERTY,
@@ -33,36 +42,68 @@ public class ExecutedEntity extends ConfigurationObject
 
 	static final Logger logger = LogManager.getLogger(ExecutedEntity.class.getName()); 
 	
+	/**
+	 * Date and time when the instance was created.  
+	 */
 	@JsonProperty("create_date") 
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
 	private LocalDateTime createDate;
 
+	/**
+	 * Last date and time when the instance was updated  
+	 */
 	@JsonProperty("last_updttm") 
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
 	private LocalDateTime lastDateTime;
 
+	/**
+	 * Type of object 
+	 */
 	@JsonIgnore
 	MeasuredEntityType type;
 	
+    /**
+     * start date-time of the current interval.
+     */
     @JsonIgnore
-    protected LocalDateTime startDateTimeStatus;	// start of the current interval.
+    protected LocalDateTime startDateTimeStatus; 
 
+    /**
+     * state of the current interval.
+     */
     @JsonIgnore
-    private MeasuringState currentState; // state of the current interval.
+    private MeasuringState currentState; 
 
-    private ReasonCode currentReason; // the reason code for the state. 
+    /**
+     * the reason code for the current state.
+     */
+    private ReasonCode currentReason;  
 
+    /**
+     * List of attributes registered in this executed entity 
+     */
     @JsonIgnore
     protected List<Attribute> attributes;
 
+    /**
+     * List of attribute values registered in this executed entity
+     */
     @JsonIgnore
     protected List<AttributeValue> attributeValues;
 
+    /**
+     * Canonical key used to reference instance in host systems. 
+     */
     protected String canonicalKey;
 	
 
+	/**
+	 * Constructor for the class 
+	 * @param id	executed entity identification
+	 * @param type	type of executed entity
+	 */
 	public ExecutedEntity(@JsonProperty("id") Integer id, MeasuredEntityType type) {
 		super(id);
 		startDateTimeStatus = LocalDateTime.now();
@@ -73,7 +114,12 @@ public class ExecutedEntity extends ConfigurationObject
 		this.type = type;
 	}
 
-	
+    /**
+     * Gets an attribute by name
+     * 
+     * @param name	name of the attribute to return
+     * @return	an attribute with the name given as parameter, or null if not found.
+     */
     @JsonIgnore
     public Attribute getAttribute(String name){
     	  
@@ -87,9 +133,15 @@ public class ExecutedEntity extends ConfigurationObject
 		return null;
     }
     
+    /**
+     * Gets an attribute value by name of the attribute
+     * 
+     * @param name		name of the attribute to return
+     * @return			The attribute value with the name given as parameter, or null if not found.
+     */
     public AttributeValue getAttributeValue(String name){
     	
-    	logger.info("Starting getAttributeValue - attribute:" + name);  
+    	logger.debug("Starting getAttributeValue - attribute:" + name);  
     	
 		for (int i = 0; i < this.attributeValues.size(); i++){
 			AttributeValue attr = this.attributeValues.get(i);
@@ -98,20 +150,36 @@ public class ExecutedEntity extends ConfigurationObject
 			}
 		}
     	
-		logger.info("ending getAttributeValue with null");
+		logger.debug("ending getAttributeValue with null");
 		
 		return null;
     }
     
+    /**
+     * Gets the list of attributes registered
+     * 
+     * @return attribute list
+     */
     @JsonIgnore
     public List<Attribute> getAttributeList(){
     	return attributes;
     }
     
+    /**
+     * Registers a new attribute in the executed object
+     * 
+     * @param attrribute  attribute to register
+     * @return			  true if the operation was successful, false otherwise.
+     */
     public boolean registerAttribute(Attribute attrribute){
     	return attributes.add(attrribute);
     }
     
+    /**
+     * Performs the equals operator with another executed entity 
+     * @param other		The other executed entity to compare against  
+     * @return			True if both entities are equal, false otherwise 
+     */
     @JsonIgnore
     public boolean equals(ExecutedEntity other){
     	
@@ -139,21 +207,44 @@ public class ExecutedEntity extends ConfigurationObject
     	return true;
     }
 
+    /**
+     * Gets the list of attribute values registered
+     * 
+     * @return attribute value list
+     */
     @JsonIgnore
     public List<AttributeValue> getAttributeValueList(){
     	return attributeValues;
     }
 
+    /**
+     * Registers an attribute value in the entity
+     * 
+     * @param value  attribute value to register
+     * 
+     * @return		true if the operation was successful, false otherwise.
+     */
     @JsonIgnore
     public boolean registerAttributeValue(AttributeValue value){
     	return attributeValues.add(value);
     }
     
+    /**
+     * Gets its type
+     * 
+     * @return type of executed entity
+     */
     @JsonIgnore
     public MeasuredEntityType getType(){
     	return type;
     }
         
+    /**
+     * Starts a new state interval in the entity
+     * 
+     * @param newState	The state of the new interval
+     * @param rCode		the reason code for the new interval
+     */
     @JsonIgnore
     public void startInterval(MeasuringState newState, ReasonCode rCode) {
     	currentState = newState;
@@ -161,26 +252,50 @@ public class ExecutedEntity extends ConfigurationObject
     	startDateTimeStatus = LocalDateTime.now();
     }
     
+    /**
+     * Gets the entity's current state 
+     * 
+     * @return	current state
+     */
     @JsonIgnore
     public MeasuringState getCurrentState(){
     	return this.currentState;
     }
     
+    /**
+     * Gets the entity's current state reason
+     * 
+     * @return	current reason code
+     */
     @JsonIgnore
     public ReasonCode getCurrentReason(){
     	return this.currentReason;
     }
     
+    /**
+     * Gets the date and time when the current state interval start
+     *  
+     * @return start date and time for the current state interval
+     */
     @JsonIgnore
     public LocalDateTime getCurrentStatDateTime(){
     	return this.startDateTimeStatus;
     }
 
+	/**
+	 * Sets the canonical key for this entity in the host system
+	 * 
+	 * @param canonicalKey canonical key in the host system.
+	 */
 	public void setCanonicalKey(String canonicalKey) {
 		this.canonicalKey = canonicalKey;
 	}
 
-    
+    /**
+     * Gets the canonical key for this entity in the host system
+     * 
+     * @return	canonical key in the host system.
+     */
     public String getCanonicalKey(){
     	return this.canonicalKey;
     }

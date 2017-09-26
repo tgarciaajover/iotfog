@@ -1,5 +1,6 @@
 package com.advicetec.iot.rest;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -376,8 +377,9 @@ public class ActivityRegistrationResource extends ServerResource
 	 * @param measuredEntityFacade Measured entity where the production should be started
 	 * @param idProduction    	   Internal production order identifier
 	 * @throws SQLException	  	   It is triggered if an error occurs during the production order information retrieval  
+	 * @throws PropertyVetoException 
 	 */
-	private void executeStartProduction(MeasuredEntityFacade measuredEntityFacade, int idProduction) throws SQLException{
+	private void executeStartProduction(MeasuredEntityFacade measuredEntityFacade, int idProduction) throws SQLException, PropertyVetoException{
     	logger.debug("in register production order start");
         
     	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 

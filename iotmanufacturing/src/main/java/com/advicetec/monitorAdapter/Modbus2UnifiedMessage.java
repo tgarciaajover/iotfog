@@ -32,39 +32,15 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 
 	static Logger logger = LogManager.getLogger(Modbus2UnifiedMessage.class.getName());
 
-	/**
-	 * Concentrator's ip address
-	 */
-	private String ipAddr; // 
-	/**
-	 * Concentrator's port
-	 */
-	private Integer port;  // 
-	/**
-	 * id of Measuring Device
-	 */
-	private Integer uid;   //
-	/**
-	 * Number of the first register
-	 */
-	private Integer offSet; // 
-	/**
-	 * Amount of elements read.
-	 */
-	private Integer count;   //
-	/**
-	 * type of modbus event
-	 */
-	private ModBusTcpEventType type; // 
-	/**
-	 * Measured values, data.
-	 */
-	private byte[] dataMeasured;   
-	
-	/**
-	 * Constructor, receives a dictionary with names and values.
-	 * @param dictionary map of string - value pairs. 
-	 */
+	private String ipAddr; // Concentrator's ip address
+	private Integer port;  // Concentrator's port
+	private Integer uid;   // id of device measure
+	private Integer offSet; // Number of the first register
+	private Integer count;   // Number of elements read. 
+	private ModBusTcpEventType type; // type of modbus event
+	private byte[] dataMeasured;   // measures
+
+
 	public Modbus2UnifiedMessage(Map<String, Object> dictionary) {
 		ipAddr = (String) dictionary.get("IPAddress");
 		port = (Integer) dictionary.get("Port");
@@ -97,15 +73,18 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	public List<UnifiedMessage> getUnifiedMessage() throws InstantiationException, 
 	IllegalAccessException, ClassNotFoundException  {
 
+
 		logger.debug("entering getUnifiedMessage" + "port:"
 				+ Integer.toString(port) + "type: " + this.type + 
 				" uid:" + this.uid + " offset: " + this.offSet + 
 				"count: " + this.count);
+
 		
 		ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
 		// get the portlabel from configuration environment.
 		String portLabel = ModBusUtils.buildPortLabel(this.type, this.port, 
 				this.uid, this.offSet, this.count);
+		
 		
 		if (portLabel == null){
 			return theList;

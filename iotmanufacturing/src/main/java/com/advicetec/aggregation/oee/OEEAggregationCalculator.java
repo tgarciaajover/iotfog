@@ -222,7 +222,7 @@ public class OEEAggregationCalculator {
 				List<OverallEquipmentEffectiveness> list = OEEContainer.getOEEList(
 						measuringEntity, measuredEntityType, period);
 				
-				logger.info("Nbr registers found:" + list.size());
+				logger.debug("Nbr registers found:" + list.size());
 
 				LocalDateTime now = LocalDateTime.now();
 
@@ -253,7 +253,7 @@ public class OEEAggregationCalculator {
 				ret = aggregateList(measuringEntity, measuredEntityType, period,  list);
 				if (insert){
 					
-					logger.debug("Replacing the OEE for day:" + period.getKey());
+					logger.debug("Number of registers:" + ret.size() + " Replacing the OEE for day:" + period.getKey());
 					
 					OEEContainer.dbDelete(ret);
 					OEEContainer.dbInsert(ret);
@@ -269,7 +269,7 @@ public class OEEAggregationCalculator {
 			logger.error("The OEE Aggretation Container was not created");
 		}
 		
-		logger.info("Finishing calculate by day");
+		logger.debug("Finishing calculate by day "+ formerDay);
 		
 		return ret;
 	}
@@ -290,7 +290,7 @@ public class OEEAggregationCalculator {
 							  LocalDateTime formerHour,
 							  boolean insert, boolean replace) {
 
-		logger.info("In calculateHour params measuredEntity:" + measuringEntity + "entityType:" + measuredEntityType.getName() + 
+		logger.debug("In calculateHour params measuredEntity:" + measuringEntity + "entityType:" + measuredEntityType.getName() + 
 					" hour: " + formerHour.toString());
 		
 		OEEAggregationManager manager = OEEAggregationManager.getInstance();
@@ -307,7 +307,7 @@ public class OEEAggregationCalculator {
 				String parQueryTo =  period.getKey()+":59:59.999";
 				List<OverallEquipmentEffectiveness> list = OEEContainer.intervalsByHour(
 						measuringEntity,measuredEntityType, period.getKey(), parQueryFrom,parQueryTo);
-				logger.info("number of oees calculated for the hour:" + list.size());
+				logger.debug("number of oees calculated for the hour:" + list.size());
 				ret = aggregateList(measuringEntity, measuredEntityType, period,  list);
 				
 				if (insert){

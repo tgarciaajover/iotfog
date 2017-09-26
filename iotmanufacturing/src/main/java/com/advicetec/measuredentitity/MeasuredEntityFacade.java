@@ -1,7 +1,13 @@
 package com.advicetec.measuredentitity;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -10,11 +16,16 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
+import java.util.TimeZone;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.parsers.ParserConfigurationException;
@@ -28,14 +39,20 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 
+import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.aggregation.oee.OEEAggregationCalculator;
 import com.advicetec.aggregation.oee.OEEAggregationManager;
 import com.advicetec.aggregation.oee.OverallEquipmentEffectiveness;
+import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
+import com.advicetec.configuration.ReasonCodeContainer;
+import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.TimeInterval;
+import com.advicetec.eventprocessor.EventManager;
+import com.advicetec.eventprocessor.PurgeFacadeCacheMapsEvent;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.persistence.MeasureAttributeValueCache;
@@ -66,7 +83,7 @@ public final class MeasuredEntityFacade {
 	private MeasureAttributeValueCache attValueCache;
 	
 	// This map stores endTime, startTime,
-	private TreeMap<LocalDateTime,String> statesMap;
+	private SortedMap<LocalDateTime,String> statesMap;
 	private StateIntervalCache stateCache;
 	
 	// This field is the attribute name for the expected production rate in minutes.
@@ -79,24 +96,45 @@ public final class MeasuredEntityFacade {
 	private String unit2PerCycles;
 	
 	// This field is the attribute name for the production counter.
-	private String actualProductionCountId;
-
+	private String actualProductionCountId;	
+	
+	// This field establishes how often we have to remove the cache entries (seconds).
+	private Integer purgeFacadeCacheMapEntries;
+	
 	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId, 
-								 String unit1PerCycles, String unit2PerCycles,  String actualProductionCountId) 
+								 String unit1PerCycles, String unit2PerCycles,  String actualProductionCountId, Integer purgeFacadeCacheMapEntries)
 	{
 		this.entity = entity;
 		this.status = new StatusStore();
 		this.attValueCache= MeasureAttributeValueCache.getInstance();
-		this.attMap = new HashMap<String,SortedMap<LocalDateTime,String>>();
-		this.statesMap = new TreeMap<LocalDateTime,String>();
+		
+		this.attMap = new ConcurrentHashMap<String,SortedMap<LocalDateTime,String>>();
+		this.statesMap = new ConcurrentSkipListMap<LocalDateTime,String>();
+		
 		this.stateCache = StateIntervalCache.getInstance();
 		this.productionRateId = productionRateId;
 		this.unit1PerCycles = unit1PerCycles;
 		this.unit2PerCycles = unit2PerCycles;
 		this.actualProductionCountId = actualProductionCountId;
+		this.purgeFacadeCacheMapEntries = purgeFacadeCacheMapEntries;
+		
+		PurgeFacadeCacheMapsEvent purgeEvent = new PurgeFacadeCacheMapsEvent(entity.getId(), entity.getType());
+		purgeEvent.setRepeated(true);
+		purgeEvent.setMilliseconds(this.purgeFacadeCacheMapEntries * 1000);
+		
+		try {
+			
+			EventManager.getInstance().getDelayedQueue().put(new DelayEvent(purgeEvent, purgeEvent.getMilliseconds())  );
+			logger.debug("Purge Event has been scheduled for measured entity:" + entity.getId());
+
+		} catch (InterruptedException e) {
+			logger.error("Error creating the purge event in the queue for measured entity:" + entity.getId());
+			e.printStackTrace();
+		}
+		
 	}
 
-	public MeasuredEntity getEntity() {
+	public synchronized MeasuredEntity getEntity() {
 		return entity;
 	}
 
@@ -139,7 +177,7 @@ public final class MeasuredEntityFacade {
 		String attName = mav.getAttr().getName();
 		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
 		if(internalMap == null){
-			attMap.put(attName,new TreeMap<LocalDateTime, String>());
+			attMap.put(attName,new ConcurrentSkipListMap<LocalDateTime, String>());
 			internalMap = attMap.get(attName);
 		}
 		internalMap.put(mav.getTimeStamp(), mav.getKey());
@@ -287,15 +325,13 @@ public final class MeasuredEntityFacade {
 			Collection<String> keys = subMap.values();
 			String[] keyArray = keys.toArray( new String[keys.size()]);
 
-			ArrayList<AttributeValue> newList = attValueCache.
-					getFromDatabase(entity.getId(),entity.getType(),
+			ArrayList<AttributeValue> newList = attValueCache.getFromDatabase(entity.getId(),entity.getType(),
 							status.getAttribute(attrName),from, oldest);
 			newList.addAll(getFromCache(keyArray));
 
 			return newList;
 		}
 	}
-
 
 
 	/**
@@ -305,13 +341,20 @@ public final class MeasuredEntityFacade {
 	public synchronized void deleteOldValues(LocalDateTime oldest){
 		for(SortedMap<LocalDateTime, String> internalMap : attMap.values()){
 			// replace the map with the last entries. 
-			internalMap = internalMap.tailMap(oldest);
+			Set<LocalDateTime> keysToDelete = internalMap.headMap(oldest).keySet();
+			for (LocalDateTime datetime : keysToDelete){
+				internalMap.remove(datetime);
+			}
 		}
 	}
 
 
 	public synchronized void deleteOldStates(LocalDateTime oldest){
-		statesMap = (TreeMap<LocalDateTime, String>) statesMap.tailMap(oldest, true);
+		Set<LocalDateTime> keysToDelete = statesMap.headMap(oldest).keySet();
+		for (LocalDateTime datetime : keysToDelete){
+			statesMap.remove(datetime);
+		}
+		
 	}
 
 	public synchronized String getByIntervalByAttributeNameJSON(String attrName, LocalDateTime from, LocalDateTime to){
@@ -374,7 +417,7 @@ public final class MeasuredEntityFacade {
 	 * @param keyArray
 	 * @return
 	 */
-	private synchronized ArrayList<AttributeValue> getFromCache(String[] keyArray){
+	private ArrayList<AttributeValue> getFromCache(String[] keyArray){
 		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
 		for (String key : keyArray) {
 			AttributeValue value = attValueCache.getFromCache(key);
@@ -487,7 +530,7 @@ public final class MeasuredEntityFacade {
 	}
 
 	// Verifies if a particular attribute belongs to the measure entity status.  
-	private  boolean isAttribute(String attrName) {
+	private synchronized boolean isAttribute(String attrName) {
 
 		Attribute att = status.getAttribute(attrName);
 
@@ -533,8 +576,9 @@ public final class MeasuredEntityFacade {
 	 * @param from Start date.
 	 * @param to End date.
 	 * @return Json Array of states.
+	 * @throws PropertyVetoException 
 	 */
-	public synchronized JSONArray getJsonStates(LocalDateTime from, LocalDateTime to){
+	public synchronized JSONArray getJsonStates(LocalDateTime from, LocalDateTime to) {
 		logger.debug("getJsonStates" + " from: " + from.toString() + " to: " + to.toString());
 		JSONArray array = null;
 		String cannonicalMachine = "";
@@ -580,6 +624,7 @@ public final class MeasuredEntityFacade {
 	 * @param from
 	 * @param to
 	 * @return
+	 * @throws PropertyVetoException 
 	 */
 	public synchronized JSONArray getJsonTrend(String trendVar,LocalDateTime from, LocalDateTime to){
 		JSONArray array = null;
@@ -692,11 +737,27 @@ public final class MeasuredEntityFacade {
 		stateCache.bulkCommit(new ArrayList<String>(statesMap.values()));
 	}
 	
+	
+	/**
+	 * Method to remove internal references that are out of date.
+	 */
+	public synchronized void removeOldCacheReferences()
+	{
+		// Remove References from the attribute cache.
+		LocalDateTime oldestAttr = attValueCache.getOldestTime();		
+		deleteOldValues(oldestAttr);
+
+		
+		// Delete References from the state cache.
+		LocalDateTime oldestState = stateCache.getOldestTime();		
+		deleteOldStates(oldestState);
+		
+	}
 	/***
 	 * Commands to store all measured attribute values into the database
 	 * and clean the cache. 
 	 */
-	public void storeAllMeasuredAttributeValues(){
+	public synchronized void storeAllMeasuredAttributeValues(){
 		LocalDateTime oldest = attValueCache.getOldestTime();
 		
 		deleteOldValues(oldest);
@@ -825,31 +886,31 @@ public final class MeasuredEntityFacade {
 		return map;
 	}
 	
-	public void addExecutedObject(ExecutedEntity executedEntity)
+	public synchronized void addExecutedObject(ExecutedEntity executedEntity)
 	{
 		this.entity.addExecutedEntity(executedEntity);
 		
 		ExecutedEntityChange();
 	}
 	
-	public void stopExecutedObjects()
+	public synchronized void stopExecutedObjects()
 	{
 		this.entity.stopExecuteEntities();
 	}
 	
-	public void removeExecutedObject(Integer id)
+	public synchronized void removeExecutedObject(Integer id)
 	{
 		this.entity.removeExecutedEntity(id);
 		
 		ExecutedEntityChange();
 	}
 
-	public AttributeValue getExecutedObjectAttribute(String attributeId)
+	public synchronized AttributeValue getExecutedObjectAttribute(String attributeId)
 	{
 		return this.entity.getAttributeFromExecutedObject(attributeId);
 	}
 
-	public void setCurrentState(Map<String, ASTNode> symbolMap) {
+	public synchronized void setCurrentState(Map<String, ASTNode> symbolMap) {
 
 		for (Map.Entry<String, ASTNode> entry : symbolMap.entrySet()) 
 		{
@@ -1059,7 +1120,7 @@ public final class MeasuredEntityFacade {
 		return array;
 	}
 
-	public boolean updateStateInterval(String startDttmStr, ReasonCode reasonCode) {
+	public synchronized boolean updateStateInterval(String startDttmStr, ReasonCode reasonCode) {
 
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
@@ -1098,5 +1159,6 @@ public final class MeasuredEntityFacade {
 		
 		return ret;
 	}
+	
 }
 

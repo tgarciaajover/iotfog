@@ -29,11 +29,12 @@ public class AdapterManager extends Manager implements Runnable
 	private static AdapterManager instance=null;
 	private static ConfigurationManager confManager = null; 
 	private static MessageManager messManager = null;
+
 	/**
 	 * Returns the singleton instance of this manager.
 	 * @return the singleton instance of this manager.
 	 */
-	public static AdapterManager getInstance()
+	public synchronized static AdapterManager getInstance()
 	{
 		if (instance==null)
 			instance = new AdapterManager();
