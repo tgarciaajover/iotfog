@@ -11,45 +11,68 @@ import org.apache.logging.log4j.Logger;
 import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.core.Configurable;
 import com.advicetec.eventprocessor.AggregationEvent;
-import com.advicetec.eventprocessor.Event;
 import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.eventprocessor.ModBusTcpEvent;
 import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
-import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.utils.MqttSubscriber;
 
 /**
- * This class manages the list of entities.
+ * This class manages the list of measured entities registered.
  * 
- * @author user
+ * @author Advicetec
  *
  */
 public class MeasuredEntityManager extends Configurable {
 	
-	private static MeasuredEntityManager instance=null;
+	/**
+	 * Reference to the singleton that is going to be used to reference the object.
+	 */
+	private static MeasuredEntityManager instance = null;
+	
+	/**
+	 * Container used to retry measured entities from the database.  
+	 */
 	private MeasuredEntityContainer measuredEntities;
 	
 	static Logger logger = LogManager.getLogger(MeasuredEntityManager.class.getName());
 	
+	/**
+	 * List of measured entities registered. 
+	 */
 	private List<MeasuredEntityFacade> entities;
 	
-	// Field that maintains the machine speed in case of no job on the machine. 
+	/**
+	 *	Field that maintains the machine speed in case of no job on the machine. 
+	 */
 	private String productionRateId;
 	
-	// Field that establishes the conversion Product Unit 1 / Cycle
+	/**
+	 * Field that establishes the conversion Product Unit 1 / Cycle
+	 */
 	private String unit1PerCycles;
 	
-	// Field that establishes the conversion Product Unit 2 / Cycle
+	/**
+	 * Field that establishes the conversion Product Unit 2 / Cycle
+	 */
 	private String unit2PerCycles;
 	
-	// This field is the attribute name for the production counter.
+	/**
+	 * This field is the attribute name for the production counter.
+	 */
 	private String actualProductionCountId;
 
-	// This field establishes how often we have to remove the cache entries (seconds).
+	/**
+	 * This field establishes how often we have to remove the cache entries (seconds). 
+	 */
 	private Integer purgeFacadeCacheMapEntries;
 	
+	/**
+	 * Constructor for the class 
+	 * 
+	 * @throws SQLException  this exception is thrown is case of database connection error.
+	 */
 	private MeasuredEntityManager() throws SQLException{
 		
 		super("MeasuredEntity");
@@ -120,6 +143,13 @@ public class MeasuredEntityManager extends Configurable {
 		
 	}
 
+	/**
+	 * Gets the reference to singleton instance
+	 *  
+	 * @return  measure entity manager singleton. 
+	 * 
+	 * @throws SQLException  it is thrown if the connection to the database could not be established.
+	 */
 	public synchronized static MeasuredEntityManager getInstance() throws SQLException{
 		if(instance == null){
 			instance = new MeasuredEntityManager();
@@ -128,13 +158,17 @@ public class MeasuredEntityManager extends Configurable {
 	}
 	
 	/**
-	 * Returns TRUE if the entity parameter is already into the list of facades.
-	 * @param entity
-	 * @return TRUE if the entity already exist into the list, FALSE otherwise.
+	 * Verifies if a particular measured entity is already registered in the database.
+	 *   
+	 * Returns TRUE if the measured entity given parameter is already into the list of facades.
+	 * 
+	 * @param entity	Measured entity that is given to verify if it is registered in the manager.
+	 * 
+	 * @return 			TRUE if the entity already exist into the list, FALSE otherwise.
 	 */
 	private synchronized boolean entityAlreadyExists(final MeasuredEntity entity){	
 		for (MeasuredEntityFacade facade : entities) {
-			if(facade.getEntity().getId().equals(entity)){
+			if(facade.getEntity().getId().equals(entity.getId())){
 				return true;
 			}
 		}
@@ -142,9 +176,11 @@ public class MeasuredEntityManager extends Configurable {
 	}
 	
 	/**
-	 * Inserts a new entity in the list and creates its facade.
-	 * @param entity The new measured entity.
-	 * @return
+	 * Inserts a new entity in the measured entity list and creates its facade.
+	 * 
+	 * @param entity 	The new measured entity.
+	 * @return			true if the measured entity was registered}, false otherwise.
+	 * 
 	 * @throws PropertyVetoException 
 	 */
 	public synchronized boolean addNewEntity(final MeasuredEntity entity){
@@ -157,8 +193,10 @@ public class MeasuredEntityManager extends Configurable {
 	}
 	
 	/**
-	 * Returns the Entity facade of a given entity id.
-	 * @param entityId The entity id to search.
+	 * Returns the measured entity facade for a given entity id.
+	 * 
+	 * @param entityId 	The entity id to search.
+	 * 
 	 * @return NULL if there is not an entity with the given id.
 	 */
 	public synchronized MeasuredEntityFacade getFacadeOfEntityById(final Integer entityId){	
@@ -180,18 +218,40 @@ public class MeasuredEntityManager extends Configurable {
 		return null;
 	}
 
+	/**
+	 * Gets the reference to the measured entity container
+	 * 
+	 * @return measured entity container
+	 */
 	public synchronized MeasuredEntityContainer getMeasuredEntityContainer()
 	{
 		return this.measuredEntities;
 	}
 
 	
+	/**
+	 * Gets the internal measure identifier from the measured entity canonical identifier. 
+	 *  
+	 * @param company			Company canonical identifier
+	 * @param location			Location canonical identifier
+	 * @param plant				Plant canonical identifier
+	 * @param machineGroup		Machine group canonical identifier
+	 * @param machineId			Machine canonical identifier
+	 * 
+	 * @return	measured entity internal identifier 
+	 */
 	public synchronized Integer getMeasuredEntityId(String company, String location,
 			String plant, String machineGroup, String machineId) {
 		
 		return this.measuredEntities.getCanonicalObject(company, location, plant, machineGroup, machineId);
 	}
 	
+	/**
+	 * Gets the canonical identifier from a internal measured entity identifier
+	 * @param id	internal measured entity identifier
+	 * 
+	 * @return		canonical identifier		
+	 */
 	public String getCanonicalById(Integer id){
 		if (this.measuredEntities.getObject(id) == null) {
 			return null;
@@ -201,6 +261,13 @@ public class MeasuredEntityManager extends Configurable {
 		}
 	}
 	
+	/**
+	 * Removes a measured entity from its internal identifier
+	 * 
+	 * @param entityId	measured entity identifier to remove
+	 * 
+	 * @return	True if the measured entity was removed, false otherwise.
+	 */
 	public synchronized boolean removeMeasuredEntity(Integer entityId)
 	{
 
@@ -246,6 +313,11 @@ public class MeasuredEntityManager extends Configurable {
 	}
 	
 	
+	/**
+	 * Schedule an aggregation event list in the scheduler.
+	 *  
+	 * @param scheduledEvents	Lists of scheduled events to schedule.
+	 */
 	public synchronized void scheduleAggregationEvents(List<AggregationEvent> scheduledEvents) {
 		
 		logger.info("scheduling # event:" + scheduledEvents.size());

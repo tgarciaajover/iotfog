@@ -2,12 +2,7 @@ package com.advicetec.measuredentitity;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -16,14 +11,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.TimeZone;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -43,10 +35,7 @@ import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.aggregation.oee.OEEAggregationCalculator;
 import com.advicetec.aggregation.oee.OEEAggregationManager;
 import com.advicetec.aggregation.oee.OverallEquipmentEffectiveness;
-import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
-import com.advicetec.configuration.ReasonCodeContainer;
-import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeValue;
@@ -65,8 +54,9 @@ import com.advicetec.utils.PredefinedPeriodType;
 
 /**
  * This class is a MeasuredEntity facade.
- * It allows the language processor to access some functionality
- * from the MeasuredEntity without expose all its methods.
+ * 
+ * It allows the language processor to access the measured entity functionality
+ * without exposing all its methods.
  *   
  * @author maldofer
  *
@@ -76,31 +66,71 @@ public final class MeasuredEntityFacade {
 
 	static Logger logger = LogManager.getLogger(MeasuredEntityFacade.class.getName());
 
+	/**
+	 *  Measure entity for which this facade is built.  
+	 */
 	private MeasuredEntity entity;
-	// Keeps an in-memory entity status
+	
+	/**
+	 * Keeps the in-memory entity status, the status corresponds to the current value of all attributes. 
+	 */
 	private StatusStore status;
+	
+	/**
+	 * References to measured attributes value stored in the cache. 
+	 * For each attribute, we store the keys being used in the cache ordered by the datetime when they were inserted.
+	 *    
+	 */
 	private Map<String,SortedMap<LocalDateTime,String>> attMap;
 	private MeasureAttributeValueCache attValueCache;
 	
-	// This map stores endTime, startTime,
+	/**
+	 * This map maintains references to states instances stored in the state cache.
+	 * 
+	 * It maintains the references ordered by datetime.    
+	 */
 	private SortedMap<LocalDateTime,String> statesMap;
+	
+	/**
+	 *  Reference to the state cache where intervals are stored.
+	 */
 	private StateIntervalCache stateCache;
 	
-	// This field is the attribute name for the expected production rate in minutes.
+	/**
+	 *  This field is the attribute name for the expected production rate in minutes. 
+	 */
 	private String productionRateId;
 	
-	// This field establishes the conversion Product Unit 1 / Cycle
+	/**
+	 * This field establishes the conversion Product Unit 1 / Cycle 
+	 */
 	private String unit1PerCycles;
 	
-	// This field establishes the conversion Product Unit 2 / Cycle
+	/**
+	 *  This field establishes the conversion Product Unit 2 / Cycle 
+	 */
 	private String unit2PerCycles;
 	
-	// This field is the attribute name for the production counter.
+	/**
+	 *  This field is the attribute name for the production counter. 
+	 */
 	private String actualProductionCountId;	
 	
-	// This field establishes how often we have to remove the cache entries (seconds).
+	/**
+	 *  This field establishes how often we have to remove the cache entries (seconds). 
+	 */
 	private Integer purgeFacadeCacheMapEntries;
 	
+	/**
+	 * Constructor for the class.
+	 *  
+	 * @param entity						measure entity for which we are building the facade
+	 * @param productionRateId				field used to represent the production rate 
+	 * @param unit1PerCycles				field used to represent the units produced per cycle (conversion 1) 
+	 * @param unit2PerCycles				field used to represent the units produced per cycle (conversion 2)
+	 * @param actualProductionCountId		field used to maintain the actual production count
+	 * @param purgeFacadeCacheMapEntries	how often we have to purge cache entry references.
+	 */
 	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId, 
 								 String unit1PerCycles, String unit2PerCycles,  String actualProductionCountId, Integer purgeFacadeCacheMapEntries)
 	{
@@ -134,20 +164,35 @@ public final class MeasuredEntityFacade {
 		
 	}
 
+	/**
+	 * Gets the measured entity
+	 * 
+	 * @return  measured entity
+	 */
 	public synchronized MeasuredEntity getEntity() {
 		return entity;
 	}
 
+	/**
+	 * Sets the entity referenced by this facade.
+	 * @param entity	measured entity being referenced. 
+	 */
 	public synchronized void setEntity(MeasuredEntity entity) {
 		this.entity = entity;
 	}
 
+	/**
+	 * Gets the measured entity type
+	 * 
+	 * @return	measure entity type
+	 */
 	public synchronized MeasuredEntityType getType(){
 		return entity.getType();
 	}
 
 	/**
 	 * Sets an Attribute.
+	 * 
 	 * @param attribute
 	 * @throws Exception If the new type of the attribute does not match the 
 	 * previous type.
@@ -159,7 +204,8 @@ public final class MeasuredEntityFacade {
 
 	/**
 	 * Sets or updates the attribute value into the status and store.
-	 * @param attrValue
+	 * 
+	 * @param attrValue attribute value to update.
 	 */
 	public synchronized void setAttributeValue(AttributeValue attrValue)
 	{
@@ -185,15 +231,18 @@ public final class MeasuredEntityFacade {
 
 	/**
 	 * Returns the newest Measured Attribute Value for a given Attribute name.
-	 * @param attName
-	 * @return
+	 * 
+	 * @param attName attribute name that the user wants to return its newest value
+	 * 
+	 * @return Last measure attribute value created.
 	 */
 	public synchronized AttributeValue getNewestByAttributeName(String attName){
 		return status.getAttributeValueByName(attName);
 	}
 
 	/**
-	 * Returns the current state of the measured entity. 
+	 * Returns the current state of the measured entity.
+	 *  
 	 * @return  If there is not entity assigned return undefined.
 	 */    
 	public synchronized MeasuringState getCurrentState(){
@@ -205,10 +254,12 @@ public final class MeasuredEntityFacade {
      }
 	
 	/**
+	 * Imports all attribute values in valueMap into the cache and status. 
+	 * This method is used whenever the language finishes and an update is required to the measured entity status. 
 	 * 
-	 * @param valueMap 
-	 * @param parent Identificator from the MeasuredEntity
-	 * @param parentType Type of the Measured Entity.
+	 * @param valueMap 		Values to be imported
+	 * @param parent 		Measured Entity identificator to update
+	 * @param parentType 	Type of the Measured Entity.
 	 */
 	public synchronized void importAttributeValues(Map<String, ASTNode> valueMap, Integer parent, MeasuredEntityType parentType) {
 
@@ -274,10 +325,11 @@ public final class MeasuredEntityFacade {
 
 	/**
 	 * Adds to the STATUS a new Attribute Value.
-	 * @param att The Attribute
-	 * @param value The Value
-	 * @param parent Id of the measured entity
-	 * @param parentType Type of measured entity.
+	 * 
+	 * @param att 			The Attribute
+	 * @param value 		The measure attribute value to add
+	 * @param parent 		Id of the measured entity
+	 * @param parentType 	Type of measured entity.
 	 */
 	public synchronized void setAttributeValue(Attribute att, Object value,Integer parent, MeasuredEntityType parentType) {
 
@@ -335,7 +387,8 @@ public final class MeasuredEntityFacade {
 
 
 	/**
-	 * Deletes old values from attribute value map.
+	 * Deletes old measure attribute values from attribute value map.
+	 * 
 	 * @param oldest
 	 */
 	public synchronized void deleteOldValues(LocalDateTime oldest){
@@ -348,7 +401,11 @@ public final class MeasuredEntityFacade {
 		}
 	}
 
-
+	/**
+	 * Deletes old states from the state map.  
+	 * 
+	 * @param oldest this corresponds to the oldest state that must be maintained on the map. 
+	 */
 	public synchronized void deleteOldStates(LocalDateTime oldest){
 		Set<LocalDateTime> keysToDelete = statesMap.headMap(oldest).keySet();
 		for (LocalDateTime datetime : keysToDelete){
@@ -357,6 +414,14 @@ public final class MeasuredEntityFacade {
 		
 	}
 
+	/**
+	 * Generates a Json object with all the attribute values stored during the time interval defined by from and to.
+	 *    
+	 * @param attrName  Attribute name for which we want to return the values
+	 * @param from		start of the time interval
+	 * @param to		end of the time interval
+	 * @return			values stored for the attribute during the time interval given as parameter. 
+	 */
 	public synchronized String getByIntervalByAttributeNameJSON(String attrName, LocalDateTime from, LocalDateTime to){
 
 		List<AttributeValue> ret = getByIntervalByAttributeName(attrName, from, to);
@@ -414,8 +479,9 @@ public final class MeasuredEntityFacade {
 
 	/**
 	 * Returns a list of Measured Attribute Values, from the cache,
-	 * @param keyArray
-	 * @return
+	 * 
+	 * @param keyArray 	array with the keys to retrieve
+	 * @return			Measure attribute values from the cache.
 	 */
 	private ArrayList<AttributeValue> getFromCache(String[] keyArray){
 		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
@@ -432,16 +498,29 @@ public final class MeasuredEntityFacade {
 		return maValues;
 	}
 
+	/**
+	 * Import all attribute definitions in symbolMap into the measure entity status.
+	 * 
+	 * @param symbolMap		Map with the symbols to import
+	 * @param origin		Identifies the origin of these symbols: behavior, transformation.
+	 * @throws Exception
+	 */
 	public synchronized void importSymbols(Map<String, Symbol> symbolMap, AttributeOrigin origin) throws Exception {
 		status.importSymbols(symbolMap, origin);
 	}
 
+	/**
+	 * Gets the collection of attributes registered in the status.
+	 * 
+	 * @return set of attributes registered in the measured entity. 
+	 */
 	public synchronized Collection<Attribute> getStatus(){
 		return status.getStatus();
 	}
 
 	/**
-	 * Returns the measured Entity status. 
+	 * Returns the measured Entity status in a JSON object.
+	 *  
 	 * @return json array
 	 */
 	public synchronized JSONArray getStatusJSON(){
@@ -449,6 +528,11 @@ public final class MeasuredEntityFacade {
 	}
 
 
+	/**
+	 * Facade method to import attribute values from the language to the measured entity.
+	 *  
+	 * @param valueMap map to import 
+	 */
 	public synchronized void importAttributeValues(Map<String, ASTNode> valueMap) {
 		importAttributeValues(valueMap,entity.getId(),entity.getType());
 
@@ -458,9 +542,13 @@ public final class MeasuredEntityFacade {
 		return status.getAttributeValues();
 	}
 
-    /**
-     * Actual rate and rate are assumed in minutes. 
-     */
+	/**
+	 * Registers a new interval in the measured entity
+	 * 
+	 * @param status		new status for the measured entity 
+	 * @param reasonCode	reason code of the new status
+	 * @param interval		Time interval in which the measure entity remains in the status defined.
+	 */
 	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
 		
@@ -529,7 +617,12 @@ public final class MeasuredEntityFacade {
 		
 	}
 
-	// Verifies if a particular attribute belongs to the measure entity status.  
+	/**
+	 * Verifies if a particular attribute belongs to the measure entity status.
+	 * 
+	 * @param attrName  attribute name to verify 
+	 * @return			true if the attribute name is registered, false otherwise.
+	 */
 	private synchronized boolean isAttribute(String attrName) {
 
 		Attribute att = status.getAttribute(attrName);
@@ -541,10 +634,11 @@ public final class MeasuredEntityFacade {
 	}
 
 	/**
-	 * Returns array of States of this MeasuredEntity for the given dates.
-	 * @param from Start date.
-	 * @param to End date.
-	 * @return String with the json information.
+	 * Returns an array of states of this measured entity for the given dates.
+	 * 
+	 * @param from 		Start date.
+	 * @param to 		End date.
+	 * @return 			String representation of the json information.
 	 */
 	public synchronized String getJsonStatesByInterval(LocalDateTime from, LocalDateTime to){
 
@@ -573,8 +667,9 @@ public final class MeasuredEntityFacade {
 	/**
 	 * Returns the json array with the format:<br>
 	 * [ ... {"machine":machine,"status":sts,"startDttm":start,"endDttm":end,"reason":reason}...]
-	 * @param from Start date.
-	 * @param to End date.
+	 * 
+	 * @param from 	Start date.
+	 * @param to 	End date.
 	 * @return Json Array of states.
 	 * @throws PropertyVetoException 
 	 */
@@ -620,10 +715,10 @@ public final class MeasuredEntityFacade {
 	 * Returns Json array with the format:<br>
 	 * [ ... {"machine":machine,"variable":var,"dttmStamp":stamp,"variableValue":val}...]
 	 * 
-	 * @param trendVar
-	 * @param from
-	 * @param to
-	 * @return
+	 * @param trendVar	name of the attribute marked as trend 
+	 * @param from		start datetime 
+	 * @param to		end datetime
+	 * @return			Json array with the format specified. The array maintains measure attribute values.  
 	 * @throws PropertyVetoException 
 	 */
 	public synchronized JSONArray getJsonTrend(String trendVar,LocalDateTime from, LocalDateTime to){
@@ -657,9 +752,11 @@ public final class MeasuredEntityFacade {
 	}
 
 	/**
-	 * Returns the json representation of 
-	 * @param interval
-	 * @return
+	 * Returns the Json representation of a set of states that belong to the interval given as parameter.
+	 * 
+	 * @param interval  start and end datetime
+	 * 
+	 * @return	json array in string.
 	 */
 	public synchronized String statesByInterval(TimeInterval interval){
 		List<StateInterval> intervals = getStatesByInterval(interval.getStart(), interval.getEnd());
@@ -685,8 +782,10 @@ public final class MeasuredEntityFacade {
 
 	/**
 	 * Returns the list of intervals between two datetimes.
-	 * @param from Beginning time
-	 * @param to Ending time.
+	 * 
+	 * @param from 		Begin time
+	 * @param to 		End time.
+	 * 
 	 * @return List of intervals.
 	 */
 	public synchronized List<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
@@ -726,8 +825,9 @@ public final class MeasuredEntityFacade {
 
 
 	/**
-	 * Commands to the cache to store all intervals into the database 
-	 * and clean the cache.
+	 * Commands the cache to store all intervals in the database and cleans the cache.
+	 * 
+	 * This method is used when the measured facade must be removed because the measured entity is deleted.
 	 */
 	public synchronized void storeAllStateIntervals(){
 		LocalDateTime oldest = stateCache.getOldestTime();
@@ -739,7 +839,7 @@ public final class MeasuredEntityFacade {
 	
 	
 	/**
-	 * Method to remove internal references that are out of date.
+	 * Method to remove internal references for both caches that are out of date.
 	 */
 	public synchronized void removeOldCacheReferences()
 	{
@@ -754,8 +854,8 @@ public final class MeasuredEntityFacade {
 		
 	}
 	/***
-	 * Commands to store all measured attribute values into the database
-	 * and clean the cache. 
+	 * Command to order the cache to store all measured attribute values associated to the measured 
+	 * entity into the database and cleans itself. 
 	 */
 	public synchronized void storeAllMeasuredAttributeValues(){
 		LocalDateTime oldest = attValueCache.getOldestTime();
@@ -774,6 +874,7 @@ public final class MeasuredEntityFacade {
 	
 	/**
 	 * Returns the Entity Status into a XML document.
+	 * 
 	 * @return
 	 * @throws ParserConfigurationException
 	 * @throws JAXBException
@@ -782,13 +883,21 @@ public final class MeasuredEntityFacade {
 		return status.toXml();
 	}
 
-
+	
+	/**
+	 * Gets registered downtown reasons in an interval. The response is a json array with downtime reason 
+	 * fulfilling the date interval.
+	 * 
+	 * @param from	start datetime 
+	 * @param to	end datetime
+	 * 
+	 * @return  list of downtime reasons.
+	 */
 	public synchronized JSONArray getJsonDowntimeReasons(LocalDateTime from,	LocalDateTime to) 
 	{
-		logger.info("In getJsonDowntimeReasons + from:" + from.toString() + " to:" + to.toString());
+		logger.debug("In getJsonDowntimeReasons + from:" + from.toString() + " to:" + to.toString());
 		
 		JSONArray array = null;
-		String cannonicalMachine ="";
 		List<DowntimeReason> list = getDowntimeReasons(from, to);
 
 		array = new JSONArray();
@@ -806,6 +915,14 @@ public final class MeasuredEntityFacade {
 		return array;
 	}
 
+	/**
+	 * Get the list of downtime reasons within an interval.
+	 * 
+	 * @param from	start datetime 
+	 * @param to	end datetime
+	 * 
+	 * @return	list of downtime reasons.
+	 */
 	private List<DowntimeReason> getDowntimeReasons(LocalDateTime from,	LocalDateTime to){
 	
 		List<StateInterval> list = new ArrayList<StateInterval>();
@@ -816,7 +933,7 @@ public final class MeasuredEntityFacade {
 		// all values are in the cache
 		if(oldest.isBefore(from))
 		{
-			logger.info("downtime reason cache only");	
+			logger.debug("downtime reason cache only");	
 			SortedMap<LocalDateTime, String> subMap = statesMap.subMap(from, to);
 			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
 				list.add(stateCache.getFromCache(entry.getValue()));
@@ -825,13 +942,13 @@ public final class MeasuredEntityFacade {
 		} 
 		else if(oldest.isAfter(to))
 		{
-			logger.info("downtime reason database only");
+			logger.debug("downtime reason database only");
 			// all values are in the database 
 			reasons.addAll(stateCache.getDownTimeReasonsByInterval(this.entity,from,to).values());
 		} 
 		else 
 		{
-			logger.info("downtime reason mixed cache - database");
+			logger.debug("downtime reason mixed cache - database");
 		     // get from cache
 			SortedMap<LocalDateTime, String> subMap = statesMap.subMap(oldest, to);
 			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
@@ -851,11 +968,17 @@ public final class MeasuredEntityFacade {
 			reasons.addAll(temp.values());
 			reasons.addAll(temp2.values());
 		}
-		logger.info("num Reasons:" + reasons.size());
+
+		logger.debug("num Reasons:" + reasons.size());
 		return reasons;
 	}
 	
 	
+	/**
+	 * 
+	 * @param list
+	 * @return
+	 */
 	private Map<Integer,DowntimeReason> sumarizeDowntimeReason(List<StateInterval> list) {
 		Map<Integer,DowntimeReason> map = new HashMap<Integer, DowntimeReason>();
 		DowntimeReason reason = null;
@@ -886,6 +1009,12 @@ public final class MeasuredEntityFacade {
 		return map;
 	}
 	
+	/**
+	 * Adds a new executed object to the measured entity. 
+	 * This is equivalent to saying that the executing object is being processed in this measured entity
+	 * 
+	 * @param executedEntity  executed object to add.
+	 */
 	public synchronized void addExecutedObject(ExecutedEntity executedEntity)
 	{
 		this.entity.addExecutedEntity(executedEntity);
@@ -893,11 +1022,19 @@ public final class MeasuredEntityFacade {
 		ExecutedEntityChange();
 	}
 	
+	/**
+	 * Stops all executed object that were previously executed in this measured entity. 
+	 */
 	public synchronized void stopExecutedObjects()
 	{
 		this.entity.stopExecuteEntities();
 	}
 	
+	/**
+	 * Stops an executed object that was previously executed in this measured entity.
+	 * 
+	 * @param id identifier of the executed object to remove.
+	 */
 	public synchronized void removeExecutedObject(Integer id)
 	{
 		this.entity.removeExecutedEntity(id);
@@ -905,11 +1042,24 @@ public final class MeasuredEntityFacade {
 		ExecutedEntityChange();
 	}
 
+	/**
+	 * Get an attribute value defined in an executed object.
+	 * 
+	 * @param attributeId	attribute name for which we want to obtain its value
+	 * 
+	 * @return	attribute value registered.
+	 */
 	public synchronized AttributeValue getExecutedObjectAttribute(String attributeId)
 	{
 		return this.entity.getAttributeFromExecutedObject(attributeId);
 	}
 
+	/**
+	 * Updates the state of the measure entity taking as parameter 
+	 * the measured attributes resulting from a transformation or behavior execution 
+	 * 
+	 * @param symbolMap	symbols generated by the transformation or behavior execution.
+	 */
 	public synchronized void setCurrentState(Map<String, ASTNode> symbolMap) {
 
 		for (Map.Entry<String, ASTNode> entry : symbolMap.entrySet()) 
@@ -952,6 +1102,9 @@ public final class MeasuredEntityFacade {
 
 	}
 	
+	/**
+	 * Change the executing entity being processed in the measure entity. Registers the corresponding interval representing the change. 
+	 */
 	public synchronized void ExecutedEntityChange(){
 		
 		LocalDateTime localDateTime = LocalDateTime.now();
@@ -961,6 +1114,15 @@ public final class MeasuredEntityFacade {
 
 	}
 
+	/**
+	 * Gets the OEE for the measured entity within the interval given as parameter  
+	 * 
+	 * @param dttmFrom		start datetime 
+	 * @param dttmTo		end datetime
+	 * @param reqInterval	specifies the granurality required for the response.
+	 * 
+	 * @return	Array of OEEs calculated with the granurality defined by reqInterval.  
+	 */
 	public synchronized JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo, String reqInterval) {
 				
         // Bring different predefined periods required
@@ -969,7 +1131,7 @@ public final class MeasuredEntityFacade {
 		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
 		List<OverallEquipmentEffectiveness> oees = new ArrayList<OverallEquipmentEffectiveness>();
 		
-		logger.info("Number of elements to calculate in the final list:" + periods.size());
+		logger.debug("Number of elements to calculate in the final list:" + periods.size());
 		
 		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
 		for (int i = 0; i < periods.size(); i++)
@@ -977,7 +1139,7 @@ public final class MeasuredEntityFacade {
 					
 			PredefinedPeriod period = periods.get(i);
 			
-			logger.info("Period Type:" + period.getType().getName());
+			logger.debug("Period Type:" + period.getType().getName());
 			
 			if (period.getType() == PredefinedPeriodType.INT_LT_HOUR)
 			{
@@ -1007,7 +1169,7 @@ public final class MeasuredEntityFacade {
 				if (oee2 !=null) {
 					oees.add(oee2);
 				} else {
-					logger.info("calculating oee for hour");
+					logger.debug("calculating oee for hour");
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
 					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false, false));
 				}
@@ -1047,7 +1209,7 @@ public final class MeasuredEntityFacade {
 			}			
 		}
 			
-		logger.info("Number of elements in the final list:" + oees.size());
+		logger.debug("Number of elements in the final list:" + oees.size());
 
 		JSONArray array = null;
 		array = new JSONArray();
@@ -1087,7 +1249,7 @@ public final class MeasuredEntityFacade {
 			double oeeValue =  part1 * part2 * part3;   
 			oeeValue = oeeValue * 100; 
 			
-			logger.info("oee" + Double.toString(oeeValue));
+			logger.debug("oee" + Double.toString(oeeValue));
 			
 			jsob.append("oee", new Double(oeeValue));
 			
@@ -1103,7 +1265,7 @@ public final class MeasuredEntityFacade {
 	 */
 	public synchronized JSONArray getJsonAttributeTrend() {
 		
-		logger.info("In getJsonAttributeTrend");
+		logger.debug("In getJsonAttributeTrend");
 		
 		List<Attribute> trendAttributes = status.getTrendAttributes();
 		JSONArray array = null;
@@ -1120,38 +1282,46 @@ public final class MeasuredEntityFacade {
 		return array;
 	}
 
+	/**
+	 * Update a previously defined stat, assigning its reason code. 
+	 *  
+	 * @param startDttmStr	start datetime when the interval to update started - this value works as a key for the interval states. 
+	 * @param reasonCode	Reason code to assign.
+	 * 	
+	 * @return	true if the intervals was found and updated, false otherwise.
+	 */
 	public synchronized boolean updateStateInterval(String startDttmStr, ReasonCode reasonCode) {
 
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
 		
-		logger.info("reasoncode id:" + reasonCode.getId() + " descr:" + reasonCode.getDescription() + " startDttm:" + startDttm );
+		logger.debug("reasoncode id:" + reasonCode.getId() + " descr:" + reasonCode.getDescription() + " startDttm:" + startDttm );
 		
 		boolean ret = false;
 		
 		if (this.entity.getCurrentStatDateTime().equals(startDttm)){
 			
-			logger.info("Updating the current state interval");
+			logger.debug("Updating the current state interval");
 			
 			this.entity.setCurrentReasonCode(reasonCode);
 			ret = true;
 		} else {
 
-			logger.info("Updating the past state interval");
+			logger.debug("Updating the past state interval");
 			
 			LocalDateTime oldest = stateCache.getOldestTime();
 			
-			logger.info("oldest" + oldest.format(formatter));
+			logger.debug("oldest" + oldest.format(formatter));
 			
 			// all values are in the cache
 			if(oldest.isBefore(startDttm))
 			{
-				logger.info("the datetime given is before");
+				logger.debug("the datetime given is before");
 				String stateKey = statesMap.get(startDttm);
-				logger.info("State key found:" + stateKey);
+				logger.debug("State key found:" + stateKey);
 				ret = stateCache.updateCacheStateInterval(stateKey, reasonCode);
 			} else if(oldest.isAfter(startDttm)){
-				logger.info("the datetime given is after");
+				logger.debug("the datetime given is after");
 				// all values are in the database 
 				ret = stateCache.updateStateInterval(this.entity.getId(), this.entity.getType(), startDttm, reasonCode);				
 			}

@@ -6,6 +6,7 @@ import org.codehaus.jackson.annotate.JsonTypeName;
 
 /**
  * This class models a Plant as an Entity.
+ * 
  * This object stores canonical information such as company, location, plant_id.
  * 
  * @author advicetec
@@ -16,24 +17,46 @@ public class Plant extends ProductionEntity {
 	
 	// canonical information
 	
+	/**
+	 *  canonical company identifier 
+	 */
 	@JsonProperty("id_compania")
 	private String canonicalCompany;
 	
+	/**
+	 * canonical location identifier
+	 */
 	@JsonProperty("id_sede")
 	private String canonicalLocation;
 	
+	/**
+	 * canonical plant identifier
+	 */
 	@JsonProperty("id_planta")
 	private String canonicalPlantId;
 	
 	
+	/**
+	 * Gets the canonical company identifier
+	 * 
+	 * @return	canonical company identifier
+	 */
 	public String getCannonicalCompany() {
 		return canonicalCompany;
 	}
 
+	/**
+	 * Gets the canonical location identifier
+	 * @return	canonical location identifier
+	 */
 	public String getCannonicalLocation() {
 		return canonicalLocation;
 	}
 
+	/**
+	 * Gets the canonical plant identifier 
+	 * @return	canonical plant identifier
+	 */
 	public String getCannonicalPlantId() {
 		return canonicalPlantId;
 	}

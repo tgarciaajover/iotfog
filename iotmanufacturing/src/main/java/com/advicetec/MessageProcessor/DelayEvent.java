@@ -14,7 +14,8 @@ import com.advicetec.eventprocessor.Event;
  * processed.
  * <p>
  * This class implements the <code>Delayed</code> interface that marks objects
- * that will exectute after a specified time.
+ * that will execute after a specified time.
+ * 
  * @author advicetec
  * @see Event
  * @see Delayed

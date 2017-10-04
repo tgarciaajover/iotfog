@@ -22,11 +22,24 @@ public enum MeasuringState
 	UNSCHEDULEDOWN(2,"UnScheduleDown"),
 	UNDEFINED(3, "Undefined");
 
+	/**
+	 * value assigned to the measured state 
+	 */
 	@JsonProperty 
 	private int value;
+	
+	/**
+	 * name (description) of the measured state.
+	 */
 	@JsonProperty 
 	private String name;
 
+	/**
+	 * Measured state constructor
+	 *  
+	 * @param value  value
+	 * @param name	 name - description
+	 */
 	private MeasuringState(int value, String name) {
 		this.value = value;
 		this.name = name;
