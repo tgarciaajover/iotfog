@@ -336,9 +336,9 @@ public class OEEAggregationContainer extends Container
 				
 				productiveTime += actualProductiveTime; 
 				
-				qtySchedToProduce += rowConversion1 * rowProductionRate * (actualProductiveTime / 60);
+				qtySchedToProduce += rowConversion1 * rowProductionRate * ( (float) actualProductiveTime / 60);
 				
-				qtyProduced += rowConversion1 * rowActualProductionRate * (actualProductiveTime / 60);
+				qtyProduced += rowConversion1 * rowActualProductionRate * ( (float) actualProductiveTime / 60);
 				
 				if (reducedTime == 0) {
 					qtyDefective += rowQtyDefective;
