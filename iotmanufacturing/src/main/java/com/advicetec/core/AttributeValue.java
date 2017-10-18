@@ -132,24 +132,33 @@ public class AttributeValue
 	 * 
 	 * @return true if this attribute value is equal to the given by parameter.
 	 */
-	public boolean equals(AttributeValue other){
-		if (other.key.compareTo(this.key) != 0){
+	public boolean equals(Object o){
+		
+		if (o instanceof AttributeValue) {
+			
+			AttributeValue other = (AttributeValue) o;   
+			if (other.key.compareTo(this.key) != 0){
+				return false;
+			}
+			
+			if (other.attr.equals(this.attr) != true)
+				return false;
+			
+			if (other.value.equals(this.value) != true)
+				return false;
+			
+			if (other.generator != this.generator)
+				return false;
+			
+			if (other.generatorType != this.generatorType) 
+				return false;
+			
+			return true;
+		} else { 
+			
 			return false;
+			
 		}
-		
-		if (other.attr.equals(this.attr) != true)
-			return false;
-		
-		if (other.value.equals(this.value) != true)
-			return false;
-		
-		if (other.generator != this.generator)
-			return false;
-		
-		if (other.generatorType != this.generatorType) 
-			return false;
-		
-		return true;
 	}
 
 	/**

@@ -62,9 +62,6 @@ public class JetFile2Protocol {
 			return _map.get(code).meaning;
 		}
 		
-		public boolean equals(StatusCode other){
-			return this.code == other.code;
-		}
 	}
 	
 	/**

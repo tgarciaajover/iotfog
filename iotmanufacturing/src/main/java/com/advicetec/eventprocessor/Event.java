@@ -143,7 +143,15 @@ public abstract class Event
 	 * 
 	 * @return true if equal, false otherwise.  
 	 */
-	public boolean equals(Event o){
-		return this.uuid.equals(o.uuid);
+	public boolean equals(Object o){
+		if (o instanceof Event) {
+			
+			Event other = (Event) o;
+			return this.uuid.equals(other.uuid);
+			
+		} else {
+			return false;
+		}
+		
 	}
 }

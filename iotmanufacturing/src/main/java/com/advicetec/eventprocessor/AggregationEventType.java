@@ -69,18 +69,6 @@ public enum AggregationEventType
 		return _map.get(value);
 	}
 	
-	/**
-	 * Equals method to compare two AggregationEventTypes
-	 * 
-	 * We say that an event type is equal to the other if they have the same code.
-	 *  
-	 * @param other AggregationEventType to compare.
-	 * 
-	 * @return true if equals, false otherwise. 
-	 */
-	public boolean equals(AggregationEventType other){
-		return this.code == other.code;
-	}
 	
 	/**
 	 * Gets the name of the event aggregation type.

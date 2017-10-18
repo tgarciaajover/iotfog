@@ -101,7 +101,10 @@ public class IotRestServer extends Application {
       
       // Resource for Implementing Measuring Entity Scheduled Events CRUD
       router.attach("/MeasuredEntity/{uniqueID}/ScheduledEvent/{EventID}", MeasuredEntityScheduledEventResource.class);
-
+      
+      // Resource for verify which transformations use a behavior
+      router.attach("/MeasuredEntity/{uniqueID}/TransformationsUsingBehavior/{BehaviorID}", MeasuredEntityBehaviorCheckResource.class);
+      
       // Resource for Implementing the classes available to translate signals into interpreted signals. 
       router.attach("/TranslationClasses", TranslationClassesResource.class);  
       

@@ -266,8 +266,13 @@ public class PredefinedPeriod
 	 * @return <code>TRUE</code> if the predefined periods are equals, 
 	 * <code>FALSE</code> otherwise. 
 	 */
-	public boolean equals(PredefinedPeriod another){
-		return(getKey().equalsIgnoreCase(another.getKey()));
+	public boolean equals(Object o){
+		if (o instanceof PredefinedPeriod) {
+			PredefinedPeriod another = (PredefinedPeriod) o; 
+			return(getKey().equalsIgnoreCase(another.getKey()));
+		} else {
+			return false;
+		}
 	}
 	
 }

@@ -292,11 +292,12 @@ public class ConfigurationManager extends Configurable
 	 * 
 	 * @return measured entity registered for the monitoring device and port label. If not found returns null.
 	 */
-	public Integer getMeasuredEntity(String macAddress, String portLabel){
-		logger.debug("start getMeasuredEntity params:" + macAddress + "|" + portLabel);
-		MonitoringDevice mDevice = this.getMonitoringDevice(macAddress); 
+	public Integer getMeasuredEntity(String monitoringAddress, String portLabel){
+		logger.info("start getMeasuredEntity params:" + monitoringAddress + "|" + portLabel);
+		
+		MonitoringDevice mDevice = this.getMonitoringDevice(monitoringAddress); 
 		if ( mDevice == null){
-			logger.error("Monitoring Device with address:"+ macAddress +" not found");
+			logger.error("Monitoring Device with address:"+ monitoringAddress +" not found");
 			return null;
 		}
 		else { 		

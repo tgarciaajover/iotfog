@@ -181,29 +181,35 @@ public class ExecutedEntity extends ConfigurationObject
      * @return	TRUE if both, the given and this entities are equal, FALSE otherwise. 
      */
     @JsonIgnore
-    public boolean equals(ExecutedEntity other){
+    public boolean equals(Object o){
     	
-    	// we said that a production order is equal to another if both have the same 
-    	// attributes and their attribute values are also equal. 
-    	if (getId() != other.getId())
+    	if (o instanceof ExecutedEntity) { 
+	    	ExecutedEntity other = (ExecutedEntity) o;
+	    	
+	    	// we said that a production order is equal to another if both have the same 
+	    	// attributes and their attribute values are also equal. 
+	    	if (getId() != other.getId())
+	    		return false;
+	    	
+	    	// Check if both orders have the same attributes.  
+			for (int i = 0; i < this.attributes.size(); i++){
+				Attribute attr = other.getAttribute(this.attributes.get(i).getName());
+				if ((attr == null) || (attr.equals(this.attributes.get(i)) == false)){
+					return false;
+				}
+			}
+	
+	    	// Check if both orders have the same attributes values.  
+			for (int i = 0; i < this.attributeValues.size(); i++){
+				AttributeValue attr = other.getAttributeValue(this.attributes.get(i).getName());
+				if ((attr == null) || (attr.equals(this.attributeValues.get(i)) == false)){
+					return false;
+				}
+			}
+	    	return true;
+    	} else {
     		return false;
-    	
-    	// Check if both orders have the same attributes.  
-		for (int i = 0; i < this.attributes.size(); i++){
-			Attribute attr = other.getAttribute(this.attributes.get(i).getName());
-			if ((attr == null) || (attr.equals(this.attributes.get(i)) == false)){
-				return false;
-			}
-		}
-
-    	// Check if both orders have the same attributes values.  
-		for (int i = 0; i < this.attributeValues.size(); i++){
-			AttributeValue attr = other.getAttributeValue(this.attributes.get(i).getName());
-			if ((attr == null) || (attr.equals(this.attributeValues.get(i)) == false)){
-				return false;
-			}
-		}
-    	return true;
+    	}
     }
 
     /**

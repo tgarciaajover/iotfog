@@ -204,33 +204,47 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 				MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
 				MeasuredEntityScheduledEvent scheduleEvent = measuredEntityFacade.getEntity().getScheduledEvent(eventId);
-
-				// Creates the required schedule events. We create an event by each recurrence included.  
-				if (scheduleEvent.getScheduledEventType().compareTo("AG") == 0) {
+				
+				if (scheduleEvent == null) {
 					
-					String lines[] = scheduleEvent.getRecurrence().split("\\r?\\n");
-					List<Event> events = new ArrayList<Event>();
+					logger.info("Event with Id:" + eventId + " was not found in measured entity:" + uniqueID);
 					
-					for (String recurrence : lines) {
-						AggregationEvent aggEvent = new AggregationEvent(measuredEntityFacade.getEntity().getId(), measuredEntityFacade.getEntity().getType(), AggregationEventType.OEE, recurrence, scheduleEvent.getDayTime());
-						events.add(aggEvent);
-					}
-					
-					// Removes the events from the delay queue.
-					for (Event evt : events){						
-						DelayEvent dEvent = new DelayEvent(evt,0);						
-						EventManager.getInstance().getDelayedQueue().remove(dEvent);	
-					}
+					// If not found, we send ok.
+					getResponse().setStatus(Status.SUCCESS_OK);
 					
 				} else {
-					logger.error("The Schedule event given cannot be processed - Type given:" +  scheduleEvent.getScheduledEventType() );
+					
+					// Creates the required schedule events. We create an event by each recurrence included.  
+					if (scheduleEvent.getScheduledEventType().compareTo("AG") == 0) {
+
+						String lines[] = scheduleEvent.getRecurrence().split("\\r?\\n");
+						List<Event> events = new ArrayList<Event>();
+
+						for (String recurrence : lines) {
+							AggregationEvent aggEvent = new AggregationEvent(measuredEntityFacade.getEntity().getId(), measuredEntityFacade.getEntity().getType(), AggregationEventType.OEE, recurrence, scheduleEvent.getDayTime());
+							events.add(aggEvent);
+						}
+						
+						logger.info("schedule events to delete:" + events.size());
+						
+						// Removes the events from the delay queue.
+						for (Event evt : events){						
+							DelayEvent dEvent = new DelayEvent(evt,0);
+							
+							boolean deleted = EventManager.getInstance().removeEvent(dEvent);
+							logger.info( "Event: " + dEvent.getKey() + " deleted:" + deleted); 
+						}
+
+					} else {
+						logger.error("The Schedule event given cannot be processed - Type given:" +  scheduleEvent.getScheduledEventType() );
+					}
+
+
+					// Deletes the schedule event from the measured entity. 
+					measuredEntityFacade.getEntity().removeScheduledEvent(eventId);
+
+					getResponse().setStatus(Status.SUCCESS_OK);
 				}
-
-				
-				// Deletes the schedule event from the measured entity. 
-				measuredEntityFacade.getEntity().removeScheduledEvent(eventId);
-
-				getResponse().setStatus(Status.SUCCESS_OK);
 
 			} catch (NumberFormatException e) {
 				String error = "The value given in Scheduled Event is not a valid number";

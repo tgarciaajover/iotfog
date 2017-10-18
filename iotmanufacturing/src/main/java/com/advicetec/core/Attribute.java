@@ -16,6 +16,7 @@ import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.advicetec.core.serialization.AttributeOriginSerializer;
+import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.configuration.SignalType;
 import com.advicetec.core.serialization.AttributeOriginDeserializer;
 import com.advicetec.core.serialization.AttributeTypeDeserializer;
@@ -213,24 +214,30 @@ public class Attribute
 	 * 
 	 * @return true if both attributes are equal, false otherwise.
 	 */
-	public boolean equals(Attribute other){
-		if ( this.name.compareTo(other.name) != 0 )
-			return false;
+	public boolean equals(Object o){
 		
-		if (!(this.type.equals(other.type)))
-		    return false;
-	
-		if (!(this.unit.equals(other.unit)))
-			return false;
+		if (o instanceof Attribute) {
+			Attribute other = (Attribute) o; 
+			if ( this.name.compareTo(other.name) != 0 )
+				return false;
+			
+			if (!(this.type.equals(other.type)))
+			    return false;
 		
-		if (this.trend != other.trend)
+			if (!(this.unit.equals(other.unit)))
+				return false;
+			
+			if (this.trend != other.trend)
+				return false;
+			
+			if (this.origin != other.origin)
+				return false;
+			
+			return true;
+			
+		} else {
 			return false;
-		
-		if (this.origin != other.origin)
-			return false;
-		
-		return true;
-					
+		}
 	}
 	
 	/** 

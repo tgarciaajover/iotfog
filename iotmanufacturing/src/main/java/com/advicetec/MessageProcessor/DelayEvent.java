@@ -88,8 +88,14 @@ public class DelayEvent implements Delayed
 	 * @return  <code>TRUE</code> if the given Delayed Event and this object
 	 * have the same event key, <code>FALSE</code> otherwise.
 	 */
-	public boolean equals(DelayEvent o){
-		return this.getKey().equals(o.getKey()); 
+	public boolean equals(Object o){
+		if (o instanceof DelayEvent) {
+			DelayEvent delay = (DelayEvent) o; 
+			logger.debug("This.key:" + this.getKey() + "Other.key: " + delay.getKey() );
+			return this.getKey().equals(delay.getKey());
+		} else {
+			return false;
+		}
 	}
 	/**
 	 * Returns the scheduled time, in milliseconds, for this event.

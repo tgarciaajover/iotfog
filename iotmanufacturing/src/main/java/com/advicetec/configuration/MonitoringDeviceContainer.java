@@ -6,8 +6,10 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -166,6 +168,36 @@ public class MonitoringDeviceContainer extends Container
         }
 		
 	}
+	
+	/**
+	 * Inserts the monitoring device given as parameter in the container.
+	 * 
+	 * If the monitoring device already exists, then replace it.
+	 * 
+	 * @param mDevice  Monitoring device to add.
+	 */
+	public synchronized void addMonitoringDevice(MonitoringDevice mDevice) {
+		
+		// Adds the monitoring device monitoring device container
+		super.configuationObjects.put(mDevice.getId(), mDevice);
+
+        // Update indexes created to references the monitoring device
+		if (mDevice.getMac_addres() != null){
+	        if (!mDevice.getMac_addres().isEmpty())
+	        	indexByMac.put(mDevice.getMac_addres(), mDevice.getId());
+        }
+        
+        if (mDevice.getIp_address() != null){
+	        if (!mDevice.getIp_address().isEmpty())
+	        	indexByIpAddress.put(mDevice.getIp_address(), mDevice.getId());
+        }
+        
+        if (mDevice.getSerial() != null){
+	        if (!mDevice.getSerial().isEmpty())
+	        	indexBySerial.put(mDevice.getSerial(),mDevice.getId());
+        }
+
+	}
 
 	/**
 	 * Delete a monitoring device from the container
@@ -236,7 +268,6 @@ public class MonitoringDeviceContainer extends Container
 	 * 
 	 * @param json  json object representing the measuring device. 
 	 * 
-	 * If the object can be parse, then a new object is added in the container.
 	 */
 	public synchronized MonitoringDevice fromJSON(String json){
 		
@@ -248,6 +279,11 @@ public class MonitoringDeviceContainer extends Container
 		try {
 		
 			mDeviceTemp = mapper.readValue(json, MonitoringDevice.class);
+			
+			logger.debug("Json object read:" + mDeviceTemp.toJson());
+			
+			logger.debug("Monitoring device id given:" + mDeviceTemp.getId()  );
+			logger.debug("Monitoring address given:" + mDeviceTemp.getIp_address()  );
 			
 			DeviceTypeContainer deviceTypeContainer = (DeviceTypeContainer) this.getReferenceContainer("DeviceType");			
 			DeviceType deviceTypeTmp = (DeviceType) deviceTypeContainer.getObject(mDeviceTemp.getType().getId());
@@ -269,11 +305,9 @@ public class MonitoringDeviceContainer extends Container
 					inputOutputPort.setSignalType(signal);
 				}
 			}
-			
-			super.configuationObjects.put(mDeviceTemp.getId(), mDeviceTemp);
-			
-			logger.debug("The monitoring device with Id:" + mDeviceTemp.getId() + " was inserted");
-					
+
+			mDeviceTemp.updateIndexes();
+
 		} catch (JsonParseException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
@@ -295,7 +329,7 @@ public class MonitoringDeviceContainer extends Container
 		try 
 		{
 			super.connect();
-			logger.debug("in getModbusEvents by measured entity");
+			logger.info("in getModbusEvents by monitoring device - id:" + monitoring.getId() );
 			
 			String sqlSelect = sqlSelect3 + String.valueOf(monitoring.getId());  
 			ResultSet rs3 = super.pst.executeQuery(sqlSelect);
@@ -306,7 +340,9 @@ public class MonitoringDeviceContainer extends Container
 				Integer measured_entity_id  = rs3.getInt("measured_entity_id");  
 				String portLabel        	= rs3.getString("port_label");
 				Integer refreshTimeMs       = rs3.getInt("refresh_time_ms");
-
+				
+				logger.info("new modbus event found");
+				
 				if (refreshTimeMs > 0){
 					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(ipaddress, measured_entity_id, portLabel, refreshTimeMs);
 					if (modBusEvent != null)
@@ -331,6 +367,20 @@ public class MonitoringDeviceContainer extends Container
 		}
 		
 		return events;
+	}
+
+	public Map<Integer, List<InputOutputPort>> getInputOutputPortReferingMeasuredEntity(Integer measuredEntity) {
+				
+		Map<Integer, List<InputOutputPort>> ports = new HashMap<Integer,List<InputOutputPort>>();
+
+		Set<Integer> monitoringKeys = this.configuationObjects.keySet();
+
+		for (Integer key : monitoringKeys) {
+			MonitoringDevice mDevice = (MonitoringDevice) this.configuationObjects.get(key);
+			ports.put(key, mDevice.getInputOutputPortReferingMeasuredEntity(measuredEntity));
+		}
+		
+		return ports;
 	}
 	
 }

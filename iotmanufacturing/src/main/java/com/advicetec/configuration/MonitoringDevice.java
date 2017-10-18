@@ -20,6 +20,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
+import com.advicetec.eventprocessor.ModBusTcpEvent;
 
 /**
  * A monitoring device represents the entity installed for a machine that is actually receiving and sending information to sensors.
@@ -85,6 +86,7 @@ public class MonitoringDevice extends ConfigurationObject
 	 * Map between the label of the part and its identifier. 
 	 * This maps is a helper structure to make faster port look ups by port label.
 	 */
+	@JsonIgnore
 	private Map<String, Integer> portsByLabel; 
 	
 	/**
@@ -160,7 +162,7 @@ public class MonitoringDevice extends ConfigurationObject
 	/**
 	 * Sets the date and time when the equipment was registered in the system.
 	 * 
-	 * @param create_date  registration datatime.
+	 * @param create_date  registration datetime.
 	 */
 	public void setCreate_date(LocalDateTime create_date) {
 		this.create_date = create_date;
@@ -254,6 +256,7 @@ public class MonitoringDevice extends ConfigurationObject
 	 * @param iop Input - Output port object to add.
 	 */
 	public void putInputOutputPort(InputOutputPort iop){
+		logger.info("port label:" + iop.getPortLabel() + "Id:" + iop.getId());
 		this.inputOutputPorts.add(iop);
 		this.portsByLabel.put(iop.getPortLabel(), iop.getId());
 	}
@@ -276,7 +279,73 @@ public class MonitoringDevice extends ConfigurationObject
 			return getInputOutputPort(id).getSignalType().getType().getClassName();
 		}
 	}
+	
+	/**
+	 * Indexes are maps used to speed up looks ups of instances.
+	 * 
+	 * for now the portsByLabel index is the only one. 
+	 */
+	public void updateIndexes() {
+		
+		this.portsByLabel.clear();
+		
+		for (int i = 0; i < this.inputOutputPorts.size(); i++){
+			InputOutputPort inputOutputPort = this.inputOutputPorts.get(i);
+			this.portsByLabel.put(inputOutputPort.getPortLabel(), inputOutputPort.getId());
+		}
+		
+	}
+	
+	/**
+	 * Gets the Modbus events that are required to schedule for this measuring device
+	 * 
+	 * @return List fo modbus events.
+	 */
+	public List<ModBusTcpEvent> getModbusEvents(){
+		
+		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
+		
+		String ipAddress = this.getIp_address();
+		
+		for (int i = 0; i < this.inputOutputPorts.size(); i++){
+			InputOutputPort inputOutputPort = this.inputOutputPorts.get(i);
+			logger.info("Type of protocol of the port signal:" + inputOutputPort.getSignalType().getType().getProtocol() );
+			if (inputOutputPort.getSignalType().getType().getProtocol().equals("M")) {
+				
+				String portLabel = inputOutputPort.getPortLabel();
+				Integer refreshTimeMs = inputOutputPort.getRefreshTimeMs();
+				Integer measuredEntity = inputOutputPort.getMeasuringEntity();
 
+				if (refreshTimeMs.compareTo(0) > 0){
+					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(ipAddress, measuredEntity, portLabel, refreshTimeMs);
+					if (modBusEvent != null)
+						events.add(modBusEvent);
+				} else {
+					logger.error("Refresh time is zero for Port label:" + portLabel + " which is invalid");
+				}
+
+			}
+		}
+		
+		return events;
+		
+	}
+
+	public List<InputOutputPort> getInputOutputPortReferingMeasuredEntity(Integer measuredEntity){
+		
+		List<InputOutputPort> ports = new ArrayList<InputOutputPort>();
+		
+		for (int i = 0; i < this.inputOutputPorts.size(); i++){
+			InputOutputPort inputOutputPort = this.inputOutputPorts.get(i);
+			if (inputOutputPort.getMeasuringEntity().equals(measuredEntity)) {
+				ports.add(inputOutputPort);
+			}
+		}
+		
+		return ports;
+	}
+	
+	
 	/**
 	 * Creates a JSON representation for the object.
 	 * 

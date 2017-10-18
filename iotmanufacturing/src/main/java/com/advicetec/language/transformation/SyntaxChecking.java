@@ -16,6 +16,7 @@ import org.w3c.dom.Element;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarLexer;
 import com.advicetec.language.ast.CollectionErrorListener;
+import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -127,4 +128,45 @@ import com.advicetec.measuredentitity.MeasuredEntityManager;
        
     }    
 
+	public boolean referencesImport(String program, Integer measuredEntity, String behaviorName ) {
+
+    	
+    	if ((program == null) || program.isEmpty())
+    	{
+    		return false;
+    	}
+
+    	List<SyntaxError> listErrors;
+
+    	CharStream  stream = (CharStream) new ANTLRInputStream(program);
+		TransformationGrammarLexer lexer = new TransformationGrammarLexer(stream);
+
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+        TransformationGrammarParser parser = new TransformationGrammarParser(tokens);
+        parser.setBuildParseTree(true);
+        parser.removeErrorListeners();
+        CollectionErrorListener collector = new CollectionErrorListener();
+        parser.addErrorListener(collector);
+        ParseTree tree = parser.program();
+
+        // show tree in text form
+        logger.debug(tree.toStringTree(parser));
+
+        ParseTreeWalker walker = new ParseTreeWalker();
+
+        DefPhase def = new DefPhase(parser);
+
+        walker.walk(def, tree);
+        
+        Symbol symbol = def.getGlobalScope().resolve(behaviorName);
+        
+        if (symbol instanceof ImportSymbol) {
+        	return true;
+        } else {
+        	return false;
+        }
+
+	}
+	
 }

@@ -542,13 +542,14 @@ public class MeasuredEntityContainer extends Container
 			while (rs6.next()) 
 			{
 
+				Integer id 					= rs6.getInt("id");
 				String scheduleEventType   	= rs6.getString("scheduled_event_type");
 				String descr  				= rs6.getString("descr");  
 				String recurrences        	= rs6.getString("recurrences");
 				Time day_time				= rs6.getTime("day_time");
 				Timestamp createDate 		= rs6.getTimestamp("create_date");
 
-				MeasuredEntityScheduledEvent measuredEvent = new MeasuredEntityScheduledEvent(entity.getId(), scheduleEventType );
+				MeasuredEntityScheduledEvent measuredEvent = new MeasuredEntityScheduledEvent(id, scheduleEventType );
 				measuredEvent.setDescr(descr);
 				measuredEvent.setRecurrence(recurrences);
 				measuredEvent.setDayTime(day_time.toLocalTime());

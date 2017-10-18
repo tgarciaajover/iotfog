@@ -86,19 +86,6 @@ public enum ModBusTcpEventType
 	}
 	
 	/**
-	 * Equals method to compare two ModBusEventTypes
-	 * 
-	 * We say that a modbus event type is equal to the other if they have the same code.
-	 *  
-	 * @param other ModbusEventType to compare.
-	 * 
-	 * @return true if equals, false otherwise. 
-	 */
-	public boolean equals(ModBusTcpEventType other){
-		return this.code == other.code;
-	}
-	
-	/**
 	 * Gets the name of the modbus event type.
 	 * @return
 	 */

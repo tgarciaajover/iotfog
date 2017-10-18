@@ -73,17 +73,6 @@ public enum AttributeOrigin {
 	}
 
 	/**
-	 * Equals with other attribute origin. 
-	 * 
-	 * @param o  attribute origin.  
-	 * 
-	 * @return   true if equals, false otherwise.
-	 */
-	public boolean equals(AttributeType o){
-		return this.name.equals(o.getName());
-	}
-
-	/**
 	 * Gets the attribute origin from its identifier
 	 * 
 	 * @param val  attribute origin identifier

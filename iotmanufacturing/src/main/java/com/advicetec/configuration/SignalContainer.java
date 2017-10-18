@@ -112,6 +112,8 @@ public class SignalContainer extends Container
 		
 			signalTemp = mapper.readValue(json, Signal.class);
 			
+			logger.debug(signalTemp.toJson());
+			
 			SignalTypeContainer signalTypeContainer = (SignalTypeContainer) this.getReferenceContainer("SignalType");
 						
 			ConfigurationObject signalType = signalTypeContainer.getObject(signalTemp.getType().getId());

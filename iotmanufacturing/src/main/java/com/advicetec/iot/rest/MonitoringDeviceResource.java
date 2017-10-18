@@ -9,6 +9,7 @@ import org.restlet.resource.ServerResource;
 import org.restlet.data.Status;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -100,35 +101,73 @@ public class MonitoringDeviceResource extends ServerResource
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 
-		logger.debug("Json:" + jsonText);
+		logger.info("putMonitoringDevice Json:" + jsonText);
 
 		// Look for it in the Monitoring Device Database.
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
 		MonitoringDeviceContainer monitoringDeviceCon = confManager.getMonitoringDeviceContainer();
-
 		MonitoringDevice monitoringDev = monitoringDeviceCon.fromJSON(jsonText);
-		
+
 		// Create modbus events.
 		if (monitoringDev == null) {
 			String error = "The monitoring device could not be deserialized";
 			getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST, error);
 			
 		} else {
-			List<ModBusTcpEvent> events = monitoringDeviceCon.getModbusEvents(monitoringDev);
+						
+			// Checks if the monitoring device was previously defined. 
+			MonitoringDevice previousMDevice = (MonitoringDevice) monitoringDeviceCon.getObject(monitoringDev.getId());
 			
-			for (ModBusTcpEvent evt : events){
-				Queueable obj = new Queueable(QueueType.EVENT, evt);
-				try {
-					logger.debug("new: " + events.size() +  " modbus event created");
-					EventManager.getInstance().getQueue().enqueue(6, obj);
-					
-				} catch (InterruptedException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
+			if (previousMDevice != null) {
+				
+				// gets the list of modbus events for the monitoring device.
+				List<ModBusTcpEvent> oldEvents = previousMDevice.getModbusEvents();
+
+				// Adds the monitoring device to monitoring device container.
+				monitoringDeviceCon.addMonitoringDevice(monitoringDev);
+
+				// We could create the monitoring device, It is going to create modbus events.
+				List<ModBusTcpEvent> events = monitoringDev.getModbusEvents();
+				
+				List<ModBusTcpEvent> maintainEvents = new ArrayList<ModBusTcpEvent>();
+				
+				// Filter which events must be maintained, which deleted and which added.				
+				for (ModBusTcpEvent evt : oldEvents) {
+					// If the event exists in the new list, then we have to maintain it, which means remove it from both lists. 
+					if (events.contains(evt)) {
+						maintainEvents.add(evt);
+					}
 				}
+				
+				for (ModBusTcpEvent evt : maintainEvents) {
+					oldEvents.remove(evt);
+					events.remove(evt);
+				}
+				
+				// Delete modbus events
+				deleteModBusEvents(oldEvents);
+				
+				// Inserts modbus events.
+				insertModBusEvents(events);		
+				
+				logger.info("Num modbus events created:" + events.size() + " Num modbus events deleted:" + oldEvents.size() );
+			
+			} else {
+
+				// Adds the monitoring device to monitoring device container.
+				monitoringDeviceCon.addMonitoringDevice(monitoringDev);
+
+				// We could create the monitoring device, It is going to create modbus events.
+				List<ModBusTcpEvent> events = monitoringDev.getModbusEvents();
+				
+				// Inserts modbus events.
+				insertModBusEvents(events);
+				
+				logger.info("Num modbus events created:" + events.size());
+
 			}
 
-			logger.debug("numElements:" + monitoringDeviceCon.size());
+			logger.info("numElements:" + monitoringDeviceCon.size());
 			getResponse().setStatus(Status.SUCCESS_OK);
 		}
 		
@@ -152,17 +191,49 @@ public class MonitoringDeviceResource extends ServerResource
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
 		MonitoringDeviceContainer monitoringDeviceCon = confManager.getMonitoringDeviceContainer();
 		MonitoringDevice monDevice = (MonitoringDevice) monitoringDeviceCon.getObject(uniqueID);
-		List<ModBusTcpEvent> events = monitoringDeviceCon.getModbusEvents(monDevice);
+		
+		// Deletes Modbus events being executed for this measuring device.
+		List<ModBusTcpEvent> events = monDevice.getModbusEvents();
+		deleteModBusEvents(events);
 
-		for (ModBusTcpEvent evt : events){
-			DelayEvent delEvent = new DelayEvent(evt, 0); 
-			EventManager.getInstance().getDelayedQueue().remove(delEvent);
-		}
-
+		// Deletes the monitoring device from the container.
 		monitoringDeviceCon.deleteMonitoringDevice(uniqueID);
 		return null;
 	}
 
+	private void insertModBusEvents(List<ModBusTcpEvent> events) {
 
+		for (ModBusTcpEvent evt : events){
+			Queueable obj = new Queueable(QueueType.EVENT, evt);
+			try {
+				
+				logger.info("key:" + evt.getKey() + " ipAddress:" + evt.getIpAddress() + " milliseconds:" + evt.getMilliseconds() + " port:" + evt.getPort());
+				logger.info("new: " + events.size() +  " modbus event created");
+				EventManager.getInstance().getQueue().enqueue(6, obj);
+				
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+		}
+
+	}
+	
+	/**
+	 * Deletes all scheduled modbus events given as parameters in the list.
+	 * 
+	 * @param events	List of events to remove.
+	 */
+	private void deleteModBusEvents(List<ModBusTcpEvent> events) {
+
+		logger.info("Current delayed events:" + EventManager.getInstance().evntsToString());
+		
+		for (ModBusTcpEvent evt : events)
+		{
+			DelayEvent delEvent = new DelayEvent(evt, 0); 
+			boolean removed = EventManager.getInstance().removeEvent(delEvent);
+			logger.info("The event with key:" + evt.getKey() + " to remove was found: " + removed );
+		}
+	}
 
 }

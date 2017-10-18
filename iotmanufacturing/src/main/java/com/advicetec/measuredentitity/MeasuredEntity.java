@@ -271,8 +271,14 @@ public abstract class MeasuredEntity extends ConfigurationObject
 	 * @param other	the measured entity to compare
 	 * @return TRUE if this and the given objects are equal, FALSE otherwise.
 	 */
-	public synchronized boolean equals(MeasuredEntity other){
-		return getId().equals( other.getId());
+	public synchronized boolean equals(Object o){
+		
+		if (o instanceof MeasuredEntity) {
+			MeasuredEntity other = (MeasuredEntity) o;
+			return getId().equals( other.getId());
+		} else {
+			return false;
+		}
 	}
 
 	/**

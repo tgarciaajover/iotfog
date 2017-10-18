@@ -416,8 +416,8 @@ public class EventManager extends Manager
      *
      * @param key Event to delete it is deleted by comparing its key.
      */
-    public synchronized void removeEvent(DelayEvent event) {
-    	this.delayedQueue.remove(event);
+    public synchronized boolean removeEvent(DelayEvent event) {
+    	return this.delayedQueue.remove(event);
 	}
     
     public synchronized boolean blockProcessingHandler(EventType type) {
@@ -499,6 +499,16 @@ public class EventManager extends Manager
     	} else {
     		return maximum.intValue();
     	}
+    }
+    
+    public synchronized String evntsToString() {
+    	Iterator<DelayEvent> iter = this.getDelayedQueue().iterator();
     	
+    	String result = ""; 
+    	while (iter.hasNext()) {
+    		result = result + " key:" + iter.next().getKey(); 
+    	}
+    	
+    	return result;
     }
 }
