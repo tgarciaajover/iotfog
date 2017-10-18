@@ -41,6 +41,12 @@ public class ExecutedEntity extends ConfigurationObject
 {
 
 	static final Logger logger = LogManager.getLogger(ExecutedEntity.class.getName()); 
+
+	/**
+	 * maximum state interval measured in seconds before is saved.
+	 */
+	static Integer MAX_INTERVAL_TIME = 300; 
+
 	
 	/**
 	 * Date and time when the instance was created.  
@@ -98,6 +104,12 @@ public class ExecutedEntity extends ConfigurationObject
      */
     protected String canonicalKey;
 	
+	/**
+	 * maximum amount of seconds that an interval can be open.
+	 */
+	@JsonIgnore
+	protected Integer maxTimeForInterval;
+    
 
 	/**
 	 * Constructor for the class 
@@ -109,6 +121,8 @@ public class ExecutedEntity extends ConfigurationObject
 		startDateTimeStatus = LocalDateTime.now();
 		currentState = MeasuringState.SCHEDULEDOWN;
 		currentReason = null;
+		maxTimeForInterval = MAX_INTERVAL_TIME; 
+		
 		attributes = new ArrayList<Attribute>();
 		attributeValues = new ArrayList<AttributeValue>();
 		this.type = type;
@@ -251,10 +265,10 @@ public class ExecutedEntity extends ConfigurationObject
      * @param rCode	the reason code for the new interval.
      */
     @JsonIgnore
-    public void startInterval(MeasuringState newState, ReasonCode rCode) {
+    public void startInterval(LocalDateTime dateTime, MeasuringState newState, ReasonCode rCode) {
     	currentState = newState;
     	currentReason= rCode;
-    	startDateTimeStatus = LocalDateTime.now();
+    	startDateTimeStatus = dateTime;
     }
     
     /**
@@ -304,4 +318,28 @@ public class ExecutedEntity extends ConfigurationObject
     public String getCanonicalKey(){
     	return this.canonicalKey;
     }
+
+	/**
+	 * Gets the maximum interval time 
+	 * 
+	 * @return	maximum interval time
+	 */
+	public synchronized Integer getMaxTimeForInterval() {
+		return maxTimeForInterval;
+	}
+
+    
+	/**
+	 * This function verifies if the current interval state should be calculated and saved. 
+	 * 
+	 * @return TRUE if we should start a new interval, FALSE otherwise.
+	 */
+	public synchronized boolean startNewInterval() {
+
+		if (getCurrentStatDateTime().plusSeconds(getMaxTimeForInterval()).isBefore(LocalDateTime.now()))
+			return true;
+
+		return false;
+	}
+
 }

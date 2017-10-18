@@ -650,12 +650,12 @@ public class StateIntervalCache extends Configurable {
 	 * not return data, this method returns an empty list.
 	 */
 	public Map<Integer,DowntimeReason> getDownTimeReasonsByInterval(
-			MeasuredEntity entity,LocalDateTime from, LocalDateTime to) {
+			Integer entityId, MeasuredEntityType mType, String canonicalId, LocalDateTime from, LocalDateTime to) {
 
 		Connection connDB  = null; 
 		PreparedStatement pstDB = null;
 
-		logger.debug("in getDownTimeReasonsByInterval MeasuredEntity:" + entity.getId() + " from:" + from.toString() + " to:" + to.toString());
+		logger.debug("in getDownTimeReasonsByInterval Entity:" + entityId + " from:" + from.toString() + " to:" + to.toString());
 
 		Map<Integer,DowntimeReason> map = new HashMap<Integer,DowntimeReason>();
 
@@ -664,8 +664,8 @@ public class StateIntervalCache extends Configurable {
 			connDB = getConnection();
 			connDB.setAutoCommit(false);
 			pstDB = connDB.prepareStatement(getSqlDownTimeReasons());
-			pstDB.setInt(1, entity.getId());
-			pstDB.setInt(2, entity.getType().getValue());
+			pstDB.setInt(1, entityId);
+			pstDB.setInt(2, mType.getValue());
 			pstDB.setTimestamp(3, Timestamp.valueOf(from));
 			pstDB.setTimestamp(4, Timestamp.valueOf(to));
 			pstDB.setTimestamp(5, Timestamp.valueOf(from));
@@ -682,15 +682,14 @@ public class StateIntervalCache extends Configurable {
 				Integer counter = rs.getInt("counter");
 				Double duration = rs.getDouble("duration");
 
-				if(entity.getType() == MeasuredEntityType.MACHINE){
+				if(mType == MeasuredEntityType.MACHINE){
 					ReasonCode reason;
 					reason = (ReasonCode) reasonCont.getObject(reasonCode);
 					if(reason != null){
-						map.put(reasonCode,new DowntimeReason(((Machine)entity).getCannonicalMachineId(), 
-								reason.getCannonicalReasonId(), reason.getDescription(), counter, duration) );
+						map.put(reasonCode,new DowntimeReason(canonicalId, reason.getCannonicalReasonId(), 
+																reason.getDescription(), counter, duration) );
 					} else {
-						map.put(0, new DowntimeReason(((Machine)entity).getCannonicalMachineId(), 
-								"0", "Desconocida", counter, duration));
+						map.put(0, new DowntimeReason(canonicalId, "0", "Desconocida", counter, duration));
 					}
 				}
 			}

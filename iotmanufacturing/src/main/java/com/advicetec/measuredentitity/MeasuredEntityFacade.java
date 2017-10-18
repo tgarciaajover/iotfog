@@ -39,6 +39,7 @@ import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeValue;
+import com.advicetec.core.EntityFacade;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.eventprocessor.PurgeFacadeCacheMapsEvent;
@@ -61,7 +62,7 @@ import com.advicetec.utils.PredefinedPeriodType;
  * @author maldofer
  *
  */
-public final class MeasuredEntityFacade {
+public final class MeasuredEntityFacade implements EntityFacade {
 
 
 	static Logger logger = LogManager.getLogger(MeasuredEntityFacade.class.getName());
@@ -79,7 +80,6 @@ public final class MeasuredEntityFacade {
 	/**
 	 * References to measured attributes value stored in the cache. 
 	 * For each attribute, we store the keys being used in the cache ordered by the datetime when they were inserted.
-	 *    
 	 */
 	private Map<String,SortedMap<LocalDateTime,String>> attMap;
 	private MeasureAttributeValueCache attValueCache;
@@ -132,7 +132,8 @@ public final class MeasuredEntityFacade {
 	 * @param purgeFacadeCacheMapEntries	how often we have to purge cache entry references.
 	 */
 	public MeasuredEntityFacade(MeasuredEntity entity, String productionRateId, 
-								 String unit1PerCycles, String unit2PerCycles,  String actualProductionCountId, Integer purgeFacadeCacheMapEntries)
+								 String unit1PerCycles, String unit2PerCycles,  
+								   String actualProductionCountId, Integer purgeFacadeCacheMapEntries)
 	{
 		this.entity = entity;
 		this.status = new StatusStore();
@@ -467,8 +468,7 @@ public final class MeasuredEntityFacade {
 		String[] keyArray = (String[]) internalMap.values().toArray();
 		if(n>= internalMap.size()){
 			return getFromCache(keyArray);
-		}
-		else{
+		} else{
 			for (int i = keyArray.length - n - 1; i < keyArray.length; i++) {
 				maValues.add(attValueCache.getFromCache(keyArray[i]));
 			}
@@ -841,6 +841,7 @@ public final class MeasuredEntityFacade {
 	/**
 	 * Method to remove internal references for both caches that are out of date.
 	 */
+	
 	public synchronized void removeOldCacheReferences()
 	{
 		// Remove References from the attribute cache.
@@ -853,6 +854,7 @@ public final class MeasuredEntityFacade {
 		deleteOldStates(oldestState);
 		
 	}
+	
 	/***
 	 * Command to order the cache to store all measured attribute values associated to the measured 
 	 * entity into the database and cleans itself. 
@@ -944,7 +946,8 @@ public final class MeasuredEntityFacade {
 		{
 			logger.debug("downtime reason database only");
 			// all values are in the database 
-			reasons.addAll(stateCache.getDownTimeReasonsByInterval(this.entity,from,to).values());
+			reasons.addAll(stateCache.getDownTimeReasonsByInterval(this.entity.getId(), this.entity.getType(), 
+																	this.entity.getCanonicalIdentifier(), from,to).values());
 		} 
 		else 
 		{
@@ -957,7 +960,8 @@ public final class MeasuredEntityFacade {
 			Map<Integer, DowntimeReason> temp = sumarizeDowntimeReason(list);
 			
 			// get from database
-			Map<Integer, DowntimeReason> temp2 = stateCache.getDownTimeReasonsByInterval(this.entity,from,oldest);
+			Map<Integer, DowntimeReason> temp2 = stateCache.getDownTimeReasonsByInterval(this.entity.getId(), this.entity.getType(), 
+																						    this.entity.getCanonicalIdentifier(),from,oldest);
 			for (Integer k : temp.keySet()) {
 				if(temp2.containsKey(k)){
 					DowntimeReason dtr = temp2.remove(k);

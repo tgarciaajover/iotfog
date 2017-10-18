@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.AttributeValue;
+import com.advicetec.core.EntityFacade;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseVisitor;
@@ -34,7 +35,6 @@ import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.TransformationSpace;
 import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.VariableSymbol;
-import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuringState;
 
 /**
@@ -83,7 +83,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	/**
 	 * Measured entity facade defining the context for behavior execution.   
 	 */
-	MeasuredEntityFacade facade;
+	EntityFacade facade;
 	
 	/**
 	 * Global memory space 
@@ -113,7 +113,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	 * @param scopes		Scopes defined through the whole execution
 	 * @param facade		Measure entity facade where the transformation is being executed.
 	 */
-	public Interpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, MeasuredEntityFacade facade)
+	public Interpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, EntityFacade facade)
 	{
 		// Variable for symbol definition.
 		this.globalScope = _globalScope;

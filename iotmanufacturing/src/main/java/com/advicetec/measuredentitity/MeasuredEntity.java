@@ -49,7 +49,7 @@ import com.advicetec.eventprocessor.AggregationEventType;
 @JsonSubTypes({
 	@Type(value = Machine.class, name = "M"),
 	@Type(value = Plant.class, name = "P") })
-public abstract class MeasuredEntity extends ConfigurationObject 
+public abstract class MeasuredEntity extends Entity 
 {
 	static final Logger logger = LogManager.getLogger(MeasuredEntity.class.getName());
 

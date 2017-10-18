@@ -2,12 +2,8 @@ package com.advicetec.applicationAdapter;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -16,9 +12,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
-import java.util.TimeZone;
-import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,22 +21,40 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+
+
+import com.advicetec.MessageProcessor.DelayEvent;
+import com.advicetec.aggregation.oee.OEEAggregationCalculator;
+import com.advicetec.aggregation.oee.OEEAggregationManager;
+import com.advicetec.aggregation.oee.OverallEquipmentEffectiveness;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.TimeInterval;
+import com.advicetec.eventprocessor.EventManager;
+import com.advicetec.eventprocessor.PurgeFacadeCacheMapsEvent;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.Symbol;
+import com.advicetec.measuredentitity.DowntimeReason;
+import com.advicetec.measuredentitity.ExecutedEntity;
+import com.advicetec.measuredentitity.Machine;
 import com.advicetec.measuredentitity.MeasuredAttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.measuredentitity.MeasuringState;
 import com.advicetec.measuredentitity.StateInterval;
 import com.advicetec.core.AttributeValue;
+import com.advicetec.core.EntityFacade;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
 import com.advicetec.persistence.StatusStore;
+import com.advicetec.utils.PeriodUtils;
+import com.advicetec.utils.PredefinedPeriod;
+import com.advicetec.utils.PredefinedPeriodType;
 
 
 /**
@@ -52,7 +65,7 @@ import com.advicetec.persistence.StatusStore;
  * @author maldofer
  *
  */
-public final class ProductionOrderFacade {
+public final class ProductionOrderFacade implements EntityFacade {
 
 
 	static Logger logger = LogManager.getLogger(ProductionOrderFacade.class.getName());
@@ -61,7 +74,7 @@ public final class ProductionOrderFacade {
 	/**
 	 * Production order object for which this facade is created.
 	 */
-	private ProductionOrder pOrder;
+	private ExecutedEntity pOrder;
 	
 	/**
 	 * Keeps an in-memory entity status (The status is the set of variables register for the production order)
@@ -110,7 +123,12 @@ public final class ProductionOrderFacade {
 	 * Production cycle or cycle count registered from the sensor. 
 	 */
 	private String actualProductionCountId;
-	
+
+	/**
+	 *  This field establishes how often we have to remove the cache entries (seconds). 
+	 */
+	private Integer purgeFacadeCacheMapEntries;
+		
 	
 	/**
 	 * SQL to select a set of AttributeValue given owner id and type, attribute
@@ -133,26 +151,48 @@ public final class ProductionOrderFacade {
 	 * @param unit1PerCycles	: field used to convert from cycles to a first product unit.
 	 * @param unit2PerCycles	: field used to convert from cycles to a second product unit.
 	 * @param actualProductionCountId : actual rate registered from the sensor.
+	 * @param purgeFacadeCacheMapEntries	how often we have to purge cache entry references.
+	 *
 	 * @throws PropertyVetoException 
 	 */
-	public ProductionOrderFacade(ProductionOrder pOrder, String productionRateId, String unit1PerCycles, String unit2PerCycles, String actualProductionCountId) throws PropertyVetoException 
+	public ProductionOrderFacade(ExecutedEntity pOrder, String productionRateId, 
+								  String unit1PerCycles, String unit2PerCycles, 
+								    String actualProductionCountId, Integer purgeFacadeCacheMapEntries) throws PropertyVetoException 
 	{
 		this.pOrder = pOrder;
 		this.status = new StatusStore();
 		this.attValueCache= MeasureAttributeValueCache.getInstance();
-		this.attMap = new HashMap<String,SortedMap<LocalDateTime,String>>();
-		this.statesMap = new TreeMap<LocalDateTime,String>();
+		
+		this.attMap = new ConcurrentHashMap<String,SortedMap<LocalDateTime,String>>();
+		this.statesMap = new ConcurrentSkipListMap<LocalDateTime,String>();
+		
 		this.stateCache = StateIntervalCache.getInstance();
 		this.productionRateId = productionRateId;
 		this.unit1PerCycles = unit1PerCycles; 
 		this.unit2PerCycles = unit2PerCycles;
 		this.actualProductionCountId = actualProductionCountId;
+		this.purgeFacadeCacheMapEntries = purgeFacadeCacheMapEntries;
+	
+		PurgeFacadeCacheMapsEvent purgeEvent = new PurgeFacadeCacheMapsEvent(pOrder.getId(), pOrder.getType());
+		purgeEvent.setRepeated(true);
+		purgeEvent.setMilliseconds(this.purgeFacadeCacheMapEntries * 1000);
+		
+		try {
+			
+			EventManager.getInstance().getDelayedQueue().put(new DelayEvent(purgeEvent, purgeEvent.getMilliseconds())  );
+			logger.debug("Purge Event has been scheduled for measured entity:" + pOrder.getId());
+
+		} catch (InterruptedException e) {
+			logger.error("Error creating the purge event in the queue for measured entity:" + pOrder.getId());
+			e.printStackTrace();
+		}
+		
 	}
 
 	/**
 	 * @return Returns the reference to the production order.
 	 */
-	public ProductionOrder getProductionOrder() {
+	public ExecutedEntity getProductionOrder() {
 		return pOrder;
 	}
 
@@ -201,7 +241,7 @@ public final class ProductionOrderFacade {
 		String attName = mav.getAttr().getName();
 		SortedMap<LocalDateTime, String> internalMap = attMap.get(attName);
 		if(internalMap == null){
-			attMap.put(attName,new TreeMap<LocalDateTime, String>());
+			attMap.put(attName,new ConcurrentSkipListMap<LocalDateTime, String>());
 			internalMap = attMap.get(attName);
 		}
 		internalMap.put(mav.getTimeStamp(), mav.getKey());
@@ -265,7 +305,19 @@ public final class ProductionOrderFacade {
 		return status.getAttributeValueByName(attName);
 	}
 
-
+	/**
+	 * Returns the current state of the executed entity.
+	 *  
+	 * @return  If there is not entity assigned return undefined.
+	 */    
+	public synchronized MeasuringState getCurrentState(){
+    	 if (this.pOrder == null){
+    		 return MeasuringState.UNDEFINED;
+    	 } else {
+    		 return this.pOrder.getCurrentState();
+    	 }
+     }
+	
 	/**
 	 * Inserts a new measure attribute value from the map valueMap. The map has as key the name of the attribute and as value 
 	 * the measure of the attribute value to insert. 
@@ -404,7 +456,10 @@ public final class ProductionOrderFacade {
 	public void deleteOldValues(LocalDateTime oldest){
 		for(SortedMap<LocalDateTime, String> internalMap : attMap.values()){
 			// replace the map with the last entries. 
-			internalMap = internalMap.tailMap(oldest);
+			Set<LocalDateTime> keysToDelete = internalMap.headMap(oldest).keySet();
+			for (LocalDateTime datetime : keysToDelete){
+				internalMap.remove(datetime);
+			}
 		}
 	}
 	
@@ -415,7 +470,10 @@ public final class ProductionOrderFacade {
 	 * @param oldest : data and time establishing the date limit to delete the state intervals.
 	 */
 	public void deleteOldStates(LocalDateTime oldest){
-		statesMap = (SortedMap<LocalDateTime, String>) statesMap.tailMap(oldest);
+		Set<LocalDateTime> keysToDelete = statesMap.headMap(oldest).keySet();
+		for (LocalDateTime datetime : keysToDelete){
+			statesMap.remove(datetime);
+		}
 	}
 	
 		
@@ -430,7 +488,7 @@ public final class ProductionOrderFacade {
 	public String getByIntervalByAttributeNameJSON(
 			String attrName, LocalDateTime from, LocalDateTime to){
 
-		ArrayList<AttributeValue> ret = getByIntervalByAttributeName(attrName, from, to);
+		List<AttributeValue> ret = getByIntervalByAttributeName(attrName, from, to);
 
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonText=null;
@@ -462,7 +520,7 @@ public final class ProductionOrderFacade {
 	 * values for the given attribute name.
 	 * 
 	 */
-	public List<AttributeValue> getLastNbyAttributeName(String attrName, int n){
+	public synchronized List<AttributeValue> getLastNbyAttributeName(String attrName, int n){
 		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
 
 		if(!attMap.containsKey(attrName)){
@@ -503,7 +561,7 @@ public final class ProductionOrderFacade {
 	 * @param origin : there are two origins language transformation or behavior 
 	 * @throws Exception excepts if some symbol could not be inserted.
 	 */
-	public void importSymbols(Map<String, Symbol> symbolMap, AttributeOrigin origin) throws Exception {
+	public synchronized void importSymbols(Map<String, Symbol> symbolMap, AttributeOrigin origin) throws Exception {
 		status.importSymbols(symbolMap, origin);
 	}
 
@@ -513,7 +571,7 @@ public final class ProductionOrderFacade {
 	 * 
 	 * @return List of attributes.
 	 */
-	public Collection<Attribute> getStatus(){
+	public synchronized Collection<Attribute> getStatus(){
 		return status.getStatus();
 	}
 	
@@ -521,7 +579,7 @@ public final class ProductionOrderFacade {
 	 * Returns the measured Entity status. 
 	 * @return json array
 	 */
-	public JSONArray getStatusJSON(){
+	public synchronized JSONArray getStatusJSON(){
 		return new JSONArray(getStatusValues());
 	}
 	
@@ -531,7 +589,7 @@ public final class ProductionOrderFacade {
 	 * 
 	 * @param valueMap Map with tuples attribute name, value to be registered.
 	 */
-	public void importAttributeValues(Map<String, ASTNode> valueMap) {
+	public synchronized void importAttributeValues(Map<String, ASTNode> valueMap) {
 		importAttributeValues(valueMap,this.pOrder.getId(),this.pOrder.getType());
 
 	}
@@ -542,7 +600,7 @@ public final class ProductionOrderFacade {
 
 	 * @return Current values of all attributes registered for the measured entity.
 	 */
-	public Collection<AttributeValue> getStatusValues(){
+	public synchronized Collection<AttributeValue> getStatusValues(){
 		return status.getAttributeValues();
 	}
 
@@ -553,7 +611,7 @@ public final class ProductionOrderFacade {
 	 * @param reasonCode : Reason code for that state
 	 * @param interval : date from and to when the interval happens.
 	 */
-	public void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
+	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
 		
 		Double rate = null;
@@ -645,7 +703,7 @@ public final class ProductionOrderFacade {
 	 * @param attrName  Attribute name to verify.
 	 * @return True if an attribute with name attrName is registered, false otherwise.
 	 */
-	private boolean isAttribute(String attrName) {
+	private synchronized boolean isAttribute(String attrName) {
 		
 		Attribute att = status.getAttribute(attrName);
 
@@ -662,9 +720,9 @@ public final class ProductionOrderFacade {
 	 * @param to   end of the interval
 	 * @return String in Json format representing the list of states assumed by the measured entity.
 	 */
-	public String getJsonStatesByInterval(LocalDateTime from, LocalDateTime to){
+	public synchronized String getJsonStatesByInterval(LocalDateTime from, LocalDateTime to){
 
-		ArrayList<StateInterval> intervals = getStatesByInterval(from, to);
+		List<StateInterval> intervals = getStatesByInterval(from, to);
 
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonText=null;
@@ -694,7 +752,7 @@ public final class ProductionOrderFacade {
 	 * @param to Ending time.
 	 * @return List of state intervals.
 	 */
-	public ArrayList<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
+	public synchronized List<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
 		
 		ArrayList<StateInterval> list = new ArrayList<StateInterval>();
 		LocalDateTime oldest = stateCache.getOldestTime();
@@ -724,7 +782,7 @@ public final class ProductionOrderFacade {
 	/**
 	 * Command to make the cache store all intervals into the database and clean itself.
 	 */
-	public void storeAllStateIntervals(){
+	public synchronized void storeAllStateIntervals(){
 		
 		logger.debug("in storeAllStateIntervals");
 		
@@ -733,27 +791,30 @@ public final class ProductionOrderFacade {
 		deleteOldStates(oldest);
 		
 		logger.debug("After deleting all states");
-		
-		ArrayList<String> keys = new ArrayList<String>();
-		keys.addAll(statesMap.values());
-		
-		logger.debug("before bulk commit");
-		
-		for (String key :keys){
-			logger.debug("key to delete:" + key);
-		}
-		
-		stateCache.bulkCommit(keys);
+			
+		stateCache.bulkCommit(new ArrayList<String>(statesMap.values()));
 		
 		logger.debug("finish storeAllStateIntervals");
 	}
 
+	public synchronized void removeOldCacheReferences()
+	{
+		// Remove References from the attribute cache.
+		LocalDateTime oldestAttr = attValueCache.getOldestTime();		
+		deleteOldValues(oldestAttr);
+
+		
+		// Delete References from the state cache.
+		LocalDateTime oldestState = stateCache.getOldestTime();		
+		deleteOldStates(oldestState);
+		
+	}
+	
+	
 	/***
 	 * Command to make the cache to store all measured attribute values into the database and clean itself.
 	 */
-	public void storeAllMeasuredAttributeValues(){
-
-		logger.debug("in storeAllMeasuredAttributeValues");
+	public synchronized void storeAllMeasuredAttributeValues(){
 
 		LocalDateTime oldest = attValueCache.getOldestTime();
 		
@@ -767,9 +828,344 @@ public final class ProductionOrderFacade {
 		}
 		attValueCache.bulkCommit(keys);
 
-		logger.debug("finish storeAllMeasuredAttributeValues");
+	}
+
+	/**
+	 * Gets registered downtown reasons in an interval. The response is a json array with downtime reason 
+	 * fulfilling the date interval.
+	 * 
+	 * @param from	start datetime 
+	 * @param to	end datetime
+	 * 
+	 * @return  list of downtime reasons.
+	 */
+	public synchronized JSONArray getJsonDowntimeReasons(LocalDateTime from,	LocalDateTime to) 
+	{
+		logger.debug("In getJsonDowntimeReasons + from:" + from.toString() + " to:" + to.toString());
+		
+		JSONArray array = null;
+		List<DowntimeReason> list = getDowntimeReasons(from, to);
+
+		array = new JSONArray();
+		for (DowntimeReason reason : list) {
+			// create the json object
+			JSONObject jsob = new JSONObject();
+			jsob.append("machine",reason.getMachine());
+			jsob.append("reason",reason.getReason());
+			jsob.append("reasonDescr",reason.getReasonDescr());
+			jsob.append("ocurrences", reason.getOccurrences());
+			jsob.append("durationMinutes", reason.getDurationMinutos());
+			// adding jsonObject to JsonArray
+			array.put(jsob);
+		}
+		return array;
+	}
+
+	/**
+	 * Get the list of downtime reasons within an interval.
+	 * 
+	 * @param from	start datetime 
+	 * @param to	end datetime
+	 * 
+	 * @return	list of downtime reasons.
+	 */
+	private List<DowntimeReason> getDowntimeReasons(LocalDateTime from,	LocalDateTime to){
+	
+		List<StateInterval> list = new ArrayList<StateInterval>();
+		LocalDateTime oldest = stateCache.getOldestTime();
+
+		List<DowntimeReason> reasons = new ArrayList<DowntimeReason>();
+		
+		// all values are in the cache
+		if(oldest.isBefore(from))
+		{
+			logger.debug("downtime reason cache only");	
+			SortedMap<LocalDateTime, String> subMap = statesMap.subMap(from, to);
+			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
+				list.add(stateCache.getFromCache(entry.getValue()));
+			}
+			reasons.addAll(sumarizeDowntimeReason(list).values());
+		} 
+		else if(oldest.isAfter(to))
+		{
+			logger.debug("downtime reason database only");
+			// all values are in the database 
+			reasons.addAll(stateCache.getDownTimeReasonsByInterval(this.getProductionOrder().getId(),
+																	this.getProductionOrder().getType(),
+																	this.getProductionOrder().getCanonicalKey(),
+																	from,to).values());
+		} 
+		else 
+		{
+			logger.debug("downtime reason mixed cache - database");
+		     // get from cache
+			SortedMap<LocalDateTime, String> subMap = statesMap.subMap(oldest, to);
+			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
+				list.add(stateCache.getFromCache(entry.getValue()));
+			}
+			Map<Integer, DowntimeReason> temp = sumarizeDowntimeReason(list);
+			
+			// get from database
+			Map<Integer, DowntimeReason> temp2 = stateCache.getDownTimeReasonsByInterval(this.getProductionOrder().getId(),
+																						   this.getProductionOrder().getType(),
+																						   	  this.getProductionOrder().getCanonicalKey(),from,oldest);
+			for (Integer k : temp.keySet()) {
+				if(temp2.containsKey(k)){
+					DowntimeReason dtr = temp2.remove(k);
+					temp.get(k).setOccurrences(dtr.getOccurrences() + temp.get(k).getOccurrences());
+					temp.get(k).setMinDuration(dtr.getDurationMinutos() + temp.get(k).getDurationMinutos());
+				}
+			}
+			reasons.addAll(temp.values());
+			reasons.addAll(temp2.values());
+		}
+
+		logger.debug("num Reasons:" + reasons.size());
+		return reasons;
+	}
+
+	/**
+	 * 
+	 * @param list
+	 * @return
+	 */
+	private Map<Integer,DowntimeReason> sumarizeDowntimeReason(List<StateInterval> list) {
+		Map<Integer,DowntimeReason> map = new HashMap<Integer, DowntimeReason>();
+		DowntimeReason reason = null;
+		for (StateInterval interval : list) {
+			// all operatives have null
+			if (interval == null){
+				logger.error("the interval in the downtime reason is null" );
+			} else {
+				if(interval.getReason() != null){
+					if(map.containsKey(interval.getReason().getId())){
+						reason = map.get(interval.getReason().getId());
+						reason.setMinDuration(reason.getDurationMinutos() + interval.getDurationMin());
+						reason.setOccurrences(reason.getOccurrences() + 1);
+					}else{
+						if(getProductionOrder().getType() == MeasuredEntityType.MACHINE){
+							ExecutedEntity pOrder = (ExecutedEntity) getProductionOrder();
+							reason = new DowntimeReason(pOrder.getCanonicalKey(), 
+									interval.getReason().getCannonicalReasonId(), 
+									interval.getReason().getDescription(), 
+									1, 
+									interval.getDurationMin());
+							map.put(interval.getReason().getId(), reason);
+						}
+					}
+				}
+			}
+		}
+		return map;
+	}
+
+	/**
+	 * Updates the state of the measure entity taking as parameter 
+	 * the measured attributes resulting from a transformation or behavior execution 
+	 * 
+	 * @param symbolMap	symbols generated by the transformation or behavior execution.
+	 */
+	public synchronized void setCurrentState(Map<String, ASTNode> symbolMap) {
+
+		for (Map.Entry<String, ASTNode> entry : symbolMap.entrySet()) 
+		{
+			if(entry.getKey().compareTo("state") == 0 ){
+				ASTNode node = entry.getValue();
+				Integer newState = node.asInterger();
+				 
+				if (newState == 0){
+					if ((this.pOrder.getCurrentState() != MeasuringState.OPERATING) || (this.pOrder.startNewInterval())) {
+						LocalDateTime localDateTime = LocalDateTime.now();
+						TimeInterval interval = new TimeInterval(this.pOrder.getCurrentStatDateTime(), localDateTime);
+						this.registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), interval);
+						this.pOrder.startInterval(localDateTime, MeasuringState.OPERATING, null);
+					}
+				} else if (newState == 1){
+					
+					if ((this.pOrder.getCurrentState() != MeasuringState.SCHEDULEDOWN) || (this.pOrder.startNewInterval())) {
+						LocalDateTime localDateTime = LocalDateTime.now();
+						TimeInterval interval = new TimeInterval(this.pOrder.getCurrentStatDateTime(), localDateTime);
+						this.registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), interval);
+						this.pOrder.startInterval(localDateTime, MeasuringState.SCHEDULEDOWN, null);						
+					}
+					
+				} else if (newState == 2){
+					
+					if ((this.pOrder.getCurrentState() != MeasuringState.UNSCHEDULEDOWN) || (this.pOrder.startNewInterval())) {
+						LocalDateTime localDateTime = LocalDateTime.now();
+						TimeInterval interval = new TimeInterval(this.pOrder.getCurrentStatDateTime(), localDateTime);
+						this.registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), interval);
+						this.pOrder.startInterval(localDateTime, MeasuringState.UNSCHEDULEDOWN, null);						
+					}
+					
+				} else {
+					logger.error("The new state is being set to undefined, which is incorrect");
+				}	
+				
+			}
+		}
 
 	}
+
+
+	/**
+	 * Gets the OEE for the measured entity within the interval given as parameter  
+	 * 
+	 * @param dttmFrom		start datetime 
+	 * @param dttmTo		end datetime
+	 * @param reqInterval	specifies the granurality required for the response.
+	 * 
+	 * @return	Array of OEEs calculated with the granurality defined by reqInterval.  
+	 */
+	public synchronized JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo, String reqInterval) {
+				
+        // Bring different predefined periods required
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods( dttmFrom, dttmTo, reqInterval ); 
+		
+		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
+		List<OverallEquipmentEffectiveness> oees = new ArrayList<OverallEquipmentEffectiveness>();
+		
+		logger.debug("Number of elements to calculate in the final list:" + periods.size());
+		
+		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
+		for (int i = 0; i < periods.size(); i++)
+		{
+					
+			PredefinedPeriod period = periods.get(i);
+			
+			logger.debug("Period Type:" + period.getType().getName());
+			
+			if (period.getType() == PredefinedPeriodType.INT_LT_HOUR)
+			{
+				
+				// Search for intervals in the requested hour.
+				DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
+				String parQueryFrom = formatter.format(period.getCalendarFrom().getTime());
+				String parQueryTo = formatter.format(period.getCalendarTo().getTime());
+				
+				PredefinedPeriod periodTmp = new PredefinedPeriod(period.getCalendarFrom().get(Calendar.YEAR), 
+						period.getCalendarFrom().get(Calendar.MONTH) +1,
+						period.getCalendarFrom().get(Calendar.DAY_OF_MONTH),
+						period.getCalendarFrom().get(Calendar.HOUR_OF_DAY)); 
+				
+				List<OverallEquipmentEffectiveness> oeesHour = oeeAggregation.getOeeAggregationContainer().intervalsByHour(
+															this.getProductionOrder().getId(), 
+															this.getProductionOrder().getType(), 
+															periodTmp.getKey(), parQueryFrom, parQueryTo);
+				
+				if (oeesHour.size() == 0) {
+					logger.error("The aggregation interval could not be calculated predefined Period:" + parQueryFrom );
+				} else {
+					oees.addAll(oeesHour);
+				}
+				
+			} else if ( period.getType() == PredefinedPeriodType.HOUR ){
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getProductionOrder().getId(), 
+										this.getProductionOrder().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					logger.debug("calculating oee for hour");
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateHour(this.getProductionOrder().getId(), 
+															 this.getProductionOrder().getType(), 
+															   period.getLocalDateTime(), false, false));
+				}
+			} else if ( period.getType() == PredefinedPeriodType.DAY ) {
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getProductionOrder().getId(), 
+										this.getProductionOrder().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateDay(this.getProductionOrder().getId(), 
+															this.getProductionOrder().getType(), 
+															  period.getLocalDateTime(), false, false));
+				}
+				
+			} else if ( period.getType() == PredefinedPeriodType.MONTH ) {
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getProductionOrder().getId(), this.getProductionOrder().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateMonth(this.getProductionOrder().getId(), 
+															   this.getProductionOrder().getType(), 
+															     period.getLocalDateTime(), false, false));
+				}
+				
+			} else if ( period.getType() == PredefinedPeriodType.YEAR )  {
+				
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getProductionOrder().getId(), this.getProductionOrder().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateYear(this.getProductionOrder().getId(), 
+															  this.getProductionOrder().getType(), 
+															    period.getLocalDateTime(), false, false));
+				}
+									
+			} else {
+				logger.error("Invalid Predefined Period type:" + period.getType().getName());			
+			}			
+		}
+			
+		logger.debug("Number of elements in the final list:" + oees.size());
+
+		JSONArray array = null;
+		array = new JSONArray();
+		for (OverallEquipmentEffectiveness oee : oees) {
+			// create the json object
+			JSONObject jsob = new JSONObject();
+			jsob.append("start_dttm", oee.getStartDttm());
+			jsob.append("end_dttm", oee.endDttm());
+			jsob.append("available_time",oee.getAvailableTime());
+			jsob.append("productive_time",oee.getProductiveTime());
+			jsob.append("qty_sched_to_produce",oee.getQtySchedToProduce());
+			jsob.append("qty_produced",oee.getQtyProduced());
+			jsob.append("qty_defective",oee.getQtyDefective());
+			
+			double part1 = 0;
+			double part2 = 0;
+			double part3 = 0;
+			
+			if (oee.getAvailableTime() != 0) {
+				part1 = (oee.getProductiveTime() / oee.getAvailableTime());
+			} else {
+				part1 = 1;
+			}
+			
+			if (oee.getQtySchedToProduce() != 0) {
+				part2 = (oee.getQtyProduced() / oee.getQtySchedToProduce() );
+			} else {
+				part2 = 1;
+			}
+			
+			if (oee.getQtyProduced() != 0) {
+				part3 = ((oee.getQtyProduced() - oee.getQtyDefective()) / oee.getQtyProduced() );
+			} else {
+				part3 = 1;
+			}
+			
+			double oeeValue =  part1 * part2 * part3;   
+			oeeValue = oeeValue * 100; 
+			
+			logger.debug("oee" + Double.toString(oeeValue));
+			
+			jsob.append("oee", new Double(oeeValue));
+			
+			// adding jsonObject to JsonArray
+			array.put(jsob);
+		}
+		
+		return array;
+	}
+
 	
 	/**
 	 * Starts the production order, whenever the production order was in schedule down or operating 
@@ -779,7 +1175,7 @@ public final class ProductionOrderFacade {
 		if (this.pOrder.getCurrentState() != MeasuringState.OPERATING) {  
 			TimeInterval tInterval= new TimeInterval(this.pOrder.getCurrentStatDateTime(), LocalDateTime.now()); 
 			registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), tInterval);
-			this.pOrder.startInterval(MeasuringState.OPERATING, null);
+			this.pOrder.startInterval(LocalDateTime.now(), MeasuringState.OPERATING, null);
 		}
 		
 	}
@@ -798,11 +1194,14 @@ public final class ProductionOrderFacade {
 			
 			TimeInterval tInterval= new TimeInterval(this.pOrder.getCurrentStatDateTime(), LocalDateTime.now()); 
 			registerInterval(this.pOrder.getCurrentState(), this.pOrder.getCurrentReason(), tInterval);
-			this.pOrder.startInterval(MeasuringState.UNSCHEDULEDOWN, null);
+			this.pOrder.startInterval(LocalDateTime.now(), MeasuringState.UNSCHEDULEDOWN, null);
 		}
 		
 		logger.debug("Finish production order stop ");
 	}
-	
+
+	public synchronized AttributeValue getExecutedObjectAttribute(String attributeId){
+		return null;
+	}
 }
 

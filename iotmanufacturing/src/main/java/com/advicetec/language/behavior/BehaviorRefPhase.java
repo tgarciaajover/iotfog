@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.DisplayDevice;
 import com.advicetec.configuration.DisplayDeviceContainer;
+import com.advicetec.core.EntityFacade;
 import com.advicetec.language.BehaviorGrammarBaseListener;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.ast.FunctionSymbol;

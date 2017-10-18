@@ -59,7 +59,12 @@ public class ProductionOrderManager extends Configurable {
 	 * Production cycle or cycle count registered from the sensor. 
 	 */
 	private String actualProductionCountId;
-	
+
+	/**
+	 * This field establishes how often we have to remove the cache entries (seconds). 
+	 */
+	private Integer purgeFacadeCacheMapEntries;
+
 	/**
 	 * Constructor for the class. The manager uses a properties file with name:  ProductionOrderManager.properties
 	 * 
@@ -91,6 +96,12 @@ public class ProductionOrderManager extends Configurable {
 		this.unit1PerCycles = properties.getProperty("productionUnit1PerCycles");
 		this.unit2PerCycles = properties.getProperty("productionUnit2PerCycles");
 		this.actualProductionCountId = properties.getProperty("actualProductionCountField");
+
+		if (properties.getProperty("PurgeFacadeCacheMapEntries") != null) {
+			this.purgeFacadeCacheMapEntries =Integer.getInteger(properties.getProperty("PurgeFacadeCacheMapEntries"));
+		} else {
+			this.purgeFacadeCacheMapEntries = new Integer(10); // By default 10 seconds.
+		}
 
 		productionOrders = new ProductionOrderContainer(driver, server, user, password);
 				
@@ -133,7 +144,9 @@ public class ProductionOrderManager extends Configurable {
 		}
 		
 		if (pOrders.put(pOrder.getId(), 
-				new ProductionOrderFacade(pOrder, productionRateId, unit1PerCycles, unit2PerCycles, actualProductionCountId)) != null)
+				new ProductionOrderFacade(pOrder, this.productionRateId, this.unit1PerCycles, 
+											this.unit2PerCycles, this.actualProductionCountId, 
+											  this.purgeFacadeCacheMapEntries)) != null)
 			return true;
 		else
 			return false;

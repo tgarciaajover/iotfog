@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
+import com.advicetec.core.EntityFacade;
 import com.advicetec.language.BehaviorGrammarBaseVisitor;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.ast.ASTNode;
@@ -72,7 +73,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	/**
 	 * Measured entity facade defining the context for behavior execution.   
 	 */
-	MeasuredEntityFacade facade;
+	EntityFacade facade;
 
 	/**
 	 * Global memory space 
@@ -102,7 +103,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	 * @param scopes		Scopes defined through the whole execution
 	 * @param facade		Measure entity facade where the behavior is being executed.
 	 */
-	BehaviorInterpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, MeasuredEntityFacade facade)
+	BehaviorInterpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, EntityFacade facade)
 	{
 		// Variable for symbol definition.
 		this.globalScope = _globalScope;
@@ -404,7 +405,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		// A possibility is that the attribute value comes from those assigned to the measure entity
 		value = (AttributeValue) facade.getNewestByAttributeName(attributeId);
 		
-		// If the attribute is not defined as an attribute in the measured entity, then it looks for the attribute 
+		// If the attribute is not defined as an attribute in the entity, then it looks for the attribute 
 		// in the executed object being processed.
 		if (value == null)
 			value = (AttributeValue) facade.getExecutedObjectAttribute(attributeId); 
