@@ -63,9 +63,9 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 
 			// The requested contact was found, so add the Contact's XML representation to the response.
 			if (measuredEntityFacade.getEntity() != null){
-				if (measuredEntityFacade.getEntity().getStateTransition(transitionID) != null){
+				if (((MeasuredEntity) measuredEntityFacade.getEntity()).getStateTransition(transitionID) != null){
 					// Status code defaults to 200 if we don't set it.
-					result = new JsonRepresentation(measuredEntityFacade.getEntity().getStateTransition(transitionID).toJson());
+					result = new JsonRepresentation(((MeasuredEntity) measuredEntityFacade.getEntity()).getStateTransition(transitionID).toJson());
 				} else {
 					getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
 					result = new JsonRepresentation("");
@@ -122,7 +122,7 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 				try{
 					ObjectMapper mapper = new ObjectMapper();
 					MeasuredEntityStateTransition transition = mapper.readValue(jsonText, MeasuredEntityStateTransition.class);
-					measuredEntityFacade.getEntity().putStateTransition(transition.getId(), transition.getStateFrom(), 
+					((MeasuredEntity) measuredEntityFacade.getEntity()).putStateTransition(transition.getId(), transition.getStateFrom(), 
 							transition.getResonCode(), transition.getBehavior(), transition.getCreateDate());
 
 					logger.debug("putMeasureEntityStateTransition OK");
@@ -185,7 +185,7 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 				// Get the measuring entity facade. 
 				MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
-				measuredEntityFacade.getEntity().removeStateTransition(transitionId);
+				((MeasuredEntity) measuredEntityFacade.getEntity()).removeStateTransition(transitionId);
 
 				getResponse().setStatus(Status.SUCCESS_OK);
 

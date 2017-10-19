@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.eventprocessor.MeasuredEntityEvent;
+import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuredEntityBehavior;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
@@ -70,7 +71,7 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 			result = new JsonRepresentation("");
 		} else {
-			MeasuredEntityBehavior behavior = measuredEntityFacade.getEntity().getBehavior(behaviorId);
+			MeasuredEntityBehavior behavior = ((MeasuredEntity) measuredEntityFacade.getEntity()).getBehavior(behaviorId);
 			
 			if (behavior != null){
 				String jsonTxt = behavior.toJson();
@@ -127,7 +128,7 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 			result = new JsonRepresentation("");
 		} else {
 
-			MeasuredEntityBehavior behavior = measuredEntityFacade.getEntity().behaviorFromJSON(jsonText);
+			MeasuredEntityBehavior behavior = ((MeasuredEntity) measuredEntityFacade.getEntity()).behaviorFromJSON(jsonText);
 
 			if (behavior == null){
 				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
@@ -176,7 +177,7 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 				// Removes the behavior event
 				EventManager eventManager = EventManager.getInstance();
 				
-				MeasuredEntityBehavior measuredBehavior =  measuredEntityFacade.getEntity().getBehavior(behaviorId);
+				MeasuredEntityBehavior measuredBehavior = ((MeasuredEntity) measuredEntityFacade.getEntity()).getBehavior(behaviorId);
 				
 				// Creates the behavior event to delete
 				MeasuredEntityEvent measuredEvent = new MeasuredEntityEvent(measuredBehavior.getName(), uniqueID, 0,0, new ArrayList<InterpretedSignal>()) ;
@@ -184,7 +185,7 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 				eventManager.removeEvent(delEvent);
 				
 				// Removes the behavior from the facade.
-				measuredEntityFacade.getEntity().removeBehavior(behaviorId);
+				((MeasuredEntity) measuredEntityFacade.getEntity()).removeBehavior(behaviorId);
 			    
 				getResponse().setStatus(Status.SUCCESS_OK);
 

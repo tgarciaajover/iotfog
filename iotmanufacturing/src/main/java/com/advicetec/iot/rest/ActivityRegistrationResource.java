@@ -19,7 +19,6 @@ import org.restlet.resource.Put;
 import org.restlet.resource.ServerResource;
 
 import com.advicetec.applicationAdapter.ProductionOrder;
-import com.advicetec.applicationAdapter.ProductionOrderFacade;
 import com.advicetec.applicationAdapter.ProductionOrderManager;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
@@ -27,6 +26,9 @@ import com.advicetec.configuration.ReasonCodeContainer;
 import com.advicetec.core.AttributeType;
 import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.eventprocessor.MeasuredEntityEvent;
+import com.advicetec.measuredentitity.ExecutedEntity;
+import com.advicetec.measuredentitity.MeasuredEntity;
+import com.advicetec.measuredentitity.ExecutedEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.measuredentitity.MeasuringState;
@@ -379,13 +381,14 @@ public class ActivityRegistrationResource extends ServerResource
 	 * @throws SQLException	  	   It is triggered if an error occurs during the production order information retrieval  
 	 * @throws PropertyVetoException 
 	 */
-	private void executeStartProduction(MeasuredEntityFacade measuredEntityFacade, int idProduction) throws SQLException, PropertyVetoException{
-    	logger.debug("in register production order start");
+	private void executeStartProduction(MeasuredEntityFacade measuredEntityFacade, int idProduction) throws SQLException, PropertyVetoException 
+	{
+    	logger.info("in register production order start");
         
     	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
         	
     	// Start of the production order
-    	ProductionOrderFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduction);
+    	ExecutedEntityFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduction);
     	
     	if (productionOrderFacade == null)
     	{
@@ -402,8 +405,10 @@ public class ActivityRegistrationResource extends ServerResource
     		
     	} else {
     	
-    		logger.debug("Production Order found, it is going to be put in execution");
+    		logger.info("Production Order found, it is going to be put in execution");
     		
+    		// Add a reference to measured entity facade.  
+    		productionOrderFacade.addMeasuredEntity(measuredEntityFacade);
     		
     		// Stop all other executed Objects
     		measuredEntityFacade.stopExecutedObjects();
@@ -412,7 +417,7 @@ public class ActivityRegistrationResource extends ServerResource
     		productionOrderFacade.start();
     		
         	// start production
-        	measuredEntityFacade.addExecutedObject(productionOrderFacade.getProductionOrder());
+        	measuredEntityFacade.addExecutedObject((ExecutedEntity) productionOrderFacade.getEntity());
         	
         	getResponse().setStatus(Status.SUCCESS_OK);
 	        	
@@ -430,26 +435,43 @@ public class ActivityRegistrationResource extends ServerResource
 	 * @param idProduction			Internal production order identifier to end.
 	 * @throws SQLException			It is triggered if an error occurs during the production order information retrieval
 	 */
-	private void executeStopProduction(MeasuredEntityFacade measuredEntityFacade, Integer idProduction) throws SQLException{
+	private void executeStopProduction(MeasuredEntityFacade measuredEntityFacade, Integer idProduction) throws SQLException {
 
     	logger.debug("in register production order end");
     	
     	// End of the production order
     	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
     	
-    	// Stop the production order if was in operation.
-    	ProductionOrderFacade  pOrderfacade = productionOrderManager.getFacadeOfPOrderById(idProduction);
-    	pOrderfacade.stop();
+    	// Get the entity facade for the production order. 
+    	ExecutedEntityFacade  pOrderfacade = productionOrderManager.getFacadeOfPOrderById(idProduction);
     	
-    	// Remove the production order from the measured entity.
-    	measuredEntityFacade.removeExecutedObject(idProduction);
+    	if (pOrderfacade != null) {
     	
-    	// remove the facade from the Manager
-    	productionOrderManager.removeFacade(idProduction);
+    		// Remove the Measured Entity Facade where the production order was being executed.  
+    		pOrderfacade.deleteMeasuredEntity(measuredEntityFacade.getEntity().getId());
+    		
+    		// Stop the production order if was in operation. 
+    		pOrderfacade.stop();
+
+    		// Remove the production order from the measured entity.
+    		measuredEntityFacade.removeExecutedObject(idProduction);
+
+    		// remove the facade from the Manager
+    		if (pOrderfacade.isProcessed() == false) {
+    			
+	    		productionOrderManager.removeFacade(idProduction);
+	    		productionOrderManager.getProductionOrderContainer().removeObject(idProduction);
+    		}
+
+    		getResponse().setStatus(Status.SUCCESS_OK);
     	
-    	productionOrderManager.getProductionOrderContainer().removeObject(idProduction);
-    	    	
-    	getResponse().setStatus(Status.SUCCESS_OK);
+    	} else {
+
+			String error = "The production order:" + Integer.toString(idProduction) + " was not found";
+			logger.error(error);
+			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
+
+    	}
 
 	}
 		
@@ -490,7 +512,7 @@ public class ActivityRegistrationResource extends ServerResource
 	 * @param measuredEntityFacade	Measured entity where the state interval should be updated
 	 * @param idStopReason			Stop reason identifier to set in the state interval
 	 */
-	private void executeStartNewStop(MeasuredEntityFacade measuredEntityFacade, int idStopReason){
+	private void executeStartNewStop(MeasuredEntityFacade measuredEntityFacade, int idStopReason) {
 		
 		logger.debug("in starting a measured entity stop");
 
@@ -505,7 +527,7 @@ public class ActivityRegistrationResource extends ServerResource
 		// Update the reason code.
 		measuredEntityFacade.getEntity().setCurrentReasonCode(reasonCode);
 
-		String behavior = measuredEntityFacade.getEntity().getBehaviorText(state, idStopReason);
+		String behavior = ((MeasuredEntity) measuredEntityFacade.getEntity()).getBehaviorText(state, idStopReason);
 
 		if ((behavior!= null) && (!behavior.isEmpty())){
 			ArrayList<InterpretedSignal> signals = new ArrayList<InterpretedSignal>();
@@ -539,7 +561,7 @@ public class ActivityRegistrationResource extends ServerResource
 	 * 
 	 * @return true if is valid, false otherwise.
 	 */
-	private boolean isValidActivityType(String activityType){
+	private boolean isValidActivityType(String activityType) {
 		List<String> activities = Arrays.asList(activityTypes);
 		return activities.contains( activityType );
 	}

@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.core.Configurable;
+import com.advicetec.measuredentitity.ExecutedEntityFacade;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 
 /**
@@ -37,7 +38,7 @@ public class ProductionOrderManager extends Configurable {
 	 * Map with production order being used by the software, the Integer corresponds to the key given in the database. The facade let the system
 	 * to expose some methods of the production order to other classes. 
 	 */
-	private Map<Integer, ProductionOrderFacade> pOrders;
+	private Map<Integer, ExecutedEntityFacade> pOrders;
 	
 	/**
 	 * Production rate field.
@@ -86,7 +87,7 @@ public class ProductionOrderManager extends Configurable {
 	private ProductionOrderManager() throws SQLException{
 		super("ProductionOrderManager");
 		
-		pOrders = new HashMap<Integer, ProductionOrderFacade>();
+		pOrders = new HashMap<Integer, ExecutedEntityFacade>();
 		
 		String driver = properties.getProperty("driver");
 		String server = properties.getProperty("server");
@@ -144,7 +145,7 @@ public class ProductionOrderManager extends Configurable {
 		}
 		
 		if (pOrders.put(pOrder.getId(), 
-				new ProductionOrderFacade(pOrder, this.productionRateId, this.unit1PerCycles, 
+				new ExecutedEntityFacade(pOrder, this.productionRateId, this.unit1PerCycles, 
 											this.unit2PerCycles, this.actualProductionCountId, 
 											  this.purgeFacadeCacheMapEntries)) != null)
 			return true;
@@ -158,7 +159,7 @@ public class ProductionOrderManager extends Configurable {
 	 * @param pOrderId The production order id to search.
 	 * @return NULL if there is not a production order with the given id.
 	 */
-	public synchronized ProductionOrderFacade getFacadeOfPOrderById(final Integer pOrderId){
+	public synchronized ExecutedEntityFacade getFacadeOfPOrderById(final Integer pOrderId){
 		return this.pOrders.get(pOrderId);
 	}
 
@@ -178,7 +179,7 @@ public class ProductionOrderManager extends Configurable {
 	public synchronized void removeFacade(Integer idProduccion)
 	{
 		
-    	ProductionOrderFacade productionOrderFacade = this.pOrders.remove(idProduccion);
+    	ExecutedEntityFacade productionOrderFacade = this.pOrders.remove(idProduccion);
     	if (productionOrderFacade != null){
         	// Store all data associated with the production order.
         	productionOrderFacade.storeAllMeasuredAttributeValues();
@@ -201,7 +202,9 @@ public class ProductionOrderManager extends Configurable {
 	 * @return Returns the identifier of a production order from its canonical data
 	 */
 	public synchronized Integer getProductionOrderId(String company, String location, String plant, String machineGroup,
-			String machineId, int year, int month, String productionOrder) {
+														String machineId, int year, int month, String productionOrder) {
+		
 		return  this.productionOrders.getCanonicalObject(company, location, plant, machineGroup, machineId, year, month, productionOrder);
+		
 	}
 }

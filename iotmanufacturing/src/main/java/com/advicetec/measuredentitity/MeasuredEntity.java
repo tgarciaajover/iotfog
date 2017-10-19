@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,12 +22,11 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import com.advicetec.applicationAdapter.ProductionOrderFacade;
 import com.advicetec.applicationAdapter.ProductionOrderManager;
-import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeValue;
+import com.advicetec.core.Entity;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
 import com.advicetec.eventprocessor.AggregationEvent;
@@ -53,10 +52,6 @@ public abstract class MeasuredEntity extends Entity
 {
 	static final Logger logger = LogManager.getLogger(MeasuredEntity.class.getName());
 
-	/**
-	 * maximum state interval measured in seconds before is saved.
-	 */
-	static Integer MAX_INTERVAL_TIME = 300; 
 
 	/**
 	 * Code assigned to the measured entity to make easier the user interface. 
@@ -64,11 +59,6 @@ public abstract class MeasuredEntity extends Entity
 	@JsonProperty("code")
 	protected String code;
 
-	/**
-	 * Measured entity type  
-	 */
-	@JsonIgnore
-	protected MeasuredEntityType type; 
 
 	/**
 	 * Date and time when the instance was created.  
@@ -113,23 +103,6 @@ public abstract class MeasuredEntity extends Entity
 	@JsonIgnore
 	protected List<MeasuredEntityStateTransition> stateTransitions;
 
-	/**
-	 * start date-time of the current interval.
-	 */
-	@JsonIgnore
-	protected LocalDateTime startDateTimeStatus;
-
-	/**
-	 * state of the current interval.
-	 */
-	@JsonIgnore
-	protected MeasuringState currentState;
-
-	/**
-	 * the reason code for the current state.
-	 */
-	@JsonIgnore
-	protected ReasonCode currentReason;
 
 	/**
 	 * List of executed entities being processed in this measured entity.
@@ -138,30 +111,6 @@ public abstract class MeasuredEntity extends Entity
 	@JsonIgnore
 	protected Map<Integer, ExecutedEntity> executedEntities;
 
-	/**
-	 * List of attributes registered in this executed entity
-	 */
-	@JsonIgnore
-	protected List<Attribute> attributes;
-
-	/**
-	 * List of attribute values registered in this executed entity
-	 */
-	@JsonIgnore
-	protected List<AttributeValue> attributeValues;
-
-	/**
-	 * maximum amount of seconds that an interval can be open.
-	 */
-	@JsonIgnore
-	protected Integer maxTimeForInterval;
-
-	/**
-	 * List of scheduled events registered for this measured entity. 
-	 * They are stores as a map to make it easy for reading and writing   
-	 */
-	@JsonIgnore
-	protected Map<Integer, MeasuredEntityScheduledEvent> scheduledEvents;
 
 	/**
 	 * Constructor for the class 
@@ -170,21 +119,14 @@ public abstract class MeasuredEntity extends Entity
 	 */
 	public MeasuredEntity( Integer id, MeasuredEntityType type) 
 	{
-		super(id);
-		this.type = type;
+		super(id, type);
+		
 		createDate = LocalDateTime.now();
 		behaviors = new ArrayList<MeasuredEntityBehavior>();
-		startDateTimeStatus = LocalDateTime.now();
-		currentState = MeasuringState.SCHEDULEDOWN;
-		currentReason = null;
-		maxTimeForInterval = MAX_INTERVAL_TIME; 
 
-		attributes = new ArrayList<Attribute>();
-		attributeValues = new ArrayList<AttributeValue>();
 		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
 		stateTransitions = new ArrayList<MeasuredEntityStateTransition>();
-		executedEntities = new HashMap<Integer, ExecutedEntity>();
-		scheduledEvents = new HashMap<Integer, MeasuredEntityScheduledEvent>();
+		executedEntities = new ConcurrentHashMap<Integer, ExecutedEntity>();
 
 	}
 
@@ -205,64 +147,6 @@ public abstract class MeasuredEntity extends Entity
 		this.code = code;
 	}
 
-	/**
-	 * Gets the measured entity type
-	 * 
-	 * @return	measured entity type
-	 */
-	public synchronized MeasuredEntityType getType()
-	{
-		return this.type;
-	}
-
-	/**
-	 * Gets the maximum interval time 
-	 * 
-	 * @return	maximum interval time
-	 */
-	public synchronized Integer getMaxTimeForInterval() {
-		return maxTimeForInterval;
-	}
-
-	public synchronized void setMaxTimeForInterval(Integer maxTimeForInterval) {
-		this.maxTimeForInterval = maxTimeForInterval;
-	}
-
-	/**
-	 * Creates and returns a MessageAttributeValue
-	 *  
-	 * @param attribute  Attribute for which is created a new value  
-	 * @param value 	 The value of this new measured attribute value
-	 * @param timeStamp  Date and time when the new measured attribute value is created.
-	 * 
-	 * @return the new measured attribute value created.
-	 */
-	public synchronized MeasuredAttributeValue getMeasureAttributeValue(
-			Attribute attribute, Object value, LocalDateTime timeStamp)
-	{
-		return new MeasuredAttributeValue(attribute, value, getId(), getType(), timeStamp);
-	}
-
-	/**
-	 * Gets the list of attributes 
-	 * 
-	 * @return attribute list
-	 */
-	@JsonIgnore
-	public synchronized List<Attribute> getAttributeList(){
-		return attributes;
-	}
-
-	/**
-	 * Register a new attribute in the measured entity
-	 * 
-	 * @param attrMeasureEntity  attribute to register
-	 * @return true if successful, false otherwise.
-	 */
-	@JsonIgnore
-	public synchronized boolean registerAttribute(Attribute attrMeasureEntity){
-		return attributes.add(attrMeasureEntity);
-	}
 
 	/**
 	 * Denotes if another measured entity is equals to this object. 
@@ -578,79 +462,6 @@ public abstract class MeasuredEntity extends Entity
 		return null;
 	}
 
-	/**
-	 * Gets an scheduled event by its unique internal identifier
-	 * 
-	 * @param id	scheduled event unique internal identifier
-	 * 
-	 * @return	scheduled event instance is found, null otherwise
-	 */
-	public synchronized MeasuredEntityScheduledEvent getScheduledEvent (Integer id){
-		return this.scheduledEvents.get(id);
-	}
-
-	/**
-	 * Gets the list of aggregation events to put in the event list
-	 * 
-	 * @return List of aggregation events to schedule.
-	 */
-	public synchronized List<AggregationEvent> getScheduledEvents(){
-
-		List<AggregationEvent> ret = new ArrayList<AggregationEvent>();
-
-		for (Integer key: this.scheduledEvents.keySet()) {
-			MeasuredEntityScheduledEvent scheduledEvent = this.scheduledEvents.get(key);
-			// According to the type of event, we create the instance class.
-
-			if (scheduledEvent.getScheduledEventType().equals("AG")) {
-
-				String lines[] = scheduledEvent.getRecurrence().split("\\r?\\n");
-
-				for (String recurrence : lines) {
-					AggregationEvent aggEvent = new AggregationEvent(getId(), getType(), AggregationEventType.OEE, recurrence, scheduledEvent.getDayTime());
-					ret.add(aggEvent);
-				}
-			} else {
-				logger.error("The Schedule event given is not being handled - Type given:" +  scheduledEvent.getScheduledEventType() );
-			}
-		}
-
-		return ret;
-
-	}
-
-	/**
-	 * Gets the aggregation event by its unique internal identifier
-	 * 
-	 * @param id	aggregation event unique internal identifier
-	 * 
-	 * @return		a list of aggregation events.
-	 */
-	public synchronized List<AggregationEvent> getScheduledEvents(Integer id){
-
-		List<AggregationEvent> ret = new ArrayList<AggregationEvent>();
-
-		MeasuredEntityScheduledEvent scheduledEvent  = getScheduledEvent(id);
-
-		if (scheduledEvent != null) {
-			// According to the type of event, we create the instance class.
-
-			if (scheduledEvent.getScheduledEventType().equals("AG")) {
-
-				String lines[] = scheduledEvent.getRecurrence().split("\\r?\\n");
-
-				for (String recurrence : lines) {
-					AggregationEvent aggEvent = new AggregationEvent(getId(), getType(), AggregationEventType.OEE, recurrence, scheduledEvent.getDayTime());
-					ret.add(aggEvent);
-				}
-			} else {
-				logger.error("The Schedule event given is not being handled - Type given:" +  scheduledEvent.getScheduledEventType() );
-			}
-		}
-
-		return ret;
-	}
-
 
 	/**
 	 * Inserts a behavior from JSON object.
@@ -828,60 +639,6 @@ public abstract class MeasuredEntity extends Entity
 
 	}
 
-	/**
-	 * Registers the start of a new interval in the measured entity
-	 *   
-	 * @param dateTime 	date and time when this interval should start
-	 * @param newState	state given to the machine 
-	 * @param rCode		Reason code for the interval
-	 */
-	@JsonIgnore
-	public synchronized void startInterval(LocalDateTime dateTime,  MeasuringState newState, ReasonCode rCode) {
-		currentState = newState;
-		currentReason= rCode;
-		startDateTimeStatus = dateTime;
-	}
-
-	/**
-	 * Establishes the reason code for the current interval
-	 * 
-	 * @param rCode  reason code to set.
-	 */
-	public synchronized void setCurrentReasonCode(ReasonCode rCode){
-		currentReason= rCode;
-	}
-
-	/**
-	 * Gets the state for the current interval.
-	 * 
-	 * @return current interval state.
-	 */
-	@JsonIgnore
-	public synchronized MeasuringState getCurrentState(){
-		return this.currentState;
-	}
-
-	/**
-	 * Gets the reason code for the current interval. 
-	 * 
-	 * @return	 current interval reason
-	 */
-	@JsonIgnore
-	public synchronized ReasonCode getCurrentReason()
-	{
-		return this.currentReason;
-	}
-
-	/**
-	 * Gets the date and time when the current interval started 
-	 * 
-	 * @return The date and time when the current interval started
-	 */
-	@JsonIgnore
-	public synchronized LocalDateTime getCurrentStatDateTime()
-	{
-		return this.startDateTimeStatus;
-	}
 
 	/**
 	 * Adds an executed entity to this measured entity
@@ -890,9 +647,11 @@ public abstract class MeasuredEntity extends Entity
 	 */
 	public synchronized void addExecutedEntity(ExecutedEntity executedEntity)
 	{
-		logger.debug("Measure entity Id:" + getId() + " Adding executed Entity:" + executedEntity.getId());
+		logger.info("Measure entity Id:" + getId() + " Adding executed Entity:" + executedEntity.getId());
 
 		this.executedEntities.put(executedEntity.getId(), executedEntity);
+		
+		logger.info("Num of executed entities being executed: ",  this.executedEntities.size());
 	}
 
 	/**
@@ -905,7 +664,7 @@ public abstract class MeasuredEntity extends Entity
 			productionOrderManager = ProductionOrderManager.getInstance();
 			for (Integer id : this.executedEntities.keySet()){
 				// stops all facades
-				ProductionOrderFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(id);
+				ExecutedEntityFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(id);
 				productionOrderFacade.stop();
 			}
 
@@ -944,8 +703,11 @@ public abstract class MeasuredEntity extends Entity
 	@JsonIgnore
 	public synchronized ExecutedEntity getCurrentExecutedEntity()
 	{
+		logger.info("Number of executed entities included :" + this.executedEntities.size());
+		
 		for (Integer id : this.executedEntities.keySet()){
-			ExecutedEntity executedEntity = this.executedEntities.get(id);  
+			ExecutedEntity executedEntity = this.executedEntities.get(id); 
+			logger.info("Executed entity started: " + id);
 			// only ONE executed entity must be in OPERATING state at time.
 			if (executedEntity.getCurrentState() == MeasuringState.OPERATING)
 				return executedEntity;
@@ -997,29 +759,6 @@ public abstract class MeasuredEntity extends Entity
 		}
 	}
 
-	/**
-	 * Gets an attribute value by name 
-	 * 
-	 * @param name name of the attribute which value should be returned
-	 * 
-	 * @return  Attribute name or null if not found.
-	 */
-	@JsonIgnore
-	public synchronized AttributeValue getAttributeValue(String name){
-
-		logger.debug("Starting getAttributeValue - attribute:" + name);  
-
-		for (int i = 0; i < this.attributeValues.size(); i++){
-			AttributeValue attr = this.attributeValues.get(i);
-			if ((attr.getAttr().getName()).compareTo(name) == 0){
-				return attr;
-			}
-		}
-
-		logger.debug("ending getAttributeValue with null");
-
-		return null;
-	}
 
 	/**
 	 * Gets the status behavior by state and reason code 
@@ -1068,47 +807,6 @@ public abstract class MeasuredEntity extends Entity
 		return null;
 	}
 
-	@JsonIgnore
-	public synchronized String getCanonicalIdentifier()
-	{
-		//TODO:
-		return null;
-	}
-
-	/**
-	 * This function verifies if the current interval state should be calculated and saved. 
-	 * 
-	 * @return TRUE if we should start a new interval, FALSE otherwise.
-	 */
-	public synchronized boolean startNewInterval() {
-
-		if (getCurrentStatDateTime().plusSeconds(getMaxTimeForInterval()).isBefore(LocalDateTime.now()))
-			return true;
-
-		return false;
-	}
-
-	/**
-	 * Gets the attribute list registered in the measured entity
-	 * 
-	 * @return List of attributes registered.
-	 */
-	@JsonIgnore
-	public synchronized List<AttributeValue> getAttributeValueList(){
-		return attributeValues;
-	}
-
-	/**
-	 * Registers a new attribute value in the measured entity
-	 * 
-	 * @param value  attribute value to register
-	 * 
-	 * @return true if the insert was successful, false otherwise
-	 */
-	@JsonIgnore
-	public synchronized boolean registerAttributeValue(AttributeValue value){
-		return attributeValues.add(value);
-	}
 
 	/**
 	 * Gets the conversion one from the measured entity
@@ -1230,4 +928,20 @@ public abstract class MeasuredEntity extends Entity
 			}
 		}		
 	}
+	
+	/**
+	 * Creates and returns a MessageAttributeValue
+	 *  
+	 * @param attribute  Attribute for which is created a new value  
+	 * @param value 	 The value of this new measured attribute value
+	 * @param timeStamp  Date and time when the new measured attribute value is created.
+	 * 
+	 * @return the new measured attribute value created.
+	 */
+	public synchronized MeasuredAttributeValue getMeasureAttributeValue(
+			Attribute attribute, Object value, LocalDateTime timeStamp)
+	{
+		return new MeasuredAttributeValue(attribute, value, getId(), getType(), timeStamp);
+	}
+	
 }

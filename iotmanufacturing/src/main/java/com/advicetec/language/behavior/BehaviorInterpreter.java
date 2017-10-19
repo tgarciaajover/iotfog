@@ -39,6 +39,7 @@ import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuringState;
+import com.advicetec.measuredentitity.ExecutedEntityFacade;
 
 /**
  * This class corresponds to the interpreter for the behavior language. 
@@ -76,6 +77,11 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	EntityFacade facade;
 
 	/**
+	 * Measured Entity Identifier where this behavior is being executed.
+	 */
+	Integer measuredEntityId; 
+	
+	/**
 	 * Global memory space 
 	 */
 	MemorySpace globals;
@@ -103,7 +109,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	 * @param scopes		Scopes defined through the whole execution
 	 * @param facade		Measure entity facade where the behavior is being executed.
 	 */
-	BehaviorInterpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, EntityFacade facade)
+	BehaviorInterpreter(GlobalScope _globalScope, MemorySpace _globals, ParseTreeProperty<Scope> scopes, EntityFacade facade, Integer measuredEntityId)
 	{
 		// Variable for symbol definition.
 		this.globalScope = _globalScope;
@@ -111,6 +117,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		this.scopes = scopes;
 		this.currentScope = _globalScope;
 		this.facade = facade; 
+		this.measuredEntityId = measuredEntityId;
 
 		// For memory evaluation
 		stack = new Stack<FunctionSpace>(); // call stack
@@ -402,18 +409,26 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		
 		AttributeValue value = null;
 		
-		// A possibility is that the attribute value comes from those assigned to the measure entity
+		// A possibility is that the attribute value comes from those assigned to the entity
 		value = (AttributeValue) facade.getNewestByAttributeName(attributeId);
 		
 		// If the attribute is not defined as an attribute in the entity, then it looks for the attribute 
 		// in the executed object being processed.
-		if (value == null)
-			value = (AttributeValue) facade.getExecutedObjectAttribute(attributeId); 
+		if (value == null) {
+			if (facade instanceof MeasuredEntityFacade) {
+				value = (AttributeValue) ((MeasuredEntityFacade) facade).getExecutedObjectAttribute(attributeId);
+			}
+			
+			if (facade instanceof ExecutedEntityFacade) {
+				value = (AttributeValue) ((ExecutedEntityFacade) facade).getProcessEntityAttribute(attributeId,measuredEntityId);
+			}
+		}
 		
-		if (value == null)
+		if (value == null) {
 			return null;
-		else 
+		} else { 
 			return new ASTNode(value.getValue());
+		}
 	}
 
 	/**
@@ -2082,9 +2097,30 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		else if (timeUnit.compareTo("HOUR") == 0){
 			from = now.minusHours(range);
 		}
+		
+		List<AttributeValue> values;
+		if (facade instanceof MeasuredEntityFacade) {
 
-		// Call the facade to get the attribute value during the interval. 
-		List<AttributeValue> values = facade.getByIntervalByAttributeName(attributeId, from, now);
+			// Call the facade to get the attribute value during the interval. 
+			values = facade.getByIntervalByAttributeName(attributeId, from, now);
+			
+		} else if (facade instanceof ExecutedEntityFacade) {
+			if (facade.isAttribute(attributeId)) {
+				values = facade.getByIntervalByAttributeName(attributeId, from, now);
+			} else {
+				if (((ExecutedEntityFacade) facade).getMeasuredEntity(measuredEntityId) != null) {
+					logger.info("AttributeId:" + attributeId + "from:" + from.toString() + "to:" + now.toString() );
+					values = ((ExecutedEntityFacade) facade).getMeasuredEntity(measuredEntityId).getByIntervalByAttributeName(attributeId, from, now);
+				} else {
+					// values where not found.
+					values = new ArrayList<AttributeValue>();
+					
+				}
+			}
+		} else {
+			// values where not found.
+			values = new ArrayList<AttributeValue>();
+		}
 
 
 		double valueRet = 0;
@@ -2204,10 +2240,23 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 			from = now.minusHours(range);
 		}
 
-		// Call the facade to get the attribute value during the interval. 
-		List<AttributeValue> values = facade.getByIntervalByAttributeName(attributeId, from, now);
+		List<AttributeValue> values;
+		if (facade instanceof MeasuredEntityFacade) {
 
-
+			// Call the facade to get the attribute value during the interval. 
+			values = facade.getByIntervalByAttributeName(attributeId, from, now);
+			
+		} else if (facade instanceof ExecutedEntityFacade) {
+			if (facade.isAttribute(attributeId)) {
+				values = facade.getByIntervalByAttributeName(attributeId, from, now);
+			} else {
+				values = ((ExecutedEntityFacade) facade).getMeasuredEntity(measuredEntityId).getByIntervalByAttributeName(attributeId, from, now);
+			}
+		} else {
+			// values where not found.
+			values = new ArrayList<AttributeValue>();
+		}
+		
 		Object maxValue = null;
 		for (int i = 0; i < values.size(); i++) {
 			AttributeValue value = values.get(i);

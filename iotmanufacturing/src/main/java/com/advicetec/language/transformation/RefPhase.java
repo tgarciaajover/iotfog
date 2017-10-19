@@ -22,6 +22,7 @@ import com.advicetec.language.ast.Scope;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
+import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 
 public class RefPhase extends TransformationGrammarBaseListener 
@@ -139,9 +140,9 @@ public class RefPhase extends TransformationGrammarBaseListener
 			this.error(ctx.start, ctx, "Facade was not provided for package:" + namePackage);
 			
 		} else {
-			String behaviorString = entityFacade.getEntity().getBehaviorText(namePackage);
+			String behaviorString = ( (MeasuredEntity) entityFacade.getEntity()).getBehaviorText(namePackage);
 			if (behaviorString == null) {
-				this.error(ctx.start, ctx, " No behavior with name:" + namePackage + " in the measuredEntity" + entityFacade.getEntity().getDescr() );
+				this.error(ctx.start, ctx, " No behavior with name:" + namePackage + " in the measuredEntity" + ((MeasuredEntity) entityFacade.getEntity()).getDescr() );
 			}
 		}
 	}

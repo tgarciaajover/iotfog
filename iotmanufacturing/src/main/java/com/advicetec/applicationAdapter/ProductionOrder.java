@@ -1,6 +1,10 @@
 package com.advicetec.applicationAdapter;
 
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonSubTypes;
+import org.codehaus.jackson.annotate.JsonTypeInfo;
+import org.codehaus.jackson.annotate.JsonSubTypes.Type;
+
 import com.advicetec.measuredentitity.ExecutedEntity;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 
@@ -10,6 +14,8 @@ import com.advicetec.measuredentitity.MeasuredEntityType;
  * @author Andres Marentes
  *
  */
+
+
 public class ProductionOrder extends ExecutedEntity
 {
 

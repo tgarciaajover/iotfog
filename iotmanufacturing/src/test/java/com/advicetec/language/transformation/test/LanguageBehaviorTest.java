@@ -14,6 +14,8 @@ import org.junit.Test;
 
 import com.advicetec.core.AttributeType;
 import com.advicetec.language.behavior.BehaviorInterpreterSw;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
+import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class LanguageBehaviorTest 
@@ -42,11 +44,14 @@ public class LanguageBehaviorTest
 			Integer value = 1;
 			InterpretedSignal valueSignal = new InterpretedSignal(AttributeType.INT, value );
 			list.add(valueSignal);
-			
+
 			Integer entityId = 1;
+			MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
+			MeasuredEntityFacade entityFacade = entityManager.getFacadeOfEntityById(entityId);
+
 			
 			BehaviorInterpreterSw interpreter = new BehaviorInterpreterSw();
-			interpreter.process(program, entityId, list);
+			interpreter.process(program, entityFacade, entityId, list);
 		
 		
 		} catch (FileNotFoundException e1) {

@@ -75,10 +75,24 @@ public class IotInit extends Configurable
 		logger.info("Start IOT engine");
 		
 		configManager = ConfigurationManager.getInstance();
+		
+		logger.info("Configuration Manager loaded");
+		
 		eventManager = EventManager.getInstance();
+		
+		logger.info("Event Manager loaded");
+		
 		messageManager = MessageManager.getInstance();
+		
+		logger.info("Message Manager loaded");
+		
 		adapterManager = AdapterManager.getInstance();
+		
+		logger.info("Adapter Manager loaded");
+		
 		entityManager = MeasuredEntityManager.getInstance();
+		
+		logger.info("Entity Manager loaded");
 
 		// Init the configuration  
 		configManager.loadConfiguration();
@@ -113,11 +127,11 @@ public class IotInit extends Configurable
 
 			IotInit iotInit = IotInit.getInstance();
 			iotInit.adapterManager.run();
-			logger.debug("after running adapter Manager");
+			logger.info("after running adapter Manager");
 			iotInit.messageManager.run();
-			logger.debug("after running message Manager");
+			logger.info("after running message Manager");
 			iotInit.eventManager.run();
-			logger.debug("after running event Manager");
+			logger.info("after running event Manager");
 
 			// Init the Rest server 
 			String rest_port = iotInit.properties.getProperty("rest_port");

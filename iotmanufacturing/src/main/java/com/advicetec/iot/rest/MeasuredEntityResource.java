@@ -53,7 +53,7 @@ public class MeasuredEntityResource extends ServerResource
 		} 
 		else {
 			// The requested measured entity was found, so we add the measured entity to the JSON response representation.
-			result = new JsonRepresentation(measuredEntityFacade.getEntity().toJson());
+			result = new JsonRepresentation(((MeasuredEntity) measuredEntityFacade.getEntity()).toJson());
 			// Status code defaults to 200 if we don't set it.
 		}
 		// Return the representation.  The Status code tells the client if the representation is valid.

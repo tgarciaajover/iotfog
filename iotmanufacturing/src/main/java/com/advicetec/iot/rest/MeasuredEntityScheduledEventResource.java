@@ -23,6 +23,7 @@ import com.advicetec.eventprocessor.AggregationEvent;
 import com.advicetec.eventprocessor.AggregationEventType;
 import com.advicetec.eventprocessor.Event;
 import com.advicetec.eventprocessor.EventManager;
+import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuredEntityContainer;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
@@ -140,7 +141,7 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 					ObjectMapper mapper = new ObjectMapper();
 					MeasuredEntityScheduledEvent event = mapper.readValue(jsonText, MeasuredEntityScheduledEvent.class);
 					
-					measuredEntityFacade.getEntity().putScheduledEvent( event );
+					((MeasuredEntity) measuredEntityFacade.getEntity()).putScheduledEvent( event );
 					
 					events.addAll(measuredEntityFacade.getEntity().getScheduledEvents(event.getId()));
 					
@@ -241,7 +242,7 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 
 
 					// Deletes the schedule event from the measured entity. 
-					measuredEntityFacade.getEntity().removeScheduledEvent(eventId);
+					((MeasuredEntity) measuredEntityFacade.getEntity()).removeScheduledEvent(eventId);
 
 					getResponse().setStatus(Status.SUCCESS_OK);
 				}

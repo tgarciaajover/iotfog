@@ -62,9 +62,9 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 			if (measuredEntityFacade.getEntity() != null){
 				// The requested measured entity was found.
 				Integer behaviorID = Integer.valueOf((String)this.getRequestAttributes().get("BehaviorID"));
-				if (measuredEntityFacade.getEntity().getStateBehavior(behaviorID) != null){
+				if (((MeasuredEntity) measuredEntityFacade.getEntity()).getStateBehavior(behaviorID) != null){
 					// We found the behavior state, so we can add it to the JSON response. Status code defaults to 200 if we don't set it.
-					result = new JsonRepresentation(measuredEntityFacade.getEntity().getStateBehavior(behaviorID).toJson());
+					result = new JsonRepresentation(((MeasuredEntity) measuredEntityFacade.getEntity()).getStateBehavior(behaviorID).toJson());
 				} else {
 					String error = "The requested measured entity state behavior was not found";
 					logger.warn(error);
@@ -128,7 +128,7 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 					  
 					  logger.debug("object reveived:" + behavior.getId() + behavior.getDescr() );
 					  
-					  measuredEntityFacade.getEntity().putStateBehavior(behavior);
+					  ((MeasuredEntity) measuredEntityFacade.getEntity()).putStateBehavior(behavior);
 					  
 					  logger.debug("putMeasuredEntityStateBehavior OK");
 					  
@@ -191,7 +191,7 @@ public class MeasuredEntityStateBehaviorResource extends ServerResource
 				MeasuredEntityFacade measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(uniqueID);
 
 				// Deletes the state behavior from the measured entity.
-				measuredEntityFacade.getEntity().removeStateBehavior(behaviorId);
+				((MeasuredEntity) measuredEntityFacade.getEntity()).removeStateBehavior(behaviorId);
 
 				getResponse().setStatus(Status.SUCCESS_OK);
 

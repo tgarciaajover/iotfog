@@ -49,10 +49,10 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 		
 	    int pages = (int) Math.ceil((double) items.size() / limit);
 	    
-	    logger.info("Pages:" + pages + "Items:" + items.size());
+	    logger.debug("Pages:" + pages + "Items:" + items.size());
 	    for (int i = 0; i < pages; i++) {
 	        List<AttributeValue> sub = items.subList(i * limit, ((i+1) * limit > items.size() ? items.size() : (i+1) * limit));
-	        logger.info("Num items in sublist:" + sub.size());
+	        logger.debug("Num items in sublist:" + sub.size());
 	        ret.add(sub);
 	    }
 	    
@@ -63,16 +63,16 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 	@Override
 	public void run() {
 
-		logger.info("Starting Executing database insert MeasuringAttributeValue" + " current Thread:" + Thread.currentThread().getName());
+		logger.debug("Starting Executing database insert MeasuringAttributeValue" + " current Thread:" + Thread.currentThread().getName());
 		// Splits the entries in batches of batchRows  
 		List<List<AttributeValue>> lists = split(entries, batchRows);
 
-		logger.info("Number of list:" + lists.size() + " current Thread:" + Thread.currentThread().getName());
+		logger.debug("Number of list:" + lists.size() + " current Thread:" + Thread.currentThread().getName());
 		// Loop through split lists and insert in the database 
 		for (List<AttributeValue> entry : lists) {
 			try {
 
-				logger.info("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
+				logger.debug("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
 				// connect to database
 				conn = MeasureAttributeValueCache.getConnection();
 				conn.setAutoCommit(false);
@@ -94,7 +94,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 			} finally{
 				if(pst!=null){
 					try{
-						logger.info("closing prepared statement");
+						logger.debug("closing prepared statement");
 						pst.close();
 					} catch (SQLException e) {
 						logger.error(e.getMessage());
@@ -104,7 +104,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 				
 				if(conn!=null) {
 					try {
-						logger.info("closing connection");
+						logger.debug("closing connection");
 						conn.close();
 					} catch (SQLException e) {
 						logger.error(e.getMessage());
@@ -116,6 +116,6 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 		}
 		
 		
-		logger.info("Ending Executing database insert MeasuringAttributeValue" + " current Thread:" + Thread.currentThread().getName());
+		logger.debug("Ending Executing database insert MeasuringAttributeValue" + " current Thread:" + Thread.currentThread().getName());
 	}
 }

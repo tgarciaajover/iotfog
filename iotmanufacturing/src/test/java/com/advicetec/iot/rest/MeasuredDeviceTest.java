@@ -50,9 +50,9 @@ public class MeasuredDeviceTest
 				
 				measuredEntityFacade = measuredEntityManager.getFacadeOfEntityById(measuredEntity.getId());
 				
-				assertEquals("Import from Json does not work,",measuredEntityFacade.getEntity().toJson(), machine1.toJson() );
+				assertEquals("Import from Json does not work,",((MeasuredEntity) measuredEntityFacade.getEntity()).toJson(), machine1.toJson() );
 				
-				String behaviorText = measuredEntityFacade.getEntity().getBehaviorText("ProductionCOT");
+				String behaviorText = ((MeasuredEntity) measuredEntityFacade.getEntity()).getBehaviorText("ProductionCOT");
 				
 				assertEquals("behavior texts are not equal,",behaviorText,"akjsdalksdl" );
 		} catch (Exception e)

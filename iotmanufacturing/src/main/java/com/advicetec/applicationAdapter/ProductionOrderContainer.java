@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.configuration.Container;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
@@ -51,11 +52,12 @@ public class ProductionOrderContainer extends Container
 		
 	}
 	
-	/** 
-	 * Gets a Production order from the container 
-	 * @param id : id of the production order to retry.
+	/**
+	 * Get the production order from the database 
+	 * 
+	 * @param id  Production order identifier
 	 */
-	public synchronized com.advicetec.configuration.ConfigurationObject getObject(Integer id) 
+	private ProductionOrder getProductionOrderFromDB(Integer id)
 	{
 		try 
 		{
@@ -222,17 +224,7 @@ public class ProductionOrderContainer extends Container
 			String canonicalKey = getCanonicalInformation(prdOrderTmp);
 			prdOrderTmp.setCanonicalKey(canonicalKey);
 			
-			// Load the object previously held on the container 
-			super.configuationObjects.get(id);
-
-			if (super.configuationObjects.get(id) != null){
-				if (!(super.configuationObjects.get(id).equals(prdOrderTmp))){
-					// The host system changed the the production, so we need to update it
-					super.configuationObjects.put(id, prdOrderTmp);
-				}
-			} else {    		        		        		        
-				super.configuationObjects.put(id, prdOrderTmp);
-			}
+			super.configuationObjects.put(id, prdOrderTmp);
 									
 			super.disconnect();
 			
@@ -249,6 +241,25 @@ public class ProductionOrderContainer extends Container
         }
 
 		return null;
+		
+	}
+	
+	/** 
+	 * Gets a Production order from the container 
+	 * @param id : id of the production order to retry.
+	 */
+	public synchronized ConfigurationObject getObject(Integer id) 
+	{
+
+		// Load the object previously held on the container 
+		ConfigurationObject obj = super.configuationObjects.get(id);
+
+		if (obj != null){
+			return obj;
+		} else {    		        		        		        
+			return getProductionOrderFromDB(id);
+		}
+		
 	}
 	
 	/**
@@ -266,7 +277,8 @@ public class ProductionOrderContainer extends Container
 	 * @return Returns the identifier of a production order from its canonical data
 	 */
 	public synchronized Integer getCanonicalObject(String company, String location, String plant, String machineGroup, String machineId,
-			int year, int month, String productionOrder) {
+													int year, int month, String productionOrder) 
+	{
 	
 		Integer id  = null;
 		
@@ -306,7 +318,6 @@ public class ProductionOrderContainer extends Container
         }
 
 		return id;
-
 		
 	}
 

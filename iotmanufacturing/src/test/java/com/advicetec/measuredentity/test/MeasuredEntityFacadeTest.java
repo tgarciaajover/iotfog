@@ -8,7 +8,6 @@ import org.json.JSONArray;
 import org.junit.Test;
 
 import com.advicetec.applicationAdapter.ProductionOrder;
-import com.advicetec.applicationAdapter.ProductionOrderFacade;
 import com.advicetec.applicationAdapter.ProductionOrderManager;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
@@ -16,6 +15,8 @@ import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.TimeInterval;
+import com.advicetec.measuredentitity.ExecutedEntity;
+import com.advicetec.measuredentitity.ExecutedEntityFacade;
 import com.advicetec.measuredentitity.Machine;
 import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -131,11 +132,11 @@ public class MeasuredEntityFacadeTest
 			
 				ProductionOrderManager.getInstance().addProductionOrder(pOrder);
 				
-				ProductionOrderFacade productionOrderFacade = ProductionOrderManager.getInstance().getFacadeOfPOrderById(idProduction);
+				ExecutedEntityFacade productionOrderFacade = ProductionOrderManager.getInstance().getFacadeOfPOrderById(idProduction);
 				
 				productionOrderFacade.start();
 				
-				facade.addExecutedObject(productionOrderFacade.getProductionOrder());
+				facade.addExecutedObject((ExecutedEntity) productionOrderFacade.getEntity());
 				
 				states = facade.getJsonStates(LocalDateTime.now().minusDays(1),  LocalDateTime.now());
 				

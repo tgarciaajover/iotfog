@@ -77,7 +77,7 @@ public class MeasuredEntityManager extends Configurable {
 		
 		super("MeasuredEntity");
 		
-		logger.info("In MeasuredEntityManager constructor"  );
+		logger.info("In MeasuredEntityManager constructor");
 		
 		entities = new ArrayList<MeasuredEntityFacade>();
 		
@@ -97,14 +97,22 @@ public class MeasuredEntityManager extends Configurable {
 			this.purgeFacadeCacheMapEntries = new Integer(10); // By default 10 seconds.
 		}
 		
+		logger.info("It is going to load the measured entity container");
+		
 		measuredEntities = new MeasuredEntityContainer(driver, server, user, password);
 		measuredEntities.loadContainer();
 		
+		logger.info("after loading the measured entity container");
+		
 		for (Integer i : measuredEntities.getKeys()) {
+			
 			MeasuredEntity m = (MeasuredEntity) measuredEntities.getObject(i);
+						
 			MeasuredEntityFacade f = new MeasuredEntityFacade(m, this.productionRateId, 
 																this.unit1PerCycles, this.unit2PerCycles, 
 																this.actualProductionCountId, this.purgeFacadeCacheMapEntries);
+			
+			logger.info("3");
 			entities.add(f);
 		}
 		
@@ -257,7 +265,7 @@ public class MeasuredEntityManager extends Configurable {
 			return null;
 		}
 		else {
-			return ((MeasuredEntity) this.measuredEntities.getObject(id)).getCanonicalIdentifier();
+			return ((MeasuredEntity) this.measuredEntities.getObject(id)).getCanonicalKey();
 		}
 	}
 	

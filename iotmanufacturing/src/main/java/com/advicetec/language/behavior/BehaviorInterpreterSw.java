@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.tree.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.advicetec.core.EntityFacade;
 import com.advicetec.language.BehaviorGrammarLexer;
 import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.ast.ASTNode;
@@ -83,13 +84,14 @@ public class BehaviorInterpreterSw
      *  
      *   It checks the grammar and interprets the code.  
      *   
-     * @param program		behavior text to interpret
-     * @param entityId		measure entity id for which the behavior is going to be run. 				
-     * @param parameters	List of parameters required for the behavior execution.
-     * @throws Exception	Run time exceptions generated during the behavior execution.
+     * @param program			behavior text to interpret
+     * @param entityFacade		entity facade for which the behavior is going to be run. 
+     * @param measuredEntityId	measured entity identifier that this behavior belongs to. 	
+     * @param parameters		List of parameters required for the behavior execution.
+     * @throws Exception		Run time exceptions generated during the behavior execution.
      */
     @SuppressWarnings("deprecation")
-	public void process(String program, Integer entityId, List<InterpretedSignal> parameters) throws Exception 
+	public void process(String program, EntityFacade entityFacade, Integer measuredEntityId, List<InterpretedSignal> parameters) throws Exception 
     {
         if ((program == null) || program.isEmpty()){
         	logger.error("The program given is empty");
@@ -178,11 +180,8 @@ public class BehaviorInterpreterSw
             globals.put(arg.getName(), argValue);
             i++;
         }
-
-        MeasuredEntityManager manager = MeasuredEntityManager.getInstance();
-        MeasuredEntityFacade facade = manager.getFacadeOfEntityById(entityId);
         
-        interpreter = new BehaviorInterpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), facade);
+        interpreter = new BehaviorInterpreter(defPhase.getGlobalScope(), globals, defPhase.getScopes(), entityFacade, measuredEntityId);
         interpreter.visit(tree);
         
         
