@@ -39,7 +39,12 @@ public enum MeasuredEntityType
 	/**
 	 * Job 
 	 */
-	JOB(4,"Job");
+	JOB(4,"Job"),
+	
+	/**
+	 * Underfinedc
+	 */
+	UNDEFINED(4,"Undefined");
 	
 	/**
 	 * code of the measured entity type. 

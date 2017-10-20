@@ -326,61 +326,19 @@ public class MeasureAttributeValueCache extends Configurable {
 	 */
 	public void bulkCommit(List<String> keys) {
 
+		// Gets a copy of all attributes in the cache. 
 		Map<String,AttributeValue> subSet = cache.getAllPresent(keys);
 		
-		// Splits the entries in batches of batchRows  
-		List<List<AttributeValue>> lists = MeasureAttributeDatabaseStore.split(subSet, BATCH_ROWS);
+		// Invalidates all cache entries found.
+		cache.invalidateAll(keys);
+
+		// Saves measured attribute values in the database.
+		MeasureAttributeDatabaseStore storedatabase;
 		
-		// Loop through split lists and insert in the database 
-		for (List<AttributeValue> entry : lists) {
-			if (entry.size() > 0){
-				try {
-					conn = getConnection();
-					conn.setAutoCommit(false);
-					// prepare statement
-					pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
-					
-					List<String> keysToInvalidate = new ArrayList<String>();
-					// Get the keys to insert in the database.
-					for (AttributeValue value :	entry) {
-						if(value instanceof MeasuredAttributeValue){
-							MeasuredAttributeValue mav = (MeasuredAttributeValue) value;
-							keysToInvalidate.add(mav.getKey());
-							mav.dbInsert(pst);
-						}
-					}
-					// execute the query
-					pst.executeBatch();
-					conn.commit();
-					// Remove all keys inserted in the database.
-					cache.invalidateAll(keysToInvalidate);
-
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-				
-				finally {
-					if(pst!=null) {
-						try {
-							pst.close();
-						} catch (SQLException e) {
-							logger.error(e.getMessage());
-							e.printStackTrace();
-						}
-					}
-
-					if(conn!=null) {
-						try {
-							conn.close();
-						} catch (SQLException e) {
-							logger.error(e.getMessage());
-							e.printStackTrace();
-						}
-					}
-				}
-			}
-		}
+		storedatabase = new MeasureAttributeDatabaseStore(subSet, BATCH_ROWS);
+		
+		threadPool.submit(storedatabase);
+		
 	}
 
 	/**

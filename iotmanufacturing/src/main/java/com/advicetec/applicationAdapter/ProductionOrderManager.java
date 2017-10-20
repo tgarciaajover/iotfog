@@ -174,17 +174,14 @@ public class ProductionOrderManager extends Configurable {
 	/**
 	 * Removes a production order. This means that the production order is not anymore controlled.
 	 * 
+	 * observe that the cache is responsible of storing attribute values and states, so we don't have
+	 * to do something special.     
+	 * 
 	 * @param idProduccion Id of the production order to remove.
 	 */
 	public synchronized void removeFacade(Integer idProduccion)
-	{
-		
+	{		
     	ExecutedEntityFacade productionOrderFacade = this.pOrders.remove(idProduccion);
-    	if (productionOrderFacade != null){
-        	// Store all data associated with the production order.
-        	productionOrderFacade.storeAllMeasuredAttributeValues();
-        	productionOrderFacade.storeAllStateIntervals();    		
-    	}
 	}
 
 	/**

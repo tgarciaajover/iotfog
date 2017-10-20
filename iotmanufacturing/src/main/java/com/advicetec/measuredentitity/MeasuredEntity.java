@@ -59,7 +59,6 @@ public abstract class MeasuredEntity extends Entity
 	@JsonProperty("code")
 	protected String code;
 
-
 	/**
 	 * Date and time when the instance was created.  
 	 */
@@ -82,6 +81,10 @@ public abstract class MeasuredEntity extends Entity
 	@JsonProperty("descr")
 	protected String descr;
 
+	
+	@JsonIgnore
+	protected EntityState state;
+	
 	/**
 	 * Set of behavior registered to the measured entity 
 	 * @see MeasuredEntityBehavior
@@ -121,12 +124,13 @@ public abstract class MeasuredEntity extends Entity
 	{
 		super(id, type);
 		
-		createDate = LocalDateTime.now();
-		behaviors = new ArrayList<MeasuredEntityBehavior>();
-
-		stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
-		stateTransitions = new ArrayList<MeasuredEntityStateTransition>();
-		executedEntities = new ConcurrentHashMap<Integer, ExecutedEntity>();
+		this.createDate = LocalDateTime.now();
+		this.behaviors = new ArrayList<MeasuredEntityBehavior>();
+		this.state = new EntityState(MeasuringState.SCHEDULEDOWN, null, LocalDateTime.now());
+		
+		this.stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
+		this.stateTransitions = new ArrayList<MeasuredEntityStateTransition>();
+		this.executedEntities = new ConcurrentHashMap<Integer, ExecutedEntity>();
 
 	}
 
@@ -639,7 +643,73 @@ public abstract class MeasuredEntity extends Entity
 
 	}
 
+	/**
+	 * Registers the start of a new interval in the measured entity
+	 *   
+	 * @param dateTime 	date and time when this interval should start
+	 * @param newState	state given to the machine 
+	 * @param rCode		Reason code for the interval
+	 */
+	@JsonIgnore
+	public synchronized void startInterval(LocalDateTime dateTime,  MeasuringState newState, ReasonCode rCode) {
+		this.state.update(newState, rCode, dateTime);
+	}
 
+	/**
+	 * Establishes the reason code for the current interval
+	 * 
+	 * @param rCode  reason code to set.
+	 */
+	public synchronized void setCurrentReasonCode(ReasonCode rCode){
+		this.state.setReason(rCode);
+	}
+
+	/**
+	 * Gets the state for the current interval.
+	 * 
+	 * @return current interval state.
+	 */
+	@JsonIgnore
+	public synchronized MeasuringState getCurrentState(){
+		return this.state.getState();
+	}
+
+	/**
+	 * Gets the reason code for the current interval. 
+	 * 
+	 * @return	 current interval reason
+	 */
+	@JsonIgnore
+	public synchronized ReasonCode getCurrentReason()
+	{
+		return this.state.getReason();
+	}
+
+	/**
+	 * Gets the date and time when the current interval started 
+	 * 
+	 * @return The date and time when the current interval started
+	 */
+	@JsonIgnore
+	public synchronized LocalDateTime getCurrentStatDateTime()
+	{
+		return this.state.getStartDateTimeStatus();
+	}
+
+	/**
+	 * This function verifies if the current interval state should be calculated and saved. 
+	 * 
+	 * @return TRUE if we should start a new interval, FALSE otherwise.
+	 */
+	public synchronized boolean startNewInterval() {
+
+		if (getCurrentStatDateTime().plusSeconds(getMaxTimeForInterval()).isBefore(LocalDateTime.now()))
+			return true;
+
+		return false;
+	}
+	
+	
 	/**
 	 * Adds an executed entity to this measured entity
 	 * 
@@ -665,7 +735,7 @@ public abstract class MeasuredEntity extends Entity
 			for (Integer id : this.executedEntities.keySet()){
 				// stops all facades
 				ExecutedEntityFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(id);
-				productionOrderFacade.stop();
+				productionOrderFacade.stop(this.getId());
 			}
 
 		} catch (SQLException e) {
@@ -709,7 +779,7 @@ public abstract class MeasuredEntity extends Entity
 			ExecutedEntity executedEntity = this.executedEntities.get(id); 
 			logger.info("Executed entity started: " + id);
 			// only ONE executed entity must be in OPERATING state at time.
-			if (executedEntity.getCurrentState() == MeasuringState.OPERATING)
+			if (executedEntity.getCurrentState(getId()) == MeasuringState.OPERATING)
 				return executedEntity;
 		}
 
@@ -729,7 +799,7 @@ public abstract class MeasuredEntity extends Entity
 		try {
 			for (Integer id : this.executedEntities.keySet()){
 				ExecutedEntity executedEntity = this.executedEntities.get(id);  
-				if (executedEntity.getCurrentState() == MeasuringState.OPERATING)
+				if (executedEntity.getCurrentState(getId()) == MeasuringState.OPERATING)
 				{
 					ProductionOrderManager pOrderManager;
 					pOrderManager = ProductionOrderManager.getInstance();
@@ -800,7 +870,7 @@ public abstract class MeasuredEntity extends Entity
 		for (Integer id : this.executedEntities.keySet()){
 			logger.debug("Executed Object:" + id);
 			ExecutedEntity executedEntity = this.executedEntities.get(id);
-			if (executedEntity.getCurrentState() == MeasuringState.OPERATING){
+			if (executedEntity.getCurrentState(getId()) == MeasuringState.OPERATING){
 				return executedEntity.getAttributeValue(attributeId);
 			}
 		}
@@ -821,7 +891,7 @@ public abstract class MeasuredEntity extends Entity
 		try {
 			for (Integer id : this.executedEntities.keySet()){
 				ExecutedEntity executedEntity = this.executedEntities.get(id);  
-				if (executedEntity.getCurrentState() == MeasuringState.OPERATING)
+				if (executedEntity.getCurrentState(getId()) == MeasuringState.OPERATING)
 				{
 					ProductionOrderManager pOrderManager;
 					pOrderManager = ProductionOrderManager.getInstance();
@@ -865,7 +935,7 @@ public abstract class MeasuredEntity extends Entity
 		try {
 			for (Integer id : this.executedEntities.keySet()){
 				ExecutedEntity executedEntity = this.executedEntities.get(id);  
-				if (executedEntity.getCurrentState() == MeasuringState.OPERATING)
+				if (executedEntity.getCurrentState(getId()) == MeasuringState.OPERATING)
 				{
 					ProductionOrderManager pOrderManager;
 					pOrderManager = ProductionOrderManager.getInstance();

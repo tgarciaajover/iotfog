@@ -40,25 +40,6 @@ public abstract class Entity extends ConfigurationObject {
      */
     protected String canonicalKey;
 	
-	
-	/**
-	 * start date-time of the current interval.
-	 */
-	@JsonIgnore
-	protected LocalDateTime startDateTimeStatus;
-
-	/**
-	 * state of the current interval.
-	 */
-	@JsonIgnore
-	protected MeasuringState currentState;
-
-	/**
-	 * the reason code for the current state.
-	 */
-	@JsonIgnore
-	protected ReasonCode currentReason;
-
 	/**
 	 * List of attributes registered in this executed entity
 	 */
@@ -90,9 +71,6 @@ public abstract class Entity extends ConfigurationObject {
 		super(id);
 		
 		this.type = type;
-		this.startDateTimeStatus = LocalDateTime.now();
-		this.currentState = MeasuringState.SCHEDULEDOWN;
-		this.currentReason = null;
 		this.maxTimeForInterval = MAX_INTERVAL_TIME; 
 
 		this.attributes = new CopyOnWriteArrayList<Attribute>();
@@ -101,7 +79,6 @@ public abstract class Entity extends ConfigurationObject {
 		
 	}
 
-	
 	/**
 	 * Gets the measured entity type
 	 * 
@@ -144,7 +121,6 @@ public abstract class Entity extends ConfigurationObject {
 		return null;
     }
 
-	
 	/**
 	 * Gets the list of attributes 
 	 * 
@@ -239,60 +215,6 @@ public abstract class Entity extends ConfigurationObject {
 		return ret;
 	}
 
-	/**
-	 * Registers the start of a new interval in the measured entity
-	 *   
-	 * @param dateTime 	date and time when this interval should start
-	 * @param newState	state given to the machine 
-	 * @param rCode		Reason code for the interval
-	 */
-	@JsonIgnore
-	public synchronized void startInterval(LocalDateTime dateTime,  MeasuringState newState, ReasonCode rCode) {
-		currentState = newState;
-		currentReason= rCode;
-		startDateTimeStatus = dateTime;
-	}
-
-	/**
-	 * Establishes the reason code for the current interval
-	 * 
-	 * @param rCode  reason code to set.
-	 */
-	public synchronized void setCurrentReasonCode(ReasonCode rCode){
-		currentReason= rCode;
-	}
-
-	/**
-	 * Gets the state for the current interval.
-	 * 
-	 * @return current interval state.
-	 */
-	@JsonIgnore
-	public synchronized MeasuringState getCurrentState(){
-		return this.currentState;
-	}
-
-	/**
-	 * Gets the reason code for the current interval. 
-	 * 
-	 * @return	 current interval reason
-	 */
-	@JsonIgnore
-	public synchronized ReasonCode getCurrentReason()
-	{
-		return this.currentReason;
-	}
-
-	/**
-	 * Gets the date and time when the current interval started 
-	 * 
-	 * @return The date and time when the current interval started
-	 */
-	@JsonIgnore
-	public synchronized LocalDateTime getCurrentStatDateTime()
-	{
-		return this.startDateTimeStatus;
-	}
 
 	/**
 	 * Gets an attribute value by name 
@@ -319,19 +241,6 @@ public abstract class Entity extends ConfigurationObject {
 	}
 
 	
-	/**
-	 * This function verifies if the current interval state should be calculated and saved. 
-	 * 
-	 * @return TRUE if we should start a new interval, FALSE otherwise.
-	 */
-	public synchronized boolean startNewInterval() {
-
-		if (getCurrentStatDateTime().plusSeconds(getMaxTimeForInterval()).isBefore(LocalDateTime.now()))
-			return true;
-
-		return false;
-	}
-
 	/**
 	 * Gets the attribute list registered in the measured entity
 	 * 

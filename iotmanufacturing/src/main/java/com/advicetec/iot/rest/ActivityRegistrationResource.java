@@ -414,7 +414,7 @@ public class ActivityRegistrationResource extends ServerResource
     		measuredEntityFacade.stopExecutedObjects();
         	
     		// put the production order in execution.
-    		productionOrderFacade.start();
+    		productionOrderFacade.start(measuredEntityFacade.getEntity().getId());
     		
         	// start production
         	measuredEntityFacade.addExecutedObject((ExecutedEntity) productionOrderFacade.getEntity());
@@ -446,13 +446,13 @@ public class ActivityRegistrationResource extends ServerResource
     	ExecutedEntityFacade  pOrderfacade = productionOrderManager.getFacadeOfPOrderById(idProduction);
     	
     	if (pOrderfacade != null) {
-    	
+    	    		
+    		// Stop the production order if was in operation. 
+    		pOrderfacade.stop(measuredEntityFacade.getEntity().getId());
+
     		// Remove the Measured Entity Facade where the production order was being executed.  
     		pOrderfacade.deleteMeasuredEntity(measuredEntityFacade.getEntity().getId());
     		
-    		// Stop the production order if was in operation. 
-    		pOrderfacade.stop();
-
     		// Remove the production order from the measured entity.
     		measuredEntityFacade.removeExecutedObject(idProduction);
 
@@ -522,10 +522,10 @@ public class ActivityRegistrationResource extends ServerResource
 		ReasonCode reasonCode = (ReasonCode) reasonCodeCon.getObject(idStopReason);
 
 		// Update the current stop, call the behavior.
-		MeasuringState state =  measuredEntityFacade.getEntity().getCurrentState();
+		MeasuringState state = ((MeasuredEntity)measuredEntityFacade.getEntity()).getCurrentState();
 	
 		// Update the reason code.
-		measuredEntityFacade.getEntity().setCurrentReasonCode(reasonCode);
+		((MeasuredEntity)measuredEntityFacade.getEntity()).setCurrentReasonCode(reasonCode);
 
 		String behavior = ((MeasuredEntity) measuredEntityFacade.getEntity()).getBehaviorText(state, idStopReason);
 
@@ -534,7 +534,7 @@ public class ActivityRegistrationResource extends ServerResource
 			InterpretedSignal reasonSignal = new InterpretedSignal(AttributeType.INT, new Integer(idStopReason));
 			signals.add(reasonSignal);
 
-			MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuredEntityFacade.getEntity().getId(),0, 0, signals );
+			MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuredEntityFacade.getEntity().getId(), measuredEntityFacade.getEntity().getType(), 0, 0, signals );
 			event.setRepeated(false);
 			event.setMilliseconds(0); // To be executed now.
 

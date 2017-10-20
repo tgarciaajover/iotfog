@@ -1,5 +1,7 @@
 package com.advicetec.eventprocessor;
 
+import com.advicetec.measuredentitity.MeasuredEntityType;
+
 public class DisplayEvent extends Event 
 {
 
@@ -53,4 +55,16 @@ public class DisplayEvent extends Event
 	                ", display_text=" + display_text +
 	                '}';
 	}
+
+	@Override
+	public Integer getEntity() {
+		return -1;
+	}
+
+	@Override
+	public MeasuredEntityType getOwnerType() {
+		return MeasuredEntityType.UNDEFINED;
+	}
+	
+	
 }

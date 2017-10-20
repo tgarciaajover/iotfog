@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.utils.ModBusUtils;
 
 public abstract class ModBusTcpEvent extends Event
@@ -160,6 +161,17 @@ public abstract class ModBusTcpEvent extends Event
 		}
 		
 		return retEvent;
+	}
+	
+	@Override
+	public Integer getEntity() {
+		return -1;
+	}
+	
+	@Override
+	public MeasuredEntityType getOwnerType() {
+		
+		return MeasuredEntityType.UNDEFINED;
 	}
 	
 }

@@ -448,7 +448,14 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 		space = getSpaceWithSymbol(id);
 		if ( space==null ){ 
-			MeasuringState state = facade.getCurrentState();
+			
+			MeasuringState state = MeasuringState.UNDEFINED;
+			if (facade instanceof MeasuredEntityFacade) {
+				state = ((MeasuredEntityFacade)facade).getCurrentState();
+			} else if(facade instanceof ExecutedEntityFacade) {
+				state = ((ExecutedEntityFacade)facade).getCurrentState(this.measuredEntityId);
+			}
+			
 			switch (state){
 			case OPERATING:
 				node = new ASTNode(new Integer(0));

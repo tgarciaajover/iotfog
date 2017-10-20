@@ -134,7 +134,7 @@ public class MeasuredEntityFacadeTest
 				
 				ExecutedEntityFacade productionOrderFacade = ProductionOrderManager.getInstance().getFacadeOfPOrderById(idProduction);
 				
-				productionOrderFacade.start();
+				productionOrderFacade.start(entity.getId());
 				
 				facade.addExecutedObject((ExecutedEntity) productionOrderFacade.getEntity());
 				
@@ -144,7 +144,7 @@ public class MeasuredEntityFacadeTest
 				
 				Thread.sleep(2000);
 				
-				productionOrderFacade.stop();
+				productionOrderFacade.stop(entity.getId());
 
 				// Remove the production order from the measured entity.
 		    	facade.removeExecutedObject(idProduction);

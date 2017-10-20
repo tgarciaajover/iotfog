@@ -19,6 +19,7 @@ import com.advicetec.MessageProcessor.DelayEvent;
 import com.advicetec.MessageProcessor.DelayQueueConsumer;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.core.Manager;
+import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.mpmcqueue.QueueType;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
@@ -339,7 +340,7 @@ public class EventManager extends Manager
 	 * @param measuredId identifier of the measured entity to delete.
 	 * @return true if the method execute successfully, false otherwise.
 	 */
-	public synchronized boolean removeMeasuredEntityEvents(Integer measuredId) {
+	public synchronized boolean removeEntityEvents(Integer measuredId, MeasuredEntityType type) {
 		
 		// List with the list of current events.
 		List<DelayEvent> currentEvents = new ArrayList<DelayEvent>();
@@ -348,10 +349,13 @@ public class EventManager extends Manager
 		List<DelayEvent> removeEvents = new ArrayList<DelayEvent>();
 		
 		this.delayedQueue.drainTo(currentEvents);
+		
 		Iterator<DelayEvent> itr= currentEvents.iterator();
 		while(itr.hasNext()){
 			DelayEvent dt= (DelayEvent) itr.next();
-			if (dt.getEvent().getMeasuredEntity().equals(measuredId)){
+			if ((dt.getEvent().getEntity().equals(measuredId)) 
+					&& (dt.getEvent().getOwnerType().equals(type))){
+				
 				removeEvents.add(dt);
 			}
 		}

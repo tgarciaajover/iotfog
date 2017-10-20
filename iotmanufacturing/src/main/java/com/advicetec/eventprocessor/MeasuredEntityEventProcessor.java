@@ -24,6 +24,7 @@ import com.advicetec.measuredentitity.ExecutedEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
+import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 /**
@@ -85,7 +86,18 @@ public class MeasuredEntityEventProcessor implements Processor
 
 		// Import symbols' values and state
 		entityFacade.importAttributeValues(interpreter.getGlobalAttributes());
-		entityFacade.setCurrentState(interpreter.getState());
+		
+		if (entityFacade instanceof MeasuredEntityFacade) {
+			
+			((MeasuredEntityFacade) entityFacade).setCurrentState(interpreter.getState());
+			
+		} else if (entityFacade instanceof ExecutedEntityFacade) {
+			
+			((ExecutedEntityFacade) entityFacade).setCurrentState(interpreter.getState(), measuringEntityId);
+			
+		} else {
+			logger.error("The given fachade has not been coded to work for this behavior");
+		}
 
 		Map<String, Symbol> symbols =  interpreter.getGlobalScope().getSymbolMap();
 
@@ -96,14 +108,16 @@ public class MeasuredEntityEventProcessor implements Processor
 			if (symbol instanceof TimerSymbol)
 			{
 				long duetime = ((TimerSymbol) symbol).getMilliseconds();
-				String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
+				String behavior =  getBehavior(((TimerSymbol) symbol).getCompleteName());
 				
 				if (entityFacade instanceof MeasuredEntityFacade){ 
 					// We don't send parameters to the event. 
-					MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, this.event.getDevice(), 
-															this.event.getPort(), ((MeasuredEntityFacade) entityFacade).getEntity().getId(), 
-															new ArrayList<InterpretedSignal>());
-					
+										
+					MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, 
+													((MeasuredEntityFacade) entityFacade).getEntity().getId(), 
+													 ((MeasuredEntityFacade) entityFacade).getEntity().getType(), 
+													   this.event.getDevice(), this.event.getPort(), 
+													     new ArrayList<InterpretedSignal>());
 					
 					DelayEvent dEvent = new DelayEvent(event,duetime);
 					ret.add(dEvent);
@@ -123,7 +137,7 @@ public class MeasuredEntityEventProcessor implements Processor
 	public List<DelayEvent> process() throws SQLException 
 	{
 		
-		Integer measuringEntity = this.event.getMeasuredEntity();
+		Integer measuringEntity = this.event.getEntity();
 		String behaviorName = this.event.getBehaviorName();
 		
         logger.debug("process - behavior:" + behaviorName);
@@ -189,20 +203,21 @@ public class MeasuredEntityEventProcessor implements Processor
 		return ret;
 
 	}
-
+	
 	/**
-	 * This function gets the behavior from a list of names given as parameter. 
+	 * Return the behavior from the given list of names given as parameter. 
 	 * 
-	 * We expect to have machinegroup.machine.behaviorid as the name 
-	 * 
-	 * @param names import like string containing a reference to a behavior
-	 * 
-	 * @return  the behavior which name as the list the names given by parameter.
+	 * @param names machinegroup.machine.behaviorid
+	 * @return the behavior name from the given list of names given as parameter.
 	 */
 	public String getBehavior(List<String> names)
 	{
-		// TODO: create the method.
-		return null;
+		StringBuilder behaviorName = new StringBuilder();
+		for (String name : names){
+			behaviorName.append(name); 
+		}
+
+		return behaviorName.toString();
 	}
-	
+
 }

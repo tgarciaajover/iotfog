@@ -2,6 +2,8 @@ package com.advicetec.eventprocessor;
 
 import java.util.UUID;
 
+import com.advicetec.measuredentitity.MeasuredEntityType;
+
 /**
  * Abstract class for all events. 
  * 
@@ -129,10 +131,9 @@ public abstract class Event
 	 * It is used to delete the event from delayed queues. 
 	 * @return. This base class returns -1 (an invalid measured entity id.) 
 	 */
-	public Integer getMeasuredEntity()
-	{
-		return new Integer(-1);
-	}
+	public abstract Integer getEntity();
+	
+	public abstract MeasuredEntityType getOwnerType();
 	
 	/**
 	 * Equals method, compare this event with the one given as parameter

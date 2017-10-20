@@ -26,6 +26,7 @@ import com.advicetec.language.transformation.InterpreterSw;
 import com.advicetec.language.transformation.SyntaxChecking;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
+import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 /**
@@ -109,7 +110,7 @@ public class SampleProcessor implements Processor
 					// stores the status of attributes
 					entityFacade.importSymbols(interpreter.getGlobalScope().getSymbolMap(), AttributeOrigin.TRANSFORMATION);
 					entityFacade.importAttributeValues(interpreter.getGlobalAttributes());
-					entityFacade.setCurrentState(interpreter.getState());
+					((MeasuredEntityFacade) entityFacade).setCurrentState(interpreter.getState());
 
 					Map<String, Symbol> symbols =  interpreter.getGlobalScope().getSymbolMap();
 
@@ -153,7 +154,7 @@ public class SampleProcessor implements Processor
 							
 							logger.debug("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
-							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity,mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
+							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, entityFacade.getType(), mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
 							event.setRepeated(repeated);
 							event.setMilliseconds(duetime);
 

@@ -79,7 +79,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 				pst = conn.prepareStatement(MeasuredAttributeValue.SQL_Insert);
 				// prepares the statement
 				entry.forEach((v)-> {
-					logger.debug( "db write key:" + ((MeasuredAttributeValue)v).getKey() );
+					logger.info( "db write key:" + ((MeasuredAttributeValue)v).getKey() );
 					((MeasuredAttributeValue)v).dbInsert(pst);
 
 				});

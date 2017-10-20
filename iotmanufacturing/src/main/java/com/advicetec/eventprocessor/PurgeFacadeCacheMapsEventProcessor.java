@@ -9,12 +9,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.advicetec.MessageProcessor.DelayEvent;
+import com.advicetec.applicationAdapter.ProductionOrderManager;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.DisplayDevice;
+import com.advicetec.core.EntityFacade;
 import com.advicetec.core.Processor;
 import com.advicetec.displayadapter.LedSignDisplay;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
+import com.advicetec.measuredentitity.MeasuredEntityType;
 
 /**
  * This class process purge facade cache maps events, it takes as parameter the measured entity and its type. 
@@ -49,21 +52,38 @@ public class PurgeFacadeCacheMapsEventProcessor implements Processor
 	public List<DelayEvent> process() throws SQLException 
 	{
 		
-		Integer measuredEntity = this.event.getMeasuredEntity();
+		Integer entity = this.event.getEntity();
 		
-        logger.debug("process - purge:" + measuredEntity );
+		MeasuredEntityType type = this.event.getOwnerType();
+		
+        logger.debug("process - purge:" + entity );
 		
         List<DelayEvent> ret = new ArrayList<DelayEvent>();
 
-        MeasuredEntityManager measuredEntManager = MeasuredEntityManager.getInstance();
-        MeasuredEntityFacade facade = measuredEntManager.getFacadeOfEntityById(measuredEntity);
+        EntityFacade facade = null;
+        if ((MeasuredEntityType.COMPANY == type) || 
+        	 (MeasuredEntityType.FACILITY == type) || 
+        	  (MeasuredEntityType.MACHINE == type) ||
+        	  (MeasuredEntityType.PLANT == type)) {
+        	
+        	MeasuredEntityManager measuredEntManager = MeasuredEntityManager.getInstance();
+        	facade = (EntityFacade) measuredEntManager.getFacadeOfEntityById(entity);
+        
+        } else if ((MeasuredEntityType.JOB == type)) {
+        	
+        	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance();
+        	facade = (EntityFacade) productionOrderManager.getFacadeOfPOrderById(entity);
+        	
+        } else {
+        	logger.error("The event's entity associated is undefined");
+        }
         
         if (facade == null){
-        	logger.error("The requested facade: " + Integer.toString(measuredEntity) + " was not found");
+        	logger.error("The requested facade: " + Integer.toString(entity) + " was not found");
 		} else {
 			
 			facade.removeOldCacheReferences();
-			logger.debug("finish executing purge facade event for  measured entity:" + measuredEntity);
+			logger.debug("finish executing purge facade event for  measured entity:" + entity);
 		}
 
 		return ret;

@@ -39,7 +39,7 @@ public class AggregationEvent extends Event
 	/**
 	 * Measuring entity for the aggregation.
 	 */
-	private int measuredEntity;
+	private Integer measuredEntity;
 	
 	/**
 	 * Establishes the time of measured entity.
@@ -92,7 +92,7 @@ public class AggregationEvent extends Event
 	 * Gets the measured entity identifier  
 	 * @return measured entity identifier
 	 */
-	public int getEntity() {
+	public Integer getEntity() {
 		return measuredEntity;
 	}
 
@@ -173,17 +173,6 @@ public class AggregationEvent extends Event
 		logger.debug("getSecondsToNextExecution seconds:" + seconds);
 		
 		return seconds;
-	}
-	
-	/**
-	 * Gets the measured entity for which this aggregation event was created.
-	 * 
-	 *  @return Measured entity identifier.
-	 */
-	@Override
-	public Integer getMeasuredEntity()
-	{
-		return new Integer(this.measuredEntity);
 	}
 
 }

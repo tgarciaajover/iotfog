@@ -276,13 +276,13 @@ public class MeasuredEntityManager extends Configurable {
 	 * 
 	 * @return	True if the measured entity was removed, false otherwise.
 	 */
-	public synchronized boolean removeMeasuredEntity(Integer entityId)
+	public synchronized boolean removeMeasuredEntity(Integer entityId, MeasuredEntityType entityType)
 	{
 
 		logger.debug("getFacadeOfEntityById" + Integer.toString(entityId) );
 	
 		// Removes the events related with this measured entity
-		EventManager.getInstance().removeMeasuredEntityEvents(entityId);
+		EventManager.getInstance().removeEntityEvents(entityId, entityType);
 		
 		// Remove the measured entity from the list of measured entities facades.
 		int index = 0;
@@ -299,11 +299,7 @@ public class MeasuredEntityManager extends Configurable {
 					
 					// Stops all executed objects
 					facade.stopExecutedObjects();
-					
-					// Stores pending data in caches.
-					facade.storeAllMeasuredAttributeValues();
-					facade.storeAllStateIntervals();
-					
+										
 					// Removes the facade.
 					entities.remove(index);
 					break;

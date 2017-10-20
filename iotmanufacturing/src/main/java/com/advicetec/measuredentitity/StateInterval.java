@@ -151,7 +151,7 @@ public final class StateInterval implements Storable
 			) {
 		super();
 		
-		this.key = timeInterval.toString();
+		this.key = parent + ":" + timeInterval.toString();
 		this.state = state;
 		this.reason = reason;
 		this.interval = timeInterval;

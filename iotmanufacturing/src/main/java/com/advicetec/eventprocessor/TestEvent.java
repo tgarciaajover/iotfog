@@ -1,5 +1,7 @@
 package com.advicetec.eventprocessor;
 
+import com.advicetec.measuredentitity.MeasuredEntityType;
+
 public class TestEvent extends Event 
 {
 
@@ -15,5 +17,16 @@ public class TestEvent extends Event
 	public int getTestId() {
 		return testid;
 	}
+
+	@Override
+	public Integer getEntity() {
+		return -1;
+	}
+
+	@Override
+	public MeasuredEntityType getOwnerType() {
+		return MeasuredEntityType.UNDEFINED;
+	}
+	
 	
 }

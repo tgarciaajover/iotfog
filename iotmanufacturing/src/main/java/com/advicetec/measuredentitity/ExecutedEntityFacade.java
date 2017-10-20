@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -195,21 +196,26 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	/**
 	 * Register a new state interval in the measured entity.
 	 * 
-	 * @param status : Measured entity state during the interval. 
-	 * @param reasonCode : Reason code for that state
-	 * @param interval : date from and to when the interval happens.
+	 * @param status : 			Measured entity state during the interval. 
+	 * @param reasonCode : 		Reason code for that state
+	 * @param interval : 		date from and to when the interval happens.
+	 * @param measuringEntityId Measured entity identifier where the executed entiti is being processed.
 	 */
-	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
+	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval, Integer measuringEntityId)
 	{
 		
 		Double rate = null;
 		Double conversion1 = null;
 		Double conversion2 = null;
-		Double actualRate = null; 
+		Double actualRate = null;
 		
-		if (this.entity.getCurrentState() == MeasuringState.OPERATING) {
+		MeasuringState currentStatus = ((ExecutedEntity)this.getEntity()).getCurrentState(measuringEntityId); 
+		
+		MeasuredEntityFacade measuringEntityFacade = this.processedOn.get(measuringEntityId);
+		
+		if (currentStatus == MeasuringState.OPERATING) {
 			AttributeValue attrValue = this.entity.getAttributeValue(this.productionRateId);
-			if (attrValue != null){
+			if (attrValue != null) {
 				rate = (Double) attrValue.getValue();
 			} else {
 				rate = new Double(0.0);
@@ -218,9 +224,9 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			rate = new Double(0.0);
 		}
 
-		if (this.entity.getCurrentState() == MeasuringState.OPERATING) {
+		if (currentStatus == MeasuringState.OPERATING) {
 			AttributeValue attrValue = this.entity.getAttributeValue(this.unit1PerCycles);
-			if (attrValue != null){
+			if (attrValue != null) {
 				conversion1 = (Double) attrValue.getValue();
 			} else {
 				conversion1 = new Double(0.0);
@@ -229,9 +235,9 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			conversion1 = new Double(0.0);
 		}
 
-		if (this.entity.getCurrentState() == MeasuringState.OPERATING) {
+		if (currentStatus == MeasuringState.OPERATING) {
 			AttributeValue attrValue = this.entity.getAttributeValue(this.unit2PerCycles);
-			if (attrValue != null){
+			if (attrValue != null) {
 				conversion2 = (Double) attrValue.getValue();
 			} else {
 				conversion2 = new Double(0.0);
@@ -240,35 +246,55 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			conversion2 = new Double(0.0);
 		}
 
-		if (this.entity.getCurrentState() == MeasuringState.OPERATING) {
-			// Verifies that the actual production count id field is an attribute in the measuring entity
-			if (!isAttribute(actualProductionCountId)) {
-				logger.error("The given attribute: " + this.actualProductionCountId + " does not exists as attribute in the measuring entity");
+		if (currentStatus == MeasuringState.OPERATING) {
+			
+			if (measuringEntityFacade == null) {
+				logger.error("The the measured entity: " + measuringEntityId + " is not registered in the executed object" + this.getEntity().getId());
 				actualRate = new Double(0.0);
 			} else {
 			
-				List<AttributeValue> list = getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
 				
-				double sum = 0;
-				// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
-				for (AttributeValue attributeValue : list) 
-				{
+				// Verifies that the actual production count id field is an attribute in the measuring entity
+				if (!measuringEntityFacade.isAttribute(actualProductionCountId)) {
 					
-					MeasuredAttributeValue measvalue = (MeasuredAttributeValue) attributeValue;
+					logger.error("The given attribute: " + this.actualProductionCountId + 
+									" does not exists as attribute in the measuring entity " + measuringEntityFacade.getEntity().getId());
 					
-					if ((measvalue.getValue() instanceof Double) || (measvalue.getValue() instanceof Integer)){
-						if (measvalue.getValue() instanceof Double)
-							sum = sum + (Double) measvalue.getValue();
-						else
-							sum = sum + (Integer) measvalue.getValue();
-					} else {
-						logger.error("The production count attribute: " + actualProductionCountId + " parametrized is not of type Double or Integer");
-						break;
+					actualRate = new Double(0.0);
+				} else {
+				
+					List<AttributeValue> list = measuringEntityFacade.getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
+					
+					logger.info("Registering interval - number of rows:" + list.size() );
+					
+					double sum = 0;
+					// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
+					for (AttributeValue attributeValue : list) 
+					{
+						
+						MeasuredAttributeValue measvalue = (MeasuredAttributeValue) attributeValue;
+						
+						if ((measvalue.getValue() instanceof Double) || (measvalue.getValue() instanceof Integer)){
+							if (measvalue.getValue() instanceof Double) {
+								sum = sum + (Double) measvalue.getValue();
+							} else {
+								sum = sum + (Integer) measvalue.getValue();
+							}
+						} else {
+							logger.error("The production count attribute: " + actualProductionCountId + " parametrized is not of type Double or Integer");
+							break;
+						}
 					}
+					LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
+					long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
+					double tmp = 0;
+					if (seconds > 0) {
+						tmp = (sum * 60) / seconds;
+					}
+						
+					actualRate = new Double(tmp);    // The actual rate is in cycle over minutes. 
+					
 				}
-				LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
-				long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
-				actualRate = new Double(sum * 60 / seconds); 
 			}
 		} else {
 			actualRate = new Double(0.0);
@@ -276,11 +302,22 @@ public final class ExecutedEntityFacade extends EntityFacade {
 		
 		logger.debug("we are going to register the production order interval");
 		
-		StateInterval stateInterval = new StateInterval(status, reasonCode, interval,getEntity().getId(), 
-														  getEntity().getType(), 0, 0, getEntity().getCanonicalKey(), 
-														    rate, conversion1, conversion2, actualRate, new Double(0));
+		StateInterval stateInterval = null;
+		if (measuringEntityFacade != null) {
+			stateInterval = new StateInterval(status, reasonCode, interval ,getEntity().getId(), 
+												getEntity().getType(), measuringEntityFacade.getEntity().getId(), 
+												measuringEntityFacade.getEntity().getType().getValue(), 
+												getEntity().getCanonicalKey(), 
+												rate, conversion1, conversion2, actualRate, new Double(0));
+		} else {
+			// Sets as the related object the measured entity 
+			stateInterval = new StateInterval(status, reasonCode, interval,getEntity().getId(), 
+					  getEntity().getType(), 0, 0, 
+					  getEntity().getCanonicalKey(), 
+					  rate, conversion1, conversion2, actualRate, new Double(0));			
+		}
 		
-		stateInterval.setKey(this.entity.getId()+stateInterval.getKey());
+		stateInterval.setKey(this.getEntity().getId()+ ":" + stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());
 		StateIntervalCache.getInstance().storeToCache(stateInterval);
@@ -390,16 +427,23 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * 
 	 * The production order is said to be in operation when it is executed in any measured entity.
 	 */
-	public synchronized void start()
+	public synchronized void start(Integer measuredEntityId)
 	{
-		if (getEntity().getCurrentState() != MeasuringState.OPERATING) 
-		{
 
-			TimeInterval tInterval= new TimeInterval(getEntity().getCurrentStatDateTime(), LocalDateTime.now()); 
-			registerInterval(getEntity().getCurrentState(), getEntity().getCurrentReason(), tInterval);
-			getEntity().startInterval(LocalDateTime.now(), MeasuringState.OPERATING, null);
+		if (((ExecutedEntity)getEntity()).getCurrentState(measuredEntityId) != MeasuringState.UNDEFINED) {
+			
+			// This case happens when the executed object has already been processing in the executed entity and it is going to be reprocessed.
+			
+			TimeInterval tInterval = new TimeInterval(((ExecutedEntity)getEntity()).getCurrentStatDateTime(measuredEntityId), 
+													LocalDateTime.now());
+		
+			registerInterval(((ExecutedEntity)getEntity()).getCurrentState(measuredEntityId), 
+						 ((ExecutedEntity)getEntity()).getCurrentReason(measuredEntityId), 
+						 tInterval, measuredEntityId);
+		} 
+		
+		((ExecutedEntity)getEntity()).startInterval(measuredEntityId, LocalDateTime.now(), MeasuringState.OPERATING, null);
 
-		}
 		
 	}
 	
@@ -410,22 +454,24 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * 
 	 * This means that only the production order is stopped when is not in process in all measured entities.
 	 */
-	public synchronized void stop()
+	public synchronized void stop(Integer measuringEntityId)
 	
 	{
 		logger.debug("Stopping the production order");
-		
-		if (getEntity().getCurrentState() != MeasuringState.UNSCHEDULEDOWN) {
+
+		if ( this.processedOn.containsKey(measuringEntityId) ) {
+			logger.info("Registering the final interval for the production order");
+
+			TimeInterval tInterval= new TimeInterval( ((ExecutedEntity)getEntity()).getCurrentStatDateTime(measuringEntityId), 
+													  LocalDateTime.now());
 			
-			if (this.processedOn.size() == 0) {
-				logger.debug("Registering the final interval for the production order");
+			registerInterval(((ExecutedEntity) getEntity()).getCurrentState(measuringEntityId), 
+							 ((ExecutedEntity) getEntity()).getCurrentReason(measuringEntityId), 
+							 tInterval, measuringEntityId);
 			
-				TimeInterval tInterval= new TimeInterval(getEntity().getCurrentStatDateTime(), LocalDateTime.now()); 
-				registerInterval(getEntity().getCurrentState(), getEntity().getCurrentReason(), tInterval);
-				getEntity().startInterval(LocalDateTime.now(), MeasuringState.UNSCHEDULEDOWN, null);
-			}
+			((ExecutedEntity)getEntity()).startInterval(measuringEntityId, LocalDateTime.now(), MeasuringState.UNSCHEDULEDOWN, null);
 		}
-		
+
 		logger.debug("Finish production order stop ");
 	}
 
@@ -467,6 +513,134 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			return false;
 		}
 	}
+
+	/**
+	 * Returns the current state of the measured entity.
+	 *  
+	 * @return  If there is not entity assigned return undefined.
+	 */    
+	public synchronized MeasuringState getCurrentState(Integer measuredEntityId){
+    	 if (this.entity == null){
+    		 return MeasuringState.UNDEFINED;
+    	 } else {
+    		 return ((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId);
+    	 }
+     }
+
+	private void changeState(Integer measuredEntityId, MeasuringState newState) {
+		
+		LocalDateTime localDateTime = LocalDateTime.now();
+		
+		// Creates the time interval, from the last status change to now.
+		TimeInterval interval = new TimeInterval(((ExecutedEntity) this.getEntity()).getCurrentStatDateTime(measuredEntityId), localDateTime);
+		
+		// Registers the interval in the Measured Entity
+		this.registerInterval(((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId), 
+							  ((ExecutedEntity) this.getEntity()).getCurrentReason(measuredEntityId), 
+							  interval, measuredEntityId);
+		
+		((ExecutedEntity) this.getEntity()).startInterval(measuredEntityId, localDateTime, newState, null);
+		
+	}
+
+	/**
+	 * Updates the state of the entity taking as parameter 
+	 * the measured attributes resulting from a transformation or behavior execution 
+	 * 
+	 * @param symbolMap				symbols generated by the transformation or behavior execution.
+	 * @param measuredEntityId 	This parameter corresponds to the measured entity where the behavior is begin run.
+	 * 								It is required only for executed entities needing to register intervals on particular machines.
+	 */
+	public synchronized void setCurrentState(Map<String, ASTNode> symbolMap, Integer measuredEntityId) {
+
+		for (Map.Entry<String, ASTNode> entry : symbolMap.entrySet()) 
+		{
+			if(entry.getKey().compareTo("state") == 0 ){
+				ASTNode node = entry.getValue();
+				Integer newState = node.asInterger();
+				 
+				if (newState == 0){
+					
+					if ( (((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.OPERATING) || 
+							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId)) ) {
+						
+						changeState(measuredEntityId, MeasuringState.OPERATING);
+						
+					}
+					
+				} else if (newState == 1){
+					
+					if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.SCHEDULEDOWN) || 
+							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
+						
+						changeState(measuredEntityId, MeasuringState.SCHEDULEDOWN);
+												
+					}
+					
+				} else if (newState == 2){
+					
+					if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.UNSCHEDULEDOWN) || 
+							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
+						
+						changeState(measuredEntityId, MeasuringState.UNSCHEDULEDOWN);
+						
+					}
+					
+				} else {
+					logger.error("The new state is being set to undefined, which is incorrect");
+				}	
+			}
+		}
+	}
+
+	/**
+	 * Update a previously defined stat, assigning its reason code. 
+	 *  
+	 * @param startDttmStr	start datetime when the interval to update started - this value works as a key for the interval states. 
+	 * @param reasonCode	Reason code to assign.
+	 * 	
+	 * @return	true if the intervals was found and updated, false otherwise.
+	 */
+	public synchronized boolean updateStateInterval(Integer measuredEntityId, String startDttmStr, ReasonCode reasonCode) {
+
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
+		
+		logger.debug("reasoncode id:" + reasonCode.getId() + " descr:" + reasonCode.getDescription() + " startDttm:" + startDttm );
+		
+		boolean ret = false;
+		
+		if ( ((ExecutedEntity) this.getEntity()).getCurrentStatDateTime(measuredEntityId).equals(startDttm)){
+			
+			logger.debug("Updating the current state interval");
+			
+			((ExecutedEntity) this.getEntity()).setCurrentReasonCode(measuredEntityId, reasonCode);
+			ret = true;
+		} else {
+
+			logger.debug("Updating the past state interval");
+			
+			LocalDateTime oldest = stateCache.getOldestTime();
+			
+			logger.debug("oldest" + oldest.format(formatter));
+			
+			// all values are in the cache
+			if(oldest.isBefore(startDttm))
+			{
+				logger.debug("the datetime given is before");
+				String stateKey = statesMap.get(startDttm);
+				logger.debug("State key found:" + stateKey);
+				ret = stateCache.updateCacheStateInterval(stateKey, reasonCode);
+			} else if(oldest.isAfter(startDttm)){
+				logger.debug("the datetime given is after");
+				// all values are in the database 
+				ret = stateCache.updateStateInterval(this.entity.getId(), this.entity.getType(), startDttm, reasonCode);				
+			}
+		}
+		
+		return ret;
+	}
+
 	
 }
 

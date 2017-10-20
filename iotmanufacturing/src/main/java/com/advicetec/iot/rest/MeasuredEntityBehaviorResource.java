@@ -180,7 +180,7 @@ public class MeasuredEntityBehaviorResource extends ServerResource
 				MeasuredEntityBehavior measuredBehavior = ((MeasuredEntity) measuredEntityFacade.getEntity()).getBehavior(behaviorId);
 				
 				// Creates the behavior event to delete
-				MeasuredEntityEvent measuredEvent = new MeasuredEntityEvent(measuredBehavior.getName(), uniqueID, 0,0, new ArrayList<InterpretedSignal>()) ;
+				MeasuredEntityEvent measuredEvent = new MeasuredEntityEvent(measuredBehavior.getName(), uniqueID, measuredEntityFacade.getEntity().getType(), 0,0, new ArrayList<InterpretedSignal>()) ;
 				DelayEvent delEvent = new DelayEvent(measuredEvent, 0);
 				eventManager.removeEvent(delEvent);
 				

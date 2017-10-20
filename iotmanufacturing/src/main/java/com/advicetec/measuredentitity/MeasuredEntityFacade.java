@@ -1,56 +1,26 @@
 package com.advicetec.measuredentitity;
 
-import java.beans.PropertyVetoException;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-
-import javax.xml.bind.JAXBException;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.w3c.dom.Document;
 
 import com.advicetec.MessageProcessor.DelayEvent;
-import com.advicetec.aggregation.oee.OEEAggregationCalculator;
-import com.advicetec.aggregation.oee.OEEAggregationManager;
-import com.advicetec.aggregation.oee.OverallEquipmentEffectiveness;
 import com.advicetec.configuration.ReasonCode;
-import com.advicetec.core.Attribute;
-import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.EntityFacade;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.eventprocessor.PurgeFacadeCacheMapsEvent;
 import com.advicetec.language.ast.ASTNode;
-import com.advicetec.language.ast.Symbol;
-import com.advicetec.persistence.MeasureAttributeValueCache;
 import com.advicetec.persistence.StateIntervalCache;
-import com.advicetec.persistence.StatusStore;
-import com.advicetec.utils.PeriodUtils;
-import com.advicetec.utils.PredefinedPeriod;
-import com.advicetec.utils.PredefinedPeriodType;
 
 
 /**
@@ -192,9 +162,15 @@ public final class MeasuredEntityFacade extends EntityFacade {
 					break;
 				}
 			}
+			
 			LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
 			long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
-			actualRate = new Double(sum * 60 / seconds);    // The actual rate is in cycle over minutes. 
+			double tmp = 0;
+			if (seconds > 0) {
+				tmp = (sum * 60) / seconds;
+			}
+				
+			actualRate = new Double(tmp);    // The actual rate is in cycle over minutes. 
 		}
 			
 		StateInterval stateInterval = null;
@@ -207,7 +183,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			stateInterval = new StateInterval(status, reasonCode, interval, getEntity().getId(), getEntity().getType(), 
 												0, 0, "", rate, conversion1, conversion2, actualRate, new Double(0));
 		}
-		stateInterval.setKey(getEntity().getId()+stateInterval.getKey());
+		stateInterval.setKey(getEntity().getId()+ ":" + stateInterval.getKey());
 		// key in the map and the cache must be consistent
 		super.statesMap.put(interval.getStart(),stateInterval.getKey());
 		StateIntervalCache.getInstance().storeToCache(stateInterval);
@@ -326,21 +302,145 @@ public final class MeasuredEntityFacade extends EntityFacade {
 		return ((MeasuredEntity) this.getEntity()).getAttributeFromExecutedObject(attributeId);
 	}
 	
+	private void changeState(MeasuringState newState) {
+		
+		LocalDateTime localDateTime = LocalDateTime.now();
+
+		// Creates the time interval, from the last status change to now.
+		TimeInterval interval = new TimeInterval(((MeasuredEntity)this.getEntity()).getCurrentStatDateTime(), localDateTime);
+		
+		// Registers the interval in the Measured Entity
+		this.registerInterval(((MeasuredEntity)this.getEntity()).getCurrentState(), 
+							  ((MeasuredEntity)this.getEntity()).getCurrentReason(), 
+							  interval);
+		
+		// Starts a new Interval.
+		((MeasuredEntity)this.getEntity()).startInterval(localDateTime, newState, null);
+
+	}
+	
 	/**
 	 * Change the executing entity being processed in the measure entity. Registers the corresponding interval representing the change. 
 	 */
 	public synchronized void ExecutedEntityChange(){
 		
-		LocalDateTime localDateTime = LocalDateTime.now();
-		TimeInterval interval = new TimeInterval(this.entity.getCurrentStatDateTime(), localDateTime);
-		this.registerInterval(this.entity.getCurrentState(), this.entity.getCurrentReason(), interval);
-		this.getEntity().startInterval(localDateTime, this.entity.getCurrentState(), null);						
-
+		changeState(((MeasuredEntity)this.getEntity()).getCurrentState());
+		
 	}
 	
 	public synchronized ExecutedEntity getCurrentExecutedEntity() {
 		return ((MeasuredEntity) this.getEntity()).getCurrentExecutedEntity();
 	}
+	
+	/**
+	 * Returns the current state of the measured entity.
+	 *  
+	 * @return  If there is not entity assigned return undefined.
+	 */    
+	public synchronized MeasuringState getCurrentState(){
+    	 if (this.getEntity() == null){
+    		 return MeasuringState.UNDEFINED;
+    	 } else {
+    		 return ((MeasuredEntity) this.getEntity()).getCurrentState();
+    	 }
+     }
 
+
+	/**
+	 * Updates the state of the entity taking as parameter 
+	 * the measured attributes resulting from a transformation or behavior execution 
+	 * 
+	 * @param symbolMap				symbols generated by the transformation or behavior execution.
+	 */
+	public synchronized void setCurrentState(Map<String, ASTNode> symbolMap) {
+
+		for (Map.Entry<String, ASTNode> entry : symbolMap.entrySet()) 
+		{
+			if(entry.getKey().compareTo("state") == 0 ){
+				ASTNode node = entry.getValue();
+				Integer newState = node.asInterger();
+				
+				MeasuringState currentState = ((MeasuredEntity)this.getEntity()).getCurrentState();
+				
+				if (newState == 0){
+					if (( currentState != MeasuringState.OPERATING) || 
+							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
+						
+						changeState(MeasuringState.OPERATING);
+												
+					}
+				} else if (newState == 1){
+					
+					if (( currentState != MeasuringState.SCHEDULEDOWN) || 
+							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
+						
+						changeState(MeasuringState.SCHEDULEDOWN);						
+					}
+					
+				} else if (newState == 2){
+					
+					if (( currentState != MeasuringState.UNSCHEDULEDOWN) || 
+							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
+						
+						changeState(MeasuringState.UNSCHEDULEDOWN);						
+					}
+					
+				} else {
+					logger.error("The new state is being set to undefined, which is incorrect");
+				}	
+			}
+		}
+	}
+
+	
+	/**
+	 * Update a previously defined stat, assigning its reason code. 
+	 *  
+	 * @param startDttmStr	start datetime when the interval to update started - this value works as a key for the interval states. 
+	 * @param reasonCode	Reason code to assign.
+	 * 	
+	 * @return	true if the intervals was found and updated, false otherwise.
+	 */
+	public synchronized boolean updateStateInterval(String startDttmStr, ReasonCode reasonCode) {
+
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
+		
+		logger.debug("reasoncode id:" + reasonCode.getId() + " descr:" + reasonCode.getDescription() + " startDttm:" + startDttm );
+		
+		boolean ret = false;
+		
+		if ( ((MeasuredEntity) this.getEntity()).getCurrentStatDateTime().equals(startDttm)){
+			
+			logger.debug("Updating the current state interval");
+			
+			((MeasuredEntity) this.getEntity()).setCurrentReasonCode(reasonCode);
+			ret = true;
+		} else {
+
+			logger.debug("Updating the past state interval");
+			
+			LocalDateTime oldest = stateCache.getOldestTime();
+			
+			logger.debug("oldest" + oldest.format(formatter));
+			
+			// all values are in the cache
+			if(oldest.isBefore(startDttm))
+			{
+				logger.debug("the datetime given is before");
+				String stateKey = statesMap.get(startDttm);
+				logger.debug("State key found:" + stateKey);
+				ret = stateCache.updateCacheStateInterval(stateKey, reasonCode);
+			} else if(oldest.isAfter(startDttm)){
+				logger.debug("the datetime given is after");
+				// all values are in the database 
+				ret = stateCache.updateStateInterval(this.entity.getId(), this.entity.getType(), startDttm, reasonCode);				
+			}
+		}
+		
+		return ret;
+	}
+
+	
 }
 

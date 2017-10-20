@@ -2,6 +2,7 @@ package com.advicetec.eventprocessor;
 
 import java.util.List;
 
+import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 
 public class MeasuredEntityEvent extends Event 
@@ -16,6 +17,12 @@ public class MeasuredEntityEvent extends Event
 	 * Entity involved for this event.
 	 */
 	private Integer entity;
+	
+	/***
+	 * Entity type
+	 */
+	
+	private MeasuredEntityType entityType;
 	
 	/**
 	 * Device where the measure was read
@@ -41,7 +48,7 @@ public class MeasuredEntityEvent extends Event
 	 * @param port			port in the measuring device where the information was registered and that triggers this behavior
 	 * @param parameters	List of interpreted signals result of the transformation.
 	 */
-	public MeasuredEntityEvent(String behavior, Integer entity, Integer device, Integer port, List<InterpretedSignal> parameters) 
+	public MeasuredEntityEvent(String behavior, Integer entity, MeasuredEntityType entityType, Integer device, Integer port, List<InterpretedSignal> parameters) 
 	{
 		super(EventType.MEASURING_ENTITY_EVENT, 
 					EventType.MEASURING_ENTITY_EVENT.getName() + "-" + 
@@ -52,6 +59,7 @@ public class MeasuredEntityEvent extends Event
 		this.device = device;
 		this.port = port;
 		this.parameters = parameters;
+		this.entityType = entityType;
 	}
 
 	/**
@@ -80,15 +88,6 @@ public class MeasuredEntityEvent extends Event
 	public String getBehaviorName() {
 		return behaviorName;
 	}
-
-	/**
-	 * Gets the measured entity acting as context for the behavior program
-	 * 
-	 * @return measured entity identifier
-	 */
-	public Integer getMeasuredEntity() {
-		return entity;
-	}
 	
 	/**
 	 * Gets the list of parameters required to execute the behavior
@@ -106,6 +105,22 @@ public class MeasuredEntityEvent extends Event
 	 */
 	@Override
 	public String toString() {
-		return "entity=" + entity + "-" + "device=" + this.device + "-" + "Port=" + this.port + "-" + "behavior=" + behaviorName;
+		return "entity=" + entity + "-" + "entity type:" + entityType + "-" + "device=" + this.device + "-" + "Port=" + this.port + "-" + "behavior=" + behaviorName;
+	}
+
+	/**
+	 * Gets the measured entity acting as context for the behavior program
+	 * 
+	 * @return measured entity identifier
+	 */
+	@Override
+	public Integer getEntity() {
+		return entity;
+	}
+	
+	
+	@Override
+	public MeasuredEntityType getOwnerType() {
+		return entityType;
 	}
 }

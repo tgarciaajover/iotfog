@@ -131,9 +131,22 @@ public class MeasuredEntityResource extends ServerResource
 
 			// Looks for the measured entity identifier in the Measured Entity container.
 			MeasuredEntityManager measuredEntityManager = MeasuredEntityManager.getInstance();
-			measuredEntityManager.removeMeasuredEntity(uniqueID);
+			
+			MeasuredEntityFacade measuredEntityFacade =  measuredEntityManager.getFacadeOfEntityById(uniqueID);
+			
+			if (measuredEntityFacade != null) {
+			
+				measuredEntityManager.removeMeasuredEntity(measuredEntityFacade.getEntity().getId(), measuredEntityFacade.getEntity().getType());
 
-			getResponse().setStatus(Status.SUCCESS_OK);	    
+				getResponse().setStatus(Status.SUCCESS_OK);	    
+				
+			} else {
+				String error = "The measured entity :" + uniqueID.toString() + " was not found";
+				logger.error(error);
+				getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
+
+			}
+			
 			result = new JsonRepresentation("");
 			return result;
 
