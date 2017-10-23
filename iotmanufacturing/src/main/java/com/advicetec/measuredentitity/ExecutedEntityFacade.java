@@ -442,7 +442,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 						 tInterval, measuredEntityId);
 		} 
 		
-		((ExecutedEntity)getEntity()).startInterval(measuredEntityId, LocalDateTime.now(), MeasuringState.OPERATING, null);
+		((ExecutedEntity) getEntity()).startInterval(measuredEntityId, LocalDateTime.now(), MeasuringState.OPERATING, null);
 
 		
 	}
@@ -469,7 +469,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 							 ((ExecutedEntity) getEntity()).getCurrentReason(measuringEntityId), 
 							 tInterval, measuringEntityId);
 			
-			((ExecutedEntity)getEntity()).startInterval(measuringEntityId, LocalDateTime.now(), MeasuringState.UNSCHEDULEDOWN, null);
+			((ExecutedEntity) getEntity()).startInterval(measuringEntityId, LocalDateTime.now(), MeasuringState.UNSCHEDULEDOWN, null);
 		}
 
 		logger.debug("Finish production order stop ");

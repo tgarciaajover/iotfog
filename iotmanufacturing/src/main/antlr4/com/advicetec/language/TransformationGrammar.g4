@@ -82,7 +82,7 @@ log : LOG expression SEMICOLON
  ;
 
 expression : expression EXPO expression  							# Expon
- 			| round									# ref_round 			
+ 			| round													# ref_round 			
 			| MINUS expression                     					# unaryMinusExpr
  			| NOT expression                        				# notExpr
 			| token													# ref_split
@@ -114,7 +114,7 @@ startwith   : STARTWITH  PR_OPN ex1=expression ',' ex2=expression PR_CLS
 status		: STATUS DOT ID
 	;
 
-state       : STATE
+state       : STATE DOT STATES
     ;
     
 atom :		ID								# Var
@@ -191,6 +191,8 @@ STARTWITH   : 'start_with';
 
 POSSIBLE_STATES : OPERATIVE | SCHED_DOWN | UNSCHED_DOWN; 
 
+STATES  : OPERATIVE | SCHED_DOWN | UNSCHED_DOWN | SYSTEM_DOWN; 
+
 OR 		: 	'OR';
 AND 	: 	'AND';
 EQ 		: 	'==';
@@ -212,17 +214,18 @@ DOT 	:	'.';
 ASG		:	'=';
 RETURN 	: 	'return';
 
-K_FLOAT 	: 'float';
-K_INT   	: 'int';
-K_BOOL  	: 'boolean';
-K_STR   	: 'string';
-K_VOID  	: 'void';
-K_DATE		: 'date';
-K_TIME		: 'time';
-K_DATETIME 	: 'datetime';
-OPERATIVE 	: 'operative';
-SCHED_DOWN  : 'sched_down';
-UNSCHED_DOWN : 'unsched_down';
+K_FLOAT 		: 'float';
+K_INT   		: 'int';
+K_BOOL  		: 'boolean';
+K_STR   		: 'string';
+K_VOID  		: 'void';
+K_DATE			: 'date';
+K_TIME			: 'time';
+K_DATETIME 		: 'datetime';
+OPERATIVE 		: 'operative';
+SCHED_DOWN  	: 'sched_down';
+UNSCHED_DOWN 	: 'unsched_down';
+SYSTEM_DOWN 	: 'system_down';
 
 SEMICOLON 		: ';';
 COMMA 	  		: ',';
