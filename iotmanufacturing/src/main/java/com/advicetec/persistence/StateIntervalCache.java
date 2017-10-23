@@ -2,7 +2,6 @@ package com.advicetec.persistence;
 
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,13 +26,10 @@ import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.configuration.ReasonCodeContainer;
 import com.advicetec.configuration.SystemConstants;
-import com.advicetec.core.AttributeValue;
 import com.advicetec.core.Configurable;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.core.TimeInterval;
 import com.advicetec.measuredentitity.DowntimeReason;
-import com.advicetec.measuredentitity.Machine;
-import com.advicetec.measuredentitity.MeasuredEntity;
 import com.advicetec.measuredentitity.MeasuringState;
 import com.advicetec.measuredentitity.StateInterval;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -112,11 +108,39 @@ public class StateIntervalCache extends Configurable {
 	/**
 	 * SQL to select a set of Status Interval given a time range and owner_id. 
 	 */
-	final private static String sqlStatusIntervalRangeSelect = "SELECT datetime_from, datetime_to, status, reason_code, executed_object, executed_object_type, executed_object_canonical, production_rate, conversion1, conversion2, actual_production_rate, qty_defective FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? and ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? and datetime_to <= ?))";
+	final private static String sqlStatusIntervalRangeSelect = "SELECT datetime_from, datetime_to, status, reason_code, related_object, related_object_type, executed_object_canonical, production_rate, conversion1, conversion2, actual_production_rate, qty_defective FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? and ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? and datetime_to <= ?))";
 	/**
-	 * SQL sentence to update an interval over dataabse.
+	 * SQL sentence to update an interval over database.
 	 */
-	final private static String sqlUpdateInterval = "UPDATE measuringentitystatusinterval SET reason_code = ? WHERE id_owner = ? and owner_type = ? and datetime_from =?";
+	final private static String sqlMeasuredEntityUpdateInterval = "UPDATE measuringentitystatusinterval SET reason_code = ? WHERE id_owner = ? and owner_type = ? and datetime_from >= ";
+
+	/**
+	 * SQl to update by interval, it sets the reason code for all non operating intervals.
+	 */
+	final private static String sqlMeasuredEntityUpdateInterval2 = "UPDATE measuringentitystatusinterval SET reason_code = ? WHERE id_owner = ? and owner_type = ? and datetime_from >= ? and datetime_from < ?";
+	
+	/**
+	 * SQL Sentence to select the min datetime of the following operating interval.
+	 */
+	final private static String sqlMeasuredEntityStartNextOperatingInterval = "SELECT min(datetime_from) FROM measuringentitystatusinterval where id_owner = ? and owner_type = ? and datetime_from >= ? and status = ? and datetime_from <= ?";
+
+
+	/**
+	 * SQL sentence to update an interval over database running in the same measured entity.
+	 */
+	final private static String sqlExecutedEntityUpdateInterval = "UPDATE measuringentitystatusinterval SET reason_code = ? WHERE id_owner = ? and owner_type = ? and related_object = ? and related_object_type = ? and datetime_from >= ";
+ 
+
+	/**
+	 * SQl to update by interval, it sets the reason code for all non operating intervals running in the same measured entity.
+	 */
+	final private static String sqlExecutedEntityUpdateInterval2 = "UPDATE measuringentitystatusinterval SET reason_code = ? WHERE id_owner = ? and owner_type = ? and related_object = ? and related_object_type = ? and datetime_from >= ? and datetime_from < ?";
+	
+	/**
+	 * SQL Sentence to select the min datetime of the following operating interval running in the same measured entity.
+	 */
+	final private static String sqlExecutedEntityStartNextOperatingInterval = "SELECT min(datetime_from) FROM measuringentitystatusinterval where id_owner = ? and owner_type = ? and related_object = ? and related_object_type = ? and datetime_from >= ? and status = ? and datetime_from <= ?";
+	
 	/**
 	 * A cache is a map with a key and the stateInterval. 
 	 */		
@@ -421,23 +445,24 @@ public class StateIntervalCache extends Configurable {
 	}
 
 	/**
-	 * Updates a state interval into cache with the given parameters. 
-	 * @param stateKey key of downtime reason code to update.
+	 * Updates a state interval in the cache with the given parameters. 
+	 * @param stateKey key of downtime interval to update.
 	 * @param reasonCode downtime reason code to update.
-	 * @return <code>TRUE</code> if the given downtime reason code is successfully
-	 * updated, <code>FALSE</code> otherwise.
+	 * 
+	 * @return <code>The updated State Interval</code> if the given downtime reason code was successfully updated
+	 * updated, <code>null</code> otherwise.
 	 */
-	public synchronized boolean updateCacheStateInterval(String stateKey, ReasonCode reasonCode) {
+	public synchronized StateInterval updateCacheStateInterval(String stateKey, ReasonCode reasonCode) {
 
 		logger.debug("In updateCacheStateInterval");
 		
 		StateInterval stateInterval = cache.getIfPresent(stateKey);
 		if (stateInterval == null){		
-			return false;
+			return null;
 		} else {
 			stateInterval.setReason(reasonCode); 
 			cache.put(stateKey, stateInterval);
-			return true;
+			return stateInterval;
 		}
 	}
 	
@@ -461,54 +486,240 @@ public class StateIntervalCache extends Configurable {
 	 * @return <code>TRUE</code> if updates any register, <code>FALSE</code>
 	 * otherwise.  
 	 */
-	public boolean updateStateInterval(Integer entityId, MeasuredEntityType mType, 
-			LocalDateTime startDttm, ReasonCode reasonCode) {
+	public LocalDateTime updateMeasuredEntityStateInterval(Integer entityId, MeasuredEntityType mType, LocalDateTime startDttm, ReasonCode reasonCode) {
 
 		logger.debug("In updateStateInverval reasonCd:" + reasonCode.getId() );
 
 		boolean ret = false;
 		Connection connDB  = null; 
 		PreparedStatement pstDB = null;
+		PreparedStatement pstDB2 = null;
+		LocalDateTime dTimeFrom = null;
+		
 		try {
 			connDB = getConnection();
 			connDB.setAutoCommit(false);
-			// prepares the statement
-			pstDB = connDB.prepareStatement(StateIntervalCache.sqlUpdateInterval);
-			// set parameters to the query
-			pstDB.setString(1, reasonCode.getId().toString() );
-			pstDB.setInt(2, entityId);
-			pstDB.setInt(3, mType.getValue());
-			pstDB.setTimestamp(4, Timestamp.valueOf(startDttm));
-			if (pstDB.executeUpdate() > 0){
-				ret = true;
-				connDB.commit();
+			
+			Calendar calendar = Calendar.getInstance();
+			java.sql.Timestamp now = new java.sql.Timestamp(calendar.getTime().getTime());
+			
+			pstDB2 = connDB.prepareStatement(StateIntervalCache.sqlMeasuredEntityStartNextOperatingInterval);
+			pstDB2.setInt(1, entityId);
+			pstDB2.setInt(2, mType.getValue());
+			pstDB2.setTimestamp(3, Timestamp.valueOf(startDttm));
+			pstDB2.setString(4, MeasuringState.OPERATING.getName());
+			pstDB2.setTimestamp(5, now);
+			
+			ResultSet rs =  pstDB2.executeQuery();
+
+			Calendar cal = Calendar.getInstance();
+			TimeZone utcTimeZone = TimeZone.getTimeZone(SystemConstants.TIMEZONE);
+			cal.setTimeZone(utcTimeZone);
+
+			Timestamp dsTimeFrom = null;
+			while (rs.next())
+			{
+				dsTimeFrom = rs.getTimestamp(1);
+
 			}
+			
+			if (dsTimeFrom != null) {
+
+				long timestampTimeFrom = dsTimeFrom.getTime();
+				
+				cal.setTimeInMillis(timestampTimeFrom);
+				dTimeFrom = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+						cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+						cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+						cal.get(Calendar.MILLISECOND));				
+				
+				// prepares the statement
+				pstDB = connDB.prepareStatement(StateIntervalCache.sqlMeasuredEntityUpdateInterval2);
+				// set parameters to the query
+				pstDB.setString(1, reasonCode.getId().toString() );
+				pstDB.setInt(2, entityId);
+				pstDB.setInt(3, mType.getValue());
+				pstDB.setTimestamp(4, Timestamp.valueOf(startDttm));
+				pstDB.setTimestamp(5, dsTimeFrom);
+				if (pstDB.executeUpdate() > 0){
+					ret = true;
+					connDB.commit();
+				}
+				
+			} else {
+										
+				// prepares the statement
+				pstDB = connDB.prepareStatement(StateIntervalCache.sqlMeasuredEntityUpdateInterval);
+				// set parameters to the query
+				pstDB.setString(1, reasonCode.getId().toString() );
+				pstDB.setInt(2, entityId);
+				pstDB.setInt(3, mType.getValue());
+				pstDB.setTimestamp(4, Timestamp.valueOf(startDttm));
+				if (pstDB.executeUpdate() > 0){
+					ret = true;
+					connDB.commit();
+				}
+				
+			}
+				
 
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		} finally{
-			if(pstDB!=null){
-				try {
-					pstDB.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
+			
+			try {
+				
+				if (pstDB2 != null) {
+					pstDB2.close();
 				}
+				
+				if(pstDB!=null){
+					pstDB.close();
+				}
+
+				if(connDB!=null) {
+					connDB.close();
+				}
+
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
 			}
 
-			if(connDB!=null) {
-				try {
-					connDB.close();
-				} catch (SQLException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-			}
 		}			
 
-		logger.debug("In updateStateInverval return:" + ret);
-		return ret;
+		logger.debug("In updateStateInverval the last date-time is:" + dTimeFrom);
+		
+		return dTimeFrom;
+	}
+
+	/**
+	 * Updates a state interval into database with the given parameters.
+	 * 
+	 *  This method can work in parallel 
+	 * 
+	 * @param entityId measured entity id.
+	 * @param mType describes the type of measured entity.
+	 * @param startDttm initial time to query.
+	 * @param reasonCode downtime reason, not NULL.
+	 * @return <code>TRUE</code> if updates any register, <code>FALSE</code>
+	 * otherwise.  
+	 */
+	public LocalDateTime updateExecutedEntityStateInterval(Integer executedEntityId, 
+												MeasuredEntityType executedEntityType, Integer measuredEntityId,  
+												MeasuredEntityType measuredEntityType, LocalDateTime startDttm, 
+												ReasonCode reasonCode) {
+
+		logger.debug("In updateStateInverval reasonCd:" + reasonCode.getId() );
+
+		boolean ret = false;
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+		PreparedStatement pstDB2 = null;
+		LocalDateTime dTimeFrom = null;
+		
+		try {
+			connDB = getConnection();
+			connDB.setAutoCommit(false);
+			
+			Calendar calendar = Calendar.getInstance();
+			java.sql.Timestamp now = new java.sql.Timestamp(calendar.getTime().getTime());
+			
+			pstDB2 = connDB.prepareStatement(StateIntervalCache.sqlExecutedEntityStartNextOperatingInterval);
+			pstDB2.setInt(1, executedEntityId);
+			pstDB2.setInt(2, executedEntityType.getValue());
+			pstDB2.setInt(3, measuredEntityId);
+			pstDB2.setInt(4, measuredEntityType.getValue());
+			pstDB2.setTimestamp(5, Timestamp.valueOf(startDttm));
+			pstDB2.setString(6, MeasuringState.OPERATING.getName());
+			pstDB2.setTimestamp(7, now);
+			
+			ResultSet rs =  pstDB2.executeQuery();
+
+			Calendar cal = Calendar.getInstance();
+			TimeZone utcTimeZone = TimeZone.getTimeZone(SystemConstants.TIMEZONE);
+			cal.setTimeZone(utcTimeZone);
+
+			Timestamp dsTimeFrom = null;
+			while (rs.next())
+			{
+				dsTimeFrom = rs.getTimestamp(1);
+			}
+			
+			if (dsTimeFrom != null) {
+
+				long timestampTimeFrom = dsTimeFrom.getTime();
+				
+				cal.setTimeInMillis(timestampTimeFrom);
+				dTimeFrom = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+						cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+						cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+						cal.get(Calendar.MILLISECOND));				
+				
+				// prepares the statement
+				pstDB = connDB.prepareStatement(StateIntervalCache.sqlExecutedEntityUpdateInterval2);
+				// set parameters to the query
+				pstDB.setString(1, reasonCode.getId().toString() );
+				pstDB2.setInt(2, executedEntityId);
+				pstDB2.setInt(3, executedEntityType.getValue());
+				pstDB2.setInt(4, measuredEntityId);
+				pstDB2.setInt(5, measuredEntityType.getValue());
+				pstDB.setTimestamp(6, Timestamp.valueOf(startDttm));
+				pstDB.setTimestamp(7, dsTimeFrom);
+				if (pstDB.executeUpdate() > 0){
+					ret = true;
+					connDB.commit();
+				}
+				
+			} else {
+										
+				// prepares the statement
+				pstDB = connDB.prepareStatement(StateIntervalCache.sqlExecutedEntityUpdateInterval);
+				// set parameters to the query
+				pstDB.setString(1, reasonCode.getId().toString() );
+				pstDB2.setInt(2, executedEntityId);
+				pstDB2.setInt(3, executedEntityType.getValue());
+				pstDB2.setInt(4, measuredEntityId);
+				pstDB2.setInt(5, measuredEntityType.getValue());				
+				pstDB.setTimestamp(6, Timestamp.valueOf(startDttm));
+				if (pstDB.executeUpdate() > 0){
+					ret = true;
+					connDB.commit();
+				}
+				
+			}
+				
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			
+			try {
+				
+				if (pstDB2 != null) {
+					pstDB2.close();
+				}
+				
+				if(pstDB!=null){
+					pstDB.close();
+				}
+
+				if(connDB!=null) {
+					connDB.close();
+				}
+
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				e.printStackTrace();
+			}
+
+		}			
+
+		logger.debug("In updateStateInverval the last date-time is:" + dTimeFrom);
+		
+		return dTimeFrom;
 	}
 
 	

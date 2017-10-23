@@ -586,8 +586,8 @@ public abstract class EntityFacade  {
 					jsob.append("reason", null);
 				// adding the jsonObject to array
 
-				jsob.append("executedObject", interval.getExecutedObject().toString());
-				jsob.append("executedObjectType", interval.getExecutedObjectType().toString());
+				jsob.append("executedObject", interval.getRelatedObject().toString());
+				jsob.append("executedObjectType", interval.getRelatedObjectType().toString());
 				jsob.append("executedObjectCanonical", interval.getExecutedObjectCanonical());
 				array.put(jsob);
 			}

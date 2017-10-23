@@ -592,7 +592,40 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			}
 		}
 	}
+	
+	public synchronized void setCurrentState(MeasuringState newState, Integer measuredEntityId) {
+	
+		if (newState == MeasuringState.OPERATING) {
+			if ( (((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.OPERATING) || 
+					(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId)) ) {
 
+				changeState(measuredEntityId, MeasuringState.OPERATING);
+
+			}
+
+		} else if (newState == MeasuringState.SCHEDULEDOWN){
+
+			if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.SCHEDULEDOWN) || 
+					(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
+
+				changeState(measuredEntityId, MeasuringState.SCHEDULEDOWN);
+
+			}
+
+		} else if (newState == MeasuringState.UNSCHEDULEDOWN){
+
+			if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.UNSCHEDULEDOWN) || 
+					(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
+
+				changeState(measuredEntityId, MeasuringState.UNSCHEDULEDOWN);
+
+			}
+
+		} else {
+			logger.error("The new state is being set to undefined, which is incorrect");
+		}	
+		
+	}
 	/**
 	 * Update a previously defined stat, assigning its reason code. 
 	 *  
@@ -601,7 +634,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * 	
 	 * @return	true if the intervals was found and updated, false otherwise.
 	 */
-	public synchronized boolean updateStateInterval(Integer measuredEntityId, String startDttmStr, ReasonCode reasonCode) {
+	public synchronized boolean updateStateInterval(Integer measuredEntityId, MeasuredEntityType measuredEntityType,  String startDttmStr, ReasonCode reasonCode) {
 
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
@@ -616,6 +649,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			
 			((ExecutedEntity) this.getEntity()).setCurrentReasonCode(measuredEntityId, reasonCode);
 			ret = true;
+		
 		} else {
 
 			logger.debug("Updating the past state interval");
@@ -624,18 +658,50 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			
 			logger.debug("oldest" + oldest.format(formatter));
 			
-			// all values are in the cache
-			if(oldest.isBefore(startDttm))
+
+			LocalDateTime enddttm; 
+			if(oldest.isAfter(startDttm) )
 			{
-				logger.debug("the datetime given is before");
-				String stateKey = statesMap.get(startDttm);
-				logger.debug("State key found:" + stateKey);
-				ret = stateCache.updateCacheStateInterval(stateKey, reasonCode);
-			} else if(oldest.isAfter(startDttm)){
 				logger.debug("the datetime given is after");
-				// all values are in the database 
-				ret = stateCache.updateStateInterval(this.entity.getId(), this.entity.getType(), startDttm, reasonCode);				
+				// some values are in the database and maybe we have to continue updating the intervals. 
+				enddttm = stateCache.updateExecutedEntityStateInterval(this.entity.getId(), this.entity.getType(), 
+													measuredEntityId, measuredEntityType, startDttm, reasonCode);
+				
+				// We have to continue updating the intervals in the cache.
+				if (enddttm == null) {
+					SortedMap<LocalDateTime, String> tail = this.statesMap.tailMap(enddttm);
+					for (Map.Entry<LocalDateTime, String> entry : tail.entrySet()) {
+						StateInterval tmp = stateCache.getFromCache(entry.getValue());
+						if ( tmp.getState() == MeasuringState.OPERATING) {
+							break;
+						}
+						
+						else {
+							if ((tmp.getRelatedObject() == measuredEntityId) && (tmp.getRelatedObjectType() == measuredEntityType.getValue())){   
+								stateCache.updateCacheStateInterval(entry.getValue(), reasonCode);
+							}
+						}
+					}
+				}
+					 				
+			} else if(oldest.isBefore(startDttm)){
+				// all values are in the state cache
+				logger.debug("the datetime given is before");
+				SortedMap<LocalDateTime, String> tail = this.statesMap.tailMap(startDttm);
+				for (Map.Entry<LocalDateTime, String> entry : tail.entrySet()) {
+					StateInterval tmp = stateCache.getFromCache(entry.getValue());
+					if ( tmp.getState() == MeasuringState.OPERATING) {
+						break;
+					}
+					
+					else {
+						if ((tmp.getRelatedObject() == measuredEntityId) && (tmp.getRelatedObjectType() == measuredEntityType.getValue())){   
+							stateCache.updateCacheStateInterval(entry.getValue(), reasonCode);
+						}
+					}
+				}
 			}
+		
 		}
 		
 		return ret;

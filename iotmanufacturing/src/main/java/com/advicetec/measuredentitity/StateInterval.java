@@ -67,14 +67,14 @@ public final class StateInterval implements Storable
 	private MeasuredEntityType parentType;
 	
 	/**
-	 * Executed object 
+	 * Related object 
 	 */
-	private Integer executedObject;
+	private Integer relatedObject;
 	
 	/**
-	 * Executed object type.
+	 * Related object type.
 	 */
-	private Integer executedObjectType;
+	private Integer relatedObjectType;
 	
 	/**
 	 * Canonical identifier given to the executed object. 
@@ -109,7 +109,7 @@ public final class StateInterval implements Storable
 	/**
 	 * SQl Statement to be used to insert a measured status interval 
 	 */
-	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code, executed_object, executed_object_type, executed_object_canonical, production_rate, conversion1, conversion2, actual_production_rate, qty_defective)" + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	public static final String SQL_Insert = "INSERT INTO measuringentitystatusinterval(id_owner, owner_type, datetime_from, datetime_to, status, reason_code, related_object, related_object_type, executed_object_canonical, production_rate, conversion1, conversion2, actual_production_rate, qty_defective)" + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 	
 	/**
 	 * SQl Statement to be used to delete a measured status interval
@@ -140,8 +140,8 @@ public final class StateInterval implements Storable
 			@JsonProperty("interval")TimeInterval timeInterval,
 			@JsonProperty("origin")Integer parent, 
 			@JsonProperty("originType")MeasuredEntityType parentType,
-			@JsonProperty("executedObject")Integer executedObject,
-			@JsonProperty("executedObjectType")Integer executedObjectType,
+			@JsonProperty("relatedObject")Integer relatedObject,
+			@JsonProperty("relatedObjectType")Integer relatedObjectType,
 			@JsonProperty("executedObjectCanonical")String executedObjectCanonical,
 			@JsonProperty("productionRate")Double productionRate,
 			@JsonProperty("conversion1")Double conversion1,
@@ -157,8 +157,8 @@ public final class StateInterval implements Storable
 		this.interval = timeInterval;
 		this.parent = parent;
 		this.parentType = parentType;
-		this.executedObject = executedObject;
-		this.executedObjectType = executedObjectType;
+		this.relatedObject = relatedObject;
+		this.relatedObjectType = relatedObjectType;
 		this.executedObjectCanonical = executedObjectCanonical;
 		this.productionRate = productionRate;
 		this.conversion1 = conversion1;
@@ -181,33 +181,33 @@ public final class StateInterval implements Storable
 	 * Gets the executed object
 	 * @return	executed object
 	 */
-	public Integer getExecutedObject() {
-		return executedObject;
+	public Integer getRelatedObject() {
+		return relatedObject;
 	}
 
 	/**
-	 * Sets the executed object
-	 * @param executedObject	executed object to set
+	 * Sets the related object
+	 * @param relatedObject	related object to set
 	 */
-	public void setExecutedObject(Integer executedObject) {
-		this.executedObject = executedObject;
+	public void setRelatedObject(Integer relatedObject) {
+		this.relatedObject = relatedObject;
 		this.lastUpdttm = LocalDateTime.now();
 	}
 
 	/**
-	 * Gets the executed object type
-	 * @return	executed object type
+	 * Gets the related object type
+	 * @return	related object type
 	 */
-	public Integer getExecutedObjectType() {
-		return executedObjectType;
+	public Integer getRelatedObjectType() {
+		return relatedObjectType;
 	}
 	
 	/**
-	 * Sets the executed object type
-	 * @param executedObjectType	executed object type to set
+	 * Sets the related object type
+	 * @param relatedObjectType	related object type to set
 	 */
-	public void setExecutedObjectType(Integer executedObjectType) {
-		this.executedObjectType = executedObjectType;
+	public void setRelatedObjectType(Integer relatedObjectType) {
+		this.relatedObjectType = relatedObjectType;
 		this.lastUpdttm = LocalDateTime.now();
 	}
 	
@@ -393,18 +393,18 @@ public final class StateInterval implements Storable
 				pstmt.setString(6, null);
 			}
 			
-			if (getExecutedObject() == null){
+			if (getRelatedObject() == null){
 				pstmt.setNull(7, java.sql.Types.INTEGER);
 			} else{
 				// Executed Object
-				pstmt.setInt(7, getExecutedObject());
+				pstmt.setInt(7, getRelatedObject());
 			}
 			
 			// Executed Object Type
-			if (getExecutedObjectType() == null){
+			if (getRelatedObjectType() == null){
 				pstmt.setNull(8, java.sql.Types.INTEGER);
 			} else {
-				pstmt.setInt(8, getExecutedObjectType());
+				pstmt.setInt(8, getRelatedObjectType());
 			}
 
 			pstmt.setString(9, getExecutedObjectCanonical());
@@ -514,8 +514,8 @@ public final class StateInterval implements Storable
 		sb.append("interval:").append(interval).append(",");
 		sb.append("origin:").append(parent).append(",");
 		sb.append("originType:").append(parentType).append(",");
-		sb.append("executedObject:").append(executedObject).append(",");
-		sb.append("executedObjectType:").append(executedObjectType).append(",");
+		sb.append("relatedObject:").append(relatedObject).append(",");
+		sb.append("relatedObjectType:").append(relatedObjectType).append(",");
 		sb.append("productionRate:").append(productionRate);
 		sb.append("conversion1:").append(conversion1);
 		sb.append("conversion2:").append(conversion2);

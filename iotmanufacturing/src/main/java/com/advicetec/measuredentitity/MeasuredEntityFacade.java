@@ -1,11 +1,13 @@
 package com.advicetec.measuredentitity;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.advicetec.MessageProcessor.DelayEvent;
+import com.advicetec.applicationAdapter.ProductionOrderManager;
 import com.advicetec.configuration.ReasonCode;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.core.EntityFacade;
@@ -302,7 +305,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 		return ((MeasuredEntity) this.getEntity()).getAttributeFromExecutedObject(attributeId);
 	}
 	
-	private void changeState(MeasuringState newState) {
+	private void changeState(MeasuringState newState)  {
 		
 		LocalDateTime localDateTime = LocalDateTime.now();
 
@@ -316,15 +319,50 @@ public final class MeasuredEntityFacade extends EntityFacade {
 		
 		// Starts a new Interval.
 		((MeasuredEntity)this.getEntity()).startInterval(localDateTime, newState, null);
+		
+		// Verify whether or not there is an executed entity being processed.
+		// In case of being processed, then updates the executed entity state.
 
+		try {
+			
+			ExecutedEntity executedEntity = getCurrentExecutedEntity();
+			
+			if (executedEntity != null) {
+				ProductionOrderManager orderManager;
+					orderManager = ProductionOrderManager.getInstance();
+				ExecutedEntityFacade executedEntityFacade = orderManager.getFacadeOfPOrderById(executedEntity.getId()); 
+				
+				if (executedEntityFacade != null) {
+					executedEntityFacade.setCurrentState(newState, getEntity().getId());
+				}
+			}
+		
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
 	}
 	
 	/**
-	 * Change the executing entity being processed in the measure entity. Registers the corresponding interval representing the change. 
+	 * Change the executing entity being processed in the measure entity. 
+	 * 
+	 * Registers an interval representing the change. 
 	 */
 	public synchronized void ExecutedEntityChange(){
 		
-		changeState(((MeasuredEntity)this.getEntity()).getCurrentState());
+		LocalDateTime localDateTime = LocalDateTime.now();
+
+		// Creates the time interval, from the last status change to now.
+		TimeInterval interval = new TimeInterval(((MeasuredEntity)this.getEntity()).getCurrentStatDateTime(), localDateTime);
+		
+		// Registers the interval in the Measured Entity
+		this.registerInterval(((MeasuredEntity)this.getEntity()).getCurrentState(), 
+							  ((MeasuredEntity)this.getEntity()).getCurrentReason(), 
+							  interval);
+		
+		// Starts a new Interval.
+		((MeasuredEntity)this.getEntity()).startInterval(localDateTime, this.getCurrentState(), null);
 		
 	}
 	
@@ -424,17 +462,36 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			
 			logger.debug("oldest" + oldest.format(formatter));
 			
-			// all values are in the cache
-			if(oldest.isBefore(startDttm))
+			LocalDateTime enddttm; 
+			if(oldest.isAfter(startDttm) )
 			{
-				logger.debug("the datetime given is before");
-				String stateKey = statesMap.get(startDttm);
-				logger.debug("State key found:" + stateKey);
-				ret = stateCache.updateCacheStateInterval(stateKey, reasonCode);
-			} else if(oldest.isAfter(startDttm)){
 				logger.debug("the datetime given is after");
-				// all values are in the database 
-				ret = stateCache.updateStateInterval(this.entity.getId(), this.entity.getType(), startDttm, reasonCode);				
+				// some values are in the database and maybe we have to continue updating the intervals. 
+				enddttm = stateCache.updateMeasuredEntityStateInterval(this.entity.getId(), this.entity.getType(), startDttm, reasonCode);
+				
+				// We have to continue updating the intervals in the cache.
+				if (enddttm == null) {
+					SortedMap<LocalDateTime, String> tail = this.statesMap.tailMap(enddttm);
+					for (Map.Entry<LocalDateTime, String> entry : tail.entrySet()) {
+						if (stateCache.getFromCache(entry.getValue()).getState() == MeasuringState.OPERATING)
+							break;
+						else
+							stateCache.updateCacheStateInterval(entry.getValue(), reasonCode);
+						
+					}
+				}
+					 				
+			} else if(oldest.isBefore(startDttm)){
+				// all values are in the state cache
+				logger.debug("the datetime given is before");
+				SortedMap<LocalDateTime, String> tail = this.statesMap.tailMap(startDttm);
+				for (Map.Entry<LocalDateTime, String> entry : tail.entrySet()) {
+					if (stateCache.getFromCache(entry.getValue()).getState() == MeasuringState.OPERATING)
+						break;
+					else
+						stateCache.updateCacheStateInterval(entry.getValue(), reasonCode);
+					
+				}			
 			}
 		}
 		
