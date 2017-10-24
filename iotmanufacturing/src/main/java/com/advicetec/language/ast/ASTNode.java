@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import com.advicetec.measuredentitity.MeasuringState;
+
 /**
  * This class represents any value that is evaluated during language interpretation.
  * 
@@ -178,6 +180,15 @@ public class ASTNode
     }
 
     /**
+     * Returns the measuring state maintained in the node
+     * 
+     * @return a measuring state object
+     */
+    public MeasuringState asMeasuringState() {
+    	return (MeasuringState) value;
+    }
+    
+    /**
      * Establishes if the value maintained is Double
      * 
      * @return true if Double, false otherwise.
@@ -305,6 +316,10 @@ public class ASTNode
     	return value instanceof LocalDateTime[];
     }
 
+   public boolean isMeasuringState() {
+	   return value instanceof MeasuringState;
+   }
+   
    /**
     * Gets a Hashcode from the value maintained
     * 

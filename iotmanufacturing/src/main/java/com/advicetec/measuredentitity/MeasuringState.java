@@ -20,7 +20,9 @@ public enum MeasuringState
 	OPERATING(0,"Operating"),
 	SCHEDULEDOWN(1,"ScheduleDown"),
 	UNSCHEDULEDOWN(2,"UnScheduleDown"),
-	UNDEFINED(3, "Undefined");
+	SYSTEMDOWN(3,"SystemDown"),
+	INITIALIZING(4,"Initializing"),
+	UNDEFINED(5, "Undefined");
 
 	/**
 	 * value assigned to the measured state 
@@ -84,6 +86,10 @@ public enum MeasuringState
 			return SCHEDULEDOWN;
 		} else if(name.equalsIgnoreCase("UnScheduleDown")){
 			return UNSCHEDULEDOWN;
+		} else if (name.equalsIgnoreCase("Initializing")) {
+			return INITIALIZING;
+		} else if (name.equalsIgnoreCase("SystemDown")){
+			return SYSTEMDOWN;
 		} else {
 			return UNDEFINED;
 		}

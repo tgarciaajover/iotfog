@@ -126,7 +126,7 @@ public abstract class MeasuredEntity extends Entity
 		
 		this.createDate = LocalDateTime.now();
 		this.behaviors = new ArrayList<MeasuredEntityBehavior>();
-		this.state = new EntityState(MeasuringState.SCHEDULEDOWN, null, LocalDateTime.now());
+		this.state = new EntityState(MeasuringState.SYSTEMDOWN, null, LocalDateTime.now());
 		
 		this.stateBehaviors = new ArrayList<MeasuredEntityStateBehavior>();
 		this.stateTransitions = new ArrayList<MeasuredEntityStateTransition>();
@@ -773,14 +773,21 @@ public abstract class MeasuredEntity extends Entity
 	@JsonIgnore
 	public synchronized ExecutedEntity getCurrentExecutedEntity()
 	{
-		logger.info("Number of executed entities included :" + this.executedEntities.size());
+		logger.debug("Number of executed entities included :" + this.executedEntities.size());
 		
 		for (Integer id : this.executedEntities.keySet()){
 			ExecutedEntity executedEntity = this.executedEntities.get(id); 
-			logger.info("Executed entity started: " + id);
-			// only ONE executed entity must be in OPERATING state at time.
-			if (executedEntity.getCurrentState(getId()) == MeasuringState.OPERATING)
+			logger.debug("Executed entity started: " + id);
+			
+			// only ONE executed entity must be in OPERATING state at time, during execution the system can go off. In that case,
+			// the system register the production order in shutdown state.
+			
+			if ((executedEntity.getCurrentState(getId()) == MeasuringState.OPERATING) 
+				 || (executedEntity.getCurrentState(getId()) == MeasuringState.SYSTEMDOWN) 
+					  || (executedEntity.getCurrentState(getId()) == MeasuringState.INITIALIZING)) 
+			{
 				return executedEntity;
+			}
 		}
 
 		return null;

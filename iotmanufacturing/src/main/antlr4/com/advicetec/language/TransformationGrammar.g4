@@ -96,6 +96,7 @@ expression : expression EXPO expression  							# Expon
  			| expression op=(EQ | NEQ) expression		            # equalityExpr
  			| expression AND expression		                        # andExpr
  			| expression OR expression		                        # orExpr
+ 			| valid_states											# ref_valid_states
 			| atom													# ref_atom
 			;
 
@@ -114,9 +115,12 @@ startwith   : STARTWITH  PR_OPN ex1=expression ',' ex2=expression PR_CLS
 status		: STATUS DOT ID
 	;
 
-state       : STATE DOT STATES
+state       : STATE
     ;
-    
+
+valid_states : SYSTEM_DOWN | POSSIBLE_STATES
+			;
+
 atom :		ID								# Var
 			| TEXT_DATE						# Date
 			| TEXT_TIME						# Time
@@ -189,9 +193,7 @@ TIMER		: 'timer';
 REPEAT		: 'repeat';
 STARTWITH   : 'start_with';
 
-POSSIBLE_STATES : OPERATIVE | SCHED_DOWN | UNSCHED_DOWN; 
-
-STATES  : OPERATIVE | SCHED_DOWN | UNSCHED_DOWN | SYSTEM_DOWN; 
+POSSIBLE_STATES : OPERATIVE | SCHED_DOWN | UNSCHED_DOWN | INITIALIZING; 
 
 OR 		: 	'OR';
 AND 	: 	'AND';
@@ -214,6 +216,13 @@ DOT 	:	'.';
 ASG		:	'=';
 RETURN 	: 	'return';
 
+OPERATIVE 		: 'operative';
+SCHED_DOWN  	: 'sched_down';
+UNSCHED_DOWN 	: 'unsched_down';
+SYSTEM_DOWN 	: 'system_down';
+INITIALIZING	: 'initializing';
+
+
 K_FLOAT 		: 'float';
 K_INT   		: 'int';
 K_BOOL  		: 'boolean';
@@ -222,10 +231,6 @@ K_VOID  		: 'void';
 K_DATE			: 'date';
 K_TIME			: 'time';
 K_DATETIME 		: 'datetime';
-OPERATIVE 		: 'operative';
-SCHED_DOWN  	: 'sched_down';
-UNSCHED_DOWN 	: 'unsched_down';
-SYSTEM_DOWN 	: 'system_down';
 
 SEMICOLON 		: ';';
 COMMA 	  		: ',';

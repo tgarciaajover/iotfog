@@ -105,7 +105,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			e.printStackTrace();
 		}
 		
-		logger.info("Finish Creating Measured entity facade");
+		logger.debug("Finish Creating Measured entity facade");
 	}
 	
 
@@ -268,9 +268,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 */
 	public synchronized void addExecutedObject(ExecutedEntity executedEntity)
 	{
-		((MeasuredEntity) this.getEntity()).addExecutedEntity(executedEntity);
-		
-		ExecutedEntityChange();
+		((MeasuredEntity) this.getEntity()).addExecutedEntity(executedEntity);		
 	}
 	
 	/**
@@ -307,6 +305,8 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	
 	private void changeState(MeasuringState newState)  {
 		
+		logger.debug("Change State - new State:" + newState.getName());
+		
 		LocalDateTime localDateTime = LocalDateTime.now();
 
 		// Creates the time interval, from the last status change to now.
@@ -322,17 +322,23 @@ public final class MeasuredEntityFacade extends EntityFacade {
 		
 		// Verify whether or not there is an executed entity being processed.
 		// In case of being processed, then updates the executed entity state.
-
+		
 		try {
 			
 			ExecutedEntity executedEntity = getCurrentExecutedEntity();
 			
 			if (executedEntity != null) {
+				
+				logger.debug("Change state - new state found entity");
+				
 				ProductionOrderManager orderManager;
 					orderManager = ProductionOrderManager.getInstance();
 				ExecutedEntityFacade executedEntityFacade = orderManager.getFacadeOfPOrderById(executedEntity.getId()); 
 				
 				if (executedEntityFacade != null) {
+					
+					logger.debug("Change state - it is going to change executed object state - new state:" + newState.getName());
+					
 					executedEntityFacade.setCurrentState(newState, getEntity().getId());
 				}
 			}
@@ -392,22 +398,28 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 */
 	public synchronized void setCurrentState(Map<String, ASTNode> symbolMap) {
 
+		logger.debug ("Measured entity in setCurrentState" );
+		
 		for (Map.Entry<String, ASTNode> entry : symbolMap.entrySet()) 
 		{
-			if(entry.getKey().compareTo("state") == 0 ){
+			if ( entry.getKey().compareTo("state") == 0 )
+			{
+				
 				ASTNode node = entry.getValue();
-				Integer newState = node.asInterger();
+				MeasuringState newState = node.asMeasuringState();
+				
+				logger.debug ("Measured entity setCurrentState new state:" +  newState.getName());
 				
 				MeasuringState currentState = ((MeasuredEntity)this.getEntity()).getCurrentState();
 				
-				if (newState == 0){
+				if ( newState == MeasuringState.OPERATING ){
 					if (( currentState != MeasuringState.OPERATING) || 
 							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
 						
 						changeState(MeasuringState.OPERATING);
 												
 					}
-				} else if (newState == 1){
+				} else if ( newState == MeasuringState.SCHEDULEDOWN ){
 					
 					if (( currentState != MeasuringState.SCHEDULEDOWN) || 
 							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
@@ -415,21 +427,83 @@ public final class MeasuredEntityFacade extends EntityFacade {
 						changeState(MeasuringState.SCHEDULEDOWN);						
 					}
 					
-				} else if (newState == 2){
+				} else if ( newState == MeasuringState.UNSCHEDULEDOWN ){
 					
 					if (( currentState != MeasuringState.UNSCHEDULEDOWN) || 
 							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
 						
 						changeState(MeasuringState.UNSCHEDULEDOWN);						
 					}
-					
+
+				}  else if ( newState == MeasuringState.INITIALIZING ){
+
+					if (( currentState != MeasuringState.INITIALIZING) || 
+							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
+
+						changeState(MeasuringState.INITIALIZING);						
+					}
+
 				} else {
+					
 					logger.error("The new state is being set to undefined, which is incorrect");
+					
 				}	
 			}
 		}
 	}
 
+	public synchronized void setCurrentState(MeasuringState newState) {
+		
+		logger.debug("Change Current State - new State:" + newState.getName() );
+		
+		MeasuringState currentState = ((MeasuredEntity)this.getEntity()).getCurrentState();
+		
+		if (newState == MeasuringState.OPERATING ){
+			if (( currentState != MeasuringState.OPERATING) || 
+					(((MeasuredEntity)this.getEntity()).startNewInterval())) {
+				
+				changeState(MeasuringState.OPERATING);
+										
+			}
+		} else if (newState == MeasuringState.SCHEDULEDOWN){
+			
+			if (( currentState != MeasuringState.SCHEDULEDOWN) || 
+					(((MeasuredEntity)this.getEntity()).startNewInterval())) {
+				
+				changeState(MeasuringState.SCHEDULEDOWN);						
+			}
+			
+		} else if (newState == MeasuringState.UNSCHEDULEDOWN){
+			
+			if (( currentState != MeasuringState.UNSCHEDULEDOWN) || 
+					(((MeasuredEntity)this.getEntity()).startNewInterval())) {
+				
+				changeState(MeasuringState.UNSCHEDULEDOWN);						
+			}
+			
+		} else if (newState == MeasuringState.SYSTEMDOWN) {
+
+			if (( currentState != MeasuringState.SYSTEMDOWN) || 
+					(((MeasuredEntity)this.getEntity()).startNewInterval())) {
+				
+				changeState(MeasuringState.SYSTEMDOWN);						
+			}
+			
+		} else if (newState == MeasuringState.INITIALIZING){
+			
+			if (( currentState != MeasuringState.INITIALIZING) || 
+					(((MeasuredEntity)this.getEntity()).startNewInterval())) {
+				
+				changeState(MeasuringState.INITIALIZING);						
+			}
+			
+		} 
+		
+		else {
+			logger.error("The new state is being set to undefined, which is incorrect");
+		}	
+
+	}
 	
 	/**
 	 * Update a previously defined stat, assigning its reason code. 

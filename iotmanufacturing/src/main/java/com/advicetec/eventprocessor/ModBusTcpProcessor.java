@@ -201,10 +201,61 @@ public class ModBusTcpProcessor implements Processor {
 			}
 			// eventManager.releaseModbusConnection(event.getIpAddress(), event.getPort(), con);
 			
-		} catch (UnknownHostException e) {
-			logger.error("Error creating the connection with the modbus slave for ipaddress:" + event.getIpAddress() + " port:" + Integer.toString(event.getPort()));
-		} catch (Exception e){
-			logger.error("Error in modbus slave for ipaddress:" + event.getIpAddress() + " port:" + Integer.toString(event.getPort()) + "error reported:" + e.getMessage());
+		} catch (Exception e) {
+			
+			logger.error("Error in modbus message");
+			
+			dictionary.put("IPAddress", event.getIpAddress());
+			dictionary.put("Port", event.getPort());
+			dictionary.put("UID", event.getUid());
+			
+			int offset = 0;
+			int count = 0;
+			ModBusTcpEventType modbusType;
+			
+			switch (event.getType()) {
+				case READ_DISCRETE:
+					ModBusTcpDiscreteDataInputEvent evt = (ModBusTcpDiscreteDataInputEvent) event;
+					offset = evt.getOffset();
+					count = evt.getCount();
+					modbusType = ModBusTcpEventType.ERROR_READ_DISCRETE;
+					break;
+				case READ_REGISTER:
+					ModBusTcpInputRegisterEvent evt2 = (ModBusTcpInputRegisterEvent) event;
+					offset = evt2.getOffset();
+					count = evt2.getCount();
+					modbusType = ModBusTcpEventType.ERROR_READ_REGISTER;
+					break;
+				case READ_HOLDING_REGISTER:
+					ModBusTcpReadHoldingRegisterEvent evt3 = (ModBusTcpReadHoldingRegisterEvent) event;
+					offset = evt3.getOffset();
+					count = evt3.getCount();
+					modbusType = ModBusTcpEventType.ERROR_READ_HOLDING;
+					break;
+				
+				case WRITE_DISCRETE:	
+				case WRITE_REGISTER:
+				default:
+					modbusType = ModBusTcpEventType.INVALID;
+					break;
+			}
+			
+			dictionary.put("Offset", offset);
+			dictionary.put("Count", count);
+			dictionary.put("Type", modbusType.getValue());
+
+			Queueable obj3 = new Queueable(QueueType.MODBUS_ERR_MESSAGE, dictionary);
+			
+			try {
+				
+				AdapterManager.getInstance().getQueue().enqueue(6, obj3);
+				
+			} catch (InterruptedException e1) {
+				logger.error("An interrupted exceptions was generated");
+				e1.printStackTrace();
+			}						
+			
+
 		} finally {
 			
 			if (con != null){

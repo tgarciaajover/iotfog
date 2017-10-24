@@ -134,6 +134,9 @@ public class IotRestServer extends Application {
       // POST request to get the OEE for a measured entity
       router.attach("/OverallEquipmentEffectiveness", OverallEquipmentEffectivenessResource.class);
       
+      // POST request to get the OEE for a production order
+      router.attach("/OEEProductionOrder", OverallEquipmentEffectivenessExecutedEntityResource.class); 
+      
       // POST request to get the definition of the measured entity attribute. 
       router.attach("/MeasuredEntityAtttributes", MeasuredEntityAttributesResource.class);
       

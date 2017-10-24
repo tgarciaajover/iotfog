@@ -204,6 +204,8 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval, Integer measuringEntityId)
 	{
 		
+		logger.info("In registerInterval:" + status.getName());
+		
 		Double rate = null;
 		Double conversion1 = null;
 		Double conversion2 = null;
@@ -404,7 +406,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 						reason = map.get(interval.getReason().getId());
 						reason.setMinDuration(reason.getDurationMinutos() + interval.getDurationMin());
 						reason.setOccurrences(reason.getOccurrences() + 1);
-					}else{
+					} else {
 						if(getEntity().getType() == MeasuredEntityType.JOB){
 							
 							reason = new DowntimeReason(getEntity().getCanonicalKey(), 
@@ -460,6 +462,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 		logger.debug("Stopping the production order");
 
 		if ( this.processedOn.containsKey(measuringEntityId) ) {
+			
 			logger.info("Registering the final interval for the production order");
 
 			TimeInterval tInterval= new TimeInterval( ((ExecutedEntity)getEntity()).getCurrentStatDateTime(measuringEntityId), 
@@ -470,6 +473,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 							 tInterval, measuringEntityId);
 			
 			((ExecutedEntity) getEntity()).startInterval(measuringEntityId, LocalDateTime.now(), MeasuringState.UNSCHEDULEDOWN, null);
+		
 		}
 
 		logger.debug("Finish production order stop ");
@@ -541,6 +545,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 		
 		((ExecutedEntity) this.getEntity()).startInterval(measuredEntityId, localDateTime, newState, null);
 		
+		logger.info ("current state:" + (((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId)));
 	}
 
 	/**
@@ -553,13 +558,18 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 */
 	public synchronized void setCurrentState(Map<String, ASTNode> symbolMap, Integer measuredEntityId) {
 
+		logger.info("In set current state");
+		
 		for (Map.Entry<String, ASTNode> entry : symbolMap.entrySet()) 
 		{
 			if(entry.getKey().compareTo("state") == 0 ){
 				ASTNode node = entry.getValue();
-				Integer newState = node.asInterger();
+				
+				MeasuringState newState = node.asMeasuringState();
+				
+				logger.info("In set current state - new state:" + newState.getName());
 				 
-				if (newState == 0){
+				if (newState == MeasuringState.OPERATING){
 					
 					if ( (((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.OPERATING) || 
 							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId)) ) {
@@ -568,7 +578,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 						
 					}
 					
-				} else if (newState == 1){
+				} else if (newState == MeasuringState.SCHEDULEDOWN){
 					
 					if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.SCHEDULEDOWN) || 
 							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
@@ -577,12 +587,21 @@ public final class ExecutedEntityFacade extends EntityFacade {
 												
 					}
 					
-				} else if (newState == 2){
+				} else if (newState == MeasuringState.UNSCHEDULEDOWN){
 					
 					if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.UNSCHEDULEDOWN) || 
 							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
 						
 						changeState(measuredEntityId, MeasuringState.UNSCHEDULEDOWN);
+						
+					}
+					
+				} else if (newState == MeasuringState.INITIALIZING){
+					
+					if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.INITIALIZING) || 
+							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
+						
+						changeState(measuredEntityId, MeasuringState.INITIALIZING);
 						
 					}
 					
@@ -621,7 +640,27 @@ public final class ExecutedEntityFacade extends EntityFacade {
 
 			}
 
-		} else {
+		} else if (newState == MeasuringState.SYSTEMDOWN) {
+
+			if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.SYSTEMDOWN) || 
+					(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
+
+				changeState(measuredEntityId, MeasuringState.SYSTEMDOWN);
+
+			}
+
+		} else if (newState == MeasuringState.INITIALIZING) {
+
+			if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.INITIALIZING) || 
+					(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
+
+				changeState(measuredEntityId, MeasuringState.INITIALIZING);
+
+			}
+
+		} 
+		
+		else {
 			logger.error("The new state is being set to undefined, which is incorrect");
 		}	
 		

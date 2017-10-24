@@ -88,7 +88,35 @@ public class MessageHandler implements Runnable
 							}
 						}							
 						break;
+						
+					case ERROR_SAMPLE:
+						logger.info("Processing error sample");
+						
+						MeasuringErrorMessage message = (MeasuringErrorMessage) um;
+						ErrorMessageSampleProcessor processor2 = new ErrorMessageSampleProcessor(message);
+						
+						List<DelayEvent> eventsToCreate2 = processor2.process();	
 
+						for ( int i=0; i < eventsToCreate2.size(); i++){
+							DelayEvent event = eventsToCreate2.get(i);
+							logger.debug("Event key to search:" + event.getKey());
+							// queues the event if  
+							// it does not previously exists
+							if (MessageManager.getInstance().
+									existDelayEventType(event.getKey()) == false){
+								this.toQueue.put(event);
+								MessageManager.getInstance().
+								addDelayEventType(event.getKey());
+							} else {
+								logger.debug("event of type: "
+										+ event.getEvent().getEvntType().getName() +
+										"already exists in the delayed queue - key:" + 
+										event.getKey() );
+							}
+						}							
+
+						break;
+					
 					case BROKER_MESSAGE:
 						break;
 

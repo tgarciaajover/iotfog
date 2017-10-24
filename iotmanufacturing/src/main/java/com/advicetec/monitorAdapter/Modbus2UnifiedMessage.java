@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.advicetec.MessageProcessor.MeasuringErrorMessage;
 import com.advicetec.MessageProcessor.SampleMessage;
 import com.advicetec.MessageProcessor.UnifiedMessage;
 import com.advicetec.configuration.ConfigurationManager;
@@ -122,7 +123,20 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 				theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), 
 						measuringEntityId, values, transformation));
 				
+			} else if (type == ModBusTcpEventType.ERROR_READ_DISCRETE) {
+				
+				theList.add(new MeasuringErrorMessage(device, device.getInputOutputPort(portLabel), measuringEntityId));
+				
+			} else if (type == ModBusTcpEventType.ERROR_READ_REGISTER) {
+				
+				theList.add(new MeasuringErrorMessage(device, device.getInputOutputPort(portLabel), measuringEntityId));
+				
+			} else if (type == ModBusTcpEventType.ERROR_READ_HOLDING) {
+				
+				theList.add(new MeasuringErrorMessage(device, device.getInputOutputPort(portLabel), measuringEntityId));
+				
 			} else {
+				
 				logger.error("The event type given:" + type.getName() +
 						"has not an associated unified message");
 			}

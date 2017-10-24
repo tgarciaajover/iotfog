@@ -406,18 +406,20 @@ public class ActivityRegistrationResource extends ServerResource
     	} else {
     	
     		logger.info("Production Order found, it is going to be put in execution");
-    		
+
+    		measuredEntityFacade.ExecutedEntityChange();
+
     		// Add a reference to measured entity facade.  
     		productionOrderFacade.addMeasuredEntity(measuredEntityFacade);
-    		
+
     		// Stop all other executed Objects
     		measuredEntityFacade.stopExecutedObjects();
-        	
-    		// put the production order in execution.
-    		productionOrderFacade.start(measuredEntityFacade.getEntity().getId());
-    		
+
         	// start production
         	measuredEntityFacade.addExecutedObject((ExecutedEntity) productionOrderFacade.getEntity());
+
+    		// put the production order in execution.
+    		productionOrderFacade.start(measuredEntityFacade.getEntity().getId());
         	
         	getResponse().setStatus(Status.SUCCESS_OK);
 	        	
@@ -446,6 +448,8 @@ public class ActivityRegistrationResource extends ServerResource
     	ExecutedEntityFacade  pOrderfacade = productionOrderManager.getFacadeOfPOrderById(idProduction);
     	
     	if (pOrderfacade != null) {
+    		
+    		measuredEntityFacade.ExecutedEntityChange();
     	    		
     		// Stop the production order if was in operation. 
     		pOrderfacade.stop(measuredEntityFacade.getEntity().getId());

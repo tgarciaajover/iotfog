@@ -129,7 +129,8 @@ expression : ID  PR_OPN expressionList?  PR_CLS  					# Call // func call like f
  			| expression op=(EQ | NEQ) expression		            # equalityExpr
  			| expression AND expression		                        # andExpr
  			| expression OR expression		                        # orExpr
-			| atom													# ref_atom
+ 			| valid_states											# ref_valid_states 			
+			| atom													# ref_atom			
 			;
 
 token 		: TOKEN PR_OPN ex1=expression ',' ex2=expression PR_CLS
@@ -146,10 +147,11 @@ status		: STATUS DOT ID
 						
 state       : STATE
     ;
+   
+valid_states :  SYSTEM_DOWN | POSSIBLE_STATES;
 
 round : ROUND PR_OPN expression COMMA INT1 PR_CLS
 	; 
-
 						
 atom 		:	ID								# Var
 		| DATE							# Date
@@ -230,7 +232,7 @@ TIMER		: 'timer';
 REPEAT		: 'repeat';
 STARTWITH   : 'start_with';
 
-POSSIBLE_STATES : OPERATIVE | SCHED_DOWN | UNSCHED_DOWN; 
+POSSIBLE_STATES : OPERATIVE | SCHED_DOWN | UNSCHED_DOWN | INITIALIZING; 
 
 STRING : '"' .*?  '"';
 
@@ -266,17 +268,19 @@ COLON			: ':';
 
 BOOLEAN 	: 'true' | 'false';
 
-K_FLOAT 	: 'float';
-K_INT   	: 'int';
-K_BOOL  	: 'boolean';
-K_STR   	: 'string';
-K_DATETIME 	: 'datetime';
-K_VOID  	: 'void';
-K_DATE		: 'date';
-K_TIME		: 'time';
-OPERATIVE 	: 'operative';
-SCHED_DOWN  : 'sched_down';
-UNSCHED_DOWN : 'unsched_down';
+K_FLOAT 		: 'float';
+K_INT   		: 'int';
+K_BOOL  		: 'boolean';
+K_STR   		: 'string';
+K_DATETIME 		: 'datetime';
+K_VOID  		: 'void';
+K_DATE			: 'date';
+K_TIME			: 'time';
+OPERATIVE 		: 'operative';
+SCHED_DOWN  	: 'sched_down';
+UNSCHED_DOWN 	: 'unsched_down';
+SYSTEM_DOWN 	: 'system_down';
+INITIALIZING	: 'initializing';
 
 IF 		: 'if';
 ELSE 	: 'else';

@@ -9,8 +9,9 @@ package com.advicetec.MessageProcessor;
 public enum UnifiedMessageType 
 {
 	   SAMPLE(0,"Sample"),
-	   BROKER_MESSAGE(1, "Broker Message"),
-	   INVALID(2,"Invalid Event");
+	   ERROR_SAMPLE(1,"Error Sample"),
+	   BROKER_MESSAGE(2, "Broker Message"),
+	   INVALID(3,"Invalid Event");
 	  
 	   private int code;
 	   private String name;

@@ -445,20 +445,8 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		space = getSpaceWithSymbol(id);
 		if ( space==null ){ 
 			MeasuringState state = facade.getCurrentState();
-			switch (state){
-				case OPERATING:
-					node = new ASTNode(new Integer(0));
-					break;
-				case SCHEDULEDOWN:
-					node = new ASTNode(new Integer(1));
-					break;
-				case UNSCHEDULEDOWN:
-					node = new ASTNode(new Integer(2));
-					break;
-				case UNDEFINED:
-					node = new ASTNode(new Integer(3));
-					break;
-			}
+			node = new ASTNode(state);
+			
 		} else {
 			node = space.get(id);
 		}
@@ -496,18 +484,16 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			
 			String newState = ctx.POSSIBLE_STATES().getText();
 			
-			if (newState.compareTo("operative") == 0){
-				value = new Integer(0);
-				node = new ASTNode(value); 
-			} else if (newState.compareTo("sched_down") == 0 ){
-				value = new Integer(1);
-				node = new ASTNode(value); 
-			} else if (newState.compareTo("unsched_down") == 0 ){
-				value = new Integer(2);
-				node = new ASTNode(value); 
+			if ( newState.compareTo("operative") == 0 ){
+				node = new ASTNode(MeasuringState.OPERATING); 
+			} else if ( newState.compareTo("sched_down") == 0 ){
+				node = new ASTNode(MeasuringState.SCHEDULEDOWN); 
+			} else if ( newState.compareTo("unsched_down") == 0 ){
+				node = new ASTNode(MeasuringState.UNSCHEDULEDOWN); 
+			} else if ( newState.compareTo("initializing") == 0 ) {
+				node = new ASTNode(MeasuringState.INITIALIZING);
 			} else {
-				value = new Integer(3);
-				node = new ASTNode(value); 
+				node = new ASTNode(MeasuringState.UNDEFINED); 
 			}
 
 			space.put(symbol.getName(), node);         // store
@@ -1234,6 +1220,8 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		    		return new ASTNode((Boolean) (left.asDateTime()).equals(right.asDateTime()) );
 		    	} else if (left.isTime() && right.isTime()){
 		    		return new ASTNode((Boolean) (left.asTime()).equals(right.asTime()) );
+		    	} else if (left.isMeasuringState() && right.isMeasuringState()) {
+		    		return new ASTNode((Boolean) (left.asMeasuringState() == right.asMeasuringState()) ); 
 		    	} else {
             		throw new RuntimeException("operators are not of the same type");
             	}        
@@ -1257,6 +1245,8 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		    		return new ASTNode((Boolean) !(left.asDateTime()).equals(right.asDateTime()) );
 		    	} else if (left.isTime() && right.isTime()){
 		    		return new ASTNode((Boolean) !(left.asTime()).equals(right.asTime()) );
+		    	} else if (left.isMeasuringState() && right.isMeasuringState()) {
+		    		return new ASTNode((Boolean) (left.asMeasuringState() != right.asMeasuringState()) );
 		    	} else {
             		throw new RuntimeException("operators are not of the same type");
             	}        
@@ -1623,7 +1613,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
     @Override
     public ASTNode visitLog(TransformationGrammarParser.LogContext  ctx) {
         ASTNode value = this.visit(ctx.expression());
-        logger.debug("Log" + value);
+        logger.info("Log" + value);
         return value;
     }    
     
@@ -1744,6 +1734,46 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	    } 
 	}
     
+	/**
+	 * Visits a valid state expression
+	 * 	  
+	 * @return the ASTNode representing the final result.
+	 */
+	@Override public ASTNode visitRef_valid_states(TransformationGrammarParser.Ref_valid_statesContext ctx) 
+	{ 
+		String strToken = ctx.getText();
+		
+		ASTNode node;
+		
+		if (strToken.equals("operative") ) {
+			
+			node = new ASTNode(MeasuringState.OPERATING);
+			
+		} else if (strToken.equals("sched_down") ) {
+			
+			node = new ASTNode(MeasuringState.SCHEDULEDOWN);
+			
+		} else if (strToken.equals("unsched_down") ) {
+			
+			node = new ASTNode(MeasuringState.UNSCHEDULEDOWN);
+			
+		} else if ( strToken.equals("system_down") ) {
+			
+			node = new ASTNode(MeasuringState.SYSTEMDOWN);
+			
+		} else if ( strToken.equals("initializing") ) {
+			
+			node = new ASTNode(MeasuringState.INITIALIZING);
+			
+		} else {
+			
+			node = new ASTNode(MeasuringState.UNDEFINED);
+		}
+
+		return node;
+		
+	}
+	
 	/**
 	 * Visits a program parameter
 	 * 

@@ -305,16 +305,18 @@ public class OEEAggregationContainer extends Container
 				String rowReasonCode = rs.getString("reason_code");
 								
 				MeasuringState state = MeasuringState.getByName(rowStatus);
+				
 				if (state == MeasuringState.OPERATING) {
-					
+										
 					actualProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.SECONDS);
-					logger.debug("from date:" + fromDatetime.format(formatter) + " to date:" + toDatetime.format(formatter) + " act_prod_time:" + actualProductiveTime);
+					logger.debug("Operating from date:" + fromDatetime.format(formatter) + " to date:" + toDatetime.format(formatter) + " act_prod_time:" + actualProductiveTime);
 				
 				} else if (state == MeasuringState.SCHEDULEDOWN)  {
 					
+					logger.debug("Measuring State ScheduleDown");
+					
 					ReasonCode rCode = null;
 					
-					logger.info("ReasonCode: " + rowReasonCode);
 					if (rowReasonCode != null) {
 						rCode = (ReasonCode) reasonCont.getObject(Integer.valueOf(rowReasonCode.trim()));
 						
@@ -324,9 +326,16 @@ public class OEEAggregationContainer extends Container
 
 					
 				} else if (state == MeasuringState.UNSCHEDULEDOWN) {
+					
+					
 					actualProductiveTime = 0;
-				}
-				else {
+				} else if (state == MeasuringState.INITIALIZING) {
+										
+					actualProductiveTime = 0;
+				} else if (state == MeasuringState.SYSTEMDOWN) {
+										
+					actualProductiveTime = 0;
+				} else {
 					logger.error("Invalid measuring state" + state.getName());
 				}
 				

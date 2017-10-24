@@ -66,7 +66,7 @@ public class MeasuredEntityEventProcessor implements Processor
 													List<InterpretedSignal> listParams) throws Exception
 	{
 		
-		logger.info("processing - behavior:" + behaviorName);
+		logger.debug("processing - behavior:" + behaviorName);
 		
 		ArrayList<DelayEvent> ret = new ArrayList<DelayEvent>();  
 		
@@ -125,7 +125,7 @@ public class MeasuredEntityEventProcessor implements Processor
 			}
 		}
 		
-		logger.info("ending - behavior:" + behaviorName);
+		logger.debug("ending - behavior:" + behaviorName);
 		
 		return ret;
 		
@@ -140,7 +140,7 @@ public class MeasuredEntityEventProcessor implements Processor
 		Integer measuringEntity = this.event.getEntity();
 		String behaviorName = this.event.getBehaviorName();
 		
-        logger.debug("process - behavior:" + behaviorName);
+        logger.info("process - behavior:" + behaviorName);
 		
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade entityFacade = entityManager.getFacadeOfEntityById(measuringEntity);
@@ -182,7 +182,7 @@ public class MeasuredEntityEventProcessor implements Processor
 						execute_behavior(behaviorName, program, pOrderFacade, measuringEntity, listParams);
 						
 					} else {
-						logger.info("No executed entity is being run");
+						logger.debug("No executed entity is being run");
 					}
 					
 				} else {

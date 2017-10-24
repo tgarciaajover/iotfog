@@ -32,9 +32,34 @@ public enum ModBusTcpEventType
 	WRITE_REGISTER(4, "Write register"),
 	
 	/**
+	 * Error when port reading 
+	 */
+	ERROR_READ_DISCRETE(5, "Error Reading Discrete"),
+	
+	/**
+	 * Error when port reading 
+	 */
+	ERROR_READ_REGISTER(6, "Error Reading Register"),
+
+	/**
+	 * Error when port reading 
+	 */
+	ERROR_READ_HOLDING(7, "Error Reading Holding Register"),
+
+	/**
+	 * Error when port reading 
+	 */
+	ERROR_WRITE_DISCRETE(8, "Error Writing Discrete"),
+
+	/**
+	 * Error when port reading 
+	 */
+	ERROR_WRITE_REGISTER(8, "Error Writing Register"),
+
+	/**
 	 * Not a valid modbus event.
 	 */
-	INVALID(5, "Invalid");
+	INVALID(9, "Invalid");
 
 	/**
 	 * Unique code defining the modbus event type 

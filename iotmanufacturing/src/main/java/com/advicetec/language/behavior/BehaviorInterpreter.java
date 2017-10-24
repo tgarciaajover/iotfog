@@ -456,20 +456,8 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 				state = ((ExecutedEntityFacade)facade).getCurrentState(this.measuredEntityId);
 			}
 			
-			switch (state){
-			case OPERATING:
-				node = new ASTNode(new Integer(0));
-				break;
-			case SCHEDULEDOWN:
-				node = new ASTNode(new Integer(1));
-				break;
-			case UNSCHEDULEDOWN:
-				node = new ASTNode(new Integer(2));
-				break;
-			case UNDEFINED:
-				node = new ASTNode(new Integer(3));
-				break;
-			}
+			node = new ASTNode(state);
+			
 		} else {
 			node = space.get(id);
 		}
@@ -508,17 +496,15 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 			String newState = ctx.POSSIBLE_STATES().getText();
 
 			if (newState.compareTo("operative") == 0){
-				value = new Integer(0);
-				node = new ASTNode(value); 
+				node = new ASTNode(MeasuringState.OPERATING); 
 			} else if (newState.compareTo("sched_down") == 0 ){
-				value = new Integer(1);
-				node = new ASTNode(value); 
+				node = new ASTNode(MeasuringState.SCHEDULEDOWN); 
 			} else if (newState.compareTo("unsched_down") == 0 ){
-				value = new Integer(2);
-				node = new ASTNode(value); 
+				node = new ASTNode(MeasuringState.UNSCHEDULEDOWN); 
+			} else if (newState.compareTo("initializing") == 0 ) {
+				node = new ASTNode(MeasuringState.INITIALIZING);
 			} else {
-				value = new Integer(3);
-				node = new ASTNode(value); 
+				node = new ASTNode(MeasuringState.UNDEFINED); 
 			}
 
 			space.put(symbol.getName(), node);         // store
@@ -1443,7 +1429,9 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 				return new ASTNode((Boolean) (left.asDateTime()).equals(right.asDateTime()) );
 			} else if (left.isTime() && right.isTime()){
 				return new ASTNode((Boolean) (left.asTime()).equals(right.asTime()) );
-			} else {
+	    	} else if (left.isMeasuringState() && right.isMeasuringState()) {
+	    		return new ASTNode((Boolean) (left.asMeasuringState() == right.asMeasuringState()) ); 
+	    	} else {
 				throw new RuntimeException("operators are not of the same type");
 			}        
 
@@ -1466,7 +1454,9 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 				return new ASTNode((Boolean) !(left.asDateTime()).equals(right.asDateTime()) );
 			} else if (left.isTime() && right.isTime()){
 				return new ASTNode((Boolean) !(left.asTime()).equals(right.asTime()) );
-			} else {
+	    	} else if (left.isMeasuringState() && right.isMeasuringState()) {
+	    		return new ASTNode((Boolean) (left.asMeasuringState() != right.asMeasuringState()) );
+	    	} else {
 				throw new RuntimeException("operators are not of the same type");
 			}        
 
@@ -1933,7 +1923,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override
 	public ASTNode visitLog(BehaviorGrammarParser.LogContext  ctx) {
 		ASTNode value = this.visit(ctx.expression());
-		logger.debug(value);
+		logger.info(value);
 		return value;
 	}    
 
@@ -2217,6 +2207,47 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 
 	}
 
+	/**
+	 * Visits a valid state expression
+	 * 	  
+	 * @return the ASTNode representing the final result.
+	 */
+	@Override public ASTNode visitRef_valid_states(BehaviorGrammarParser.Ref_valid_statesContext ctx) 
+	{ 
+		String strToken = ctx.getText();
+		
+		ASTNode node;
+		
+		if (strToken.equals("operative") ) {
+			
+			node = new ASTNode(MeasuringState.OPERATING);
+			
+		} else if (strToken.equals("sched_down") ) {
+			
+			node = new ASTNode(MeasuringState.SCHEDULEDOWN);
+			
+		} else if (strToken.equals("unsched_down") ) {
+			
+			node = new ASTNode(MeasuringState.UNSCHEDULEDOWN);
+			
+		} else if (strToken.equals("system_down") ) {
+			
+			node = new ASTNode(MeasuringState.SYSTEMDOWN);
+			
+		} else if (strToken.equals("initializing")) {
+			
+			node = new ASTNode(MeasuringState.INITIALIZING);
+			
+		} else {
+			
+			node = new ASTNode(MeasuringState.UNDEFINED);
+		}
+
+		return node;
+		
+	}
+	
+	
 	/**
 	 * Visit the max over the time expression.
 	 * 

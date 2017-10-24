@@ -58,6 +58,20 @@ public class ModBusUtils {
 				return PREFIX + SEPARATOR + Integer.toString(port) + SEPARATOR + DIGITAL_WRITE + SEPARATOR + Integer.toString(unitId) + SEPARATOR + Integer.toString(offSet) + SEPARATOR + Integer.toString(count);
 			case WRITE_REGISTER:
 				return PREFIX + SEPARATOR + Integer.toString(port) + SEPARATOR + REGISTER_WRITE + SEPARATOR + Integer.toString(unitId) + SEPARATOR + Integer.toString(offSet) + SEPARATOR + Integer.toString(count);
+			
+			case ERROR_READ_DISCRETE:
+				return PREFIX + SEPARATOR + Integer.toString(port) + SEPARATOR + DIGITAL_READ + SEPARATOR + Integer.toString(unitId) + SEPARATOR + Integer.toString(offSet) + SEPARATOR + Integer.toString(count);
+			case ERROR_READ_REGISTER:
+				return PREFIX + SEPARATOR + Integer.toString(port) + SEPARATOR + REGISTER_READ + SEPARATOR + Integer.toString(unitId) + SEPARATOR + Integer.toString(offSet) + SEPARATOR + Integer.toString(count);
+			case ERROR_READ_HOLDING:
+				return PREFIX + SEPARATOR + Integer.toString(port) + SEPARATOR + HOLDING_READ + SEPARATOR + Integer.toString(unitId) + SEPARATOR + Integer.toString(offSet) + SEPARATOR + Integer.toString(count);
+			
+			case ERROR_WRITE_DISCRETE:
+				return PREFIX + SEPARATOR + Integer.toString(port) + SEPARATOR + DIGITAL_WRITE + SEPARATOR + Integer.toString(unitId) + SEPARATOR + Integer.toString(offSet) + SEPARATOR + Integer.toString(count);
+			
+			case ERROR_WRITE_REGISTER:
+				return PREFIX + SEPARATOR + Integer.toString(port) + SEPARATOR + REGISTER_WRITE + SEPARATOR + Integer.toString(unitId) + SEPARATOR + Integer.toString(offSet) + SEPARATOR + Integer.toString(count);
+
 			default:
 				logger.error("The method buildPortLabel cannot create a port label with type:" + type.getName());
 				return null;
