@@ -798,8 +798,8 @@ public class StateIntervalCache extends Configurable {
 				// retrieve data from the query
 				String status = rs.getString("status");
 				String reasonCode = rs.getString("reason_code");
-				Integer executedObject = rs.getInt("executed_object");
-				Integer executedObjectType = rs.getInt("executed_object_type");
+				Integer executedObject = rs.getInt("related_object");
+				Integer executedObjectType = rs.getInt("related_object_type");
 				String executedObjectCanonicalKey = rs.getString("executed_object_canonical");
 				Double productionRate = rs.getDouble("production_rate");
 				Double conversion1 = rs.getDouble("conversion1");
