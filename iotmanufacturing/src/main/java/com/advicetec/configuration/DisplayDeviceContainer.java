@@ -70,6 +70,9 @@ public class DisplayDeviceContainer extends Container
 
 		        DisplayType displayType = (DisplayType) this.getReferencedObject("DisplayType", displayId);
 		        
+		        if (displayType == null)
+		        	logger.error("Display type not found" + displayId);
+		        
 		        DisplayDevice object = new DisplayDevice(id);
 		        object.setDescr(descr);
 		        object.setDisplayType(displayType);

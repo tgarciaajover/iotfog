@@ -293,10 +293,11 @@ import org.apache.logging.log4j.Logger;
 		Symbol s = currentScope.resolve(name);
 		
 		if (s == null){
+			
 			DisplaySymbol displaySymbol = new DisplaySymbol(name);
-
+			
 			// Define the symbol in the current scope
-			currentScope.define(displaySymbol);
+			globals.define(displaySymbol);
 			
 		} 
 			

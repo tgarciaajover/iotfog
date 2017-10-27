@@ -119,7 +119,7 @@ public class ConfigurationManager extends Configurable
 		
 		// Add Display Devices
 		displayDevices = new DisplayDeviceContainer(driver, server, user, password);
-		displayDevices.addReference("DisplayType", displayDevices);
+		displayDevices.addReference("DisplayType", displayTypes);
 	}
 
 	/**

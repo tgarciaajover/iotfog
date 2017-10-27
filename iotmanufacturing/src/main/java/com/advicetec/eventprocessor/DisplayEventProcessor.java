@@ -48,14 +48,13 @@ public class DisplayEventProcessor implements Processor
 		String name = this.event.getDisplayName();
 		String text = this.event.getDisplayText();
 		
-        logger.debug("process - display:" + name + "Text:" + text);
+        logger.info("process - display:" + name + "Text:" + text);
 		
-
         ConfigurationManager confManager = ConfigurationManager.getInstance();
         DisplayDevice displayDevice = confManager.getDisplayDeviceContainer().getDisplayDevice(name);
         
 		ArrayList<DelayEvent> ret = new ArrayList<DelayEvent>();  
-
+		
 		if (displayDevice != null){
 		
 			LedSignDisplay led = new LedSignDisplay();
@@ -78,7 +77,7 @@ public class DisplayEventProcessor implements Processor
 		} else {
 			logger.error("No display with name:" + name + " was found registered in the system");
 		}
-
+		
 		return ret;
 
 	}

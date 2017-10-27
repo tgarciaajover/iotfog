@@ -18,7 +18,6 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.AttributeValue;
-import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseVisitor;
 import com.advicetec.language.ast.ASTNode;
@@ -998,7 +997,41 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
             		return new ASTNode(left.asDouble() + right.asDouble());
             	} else if (left.isString() && right.isString()){
             		new ASTNode(left.asString() + right.asString());
-		    	} else {
+            		
+		    	} else if (left.isString()) {
+		    		
+		    		if (right.isBoolean()) {
+		    			return new ASTNode(left.asString() + right.asBoolean().toString());
+		    		} else if (right.isDate()) {
+		    			return new ASTNode(left.asString() + right.asDate().toString());
+		    		} else if (right.isDouble()) {
+		    			return new ASTNode(left.asString() + right.asDouble().toString());
+		    		} else if (right.isInteger()) {
+		    			return new ASTNode(left.asString() + right.asInterger().toString());
+		    		} else if (right.isTime()) {
+		    			return new ASTNode(left.asString() + right.asTime().toString());
+		    		} else if (right.isVOID()) {
+		    			return new ASTNode(left.asString());
+		    		}
+		    			 
+		    	} else if (right.isString()) {
+
+		    		if (left.isBoolean()) {
+		    			return new ASTNode( left.asBoolean().toString() + right.asString() );
+		    		} else if (left.isDate()) {
+		    			return new ASTNode( left.asDate().toString() + right.asString());
+		    		} else if (left.isDouble()) {
+		    			return new ASTNode( left.asDouble().toString() + right.asString() );
+		    		} else if (left.isInteger()) {
+		    			return new ASTNode( left.asInterger().toString() + right.asString());
+		    		} else if (left.isTime()) {
+		    			return new ASTNode( left.asTime().toString() + right.asString());
+		    		} else if (left.isVOID()) {
+		    			return new ASTNode( left.asString());
+		    		}
+
+		    	}
+            	else {
 		    		throw new RuntimeException("operators are not numbers or strings");
 		    	}
                         
@@ -1069,54 +1102,54 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		ASTNode right = this.visit(ctx.expression(1));
 		if ((left == null) && (right == null)){
 			switch (ctx.op.getType()) {
-			case BehaviorGrammarParser.LT:
-			case BehaviorGrammarParser.GT:
+			case TransformationGrammarParser.LT:
+			case TransformationGrammarParser.GT:
 				return new ASTNode(new Boolean(false));
 			
-			case BehaviorGrammarParser.GTEQ:
-			case BehaviorGrammarParser.LTEQ:
+			case TransformationGrammarParser.GTEQ:
+			case TransformationGrammarParser.LTEQ:
 				return new ASTNode(new Boolean(true));
 
 			default:
-				throw new RuntimeException("unknown operator: " + BehaviorGrammarParser.tokenNames[ctx.op.getType()]);
+				throw new RuntimeException("unknown operator: " + TransformationGrammarParser.tokenNames[ctx.op.getType()]);
 			}
 		}
 		
 		if ((left != null) && (right == null)){
 			switch (ctx.op.getType()) {
-			case BehaviorGrammarParser.LT:
+			case TransformationGrammarParser.LT:
 				return new ASTNode(new Boolean(false));
 				
-			case BehaviorGrammarParser.GT:
+			case TransformationGrammarParser.GT:
 				return new ASTNode(new Boolean(true));
 			
-			case BehaviorGrammarParser.GTEQ:
+			case TransformationGrammarParser.GTEQ:
 				return new ASTNode(new Boolean(true));
 				
-			case BehaviorGrammarParser.LTEQ:
+			case TransformationGrammarParser.LTEQ:
 				return new ASTNode(new Boolean(false));
 
 			default:
-				throw new RuntimeException("unknown operator: " + BehaviorGrammarParser.tokenNames[ctx.op.getType()]);
+				throw new RuntimeException("unknown operator: " + TransformationGrammarParser.tokenNames[ctx.op.getType()]);
 			}
 		}
 			
 		if ((left == null) && (right != null)){
 			switch (ctx.op.getType()) {
-			case BehaviorGrammarParser.LT:
+			case TransformationGrammarParser.LT:
 				return new ASTNode(new Boolean(true));
 				
-			case BehaviorGrammarParser.GT:
+			case TransformationGrammarParser.GT:
 				return new ASTNode(new Boolean(false));
 			
-			case BehaviorGrammarParser.GTEQ:
+			case TransformationGrammarParser.GTEQ:
 				return new ASTNode(new Boolean(false));
 				
-			case BehaviorGrammarParser.LTEQ:
+			case TransformationGrammarParser.LTEQ:
 				return new ASTNode(new Boolean(true));
 
 			default:
-				throw new RuntimeException("unknown operator: " + BehaviorGrammarParser.tokenNames[ctx.op.getType()]);
+				throw new RuntimeException("unknown operator: " + TransformationGrammarParser.tokenNames[ctx.op.getType()]);
 			}
 		}
 		// Both values are different than null. 
@@ -1547,13 +1580,14 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 	 * 
 	 * @return the ASTNode VOID
 	 */
-	public ASTNode visitDisplay(BehaviorGrammarParser.DisplayContext ctx) 
+	public ASTNode visitDisplay(TransformationGrammarParser.DisplayContext ctx) 
 	{ 
 
 		String name = ctx.deviceId.getText();
 		Symbol symbol =  currentScope.resolve(name);
 		
 		if (symbol instanceof DisplaySymbol){
+			
 			DisplaySymbol display = (DisplaySymbol) symbol;
 			
 			ASTNode dataToShow = this.visit(ctx.toShow);

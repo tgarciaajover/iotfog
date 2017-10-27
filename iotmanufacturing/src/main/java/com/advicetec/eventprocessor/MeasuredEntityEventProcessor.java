@@ -14,6 +14,7 @@ import com.advicetec.applicationAdapter.ProductionOrderManager;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.EntityFacade;
 import com.advicetec.core.Processor;
+import com.advicetec.language.ast.DisplaySymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
@@ -123,6 +124,20 @@ public class MeasuredEntityEventProcessor implements Processor
 					ret.add(dEvent);
 				}
 			}
+			
+			if (symbol instanceof DisplaySymbol)
+			{
+				
+				String displayName = ((DisplaySymbol) symbol).getName();
+				String displayText = ((DisplaySymbol) symbol).getDisplayText();
+				
+				DisplayEvent event = new DisplayEvent(displayName, displayText);
+				event.setMilliseconds(0);
+				DelayEvent dEvent = new DelayEvent(event,0);
+				ret.add(dEvent);
+				
+			}
+			
 		}
 		
 		logger.debug("ending - behavior:" + behaviorName);

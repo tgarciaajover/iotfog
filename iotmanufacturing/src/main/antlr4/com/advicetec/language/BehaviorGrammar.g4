@@ -79,7 +79,7 @@ vect_attrib_dec : ATTRIBUTE type id1=ID '[' numElements=INT ']' (UNIT id2=ID)? S
 vect_var_dec : VARIABLE type id1=ID '[' numElements=INT ']' SEMICOLON
 	;
 
-display  	: DISPLAY PR_OPN deviceId=ID ',' expression PR_CLS SEMICOLON
+display  	: DISPLAY PR_OPN deviceId=ID ',' toShow=expression PR_CLS SEMICOLON
 	;
 
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON

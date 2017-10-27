@@ -56,7 +56,7 @@ assign 		: ID ASG expression SEMICOLON
 state_assign : STATE ASG POSSIBLE_STATES SEMICOLON
     ;
 
-display  	: DISPLAY PR_OPN deviceId=ID ',' expression PR_CLS SEMICOLON
+display  	: DISPLAY PR_OPN deviceId=ID ',' toShow=expression PR_CLS SEMICOLON
 	;
 
 save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON

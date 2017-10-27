@@ -32,7 +32,7 @@ public class DisplaySymbol extends Symbol
 	 * 
 	 * @param displayText  text to show.
 	 */
-	void setDisplayText(String displayText)
+	public void setDisplayText(String displayText)
 	{
 		this.diplayText = displayText;
 	}
@@ -42,7 +42,7 @@ public class DisplaySymbol extends Symbol
 	 * 
 	 * @return text to display
 	 */
-	String getDisplayText(){
+	public String getDisplayText(){
 		return this.diplayText;
 	}
 }

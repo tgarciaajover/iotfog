@@ -10,13 +10,16 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
+import com.advicetec.eventprocessor.DisplayEvent;
 import com.advicetec.eventprocessor.MeasuredEntityEvent;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.BehaviorSymbol;
+import com.advicetec.language.ast.DisplaySymbol;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.ScopedSymbol;
+import com.advicetec.language.ast.StateSymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
@@ -96,10 +99,8 @@ public class SampleProcessor implements Processor
 			try 
 			{
 				// First, we verify the transformation.
-				//List<SyntaxError> errorList = sintaxChecking.process(program);
-
-
 				List<SyntaxError> errorList = sintaxChecking.process(program, measuringEntity);
+				
 				// If no errors, then process.
 				if (errorList.size() == 0){ 
 					// Then, we read parameters from message and pass them to 
@@ -122,25 +123,29 @@ public class SampleProcessor implements Processor
 						Symbol symbol = symbols.get(symbolId);
 
 						if (symbol instanceof  ArraySymbol){
-							logger.debug("Symbol:" + symbolId + "ArraySymbol");
+							logger.debug("Symbol:" + symbolId + " ArraySymbol");
 						} else if (symbol instanceof  AttributeSymbol){
-							logger.debug("Symbol:" + symbolId + "AttributeSymbol");
+							logger.debug("Symbol:" + symbolId + " AttributeSymbol");
 						} else if (symbol instanceof  BehaviorSymbol){
-							logger.debug("Symbol:" + symbolId + "BehaviorSymbol");
+							logger.debug("Symbol:" + symbolId + " BehaviorSymbol");
 						} else if (symbol instanceof  FunctionSymbol){
-							logger.debug("Symbol:" + symbolId + "FunctionSymbol");
+							logger.debug("Symbol:" + symbolId + " FunctionSymbol");
 						} else if (symbol instanceof  ImportSymbol){
-							logger.debug("Symbol:" + symbolId + "ImportSymbol");
+							logger.debug("Symbol:" + symbolId + " ImportSymbol");
 						} else if (symbol instanceof  ScopedSymbol){
-							logger.debug("Symbol:" + symbolId + "ScopedSymbol");
+							logger.debug("Symbol:" + symbolId + " ScopedSymbol");
 						} else if (symbol instanceof  TimerSymbol){
-							logger.debug("Symbol:" + symbolId + "TimerSymbol");
+							logger.debug("Symbol:" + symbolId + " TimerSymbol");
 						} else if (symbol instanceof  UnitMeasureSymbol){
-							logger.debug("Symbol:" + symbolId + "UnitMeasureSymbol");
+							logger.debug("Symbol:" + symbolId + " UnitMeasureSymbol");
 						} else if (symbol instanceof  TransformationSymbol){
-							logger.debug("Symbol:" + symbolId + "TransformationSymbol");
+							logger.debug("Symbol:" + symbolId + " TransformationSymbol");
+						} else if (symbol instanceof StateSymbol) {
+							logger.debug("Symbol:" + symbolId + " StateSymbol");
+						} else if (symbol instanceof DisplaySymbol) {
+							logger.debug("Symbol:" + symbolId + " DisplaySymbol");
 						} else {
-							logger.debug("Symbol:" + symbolId + "Invalid symbol");
+							logger.debug("Symbol:" + symbolId + " Invalid symbol");
 						}
 
 						if (symbol instanceof TimerSymbol)
@@ -152,7 +157,7 @@ public class SampleProcessor implements Processor
 							String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
 							
 							
-							logger.debug("Symbol:" + symbolId + "behavior:" + behavior);
+							logger.info("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
 							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, entityFacade.getType(), mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
 							event.setRepeated(repeated);
@@ -160,6 +165,19 @@ public class SampleProcessor implements Processor
 
 							DelayEvent dEvent = new DelayEvent(event,duetime);
 							ret.add(dEvent);
+						}
+						
+						if (symbol instanceof DisplaySymbol)
+						{
+							
+							String displayName = ((DisplaySymbol) symbol).getName();
+							String displayText = ((DisplaySymbol) symbol).getDisplayText();
+							
+							DisplayEvent event = new DisplayEvent(displayName, displayText);
+							event.setMilliseconds(0);
+							DelayEvent dEvent = new DelayEvent(event,0);
+							ret.add(dEvent);
+							
 						}
 					}
 
