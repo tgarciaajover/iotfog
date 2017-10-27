@@ -112,7 +112,6 @@ public class MeasuredEntityManager extends Configurable {
 																this.unit1PerCycles, this.unit2PerCycles, 
 																this.actualProductionCountId, this.purgeFacadeCacheMapEntries);
 			
-			logger.info("3");
 			entities.add(f);
 		}
 		
