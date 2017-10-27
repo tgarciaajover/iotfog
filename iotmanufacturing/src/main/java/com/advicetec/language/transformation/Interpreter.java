@@ -23,6 +23,7 @@ import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseVisitor;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.AttributeSymbol;
+import com.advicetec.language.ast.DisplaySymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
 import com.advicetec.language.ast.MemorySpace;
@@ -775,11 +776,13 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 		
 		if (value.isDouble() || value.isInteger()){
 			if (value.isDouble()){
+				
 				Double valueD = new Double(value.asDouble());
-				valueD = valueD * numdecimals;
+				valueD = valueD * Math.pow(10, numdecimals);
 				long tmp = Math.round(valueD);
-				valueD = ((double)tmp / numdecimals);
+				valueD = ((double)tmp / Math.pow(10, numdecimals));
 				return new ASTNode(valueD);
+				
 			} else {
 				Integer ret = new Integer(value.asInterger());
 				return new ASTNode(ret);
@@ -1529,11 +1532,44 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			logger.debug("number of dotted names in the import:" + timer.getCompleteName().size());
 			
 			global.define(timer);
+			
 		} else {
 			throw new RuntimeException("The symbol is not a Timer symbol");
 		}
 		
 		return ASTNode.VOID;
+	}
+	
+	/**
+	 * Visits a display expression
+	 * 
+	 * 		Defines a display in the global symbol table
+	 * 
+	 * @return the ASTNode VOID
+	 */
+	public ASTNode visitDisplay(BehaviorGrammarParser.DisplayContext ctx) 
+	{ 
+
+		String name = ctx.deviceId.getText();
+		Symbol symbol =  currentScope.resolve(name);
+		
+		if (symbol instanceof DisplaySymbol){
+			DisplaySymbol display = (DisplaySymbol) symbol;
+			
+			ASTNode dataToShow = this.visit(ctx.toShow);
+			
+			display.setDisplayText(dataToShow.asString());
+			
+			GlobalScope global = getGlobalScope();
+						
+			global.define(display);
+			
+		} else {
+			throw new RuntimeException("The symbol is not a Display symbol");
+		}
+		
+		return ASTNode.VOID;
+	
 	}
 	
 	/**

@@ -999,9 +999,9 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 		if (value.isDouble() || value.isInteger()){
 			if (value.isDouble()){
 				Double valueD = new Double(value.asDouble());
-				valueD = valueD * numdecimals;
+				valueD = valueD * Math.pow(10, numdecimals);
 				long tmp = Math.round(valueD);
-				valueD = ((double)tmp / numdecimals);
+				valueD = ((double)tmp / Math.pow(10, numdecimals));
 				return new ASTNode(valueD);
 			} else {
 				Integer ret = new Integer(value.asInterger());
