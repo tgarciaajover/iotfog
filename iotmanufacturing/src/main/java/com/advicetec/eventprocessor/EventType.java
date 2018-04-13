@@ -70,6 +70,11 @@ public enum EventType
 	PURGE_FACADE_MAPS(10, "Purge_Facade_Maps"),
 	
 	/**
+	 * The Sched Aggregation event is designed to execute an aggregation in data
+	 */
+	SCHED_AGGREGATION_EVENT(12,"Sched_Aggregation_Event"),
+	
+	/**
 	 * Invalid event. 
 	 */
 	INVALID(11,"Invalid_Event");

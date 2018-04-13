@@ -768,7 +768,7 @@ public abstract class MeasuredEntity extends Entity
 	 * Obtains the executed entity being processed in the measured entity 
 	 * 
 	 * @return  current executed entity being processed. 
-	 * If any is OPERATING returns NULL.
+	 * If any is OPERATING, otherwise returns NULL.
 	 */
 	@JsonIgnore
 	public synchronized ExecutedEntity getCurrentExecutedEntity()
@@ -779,12 +779,13 @@ public abstract class MeasuredEntity extends Entity
 			ExecutedEntity executedEntity = this.executedEntities.get(id); 
 			logger.debug("Executed entity started: " + id);
 			
-			// only ONE executed entity must be in OPERATING state at time, during execution the system can go off. In that case,
+			// only ONE executed entity must be in OPERATING state at any time. During execution, the system can go off. In that case,
 			// the system register the production order in shutdown state.
 			
 			if ((executedEntity.getCurrentState(getId()) == MeasuringState.OPERATING) 
 				 || (executedEntity.getCurrentState(getId()) == MeasuringState.SYSTEMDOWN) 
-					  || (executedEntity.getCurrentState(getId()) == MeasuringState.INITIALIZING)) 
+					|| (executedEntity.getCurrentState(getId()) == MeasuringState.INITIALIZING)
+					 || (executedEntity.getCurrentState(getId()) == MeasuringState.UNSCHEDULEDOWN) )
 			{
 				return executedEntity;
 			}

@@ -503,6 +503,7 @@ public class ActivityRegistrationResource extends ServerResource
 		}
 		else{
 			String error = "It could not find the interval to update";
+			logger.info("It could not find the interval to update");
 			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 		}
 			

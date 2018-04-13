@@ -3,9 +3,11 @@ package com.advicetec.persistence;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,6 +34,12 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 	 * Default number of rows per batch  
 	 */
 	private int batchRows = 4000;
+	
+	/**
+	 * last object's date-time written to the database
+	 */
+	LocalDateTime lastStore = null;
+	
 	
 	public MeasureAttributeDatabaseStore(Map<String, AttributeValue> entries, int batchRows)
 	{
@@ -65,8 +73,8 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 		logger.debug("Starting Executing database insert MeasuringAttributeValue" + " current Thread:" + Thread.currentThread().getName());
 		// Splits the entries in batches of batchRows  
 		List<List<AttributeValue>> lists = split(entries, batchRows);
-
-		logger.debug("Number of list:" + lists.size() + " current Thread:" + Thread.currentThread().getName());
+				
+		logger.info("Number of list:" + lists.size() + " current Thread:" + Thread.currentThread().getName());
 		// Loop through split lists and insert in the database 
 		for (List<AttributeValue> entry : lists) {
 			try {
@@ -79,12 +87,20 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 				// prepares the statement
 				entry.forEach((v)-> {
 					logger.debug( "db write key:" + ((MeasuredAttributeValue)v).getKey() );
+					if (lastStore == null){
+						lastStore = ((MeasuredAttributeValue)v).getTimeStamp(); 
+					} else {
+						if (lastStore.compareTo(((MeasuredAttributeValue)v).getTimeStamp()) <= 0){
+							lastStore = ((MeasuredAttributeValue)v).getTimeStamp();
+						}
+					}
+					
 					((MeasuredAttributeValue)v).dbInsert(pst);
 
 				});
 				// execute the insertion
 				int ret[] = pst.executeBatch();
-				logger.debug("Number of Attribute Values inserted:" + ret.length);
+				logger.info("Number of Attribute Values inserted:" + ret.length);
 				conn.commit();
 
 			} catch (SQLException e) {
@@ -93,7 +109,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 			} finally{
 				if(pst!=null){
 					try{
-						logger.debug("closing prepared statement");
+						logger.info("closing prepared statement");
 						pst.close();
 					} catch (SQLException e) {
 						logger.error(e.getMessage());
@@ -103,7 +119,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 				
 				if(conn!=null) {
 					try {
-						logger.debug("closing connection");
+						logger.info("closing connection");
 						conn.close();
 					} catch (SQLException e) {
 						logger.error(e.getMessage());
@@ -114,6 +130,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 			}
 		}
 		
+		MeasureAttributeValueCache.getInstance().UpdateLastDateTimeStore(lastStore);
 		
 		logger.debug("Ending Executing database insert MeasuringAttributeValue" + " current Thread:" + Thread.currentThread().getName());
 	}

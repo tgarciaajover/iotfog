@@ -94,6 +94,23 @@ public class EventHandler implements Runnable
 
 	}
 	
+	public void runSchedAggregateEntityEvent(SchedAggregateEntityEvent schedAggrEntyEvt) throws SQLException, InterruptedException {
+
+		SchedAggregateEntityEventProcessor processor = new SchedAggregateEntityEventProcessor(schedAggrEntyEvt);
+		logger.info("processing sched_aggregate entity event");
+		
+		List<DelayEvent> eventsToCreate = processor.process();
+		
+		logger.info("Num events returned after processing:" + eventsToCreate.size());
+		for ( int i=0; i < eventsToCreate.size(); i++){
+			DelayEvent event = eventsToCreate.get(i);
+			this.delayQueue.put(event);
+		}
+		
+		repeat(schedAggrEntyEvt);
+
+	}
+	
 	public void runDisplayEvent(DisplayEvent displayEvt) throws SQLException, InterruptedException {
 
 		DisplayEventProcessor processor = new DisplayEventProcessor(displayEvt);
@@ -237,6 +254,9 @@ public class EventHandler implements Runnable
 					} else if (evnt.getEvntType() == EventType.PURGE_FACADE_MAPS){
 						
 						runPurgeFacadeEvent((PurgeFacadeCacheMapsEvent) evnt);
+					} else if (evnt.getEvntType() == EventType.SCHED_AGGREGATION_EVENT){
+						runSchedAggregateEntityEvent((SchedAggregateEntityEvent) evnt);
+						
 					}
 					else {
 						logger.error("This event cannot be processed" + evnt.getEvntType().getName());

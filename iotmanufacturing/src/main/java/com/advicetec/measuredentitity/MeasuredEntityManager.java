@@ -91,8 +91,13 @@ public class MeasuredEntityManager extends Configurable {
 		this.unit2PerCycles = properties.getProperty("machineUnit2PerCycles");
 		this.actualProductionCountId = properties.getProperty("actualProductionCountField");
 
+		logger.info("PurgeFacadeCacheMapEntries" + properties.getProperty("PurgeFacadeCacheMapEntries"));
 		if (properties.getProperty("PurgeFacadeCacheMapEntries") != null) {
-			this.purgeFacadeCacheMapEntries =Integer.getInteger(properties.getProperty("PurgeFacadeCacheMapEntries"));
+			try {
+				this.purgeFacadeCacheMapEntries =Integer.parseInt(properties.getProperty("PurgeFacadeCacheMapEntries").trim());
+			} catch(NumberFormatException ex){ // handle your exception
+				logger.error(ex);
+			}
 		} else {
 			this.purgeFacadeCacheMapEntries = new Integer(10); // By default 10 seconds.
 		}

@@ -45,6 +45,7 @@ sentence : block									# ref_block
 			| count_over_time						# ref_count_over_time
 			| max_over_time							# ref_max_over_time	
 			| timer									# ref_event
+			| sched_aggregate						# ref_sched_aggregate
 			| repeat								# ref_repeat				
 			| RETURN expression SEMICOLON		   	# ref_return
 			| state_assign                          # ref_state_assign
@@ -91,6 +92,9 @@ max_over_time : MAX_OVER_TIME PR_OPN ID COMMA TIMEUNIT COMMA range=(INT | INT1 |
 	;
 
 timer		: TIMER PR_OPN TIMEUNIT COMMA time=(INT | INT1 | DIGIT | INT4 ) COMMA pack=ID PR_CLS SEMICOLON
+	;
+
+sched_aggregate		: SCHED_AGGREGATE PR_OPN TIMEUNIT COMMA time=(INT | INT1 | DIGIT | INT4 ) COMMA pack=ID PR_CLS SEMICOLON
 	;
 
 repeat		: REPEAT PR_OPN TIMEUNIT COMMA time=(INT | INT1 | DIGIT | INT4 ) COMMA pack=ID PR_CLS SEMICOLON
@@ -229,6 +233,7 @@ ROUND 		: 'round';
 IMPORT 		: 'import'; 
 AS 			: 'as';
 TIMER		: 'timer';
+SCHED_AGGREGATE		: 'sched_aggregate';
 REPEAT		: 'repeat';
 STARTWITH   : 'start_with';
 

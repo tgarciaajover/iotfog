@@ -12,6 +12,7 @@ import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
 import com.advicetec.eventprocessor.DisplayEvent;
 import com.advicetec.eventprocessor.MeasuredEntityEvent;
+import com.advicetec.eventprocessor.SchedAggregateEntityEvent;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.BehaviorSymbol;
@@ -23,6 +24,7 @@ import com.advicetec.language.ast.StateSymbol;
 import com.advicetec.language.ast.Symbol;
 import com.advicetec.language.ast.SyntaxError;
 import com.advicetec.language.ast.TimerSymbol;
+import com.advicetec.language.ast.AggregateSymbol;
 import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.transformation.InterpreterSw;
@@ -140,6 +142,8 @@ public class SampleProcessor implements Processor
 							logger.debug("Symbol:" + symbolId + " UnitMeasureSymbol");
 						} else if (symbol instanceof  TransformationSymbol){
 							logger.debug("Symbol:" + symbolId + " TransformationSymbol");
+						} else if (symbol instanceof  AggregateSymbol){
+							logger.debug("Symbol:" + symbolId + "AggregateSymbol");
 						} else if (symbol instanceof StateSymbol) {
 							logger.debug("Symbol:" + symbolId + " StateSymbol");
 						} else if (symbol instanceof DisplaySymbol) {
@@ -160,6 +164,24 @@ public class SampleProcessor implements Processor
 							logger.info("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
 							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, entityFacade.getType(), mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
+							event.setRepeated(repeated);
+							event.setMilliseconds(duetime);
+
+							DelayEvent dEvent = new DelayEvent(event,duetime);
+							ret.add(dEvent);
+						}
+						
+						if (symbol instanceof AggregateSymbol)
+						{
+							long duetime = ((AggregateSymbol) symbol).getMilliseconds();
+							boolean repeated = ((AggregateSymbol) symbol).getRepeated();
+							
+							String aggregateMethod = getBehavior(((AggregateSymbol) symbol).getCompleteName());
+							
+							
+							logger.debug("Symbol:" + symbolId + " aggregateMethod:" + aggregateMethod+" : measuringEntity "+measuringEntity);
+							// We don't send parameters to the event. 
+							SchedAggregateEntityEvent event = new SchedAggregateEntityEvent(aggregateMethod, measuringEntity,mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
 							event.setRepeated(repeated);
 							event.setMilliseconds(duetime);
 

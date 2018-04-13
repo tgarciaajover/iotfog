@@ -2,7 +2,6 @@ package com.advicetec.persistence;
 
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -124,6 +123,11 @@ public class MeasureAttributeValueCache extends Configurable {
 	 * Connection pool for managing database connections.
 	 */
 	private static ComboPooledDataSource cpds = null;
+
+	/**
+	 * last object's date-time written to the database
+	 */
+	private static LocalDateTime lastDateTimeStore = null;
 	
 	/**
 	 * Constructs this cache with the parameters from .properties file.
@@ -186,6 +190,9 @@ public class MeasureAttributeValueCache extends Configurable {
 		cpds.setMinPoolSize(MIN_DB_THREAD_POOL);                                     
 		cpds.setAcquireIncrement(5);
 		cpds.setMaxPoolSize(MAX_DB_THREAD_POOL);
+
+		// Starts the last date-time when the cache writes in the database as the current date-time. 
+		lastDateTimeStore = LocalDateTime.now();
 		
 		/**
 		 *  This part inserts any pending data in the cache to the database, in case of shutdown.
@@ -270,6 +277,18 @@ public class MeasureAttributeValueCache extends Configurable {
 	}
 
 	/**
+	 * Updates the last object's date time written in the database.
+	 * @param lastDtStore last date time written.
+	 */
+	public synchronized static void UpdateLastDateTimeStore(LocalDateTime lastDtStore)
+	{
+		if (lastDtStore != null){
+
+			lastDateTimeStore = lastDtStore;
+		}
+	}
+	
+	/**
 	 * Returns the cache map.
 	 * @return the cache map.
 	 */
@@ -303,19 +322,7 @@ public class MeasureAttributeValueCache extends Configurable {
 	 * @return the time of the oldest entry in the cache.
 	 */
 	public LocalDateTime getOldestTime(){
-		// creates a temporary map
-		Map<String, AttributeValue> map = cache.policy().eviction().get().coldest(1);
-		// This code at most returns one value.
-		LocalDateTime ret = LocalDateTime.now();
-		if (map.size() > 0){
-			for (String key : map.keySet()){
-				ret = ((MeasuredAttributeValue) map.get(key)).getTimeStamp();
-				break;
-			}
-		}
-
-		return ret;
-
+		return lastDateTimeStore;
 	}
 
 

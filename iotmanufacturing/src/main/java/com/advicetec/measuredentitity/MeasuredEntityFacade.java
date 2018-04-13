@@ -329,7 +329,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			
 			if (executedEntity != null) {
 				
-				logger.debug("Change state - new state found entity");
+				logger.info("Change state - new state found entity");
 				
 				ProductionOrderManager orderManager;
 					orderManager = ProductionOrderManager.getInstance();
@@ -337,7 +337,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 				
 				if (executedEntityFacade != null) {
 					
-					logger.debug("Change state - it is going to change executed object state - new state:" + newState.getName());
+					logger.info("Change state - it is going to change executed object state - new state:" + newState.getName());
 					
 					executedEntityFacade.setCurrentState(newState, getEntity().getId());
 				}
@@ -518,7 +518,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
 		
-		logger.debug("reasoncode id:" + reasonCode.getId() + " descr:" + reasonCode.getDescription() + " startDttm:" + startDttm );
+		logger.info("reasoncode id:" + reasonCode.getId() + " descr:" + reasonCode.getDescription() + " startDttm:" + startDttm );
 		
 		boolean ret = false;
 		
@@ -534,12 +534,12 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			
 			LocalDateTime oldest = stateCache.getOldestTime();
 			
-			logger.debug("oldest" + oldest.format(formatter));
+			logger.info("oldest" + oldest.format(formatter));
 			
 			LocalDateTime enddttm; 
 			if(oldest.isAfter(startDttm) )
 			{
-				logger.debug("the datetime given is after");
+				logger.info("the datetime given is after");
 				// some values are in the database and maybe we have to continue updating the intervals. 
 				enddttm = stateCache.updateMeasuredEntityStateInterval(this.entity.getId(), this.entity.getType(), startDttm, reasonCode);
 				

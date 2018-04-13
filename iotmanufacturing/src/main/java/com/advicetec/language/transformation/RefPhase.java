@@ -15,6 +15,7 @@ import com.advicetec.configuration.DisplayDevice;
 import com.advicetec.configuration.DisplayDeviceContainer;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseListener;
+import com.advicetec.language.ast.AggregateSymbol;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
 import com.advicetec.language.ast.ImportSymbol;
@@ -198,6 +199,39 @@ public class RefPhase extends TransformationGrammarBaseListener
 			}
 		}
 	}
+	
+	
+	/**
+	 * Verifies that an import symbol is defined for the behavior being referenced by the timer 
+	 */
+	public void enterSchedAggregate(TransformationGrammarParser.Sched_aggregateContext ctx) 
+	{ 
+		if (ctx.pack == null){
+			this.error(ctx.start, ctx, "no Import Symbol was given");
+		} else {
+
+			String packageStr = ctx.pack.getText();		
+			Symbol var = currentScope.resolve(packageStr);
+
+			if (var instanceof AggregateSymbol) {
+
+				Symbol impSymbol = currentScope.getParentScope().resolve(packageStr);
+				if (impSymbol instanceof ImportSymbol)
+				{
+					ArrayList<String> names = ((ImportSymbol) impSymbol).getLongName();
+					for (String name : names){
+						((AggregateSymbol) var).addId(name);
+					}
+
+				} else {
+					this.error(ctx.pack, ctx, "no such Import Symbol: " + packageStr);
+				}
+			} else {
+				this.error(ctx.pack, ctx, "no such Time Symbol: " + packageStr);
+			}
+		}
+	}
+
 	
 	/**
 	 * Verifies that an import symbol is defined for the behavior being referenced by the repeat 

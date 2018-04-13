@@ -63,6 +63,8 @@ public class ConfigurationManager extends Configurable
 	 */
 	private DisplayDeviceContainer displayDevices;
 	
+	private AggregateMethodContainer aggregateMethods;
+	
     /**
      * @return Get the instance of the Configuration Manager
      */
@@ -120,6 +122,9 @@ public class ConfigurationManager extends Configurable
 		// Add Display Devices
 		displayDevices = new DisplayDeviceContainer(driver, server, user, password);
 		displayDevices.addReference("DisplayType", displayTypes);
+		
+		//Add Aggregate Methods
+		aggregateMethods = new AggregateMethodContainer(driver, server, user, password);
 	}
 
 	/**
@@ -138,6 +143,7 @@ public class ConfigurationManager extends Configurable
 		this.reasonCodes.loadContainer();
 		this.displayTypes.loadContainer();
 		this.displayDevices.loadContainer();
+		this.aggregateMethods.loadContainer();
 	}
 	
 	/**
@@ -158,6 +164,10 @@ public class ConfigurationManager extends Configurable
 	public SignalTypeContainer getSignalTypeContainer()
 	{
 		return this.signalTypes;
+	}
+	
+	public AggregateMethodContainer getAggregateMethods() {
+		return aggregateMethods;
 	}
 	
 	/**

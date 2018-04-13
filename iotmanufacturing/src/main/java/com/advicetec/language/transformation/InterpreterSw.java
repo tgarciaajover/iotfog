@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarLexer;
 import com.advicetec.language.ast.ASTNode;
+import com.advicetec.language.ast.AggregateSymbol;
 import com.advicetec.language.ast.ArrayAttributeSymbol;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.DisplaySymbol;
@@ -221,6 +222,8 @@ public class InterpreterSw
     		} else if (symbol instanceof DisplaySymbol) {
     			ret.put(symbolId, map.get(symbolId));
     		}  else if (symbol instanceof ArrayAttributeSymbol) {
+    			ret.put(symbolId, map.get(symbolId));
+    		} else if (symbol instanceof AggregateSymbol) {
     			ret.put(symbolId, map.get(symbolId));
     		} 
     	}

@@ -27,6 +27,7 @@ import com.advicetec.language.ast.TimerSymbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.ast.VariableSymbol;
 import com.advicetec.language.ast.BehaviorSymbol;
+import com.advicetec.language.ast.AggregateSymbol;
 
 import org.antlr.v4.runtime.Token;
 import org.apache.logging.log4j.LogManager;
@@ -39,6 +40,7 @@ import org.apache.logging.log4j.Logger;
  * It also verifies that the program code satisfies the language grammar.
  *  
  * @author Andres Marentes
+ * JP 001 2017-11-01 Create Aggregate Symbol
  *
  */
 public class BehaviorDefPhase extends BehaviorGrammarBaseListener 
@@ -279,6 +281,49 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 				String behaviorName = ctx.pack.getText();
 
 				TimerSymbol tSymbol = new TimerSymbol(behaviorName,unitTimer,tunit, false);
+				
+				// Define the symbol in the current scope
+				currentScope.define(tSymbol);
+			} catch (NumberFormatException e){
+				Token nameToken = ctx.start;	
+				this.error(nameToken, ctx, "The second parameter must be an integer" + nameToken.getText());
+			}
+			
+		}
+	}
+
+	/**
+	 * Actions to perform when parsing a timer symbol
+	 * 
+	 * In this case the parser has to:
+	 * 		define the timer symbol verifying its correct definition
+	 * 		include the timer symbol in the current scope.
+	 */
+	public void enterSchedAggregate(BehaviorGrammarParser.Sched_aggregateContext ctx) 
+	{ 
+		// by default seconds
+		TimeUnit unitTimer = TimeUnit.SECONDS;
+
+		if (ctx.TIMEUNIT() == null){
+			Token nameToken = ctx.start;			
+			this.error(nameToken, ctx, "No time unit was given: " + nameToken.getText());
+		} else {
+
+			if (ctx.TIMEUNIT().getText().compareTo("SECOND") == 0){
+				unitTimer = TimeUnit.SECONDS;
+			}
+			if (ctx.TIMEUNIT().getText().compareTo("MINUTE") == 0){
+				unitTimer = TimeUnit.MINUTES;
+			}
+			if (ctx.TIMEUNIT().getText().compareTo("HOUR") == 0){
+				unitTimer = TimeUnit.HOURS;
+			}
+			try
+			{
+				int tunit = Integer.valueOf(ctx.time.getText());
+				String aggregateMethod = ctx.pack.getText();
+
+				AggregateSymbol tSymbol = new AggregateSymbol(aggregateMethod,unitTimer,tunit, true);
 
 				// Define the symbol in the current scope
 				currentScope.define(tSymbol);

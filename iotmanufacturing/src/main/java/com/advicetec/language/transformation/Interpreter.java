@@ -18,9 +18,11 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.configuration.SystemConstants;
 import com.advicetec.core.AttributeValue;
+import com.advicetec.language.BehaviorGrammarParser;
 import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.TransformationGrammarBaseVisitor;
 import com.advicetec.language.ast.ASTNode;
+import com.advicetec.language.ast.AggregateSymbol;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.DisplaySymbol;
 import com.advicetec.language.ast.GlobalScope;
@@ -1566,6 +1568,34 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 			
 			global.define(timer);
 			
+		} else {
+			throw new RuntimeException("The symbol is not a Timer symbol");
+		}
+		
+		return ASTNode.VOID;
+	}
+	
+	/**
+	 * Visits a aggregate expression
+	 * 
+	 * 		Verifies that the import is defined in the symbol table
+	 * 		Defines a aggregate in the global symbol table
+	 * 
+	 * @return the ASTNode VOID
+	 */
+	public ASTNode visitSched_aggregate(TransformationGrammarParser.Sched_aggregateContext ctx) 
+	{ 
+		String name = ctx.ID().getText();
+		Symbol symbol =  currentScope.resolve(name);
+		
+		if (symbol instanceof AggregateSymbol){
+			AggregateSymbol aggregate = (AggregateSymbol) symbol;
+			GlobalScope global = getGlobalScope();
+			((AggregateSymbol) aggregate).addId(name);
+			
+			logger.debug("number of dotted names in the import:" + aggregate.getCompleteName().size());
+			
+			global.define(aggregate);
 		} else {
 			throw new RuntimeException("The symbol is not a Timer symbol");
 		}

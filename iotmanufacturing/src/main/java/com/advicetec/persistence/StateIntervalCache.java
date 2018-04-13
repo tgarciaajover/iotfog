@@ -112,7 +112,7 @@ public class StateIntervalCache extends Configurable {
 	/**
 	 * SQL sentence to update an interval over database.
 	 */
-	final private static String sqlMeasuredEntityUpdateInterval = "UPDATE measuringentitystatusinterval SET reason_code = ? WHERE id_owner = ? and owner_type = ? and datetime_from >= ";
+	final private static String sqlMeasuredEntityUpdateInterval = "UPDATE measuringentitystatusinterval SET reason_code = ? WHERE id_owner = ? and owner_type = ? and datetime_from >= ?";
 
 	/**
 	 * SQl to update by interval, it sets the reason code for all non operating intervals.
@@ -128,7 +128,7 @@ public class StateIntervalCache extends Configurable {
 	/**
 	 * SQL sentence to update an interval over database running in the same measured entity.
 	 */
-	final private static String sqlExecutedEntityUpdateInterval = "UPDATE measuringentitystatusinterval SET reason_code = ? WHERE id_owner = ? and owner_type = ? and related_object = ? and related_object_type = ? and datetime_from >= ";
+	final private static String sqlExecutedEntityUpdateInterval = "UPDATE measuringentitystatusinterval SET reason_code = ? WHERE id_owner = ? and owner_type = ? and related_object = ? and related_object_type = ? and datetime_from >= ?";
  
 
 	/**

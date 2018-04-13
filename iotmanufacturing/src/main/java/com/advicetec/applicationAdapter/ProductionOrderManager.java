@@ -99,7 +99,11 @@ public class ProductionOrderManager extends Configurable {
 		this.actualProductionCountId = properties.getProperty("actualProductionCountField");
 
 		if (properties.getProperty("PurgeFacadeCacheMapEntries") != null) {
-			this.purgeFacadeCacheMapEntries =Integer.getInteger(properties.getProperty("PurgeFacadeCacheMapEntries"));
+			try {
+				this.purgeFacadeCacheMapEntries =Integer.parseInt(properties.getProperty("PurgeFacadeCacheMapEntries").trim());
+			} catch(NumberFormatException ex){ // handle your exception
+				logger.error(ex);
+			}
 		} else {
 			this.purgeFacadeCacheMapEntries = new Integer(10); // By default 10 seconds.
 		}

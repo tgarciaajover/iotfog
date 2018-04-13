@@ -33,6 +33,7 @@ sentence : block									# ref_block
 			| display								# ref_display
 			| save									# ref_save
 			| timer									# ref_event
+			| sched_aggregate						# ref_sched_aggregate
 			| repeat								# ref_repeat
 			| RETURN expression SEMICOLON		   	# ref_return
 			| state_assign                          # ref_state_assign
@@ -63,6 +64,9 @@ save		: SAVE PR_OPN expressionList? PR_CLS SEMICOLON
 	;
 
 timer		: TIMER PR_OPN TIMEUNIT COMMA time=(INT | INT1 | DIGIT | INT4 ) COMMA pack=ID PR_CLS SEMICOLON
+	;
+	
+sched_aggregate		: SCHED_AGGREGATE PR_OPN TIMEUNIT COMMA time=(INT | INT1 | DIGIT | INT4 ) COMMA pack=ID PR_CLS SEMICOLON
 	;
 
 repeat		: REPEAT PR_OPN TIMEUNIT COMMA time=(INT | INT1 | DIGIT | INT4 ) COMMA pack=ID PR_CLS SEMICOLON
@@ -190,6 +194,7 @@ ROUND 		: 'round';
 IMPORT 		: 'import'; 
 AS 			: 'as';
 TIMER		: 'timer';
+SCHED_AGGREGATE	: 'sched_aggregate';
 REPEAT		: 'repeat';
 STARTWITH   : 'start_with';
 
