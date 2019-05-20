@@ -118,6 +118,10 @@ public class MeasuredEntityManager extends Configurable {
 																this.actualProductionCountId, this.purgeFacadeCacheMapEntries);
 			
 			entities.add(f);
+			
+			// Load executed objects
+			measuredEntities.loadExecutedEvent(f, m);
+
 		}
 		
 		logger.info("Num facades that have been read:" + Integer.toString(this.entities.size()) );

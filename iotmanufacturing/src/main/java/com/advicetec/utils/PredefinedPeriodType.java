@@ -23,7 +23,8 @@ public enum PredefinedPeriodType
 	DAY(2,"Day"),
 	HOUR(3,"Hour"),
 	INT_LT_HOUR(4,"Interval Less Than Hour"),
-	UNDEFINED(5,"Undefined");
+	UNDEFINED(5,"Undefined"),
+	MINUTE(6, "Minute");
 	
 	@JsonProperty("value")
 	private int code;

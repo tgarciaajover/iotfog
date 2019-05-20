@@ -49,7 +49,7 @@ public class MeasuredEntityBehaviorCheckResource extends ServerResource
 	@Get("json")
 	public Representation getTransformations() throws Exception {
 
-		logger.info("In getTransformations");
+		logger.debug("In getTransformations");
 				
 		// Creates an empty JSON representation.
 		Representation result;

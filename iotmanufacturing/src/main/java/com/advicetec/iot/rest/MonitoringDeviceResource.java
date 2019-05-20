@@ -101,7 +101,7 @@ public class MonitoringDeviceResource extends ServerResource
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 
-		logger.info("putMonitoringDevice Json:" + jsonText);
+		logger.debug("putMonitoringDevice Json:" + jsonText);
 
 		// Look for it in the Monitoring Device Database.
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
@@ -150,7 +150,7 @@ public class MonitoringDeviceResource extends ServerResource
 				// Inserts modbus events.
 				insertModBusEvents(events);		
 				
-				logger.info("Num modbus events created:" + events.size() + " Num modbus events deleted:" + oldEvents.size() );
+				logger.debug("Num modbus events created:" + events.size() + " Num modbus events deleted:" + oldEvents.size() );
 			
 			} else {
 
@@ -163,11 +163,11 @@ public class MonitoringDeviceResource extends ServerResource
 				// Inserts modbus events.
 				insertModBusEvents(events);
 				
-				logger.info("Num modbus events created:" + events.size());
+				logger.debug("Num modbus events created:" + events.size());
 
 			}
 
-			logger.info("numElements:" + monitoringDeviceCon.size());
+			logger.debug("numElements:" + monitoringDeviceCon.size());
 			getResponse().setStatus(Status.SUCCESS_OK);
 		}
 		
@@ -207,8 +207,8 @@ public class MonitoringDeviceResource extends ServerResource
 			Queueable obj = new Queueable(QueueType.EVENT, evt);
 			try {
 				
-				logger.info("key:" + evt.getKey() + " ipAddress:" + evt.getIpAddress() + " milliseconds:" + evt.getMilliseconds() + " port:" + evt.getPort());
-				logger.info("new: " + events.size() +  " modbus event created");
+				logger.debug("key:" + evt.getKey() + " ipAddress:" + evt.getIpAddress() + " milliseconds:" + evt.getMilliseconds() + " port:" + evt.getPort());
+				logger.debug("new: " + events.size() +  " modbus event created");
 				EventManager.getInstance().getQueue().enqueue(6, obj);
 				
 			} catch (InterruptedException e) {
@@ -226,13 +226,13 @@ public class MonitoringDeviceResource extends ServerResource
 	 */
 	private void deleteModBusEvents(List<ModBusTcpEvent> events) {
 
-		logger.info("Current delayed events:" + EventManager.getInstance().evntsToString());
+		logger.debug("Current delayed events:" + EventManager.getInstance().evntsToString());
 		
 		for (ModBusTcpEvent evt : events)
 		{
 			DelayEvent delEvent = new DelayEvent(evt, 0); 
 			boolean removed = EventManager.getInstance().removeEvent(delEvent);
-			logger.info("The event with key:" + evt.getKey() + " to remove was found: " + removed );
+			logger.debug("The event with key:" + evt.getKey() + " to remove was found: " + removed );
 		}
 	}
 

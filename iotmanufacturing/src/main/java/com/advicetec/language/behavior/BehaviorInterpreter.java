@@ -21,11 +21,13 @@ import com.advicetec.core.AttributeValue;
 import com.advicetec.core.EntityFacade;
 import com.advicetec.language.BehaviorGrammarBaseVisitor;
 import com.advicetec.language.BehaviorGrammarParser;
+import com.advicetec.language.TransformationGrammarParser;
 import com.advicetec.language.ast.ASTNode;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
 import com.advicetec.language.ast.BehaviorSpace;
 import com.advicetec.language.ast.BehaviorSymbol;
+import com.advicetec.language.ast.DisplaySymbol;
 import com.advicetec.language.ast.FunctionSpace;
 import com.advicetec.language.ast.FunctionSymbol;
 import com.advicetec.language.ast.GlobalScope;
@@ -1025,6 +1027,35 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	}
 
 	/**
+	 * Visits a display expression
+	 * 
+	 * 		Defines a display in the global symbol table
+	 * 
+	 * @return the ASTNode VOID
+	 */
+	public ASTNode visitDisplay(TransformationGrammarParser.DisplayContext ctx) 
+	{ 
+
+		String name = ctx.deviceId.getText();
+		Symbol symbol =  currentScope.resolve(name);
+		if (symbol instanceof DisplaySymbol){
+			DisplaySymbol display = (DisplaySymbol) symbol;
+			
+			ASTNode dataToShow = this.visit(ctx.toShow);
+			display.setDisplayText(dataToShow.asString());
+			
+			GlobalScope global = getGlobalScope();
+						
+			global.define(display);
+			
+		} else {
+			throw new RuntimeException("The symbol is not a Display symbol");
+		}
+		
+		return ASTNode.VOID;
+	
+	}
+	/**
 	 * Visit a text representing an integer
 	 * 
 	 * @return the ASTNode representing the integer.
@@ -1956,7 +1987,7 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 	@Override
 	public ASTNode visitLog(BehaviorGrammarParser.LogContext  ctx) {
 		ASTNode value = this.visit(ctx.expression());
-		logger.info(value);
+		logger.debug(value);
 		return value;
 	}    
 
@@ -2139,7 +2170,6 @@ public class BehaviorInterpreter extends BehaviorGrammarBaseVisitor<ASTNode>
 				values = facade.getByIntervalByAttributeName(attributeId, from, now);
 			} else {
 				if (((ExecutedEntityFacade) facade).getMeasuredEntity(measuredEntityId) != null) {
-					logger.info("AttributeId:" + attributeId + "from:" + from.toString() + "to:" + now.toString() );
 					values = ((ExecutedEntityFacade) facade).getMeasuredEntity(measuredEntityId).getByIntervalByAttributeName(attributeId, from, now);
 				} else {
 					// values where not found.

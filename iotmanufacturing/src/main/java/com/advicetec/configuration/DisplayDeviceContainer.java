@@ -3,8 +3,11 @@ package com.advicetec.configuration;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
@@ -25,7 +28,11 @@ public class DisplayDeviceContainer extends Container
 	/**
 	 * SQL Statement for reading the configuration data of display devices.
 	 */
-	static String sqlSelect1 = "SELECT id, descr, ip_address, port, display_id, reference_cd FROM setup_displaydevice";
+	static String sqlSelect1 = "SELECT id, descr, ip_address, port, display_id, reference_cd, entity_id FROM setup_displaydevice";
+	
+	static String sqlSelect2 = "SELECT var1, var2, var3 FROM setup_displaydevice where reference_cd = ?";
+	
+	static String sqlSelect3 = "SELECT label1 FROM setup_displaydevice where reference_cd = ?";
 	
 	/**
 	 * Constructor for the class, it takes as parameters data required to connect to the database.
@@ -52,7 +59,8 @@ public class DisplayDeviceContainer extends Container
 	    String ipAddress		= null;
 	    Integer port 			= 0;
 	    String referenceCd      = null;		
-
+	    Integer entityId		= 0;
+	    
 		try 
 		{
 			super.connect();
@@ -67,7 +75,8 @@ public class DisplayDeviceContainer extends Container
 		        ipAddress		= rs1.getString("ip_address");
 		        port 			= rs1.getInt("port");
 		        referenceCd     = rs1.getString("reference_cd");
-
+		        entityId        = rs1.getInt("entity_id");
+		        
 		        DisplayType displayType = (DisplayType) this.getReferencedObject("DisplayType", displayId);
 		        
 		        if (displayType == null)
@@ -79,6 +88,7 @@ public class DisplayDeviceContainer extends Container
 				object.setIpAddress(InetAddress.getByName(ipAddress));
 		        object.setPort(port);
 		        object.setReferenceCd(referenceCd);
+		        object.setEntityId(entityId);
 		        
 		        super.configuationObjects.put(id, object);
 		      
@@ -164,4 +174,74 @@ public class DisplayDeviceContainer extends Container
 		}
 	
 	}
+	
+	public synchronized ArrayList<String> getDisplayDeviceVariables(String referenceCd){
+		ArrayList<String> list = new ArrayList<String>();
+		
+		try 
+		{
+			super.connect_prepared(sqlSelect2);
+			(( PreparedStatement) super.pst).setString(1, referenceCd);			
+			
+			ResultSet rs1 = (( PreparedStatement) super.pst).executeQuery();
+			
+			while (rs1.next())
+			{
+				list.add(rs1.getString("var1"));
+				list.add(rs1.getString("var2"));
+				list.add(rs1.getString("var3"));
+			}
+			
+			rs1.close();			
+			
+			super.disconnect();
+			
+			
+		} catch (ClassNotFoundException e){
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
+        	e.printStackTrace();
+        } catch (SQLException e) {
+        	String error = "Container:" + this.getClass().getName() +  "Error connecting to the database - error:" + e.getMessage();
+        	logger.error(error);
+        	e.printStackTrace();        	
+        }
+
+		return list;
+	}
+	
+	public synchronized String getDisplayDeviceLabels(String referenceCd){
+		String label = "";
+		
+		try 
+		{
+			super.connect_prepared(sqlSelect3);
+			(( PreparedStatement) super.pst).setString(1, referenceCd);			
+			
+			ResultSet rs1 = (( PreparedStatement) super.pst).executeQuery();
+			
+			while (rs1.next())
+			{
+				label = rs1.getString("label1");
+			}
+			
+			rs1.close();			
+			
+			super.disconnect();
+			
+			
+		} catch (ClassNotFoundException e){
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
+        	e.printStackTrace();
+        } catch (SQLException e) {
+        	String error = "Container:" + this.getClass().getName() +  "Error connecting to the database - error:" + e.getMessage();
+        	logger.error(error);
+        	e.printStackTrace();        	
+        }
+
+		return label;
+	}
+	
+	
 }

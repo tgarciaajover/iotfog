@@ -118,9 +118,15 @@ public class IotRestServer extends Application {
       
       // Resource for Implementing the state intervals interface for a measured entity
       router.attach("/StateInterval/{uniqueID}", IntervalResource.class);
-      
+
+      // Resource for Implementing the state intervals interface for a measured entity
+      router.attach("/CurrentStateInterval", CurrentStateResource.class);
+
       // Resource for Implementing the activity register interface for a measured entity
       router.attach("/Register/ActivityRegister", ActivityRegistrationResource.class);  
+      
+      // Resource for Implementing an State behavior start for a measured entity
+      router.attach("/Register/BehaviorStart", BehaviorStart.class);
       
       // POST request to get a state array by time range 
       router.attach("/State",StateResource.class);
@@ -134,8 +140,14 @@ public class IotRestServer extends Application {
       // POST request to get the OEE for a measured entity
       router.attach("/OverallEquipmentEffectiveness", OverallEquipmentEffectivenessResource.class);
       
+      // POST request to recalculate the OEE for a measured entity
+      router.attach("/RecalculateOverallEquipmentEffectiveness", RecalculateOverallEquipmentEffectivenessResource.class);
+      
       // POST request to get the OEE for a production order
       router.attach("/OEEProductionOrder", OverallEquipmentEffectivenessExecutedEntityResource.class); 
+      
+      // GET request to get the start date production order
+      router.attach("/StartDateProductionOrder", ProductionOrderResource.class); 
       
       // POST request to get the definition of the measured entity attribute. 
       router.attach("/MeasuredEntityAtttributes", MeasuredEntityAttributesResource.class);

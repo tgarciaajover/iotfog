@@ -78,8 +78,8 @@ public class MessageManager extends Manager
 	 */
 	public void run() 
 	{
-		logger.debug("Start Message Manager run");
 		int number = Integer.valueOf(getProperty("NumProcessHandlers"));
+		logger.debug("Start Message Manager run: " + number);
 		List<Thread> listThread =  new ArrayList<Thread>();
 		// creates threads for each message handler
 		for (int i = 0; i < number; i++) 

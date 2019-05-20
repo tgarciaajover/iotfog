@@ -153,6 +153,7 @@ public class MeasuredEntityAttributesResource extends ServerResource
 				// get the array of attributes from the facade.
 				JSONArray jsonArray = facade.getJsonAttributeTrend();
 				result = new JsonRepresentation(jsonArray);
+				logger.debug(jsonArray);
 			}
 		} catch (SQLException e) {
 			logger.error("SQL failure.");

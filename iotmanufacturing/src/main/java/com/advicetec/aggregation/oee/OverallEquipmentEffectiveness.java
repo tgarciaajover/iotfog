@@ -23,6 +23,7 @@ public class OverallEquipmentEffectiveness implements Storable
 {
 
 	static Logger logger = LogManager.getLogger(OverallEquipmentEffectiveness.class.getName());
+	static int SECONDS_MINUTE = 60;
 	static int SECONDS_HOUR = 3600;
 	static int SECONDS_DAY = 86400;
 	static int DAYS_LEAP_YEAR = 366;
@@ -80,6 +81,10 @@ public class OverallEquipmentEffectiveness implements Storable
 	 */
 	public static final String SQL_EXISTS = "select 'x' as found from measuringentityoee where id_owner = ? and owner_type = ? and period_key = ?";
 	
+	public static final String SQL_CAL_OEE = "EXEC dbo.usp_iot_oee_calculator @in_company = ?, @in_location = ?, @in_plant = ?, @in_group = ?, @in_machine = ?, @in_production_id = ?, @in_year = ?, @in_month = ?, @in_day = ?, @reprocess_flag = ?";
+	
+	public static final String SQL_PeriodAvailability = "select avg(availability) as availability from measuringentityoee_test where id_owner = ? and owner_type = ? and period_key >= ? and len(period_key) = ? and production_time <> 0";
+	
 	/**
 	 * SQL statement used to search for those OEE aggregations less than an hour that are in an interval defined by datetime_from and datetime_from. 
 	 * If an OEE aggregation is not completely included in the interval given, then it is still included. However, the user should split the part included from the part not included. 
@@ -96,6 +101,17 @@ public class OverallEquipmentEffectiveness implements Storable
 			+ "conversion1, conversion2, actual_production_rate,qty_defective FROM measuringentitystatusinterval "
 			+ "WHERE id_owner = ? AND owner_type = ? AND datetime_from <= ? AND datetime_to >= ? AND datetime_to <= ? "
 			+ "ORDER BY datetime_from ";
+	
+	
+	public static final String SQL_RNG_MINUTE = "select case when c.datetime_from < ? then ? else c.datetime_from end as datetime_from "
+			+ ", case when c.datetime_to > ? then ? else c.datetime_to end as datetime_to"
+			+ ",c.status,c.reason_code,c.production_rate, " 
+			+ "c.conversion1, c.conversion2, c.actual_production_rate,c.qty_defective from measuringentitystatusinterval c " 
+			+ "where c.id_owner = ? and c.owner_type = ? "
+			+ "and c.datetime_from >= (select max(a.datetime_from) from measuringentitystatusinterval a "
+			+ "where a.id_owner = c.id_owner and a.owner_type =c.owner_type and a.datetime_from <= ?) "   
+			+ "and c.datetime_to <= (select min(b.datetime_to) from measuringentitystatusinterval b " 
+			+ "where b.id_owner = c.id_owner and b.owner_type =c.owner_type and b.datetime_to >= ?) ";
 
 	/**
 	 * Brings all intervals which predefined period key start with a specific prefix. It is specific for Postgres. This sentence helps to bring the following cases:
@@ -171,6 +187,9 @@ public class OverallEquipmentEffectiveness implements Storable
 
 		}	else if (this.predefinedPeriod.getType() == PredefinedPeriodType.HOUR) {
 			return SECONDS_HOUR;
+
+		}	else if (this.predefinedPeriod.getType() == PredefinedPeriodType.MINUTE) {
+			return SECONDS_MINUTE;
 
 		}	else if (this.predefinedPeriod.getType() == PredefinedPeriodType.DAY) {
 			return SECONDS_DAY;
@@ -358,6 +377,13 @@ public class OverallEquipmentEffectiveness implements Storable
 					  String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.DAY_OF_MONTH)) + " " + 
 					   String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.HOUR_OF_DAY)) + ":00:00.000";
 			
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.MINUTE) {
+			return  String.format("%04d",this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1) + "-" +
+					  String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.DAY_OF_MONTH)) + " " + 
+					   String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.HOUR_OF_DAY)) + ":" +
+					   	String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MINUTE)) + ":00.000";
+			
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.INT_LT_HOUR) {
 			return  String.format("%04d",this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-" + 
 					 String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1) + "-" + 
@@ -400,6 +426,13 @@ public class OverallEquipmentEffectiveness implements Storable
 					 String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1) + "-" + 
 					  String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.DAY_OF_MONTH)) + " " + 
 					   String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.HOUR_OF_DAY)) + ":59:59.999";
+			
+		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.MINUTE) {
+			return  String.format("%04d",this.predefinedPeriod.getCalendarFrom().get(Calendar.YEAR)) + "-" + 
+					 String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MONTH) + 1) + "-" + 
+					  String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.DAY_OF_MONTH)) + " " + 
+					   String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.HOUR_OF_DAY)) + ":" +
+					   	String.format("%02d",this.predefinedPeriod.getCalendarFrom().get(Calendar.MINUTE)) + ":59.999";
 			
 		} else if (this.predefinedPeriod.getType() == PredefinedPeriodType.INT_LT_HOUR) {
 			return  String.format("%04d",this.predefinedPeriod.getCalendarTo().get(Calendar.YEAR)) + "-" + 

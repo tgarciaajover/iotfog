@@ -114,7 +114,7 @@ public class EventManager extends Manager
 		
 		super("EventManager");	
 
-		logger.info("Constructor Event Manager");
+		logger.debug("Constructor Event Manager");
 
 		this.delayedQueue = new DelayQueue<DelayEvent>();
 
@@ -156,7 +156,7 @@ public class EventManager extends Manager
 			System.exit(0);			
 		}
 
-		logger.info("timeout given:" + String.valueOf(timeOut));
+		logger.debug("timeout given:" + String.valueOf(timeOut));
 
 		// Reads the maximum handlers by type of event.
 		this.maximimActiveHandlers = new HashMap<EventType, Integer>();		
@@ -180,7 +180,7 @@ public class EventManager extends Manager
 	 */
 	public void run() 
 	{
-		logger.info("Starting Event Manager run");
+		logger.debug("Starting Event Manager run: " + numHandlers);
 		
 		List<Thread> listThread =  new ArrayList<Thread>();
 	
@@ -194,7 +194,7 @@ public class EventManager extends Manager
 		Thread delayConsumer = new Thread(new DelayQueueConsumer("EventConsumer", this.delayedQueue));
 		delayConsumer.start();
 
-		logger.info("Ending Event Manager run");
+		logger.debug("Ending Event Manager run");
 	}	
 
 	/**

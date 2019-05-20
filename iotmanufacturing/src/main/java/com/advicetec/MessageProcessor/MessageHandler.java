@@ -50,17 +50,18 @@ public class MessageHandler implements Runnable
 	}
 
 	public void run() {
-		try {
-			while (true){
+		boolean interruptedException = false;
+		while (true && !interruptedException){
+			try {
 				
-				logger.debug("Elements in the message adapter:" + fromQueue.size()[6]);
+				
 				Queueable obj = (Queueable) fromQueue.pop();
 
 				// interprets the unified message
 				if (obj.getType() == QueueType.UNIFIED_MESSAGE)
 				{
 					UnifiedMessage um = (UnifiedMessage) obj.getContent();
-
+					logger.debug("Elements in the message adapter: " + fromQueue.size()[6]+"   um.getType() "+um.getType());
 					switch (um.getType())
 					{
 					// process a message of SAMPLE type
@@ -90,7 +91,7 @@ public class MessageHandler implements Runnable
 						break;
 						
 					case ERROR_SAMPLE:
-						logger.info("Processing error sample");
+						logger.debug("Processing error sample");
 						
 						MeasuringErrorMessage message = (MeasuringErrorMessage) um;
 						ErrorMessageSampleProcessor processor2 = new ErrorMessageSampleProcessor(message);
@@ -129,13 +130,14 @@ public class MessageHandler implements Runnable
 
 				}		
 
+			} catch (InterruptedException e) {
+				interruptedException = true;
+				logger.error("InterruptedException: " + e.getMessage());
+				e.printStackTrace();
+			} catch (SQLException e){
+				logger.error("SQLException: " + e.getMessage());
+				e.printStackTrace();
 			}
-
-		} catch (InterruptedException e) {
-			logger.error("The MessageHandler process was interrupted!");
-			e.printStackTrace();
-		} catch (SQLException e){
-			logger.error("Container error, we cannot continue");
 		}
 
 	}

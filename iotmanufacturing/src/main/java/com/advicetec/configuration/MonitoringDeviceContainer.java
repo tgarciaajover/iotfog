@@ -329,7 +329,7 @@ public class MonitoringDeviceContainer extends Container
 		try 
 		{
 			super.connect();
-			logger.info("in getModbusEvents by monitoring device - id:" + monitoring.getId() );
+			logger.debug("in getModbusEvents by monitoring device - id:" + monitoring.getId() );
 			
 			String sqlSelect = sqlSelect3 + String.valueOf(monitoring.getId());  
 			ResultSet rs3 = super.pst.executeQuery(sqlSelect);
@@ -341,7 +341,7 @@ public class MonitoringDeviceContainer extends Container
 				String portLabel        	= rs3.getString("port_label");
 				Integer refreshTimeMs       = rs3.getInt("refresh_time_ms");
 				
-				logger.info("new modbus event found");
+				logger.debug("new modbus event found");
 				
 				if (refreshTimeMs > 0){
 					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(ipaddress, measured_entity_id, portLabel, refreshTimeMs);

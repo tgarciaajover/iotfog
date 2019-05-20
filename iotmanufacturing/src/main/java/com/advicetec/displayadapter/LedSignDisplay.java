@@ -7,6 +7,7 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -59,6 +60,9 @@ public class LedSignDisplay implements Output {
 
 	private ConfigHead config;
 
+	private ArrayList<JetFile2Packet> packets;
+	private ArrayList<String> filenames;
+	
 	/**
 	 * Default constructor.
 	 */
@@ -87,6 +91,8 @@ public class LedSignDisplay implements Output {
 		this.backColor = TextFormat.Background.BLACK;
 		this.verticalAlign = TextFormat.VerticalAlign.BOTTOM;
 		this.horizontalAlign = TextFormat.HorizontalAlign.RIGHT;
+		this.packets = new ArrayList<JetFile2Packet>();
+		this.filenames = new ArrayList<String>();
 	}
 
 	public LedSignDisplay(int signalWidth, int signalHeight,
@@ -125,7 +131,7 @@ public class LedSignDisplay implements Output {
 	public void out(String message) {
 		connectionTest();
 		readSystemFiles();
-		publishMessage(message);
+		publishMessage(message, "temp.Nmg");
 		endBlackScreen();
 	}
 
@@ -166,7 +172,7 @@ public class LedSignDisplay implements Output {
 	 * @param message String with the message.
 	 * @return The response.
 	 */
-	public boolean publishMessage(String message){
+	public boolean publishMessage(String message, String filename){
 
 		// create the text message
 		StringBuilder sb = new StringBuilder( TextFormat.HEAD );
@@ -183,14 +189,16 @@ public class LedSignDisplay implements Output {
 		sb.append(flash);
 		sb.append(UdpUtils.ascii2hexString(message) );
 		sb.append(TextFormat.LINE_FEED);
-		sb.append(TextFormat.EOF);
+		sb.append(TextFormat.EOF);			
 
 		// create the text packet
-		JetFile2Packet textfile = JetFile2Protocol.InfoWrite.command0204(sb.toString());
+		JetFile2Packet textfile = JetFile2Protocol.InfoWrite.command0204(sb.toString(), filename);
 		completePacket(textfile);
 
+		packets.add(textfile);
+		filenames.add(filename);
 		// create the file write packet
-		JetFile2Packet fileWrite = JetFile2Protocol.InfoWrite.command0202(textfile.getChecksum(), UdpUtils.int2HexString(textfile.getDatalen(),2));
+		//TG - JetFile2Packet fileWrite = JetFile2Protocol.InfoWrite.command0202(textfile.getChecksum(), UdpUtils.int2HexString(textfile.getDatalen(),2), filename);
 
 		// test the connection
 		if(!connectionTest() ){
@@ -201,14 +209,41 @@ public class LedSignDisplay implements Output {
 		// publish filewrite 0202
 		endBlackScreen();
 		startBlackScreen();
-		JetFile2Packet in0202 = publishPacket(fileWrite);
+		endBlackScreen();
+		//TG - JetFile2Packet in0202 = publishPacket(fileWrite);
 
-		if(StatusCode.getStatus(in0202.getStatus()).equals(JetFile2Protocol.StatusCode.SUCESS)){	
+		/*TG - if(StatusCode.getStatus(in0202.getStatus()).equals(JetFile2Protocol.StatusCode.SUCESS)){	
 			//publish 0204 the file with the message
 			JetFile2Packet in0204 = publishPacket(textfile);
+			logger.debug("in0204 status "+in0204.getStatus().toString());
 			return in0204.getStatus().equals(JetFile2Protocol.StatusCode.SUCESS);
+		}*/
+		JetFile2Packet in0204 = publishPacket(textfile);
+		//logger.debug("in0204 status "+in0204.getStatus().toString());
+		return in0204.getStatus().equals(JetFile2Protocol.StatusCode.SUCESS);
+		//TG - endBlackScreen();
+		//TG - return false;
+	}
+	
+	public boolean publishPlayList()
+	{
+		
+		//JetFile2Packet textfile = this.packets.get(0);
+		JetFile2Packet fileWrite = JetFile2Protocol.InfoWrite.command0202(this.packets, this.filenames);
+
+		if(!connectionTest() ){
+			logger.error("Connnection test error!");
+			return false;
 		}
+
+		// publish filewrite 0202
 		endBlackScreen();
+		startBlackScreen();
+		endBlackScreen();
+		JetFile2Packet in0202 = publishPacket(fileWrite);
+		if(StatusCode.getStatus(in0202.getStatus()).equals(JetFile2Protocol.StatusCode.SUCESS)){	
+			return in0202.getStatus().equals(JetFile2Protocol.StatusCode.SUCESS);
+		}
 		return false;
 	}
 
@@ -226,13 +261,14 @@ public class LedSignDisplay implements Output {
 	 * @return A string with the response.
 	 */
 	public String publishBytes(byte[] bytes){
+		//logger.debug("netAddress " + netAddress.toString());
 		String s = null;
 		try {
 			byte[] toReceive = new byte[1024];
 			DatagramPacket packet = new DatagramPacket(bytes, bytes.length,netAddress, dstPort);
 			DatagramSocket socket = new DatagramSocket();
 			socket.send(packet);
-			logger.info("publish the packet "+packet.toString());
+			//logger.debug("publish the packet "+packet.toString());
 
 			// receives the response
 			socket.setSoTimeout(10000);
@@ -243,14 +279,14 @@ public class LedSignDisplay implements Output {
 
 			s = new String(DatatypeConverter.printHexBinary(bytes2));
 			s = (String)s.subSequence(0, received.getLength()*2);
-			logger.info("Received packet:"+s+", length:"+received.getLength());
+			//logger.debug("Received packet:"+s+", length:"+received.getLength());
 
 			socket.close();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			logger.error("Error sending the message:"
-					+ DatatypeConverter.printHexBinary(bytes));
+			//logger.error("Error sending the message:"
+			//		+ DatatypeConverter.printHexBinary(bytes));
 			e.printStackTrace();
 		}
 		return s;

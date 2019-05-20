@@ -2,6 +2,7 @@ package com.advicetec.displayadapter;
 
 import java.net.InetAddress;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +31,14 @@ public class JetFile2Protocol {
 	public static final String DST_ADDR = "01" + "01";
 	
 	public static final String SQ = "5351";
+	public static final String NUL = "00";
+	public static final String EOT = "04";
+	public static final String ENQ = "05";
+	public static final String SI = "0F";
+	public static final String BS = "08";
+	public static final String SOH = "01";
+	public static final String DEL = "7F";
+	public static final String SPACE = "20";
 
 	public static final String TEMP_FILE = "temp.Nmg";
 
@@ -113,7 +122,8 @@ public class JetFile2Protocol {
 		 * System file write-in
 		 * @return
 		 */
-		public static JetFile2Packet command0202(String check, String filesize){
+		public static JetFile2Packet command0202(ArrayList<JetFile2Packet> packets, ArrayList<String> filenames){
+			logger.debug("command0202 Start");
 			JetFile2Packet packet = new JetFile2Packet();
 			packet.setCommand(WRITE_SYS_FILE);
 			
@@ -127,40 +137,67 @@ public class JetFile2Protocol {
 			;
 			// set args
 			packet.setArgs(args.toString());
-			
+						
 			StringBuilder data = new StringBuilder(SQ); // header
-			data.append(UdpUtils.int2HexString(4, 1)); // file type
-			data.append(UdpUtils.int2HexString(0, 1)); // valid marking
-			data.append(UdpUtils.int2HexString(1, 2)); // scheduled files
-			data.append(UdpUtils.int2HexString(0, 2)); // rsv
+			logger.debug(data.toString());
+			data.append(EOT);
+			logger.debug(data.toString());
+			data.append(NUL);
+			logger.debug(data.toString());
+			data.append(ENQ);
+			logger.debug(data.toString());
+			data.append(NUL + NUL + NUL);
+			logger.debug(data.toString());
 			
-			data.append(UdpUtils.ascii2hexString("D")); // drive
-			data.append(UdpUtils.ascii2hexString("T")); // T for text
-			data.append("0f"); // file label
-			data.append("7f"); // week repetition
-			LocalDate today = LocalDate.now();
-			data.append(new DateTimeStruct(today.getYear(),today.getMonthValue(),today.getDayOfMonth()).toHexString());
-			data.append(new DateTimeStruct(today.getYear(),today.getMonthValue(),today.getDayOfMonth()).toHexString());
-			data.append(check);	// checksum 2 "0c16"; verifica el contenido del archivo
-			data.append(filesize); // filesize 2 ba00 del siguiente archivo
-			data.append(UdpUtils.ascii2hexString(TEMP_FILE, 12));// filename 12
-			
+			for(String filename : filenames){
+				data.append(UdpUtils.ascii2hexString("D")); // drive
+				logger.debug(data.toString());
+				data.append(UdpUtils.ascii2hexString("T")); // T for text
+				logger.debug(data.toString());
+				data.append(SI);
+				logger.debug(data.toString());
+				data.append(DEL);
+				logger.debug(data.toString());
+				data.append(BS);
+				logger.debug(data.toString());
+				data.append(SPACE);
+				logger.debug(data.toString());
+				data.append(SOH + SOH + SOH + SOH + SOH + SOH);
+				logger.debug(data.toString());
+				data.append(BS);
+				logger.debug(data.toString());
+				data.append(SPACE);
+				logger.debug(data.toString());
+				data.append(SOH + SOH);
+				logger.debug(data.toString());
+				data.append(UdpUtils.ascii2hexString("#"));
+				logger.debug(data.toString());
+				data.append(UdpUtils.ascii2hexString("Y"));
+				logger.debug(data.toString());
+				data.append(SOH + SOH);
+				logger.debug(data.toString());
+				data.append(NUL + NUL + NUL + NUL);
+				data.append(UdpUtils.ascii2hexString(filename));// filename 12
+				logger.debug(data.toString());
+				data.append(NUL + NUL + NUL);
+			}
 			// set data
 			packet.setData(data.toString());
 			// set checksum
 			packet.setChecksum();
-			
+			logger.debug("command0202 End");
 			return packet;
 		}
 		
-		public static JetFile2Packet command0204(String hexData ){
+		public static JetFile2Packet command0204(String hexData, String filename ){
 			JetFile2Packet packet = new JetFile2Packet();
 			packet.setCommand(InfoWrite.WRITE_TXT);
 			packet.setData(hexData);
 			
 			String codeDiskPartition = UdpUtils.ascii2hexString("D",1);
 			String ringingTimes = "00";
-			String textfileLabel = UdpUtils.ascii2hexString(TEMP_FILE,12);
+			//String textfileLabel = UdpUtils.ascii2hexString(TEMP_FILE,12);
+			String textfileLabel = UdpUtils.ascii2hexString(filename,12);
 			String filesize = UdpUtils.int2HexString(packet.getDatalen(), 4);
 			String pcktsize = UdpUtils.int2HexString(768, 2);
 			String quantity = UdpUtils.int2HexString(1, 2);

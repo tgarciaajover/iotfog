@@ -48,19 +48,18 @@ public class DelayQueueConsumer implements Runnable
 	
 	public void run() 
 	{
-		logger.info("The DelayQueueConsumer is going to run");
-		while (true) {
+		boolean interruptedException = false;
+		while (true && !interruptedException) {
 			try {
 				// Take elements out from the DelayQueue object.
 				DelayEvent object = (DelayEvent) queue.take();
 				logger.debug("passing event:" + object.getId() + 
 						" startdttm:" + object.getStartTime() +  
 						" event type:" + object.getEvent().getEvntType().getName() + 
-						" event info:" + object.getEvent().toString());
+						" event info:" + object.getEvent().toString() + "  queue size: " + queue.size());
 				// gets the event and queues it to be reprocessed by the EventManager
 				Queueable obj = new Queueable(QueueType.EVENT, object.getEvent());
 				eventManager.getQueue().enqueue(DEFAULT_PRIORITY,obj);
-				
 				// gets the number of elements on each queue.
 				int[] size = eventManager.getQueue().size();
 				String sizeStr = "";
@@ -70,7 +69,8 @@ public class DelayQueueConsumer implements Runnable
 				logger.debug("The DelayQueueConsumer enqueue other element - number of events:" + sizeStr);
 		
 			} catch (InterruptedException e) {
-				logger.error("DelayConsumer is interrupted! "+ e.getMessage());
+				interruptedException = true;
+				logger.error("InterruptedException: " + e.getMessage());
 				e.printStackTrace();
 			}
 		}

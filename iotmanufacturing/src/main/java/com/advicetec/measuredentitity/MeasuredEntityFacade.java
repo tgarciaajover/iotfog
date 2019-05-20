@@ -1,11 +1,14 @@
 package com.advicetec.measuredentitity;
 
+import java.beans.PropertyVetoException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -67,6 +70,16 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	private Integer purgeFacadeCacheMapEntries;
 	
 	/**
+	 *  This field establishes the temporality for calculate indicators. 
+	 */
+	private String ratesTemporality;
+	
+	/**
+	 *  This field establishes the name of variable from estimated the actual rate. 
+	 */
+	private String actualRateVariable;
+	
+	/**
 	 * Constructor for the class.
 	 *  
 	 * @param entity						measure entity for which we are building the facade
@@ -82,7 +95,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	{
 		
 		super(entity,purgeFacadeCacheMapEntries);
-
+		logger.debug("MeasuredEntityFacade Start " + String.valueOf(entity.getId()));
 		logger.debug("Creating Measured entity facade");
 		
 		this.productionRateId = productionRateId;
@@ -90,6 +103,9 @@ public final class MeasuredEntityFacade extends EntityFacade {
 		this.unit2PerCycles = unit2PerCycles;
 		this.actualProductionCountId = actualProductionCountId;
 		this.purgeFacadeCacheMapEntries = purgeFacadeCacheMapEntries;
+		this.ratesTemporality = getTemporalityRate();
+		this.actualRateVariable = getActualRateVariableName();
+		logger.info("Entity: " + entity.getId().toString() + " Temporality: " + this.ratesTemporality + " Variable Name: " + this.actualRateVariable);
 		
 		PurgeFacadeCacheMapsEvent purgeEvent = new PurgeFacadeCacheMapsEvent(entity.getId(), entity.getType());
 		purgeEvent.setRepeated(true);
@@ -104,21 +120,24 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			logger.error("Error creating the purge event in the queue for measured entity:" + entity.getId());
 			e.printStackTrace();
 		}
-		
+		logger.debug("MeasuredEntityFacade End " + String.valueOf(entity.getId()));
 		logger.debug("Finish Creating Measured entity facade");
 	}
 	
 
 	/**
-	 * Registers a new interval in the measured entity
+	 * Creates a new interval from the measuring state, reason code and data in the measured entity
 	 * 
 	 * @param status		new status for the measured entity 
 	 * @param reasonCode	reason code of the new status
 	 * @param interval		Time interval in which the measure entity remains in the status defined.
+	 * 
+	 * @return new state interval
 	 */
-	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
+	private StateInterval BuildStateInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
 	{
-		
+		logger.debug("BuildStateInterval Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		//logger.debug("In BuildStateInterval - status: " + status.getName().toString() + " interval: " + interval.getStart().toString());
 		// Obtains the current executed entity being processed.
 		ExecutedEntity executedEntity = ((MeasuredEntity)this.getEntity()).getCurrentExecutedEntity();
 				
@@ -140,40 +159,82 @@ public final class MeasuredEntityFacade extends EntityFacade {
 		
 		Double actualRate = null; 
 		
-		// Verifies that the actual production count id field is an attribute in the measuring entity
-		if (!isAttribute(actualProductionCountId)) {
-			logger.error("The given attribute: " + this.actualProductionCountId + " does not exists as attribute in the measuring entity");
-			actualRate = new Double(0.0);
+		if(this.actualRateVariable != null && !this.actualRateVariable.isEmpty()) {
+			// Verifies that the actual production count id field is an attribute in the measuring entity
+						if (!isAttribute(this.actualRateVariable)) {
+							logger.error("The given attribute: " + this.actualRateVariable + " does not exists as attribute in the measuring entity");
+							actualRate = new Double(0.0);
+						} else {
+							List<AttributeValue> list = getByIntervalByAttributeName(this.actualRateVariable, interval.getStart(), interval.getEnd());
+							double sum = 0;
+							// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
+							for (AttributeValue attributeValue : list) 
+							{
+								
+								MeasuredAttributeValue measvalue = (MeasuredAttributeValue) attributeValue;
+								
+								if ((measvalue.getValue() instanceof Double) || (measvalue.getValue() instanceof Integer)){
+									if (measvalue.getValue() instanceof Double)
+										sum = sum + (Double) measvalue.getValue();
+									else
+										sum = sum + (Integer) measvalue.getValue();
+								} else {
+									logger.error("The production count attribute: " + this.actualRateVariable + " parametrized is not of type Double or Integer");
+									break;
+								}
+							}
+							
+							LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
+							long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
+							double tmp = 0;
+							if (seconds > 0) {
+								if (this.ratesTemporality.equals("H")) {
+									tmp = (sum * 3600) / seconds;
+								} else {
+									tmp = (sum * 60) / seconds;
+								}
+							}
+								
+							actualRate = new Double(tmp);    // The actual rate is in cycle over minutes.
+						}
 		} else {
-		
-			List<AttributeValue> list = getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
-			
-			double sum = 0;
-			// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
-			for (AttributeValue attributeValue : list) 
-			{
-				
-				MeasuredAttributeValue measvalue = (MeasuredAttributeValue) attributeValue;
-				
-				if ((measvalue.getValue() instanceof Double) || (measvalue.getValue() instanceof Integer)){
-					if (measvalue.getValue() instanceof Double)
-						sum = sum + (Double) measvalue.getValue();
-					else
-						sum = sum + (Integer) measvalue.getValue();
-				} else {
-					logger.error("The production count attribute: " + actualProductionCountId + " parametrized is not of type Double or Integer");
-					break;
+			// Verifies that the actual production count id field is an attribute in the measuring entity
+			if (!isAttribute(actualProductionCountId)) {
+				logger.error("The given attribute: " + this.actualProductionCountId + " does not exists as attribute in the measuring entity");
+				actualRate = new Double(0.0);
+			} else {
+				List<AttributeValue> list = getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
+				double sum = 0;
+				// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
+				for (AttributeValue attributeValue : list) 
+				{
+					
+					MeasuredAttributeValue measvalue = (MeasuredAttributeValue) attributeValue;
+					
+					if ((measvalue.getValue() instanceof Double) || (measvalue.getValue() instanceof Integer)){
+						if (measvalue.getValue() instanceof Double)
+							sum = sum + (Double) measvalue.getValue();
+						else
+							sum = sum + (Integer) measvalue.getValue();
+					} else {
+						logger.error("The production count attribute: " + actualProductionCountId + " parametrized is not of type Double or Integer");
+						break;
+					}
 				}
-			}
-			
-			LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
-			long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
-			double tmp = 0;
-			if (seconds > 0) {
-				tmp = (sum * 60) / seconds;
-			}
 				
-			actualRate = new Double(tmp);    // The actual rate is in cycle over minutes. 
+				LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
+				long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
+				double tmp = 0;
+				if (seconds > 0) {
+					if (this.ratesTemporality.equals("H")) {
+						tmp = (sum * 3600) / seconds;
+					} else {
+						tmp = (sum * 60) / seconds;
+					}
+				}
+					
+				actualRate = new Double(tmp);    // The actual rate is in cycle over minutes.
+			}
 		}
 			
 		StateInterval stateInterval = null;
@@ -187,10 +248,27 @@ public final class MeasuredEntityFacade extends EntityFacade {
 												0, 0, "", rate, conversion1, conversion2, actualRate, new Double(0));
 		}
 		stateInterval.setKey(getEntity().getId()+ ":" + stateInterval.getKey());
+		logger.debug("BuildStateInterval End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		return stateInterval;
+	}
+	
+	
+	/**
+	 * Registers a new interval in the measured entity
+	 * 
+	 * @param status		new status for the measured entity 
+	 * @param reasonCode	reason code of the new status
+	 * @param interval		Time interval in which the measure entity remains in the status defined.
+	 */
+	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval)
+	{
+		logger.debug("registerInterval Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		//logger.debug("In registerInterval - status: " + status.getName().toString() + " interval: " + interval.getStart().toString());
+		StateInterval stateInterval = BuildStateInterval(status, reasonCode, interval);
 		// key in the map and the cache must be consistent
 		super.statesMap.put(interval.getStart(),stateInterval.getKey());
 		StateIntervalCache.getInstance().storeToCache(stateInterval);
-		
+		logger.debug("registerInterval End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 	}
 			
 	/**
@@ -204,6 +282,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 */
 	public synchronized JSONArray getJsonDowntimeReasons(LocalDateTime from,	LocalDateTime to) 
 	{
+		logger.debug("getJsonDowntimeReasons Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		logger.debug("In getJsonDowntimeReasons + from:" + from.toString() + " to:" + to.toString());
 		
 		JSONArray array = null;
@@ -221,7 +300,25 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			// adding jsonObject to JsonArray
 			array.put(jsob);
 		}
+		logger.debug("getJsonDowntimeReasons End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		return array;
+	}
+	
+	public synchronized double getDBActualProductionRate() {
+		Double productionRate = 0.0;
+		if (this.getCurrentState().getName().equals("UnScheduleDown")) {
+			productionRate = 0.0;
+		} else {
+			if (this.getCurrentState().getName().equals("ScheduleDown")) {
+				List<StateInterval> intervals = this.getCurrentStateInterval();
+				for (StateInterval interval : intervals){
+					productionRate = interval.getActualProductionRate();
+				}
+			} else {
+				productionRate = stateCache.getDBActualProductionRate(((MeasuredEntity)this.getEntity()).getId(), ((MeasuredEntity)this.getEntity()).getType().getValue());
+			}
+		}
+		return productionRate;
 	}
 
 	
@@ -231,6 +328,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 * @return
 	 */
 	protected Map<Integer,DowntimeReason> sumarizeDowntimeReason(List<StateInterval> list) {
+		logger.debug("sumarizeDowntimeReason Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		Map<Integer,DowntimeReason> map = new HashMap<Integer, DowntimeReason>();
 		DowntimeReason reason = null;
 		for (StateInterval interval : list) {
@@ -257,6 +355,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 				}
 			}
 		}
+		logger.debug("sumarizeDowntimeReason End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		return map;
 	}
 	
@@ -268,7 +367,9 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 */
 	public synchronized void addExecutedObject(ExecutedEntity executedEntity)
 	{
-		((MeasuredEntity) this.getEntity()).addExecutedEntity(executedEntity);		
+		logger.debug("addExecutedObject Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		((MeasuredEntity) this.getEntity()).addExecutedEntity(executedEntity);
+		logger.debug("addExecutedObject End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 	}
 	
 	/**
@@ -276,7 +377,9 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 */
 	public synchronized void stopExecutedObjects()
 	{
+		logger.debug("stopExecutedObjects Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		((MeasuredEntity) this.getEntity()).stopExecuteEntities();
+		logger.debug("stopExecutedObjects End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 	}
 	
 	/**
@@ -286,9 +389,11 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 */
 	public synchronized void removeExecutedObject(Integer id)
 	{
+		logger.debug("removeExecutedObject Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		((MeasuredEntity) this.getEntity()).removeExecutedEntity(id);
 		
 		ExecutedEntityChange();
+		logger.debug("removeExecutedObject End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 	}
 
 	/**
@@ -300,10 +405,14 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 */
 	public synchronized AttributeValue getExecutedObjectAttribute(String attributeId)
 	{
-		return ((MeasuredEntity) this.getEntity()).getAttributeFromExecutedObject(attributeId);
+		logger.debug("getExecutedObjectAttribute Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		AttributeValue attributeValue = ((MeasuredEntity) this.getEntity()).getAttributeFromExecutedObject(attributeId);
+		logger.debug("getExecutedObjectAttribute End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		return attributeValue;
 	}
 	
-	private void changeState(MeasuringState newState)  {
+	private void changeState(MeasuringState newState, boolean persistReason)  {
+		logger.debug("changeState Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		
 		logger.debug("Change State - new State:" + newState.getName());
 		
@@ -317,8 +426,13 @@ public final class MeasuredEntityFacade extends EntityFacade {
 							  ((MeasuredEntity)this.getEntity()).getCurrentReason(), 
 							  interval);
 		
-		// Starts a new Interval.
-		((MeasuredEntity)this.getEntity()).startInterval(localDateTime, newState, null);
+		// Starts a new Interval depending of new state and origin.
+		if (persistReason) {
+			((MeasuredEntity)this.getEntity()).startInterval(localDateTime, newState, ((MeasuredEntity)this.getEntity()).getCurrentReason());
+		} else {
+			((MeasuredEntity)this.getEntity()).startInterval(localDateTime, newState, null);
+		}
+		
 		
 		// Verify whether or not there is an executed entity being processed.
 		// In case of being processed, then updates the executed entity state.
@@ -327,9 +441,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			
 			ExecutedEntity executedEntity = getCurrentExecutedEntity();
 			
-			if (executedEntity != null) {
-				
-				logger.info("Change state - new state found entity");
+			if (executedEntity != null) {				
 				
 				ProductionOrderManager orderManager;
 					orderManager = ProductionOrderManager.getInstance();
@@ -337,9 +449,9 @@ public final class MeasuredEntityFacade extends EntityFacade {
 				
 				if (executedEntityFacade != null) {
 					
-					logger.info("Change state - it is going to change executed object state - new state:" + newState.getName());
-					
-					executedEntityFacade.setCurrentState(newState, getEntity().getId());
+					//logger.debug("Change state - it is going to change executed object state - new state:" + newState.getName());
+					//TG 20180901 18:50 TRATANDO DE SOLUCIONAR LOS BLOQUEOS;
+					//executedEntityFacade.setCurrentState(newState, getEntity().getId());
 				}
 			}
 		
@@ -347,6 +459,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
+		logger.debug("changeState End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		
 	}
 	
@@ -356,7 +469,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 * Registers an interval representing the change. 
 	 */
 	public synchronized void ExecutedEntityChange(){
-		
+		logger.debug("ExecutedEntityChange Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		LocalDateTime localDateTime = LocalDateTime.now();
 
 		// Creates the time interval, from the last status change to now.
@@ -368,12 +481,15 @@ public final class MeasuredEntityFacade extends EntityFacade {
 							  interval);
 		
 		// Starts a new Interval.
-		((MeasuredEntity)this.getEntity()).startInterval(localDateTime, this.getCurrentState(), null);
-		
+		((MeasuredEntity)this.getEntity()).startInterval(localDateTime, this.getCurrentState(), this.getCurrentReason());
+		logger.debug("ExecutedEntityChange End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 	}
 	
 	public synchronized ExecutedEntity getCurrentExecutedEntity() {
-		return ((MeasuredEntity) this.getEntity()).getCurrentExecutedEntity();
+		logger.debug("getCurrentExecutedEntity Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		ExecutedEntity executedEntity = ((MeasuredEntity) this.getEntity()).getCurrentExecutedEntity();
+		logger.debug("getCurrentExecutedEntity End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		return executedEntity;
 	}
 	
 	/**
@@ -382,10 +498,32 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 * @return  If there is not entity assigned return undefined.
 	 */    
 	public synchronized MeasuringState getCurrentState(){
+		 logger.debug("getCurrentState Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
     	 if (this.getEntity() == null){
+    		 logger.debug("getCurrentState End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
     		 return MeasuringState.UNDEFINED;
     	 } else {
-    		 return ((MeasuredEntity) this.getEntity()).getCurrentState();
+    		 MeasuringState measuringState = ((MeasuredEntity) this.getEntity()).getCurrentState();
+    		 logger.debug("getCurrentState End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+    		 return measuringState;
+    	 }
+     }
+	
+	
+	/**
+	 * Returns the current reason of the measured entity.
+	 *  
+	 * @return  If there is not entity assigned return null.
+	 */    
+	public synchronized ReasonCode getCurrentReason(){
+		logger.debug("getCurrentReason Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+    	 if (this.getEntity() == null){
+    		 logger.debug("getCurrentReason End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+    		 return null;
+    	 } else {
+    		 ReasonCode reasonCode = ((MeasuredEntity)this.getEntity()).getCurrentReason();
+    		 logger.debug("getCurrentReason End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+    		 return reasonCode;
     	 }
      }
 
@@ -397,7 +535,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 * @param symbolMap				symbols generated by the transformation or behavior execution.
 	 */
 	public synchronized void setCurrentState(Map<String, ASTNode> symbolMap) {
-
+		logger.debug("setCurrentState Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		logger.debug ("Measured entity in setCurrentState" );
 		
 		for (Map.Entry<String, ASTNode> entry : symbolMap.entrySet()) 
@@ -416,7 +554,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 					if (( currentState != MeasuringState.OPERATING) || 
 							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
 						
-						changeState(MeasuringState.OPERATING);
+						changeState(MeasuringState.OPERATING, false);
 												
 					}
 				} else if ( newState == MeasuringState.SCHEDULEDOWN ){
@@ -424,7 +562,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 					if (( currentState != MeasuringState.SCHEDULEDOWN) || 
 							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
 						
-						changeState(MeasuringState.SCHEDULEDOWN);						
+						changeState(MeasuringState.SCHEDULEDOWN, false);						
 					}
 					
 				} else if ( newState == MeasuringState.UNSCHEDULEDOWN ){
@@ -432,15 +570,15 @@ public final class MeasuredEntityFacade extends EntityFacade {
 					if (( currentState != MeasuringState.UNSCHEDULEDOWN) || 
 							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
 						
-						changeState(MeasuringState.UNSCHEDULEDOWN);						
+						changeState(MeasuringState.UNSCHEDULEDOWN, true);						
 					}
 
 				}  else if ( newState == MeasuringState.INITIALIZING ){
 
 					if (( currentState != MeasuringState.INITIALIZING) || 
 							(((MeasuredEntity)this.getEntity()).startNewInterval())) {
-
-						changeState(MeasuringState.INITIALIZING);						
+						
+						changeState(MeasuringState.INITIALIZING, false);						
 					}
 
 				} else {
@@ -450,9 +588,11 @@ public final class MeasuredEntityFacade extends EntityFacade {
 				}	
 			}
 		}
+		logger.debug("setCurrentState End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 	}
 
 	public synchronized void setCurrentState(MeasuringState newState) {
+		logger.debug("setCurrentState Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		
 		logger.debug("Change Current State - new State:" + newState.getName() );
 		
@@ -462,7 +602,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			if (( currentState != MeasuringState.OPERATING) || 
 					(((MeasuredEntity)this.getEntity()).startNewInterval())) {
 				
-				changeState(MeasuringState.OPERATING);
+				changeState(MeasuringState.OPERATING, false);
 										
 			}
 		} else if (newState == MeasuringState.SCHEDULEDOWN){
@@ -470,7 +610,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			if (( currentState != MeasuringState.SCHEDULEDOWN) || 
 					(((MeasuredEntity)this.getEntity()).startNewInterval())) {
 				
-				changeState(MeasuringState.SCHEDULEDOWN);						
+				changeState(MeasuringState.SCHEDULEDOWN, false);						
 			}
 			
 		} else if (newState == MeasuringState.UNSCHEDULEDOWN){
@@ -478,7 +618,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			if (( currentState != MeasuringState.UNSCHEDULEDOWN) || 
 					(((MeasuredEntity)this.getEntity()).startNewInterval())) {
 				
-				changeState(MeasuringState.UNSCHEDULEDOWN);						
+				changeState(MeasuringState.UNSCHEDULEDOWN, false);						
 			}
 			
 		} else if (newState == MeasuringState.SYSTEMDOWN) {
@@ -486,7 +626,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			if (( currentState != MeasuringState.SYSTEMDOWN) || 
 					(((MeasuredEntity)this.getEntity()).startNewInterval())) {
 				
-				changeState(MeasuringState.SYSTEMDOWN);						
+				changeState(MeasuringState.SYSTEMDOWN, false);						
 			}
 			
 		} else if (newState == MeasuringState.INITIALIZING){
@@ -494,7 +634,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 			if (( currentState != MeasuringState.INITIALIZING) || 
 					(((MeasuredEntity)this.getEntity()).startNewInterval())) {
 				
-				changeState(MeasuringState.INITIALIZING);						
+				changeState(MeasuringState.INITIALIZING, false);						
 			}
 			
 		} 
@@ -502,7 +642,7 @@ public final class MeasuredEntityFacade extends EntityFacade {
 		else {
 			logger.error("The new state is being set to undefined, which is incorrect");
 		}	
-
+		logger.debug("setCurrentState End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 	}
 	
 	/**
@@ -514,64 +654,173 @@ public final class MeasuredEntityFacade extends EntityFacade {
 	 * @return	true if the intervals was found and updated, false otherwise.
 	 */
 	public synchronized boolean updateStateInterval(String startDttmStr, ReasonCode reasonCode) {
+		logger.debug("updateStateInterval Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
 		
-		logger.info("reasoncode id:" + reasonCode.getId() + " descr:" + reasonCode.getDescription() + " startDttm:" + startDttm );
+		logger.debug("reasoncode id:" + reasonCode.getId() + " descr:" + reasonCode.getDescription() + " startDttm:" + startDttm );
 		
 		boolean ret = false;
 		
-		if ( ((MeasuredEntity) this.getEntity()).getCurrentStatDateTime().equals(startDttm)){
+		if ( ((MeasuredEntity) this.getEntity()).getCurrentStatDateTime().withNano(0).equals(startDttm)){
 			
 			logger.debug("Updating the current state interval");
 			
 			((MeasuredEntity) this.getEntity()).setCurrentReasonCode(reasonCode);
 			ret = true;
+			
 		} else {
 
 			logger.debug("Updating the past state interval");
 			
 			LocalDateTime oldest = stateCache.getOldestTime();
 			
-			logger.info("oldest" + oldest.format(formatter));
+			logger.debug("oldest" + oldest.format(formatter));
+			
 			
 			LocalDateTime enddttm; 
+			boolean updateEntityReason;
 			if(oldest.isAfter(startDttm) )
 			{
-				logger.info("the datetime given is after");
 				// some values are in the database and maybe we have to continue updating the intervals. 
 				enddttm = stateCache.updateMeasuredEntityStateInterval(this.entity.getId(), this.entity.getType(), startDttm, reasonCode);
 				
 				// We have to continue updating the intervals in the cache.
 				if (enddttm == null) {
-					SortedMap<LocalDateTime, String> tail = this.statesMap.tailMap(enddttm);
+					updateEntityReason = false;
+					SortedMap<LocalDateTime, String> tail = this.statesMap.tailMap(startDttm);
 					for (Map.Entry<LocalDateTime, String> entry : tail.entrySet()) {
-						if (stateCache.getFromCache(entry.getValue()).getState() == MeasuringState.OPERATING)
+						if (stateCache.getFromCache(entry.getValue()).getState() == MeasuringState.OPERATING) {
+							updateEntityReason = true;
 							break;
+						}
 						else
 							stateCache.updateCacheStateInterval(entry.getValue(), reasonCode);
 						
+					}
+					if (((MeasuredEntity) this.getEntity()).getCurrentState() == MeasuringState.UNSCHEDULEDOWN && !(updateEntityReason)) {
+						((MeasuredEntity) this.getEntity()).setCurrentReasonCode(reasonCode);
 					}
 				}
 					 				
 			} else if(oldest.isBefore(startDttm)){
 				// all values are in the state cache
 				logger.debug("the datetime given is before");
+				updateEntityReason = false;
 				SortedMap<LocalDateTime, String> tail = this.statesMap.tailMap(startDttm);
 				for (Map.Entry<LocalDateTime, String> entry : tail.entrySet()) {
-					if (stateCache.getFromCache(entry.getValue()).getState() == MeasuringState.OPERATING)
+					if (stateCache.getFromCache(entry.getValue()).getState() == MeasuringState.OPERATING) {
+						updateEntityReason = true;
 						break;
+					}
 					else
 						stateCache.updateCacheStateInterval(entry.getValue(), reasonCode);
-					
 				}			
+				if (((MeasuredEntity) this.getEntity()).getCurrentState() == MeasuringState.UNSCHEDULEDOWN && !(updateEntityReason)) {
+					((MeasuredEntity) this.getEntity()).setCurrentReasonCode(reasonCode);
+				}
 			}
 		}
-		
+		logger.debug("updateStateInterval End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
 		return ret;
+	}
+	
+	/**
+	 * This method converts the current state in the measured entity in a StateInterval and returns as list.
+	 * 
+	 * @return current State Interval in list.
+	 */
+	public synchronized List<StateInterval> getCurrentStateInterval() {
+		logger.debug("getCurrentStateInterval Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		LocalDateTime localDateTime = LocalDateTime.now();
+
+		// Creates the time interval, from the last status change to now.
+		TimeInterval interval = new TimeInterval(((MeasuredEntity)this.getEntity()).getCurrentStatDateTime(), localDateTime);
+
+		StateInterval current = BuildStateInterval(((MeasuredEntity)this.getEntity()).getCurrentState(), 
+													((MeasuredEntity)this.getEntity()).getCurrentReason(), interval);
+		
+		List<StateInterval> list = new ArrayList<StateInterval>();
+		
+		list.add(current);
+		logger.debug("getCurrentStateInterval End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		return list;
 	}
 
 	
+	/**
+	 * Returns the json array with the format:<br>
+	 * [ ... {"machine":machine,"status":sts,"startDttm":start,"endDttm":end,"reason":reason}...]
+	 * 
+	 * @return Json Array of current states. Actually is only one entry.
+	 * @throws PropertyVetoException 
+	 */
+	public synchronized JSONArray getJsonCurrentState() {
+		logger.debug("getJsonCurrentState Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		logger.debug("getJsonCurrentState");
+		JSONArray array = null;
+		String cannonicalMachine = "";
+			
+		cannonicalMachine = entity.getCanonicalKey();
+
+		List<StateInterval> intervals = getCurrentStateInterval();
+		array = new JSONArray();
+		for (StateInterval interval : intervals) {
+			if (interval != null)
+			{
+				// create the json object
+				JSONObject jsob = new JSONObject();
+				jsob.append("machine", cannonicalMachine);
+				jsob.append("status", interval.getState().getName());
+				jsob.append("startDttm", interval.getInterval().getStart().toString());
+				jsob.append("endDttm", interval.getInterval().getEnd().toString());
+				if (interval.getReason() != null)
+					jsob.append("reason", interval.getReason().getDescription());
+				else 
+					jsob.append("reason", null);
+				// adding the jsonObject to array
+
+				jsob.append("executedObject", interval.getRelatedObject().toString());
+				jsob.append("executedObjectType", interval.getRelatedObjectType().toString());
+				jsob.append("executedObjectCanonical", interval.getExecutedObjectCanonical());
+				jsob.append("productionRate", interval.getProductionRate());
+				jsob.append("actualProductionRate", interval.getActualProductionRate());
+				array.put(jsob);
+			}
+		}
+		logger.debug("getJsonCurrentState End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		return array;
+	}
+
+	
+	public synchronized double getCurrentStateDuration(){
+		logger.debug("getCurrentStateDuration Start " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		LocalDateTime to = LocalDateTime.now(); 
+		LocalDateTime from = LocalDateTime.now().minusDays(2);
+		List<StateInterval> intervals = getStatesByInterval(from, to);
+		StateInterval intervalActual = getCurrentStateInterval().get(0);
+		ListIterator li = intervals.listIterator(intervals.size());
+		String currenstate="", laststate="";
+		Double totDuration = 0.0;
+		
+		currenstate = intervalActual.getState().getName();
+		laststate = currenstate;
+		totDuration = intervalActual.getDurationMin();
+		
+		while(li.hasPrevious()) {
+			StateInterval interval = (StateInterval) li.previous();
+			currenstate = interval.getState().getName();			
+			if(laststate == currenstate){
+				totDuration = totDuration + interval.getDurationMin();
+			}else{
+				return totDuration;
+			}
+			laststate = currenstate;
+		}	
+		logger.debug("getCurrentStateDuration End " + String.valueOf(((MeasuredEntity)this.getEntity()).getId()));
+		return totDuration;
+	}
+
 }
 

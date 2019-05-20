@@ -110,7 +110,6 @@ public class MeasuredEntityEventProcessor implements Processor
 			{
 				long duetime = ((TimerSymbol) symbol).getMilliseconds();
 				String behavior =  getBehavior(((TimerSymbol) symbol).getCompleteName());
-				
 				if (entityFacade instanceof MeasuredEntityFacade){ 
 					// We don't send parameters to the event. 
 										
@@ -135,7 +134,7 @@ public class MeasuredEntityEventProcessor implements Processor
 				event.setMilliseconds(0);
 				DelayEvent dEvent = new DelayEvent(event,0);
 				ret.add(dEvent);
-				
+				logger.debug("create event display");
 			}
 			
 		}
@@ -146,6 +145,50 @@ public class MeasuredEntityEventProcessor implements Processor
 		
 	}
 	
+	public String getBehaviorProgram(MeasuredEntityFacade entityFacade) {
+		String program = null;
+		switch (this.event.getBehaviorType()) {
+           case COMMON_BEHAVIOR:
+				String behaviorName = this.event.getBehaviorName();				
+		        logger.debug("process - behavior:" + behaviorName);
+		        program = ((MeasuredEntity) entityFacade.getEntity()).getBehaviorText(behaviorName);
+               break;
+                   
+           case STATE_BEHAVIOR:
+				String stateBehaviorType = this.event.getStateBehaviorType();				
+		        logger.debug("process - State Behavior Type:" + stateBehaviorType);
+		        program = ((MeasuredEntity) entityFacade.getEntity()).getStateBehaviorText(stateBehaviorType);
+               break;
+                        
+           case TRANSITION_BEHAVIOR:
+               logger.error("The transition behavior functionality is not implemented");
+               break;                       
+        }
+		return program; 
+	}
+	
+	public String getBehaviorName(MeasuredEntityFacade entityFacade) {
+		String behaviorName = null;
+		switch (this.event.getBehaviorType()) {
+           case COMMON_BEHAVIOR:
+				behaviorName = this.event.getBehaviorName();				
+		        logger.debug("process - behavior:" + behaviorName);
+               break;
+                   
+           case STATE_BEHAVIOR:
+				behaviorName = this.event.getStateBehaviorType();				
+		        logger.debug("process - State Behavior Type:" + behaviorName);
+               break;
+                        
+           case TRANSITION_BEHAVIOR:
+               logger.error("The transition behavior functionality is not implemented");
+               break;                       
+        }
+		
+		return behaviorName; 
+	}
+	
+	
 	/**
 	 * This method takes the event parameter and process the behavior.
 	 */
@@ -153,19 +196,19 @@ public class MeasuredEntityEventProcessor implements Processor
 	{
 		
 		Integer measuringEntity = this.event.getEntity();
-		String behaviorName = this.event.getBehaviorName();
-		
-        logger.info("process - behavior:" + behaviorName);
 		
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade entityFacade = entityManager.getFacadeOfEntityById(measuringEntity);
 
 		ArrayList<DelayEvent> ret = new ArrayList<DelayEvent>();  
-
-		if (entityFacade != null){
 		
-			String program = ((MeasuredEntity) entityFacade.getEntity()).getBehaviorText(behaviorName);
+		String program = null;
+		String behaviorName = null;
+		if (entityFacade != null){
 			
+			behaviorName = getBehaviorName(entityFacade);
+			program = getBehaviorProgram(entityFacade);
+			logger.debug("the program for behavior name:" + behaviorName + " for measure entity:" + measuringEntity);
 			if (program == null || program.isEmpty()){
 				logger.error("the program for behavior name:" + behaviorName + " does not exist!! for measure entity:" + measuringEntity);
 				return ret;
@@ -183,25 +226,25 @@ public class MeasuredEntityEventProcessor implements Processor
 				{ 
 					
 					List<InterpretedSignal> listParams = this.event.getParameters();
-					execute_behavior(behaviorName, program, entityFacade, measuringEntity, listParams);
+					ret = (ArrayList<DelayEvent>) execute_behavior(behaviorName, program, entityFacade, measuringEntity, listParams);
 										
 					ExecutedEntity executedEntity = entityFacade.getCurrentExecutedEntity();
 					
 					// If it is an executed entity being processed, then we execute the behavior for it
 					if (executedEntity != null) {
 						
-						logger.info("it is going to execute the behavior for the executed entity");
+						logger.debug("it is going to execute the behavior for the executed entity");
 						
 						ProductionOrderManager prodOrderManager = ProductionOrderManager.getInstance();
 						ExecutedEntityFacade pOrderFacade = prodOrderManager.getFacadeOfPOrderById(executedEntity.getId());
-						execute_behavior(behaviorName, program, pOrderFacade, measuringEntity, listParams);
+						ret = (ArrayList<DelayEvent>) execute_behavior(behaviorName, program, pOrderFacade, measuringEntity, listParams);
 						
 					} else {
 						logger.debug("No executed entity is being run");
 					}
 					
 				} else {
-					logger.error("behavior" + behaviorName+ " has errors #(errors):" + String.valueOf(errorList.size()));
+					logger.error("behavior" + behaviorName + " has errors #(errors):" + String.valueOf(errorList.size()));
 				}
 			} catch (Exception e) {
 				logger.error("Error message:" + e.getMessage());

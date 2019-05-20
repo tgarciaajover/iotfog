@@ -25,6 +25,31 @@ public class PeriodUtils
 	public static int HOURSPERDAY = 24;
 	public static int HOURSPERMONTH = HOURSPERDAY * 30;
 	public static int HOURSPERYEAR = HOURSPERMONTH * 12;
+	
+	public static int MINUTESPERHOUR = 60;
+	public static int MINUTESPERDAY = MINUTESPERHOUR * 24;
+	public static int MINUTESPERMONTH = MINUTESPERDAY * 30;
+	public static int MINUTESPERYEAR = MINUTESPERMONTH * 12;
+	
+	/**
+	 * Returns start of the next minute from the given date-time.
+	 * @param date Date-Time
+	 * @return A Date-Time with the next minute.
+	 */
+	static public LocalDateTime getStartNextMinute(LocalDateTime date) {
+		LocalDateTime startNextMinute = LocalDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), date.getHour(), date.getMinute(), MAX_SECONDS );
+		return startNextMinute.plusSeconds(1);
+	}
+	
+	/**
+	 * Returns the final of the previous minute from the given date-time.
+	 * @param date Date-Time
+	 * @return A Date-Time with the previous minute.
+	 */
+	static public LocalDateTime getPreviousFinalMinute(LocalDateTime date) {
+		LocalDateTime temp = LocalDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), date.getHour(), date.getMinute(), MAX_SECONDS, 0 );
+		return temp.minusMinutes(1);
+	}
 	 
 	/**
 	 * Returns start of the next hour from the given date-time.
@@ -117,6 +142,56 @@ public class PeriodUtils
 	}
 	
 	/**
+	 * Returns a list of predefined periods in minutes between the initial 
+	 * time and end time.
+	 * 
+	 * @param from Initial time.
+	 * @param to End time.
+	 * @return List of predefined periods in minutes after initial time and 
+	 * before end time.
+	 * 
+	 * @see PredefinedPeriod
+	 */
+	static public List<PredefinedPeriod> getPredefinedPeriodMinutes( LocalDateTime from, LocalDateTime to )
+	{
+		
+		logger.debug("getPredefinedPeriodMinutes from:" + from + " to:" + to);
+		
+		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
+
+		LocalDateTime startNext = getStartNextMinute(from);
+		LocalDateTime previousEnd = getPreviousFinalMinute(to);		
+		previousEnd = previousEnd.plusSeconds(1);
+		// calculates the number of minutes between initial and end dates.
+		long minutes = ChronoUnit.MINUTES.between(startNext, previousEnd);
+		
+		logger.debug("startNext:" + startNext + " previousEnd:" + previousEnd);
+		logger.debug("in getPredefinedPeriodMinutes  NumMinutes:" + Long.toString(minutes));
+		// if the difference is less than an minute
+		if (minutes <= 0) {
+			// Inserts the initial minute
+			PredefinedPeriod predefinedPeriod = new PredefinedPeriod((int)from.getYear(), (int) from.getMonthValue(), (int)from.getDayOfMonth(), from.getHour(), from.getMinute());
+			ret.add(predefinedPeriod);
+		
+		} else {
+			// inserts the less than an minute period.
+			PredefinedPeriod predefinedPeriod = new PredefinedPeriod((int)from.getYear(), (int) from.getMonthValue(), (int)from.getDayOfMonth(), from.getHour(), from.getMinute());
+			ret.add(predefinedPeriod);
+			// inserts the periods of minutes
+			for (int i = 0; i < minutes; i++) { 
+				predefinedPeriod = new PredefinedPeriod((int)startNext.getYear(), (int) startNext.getMonthValue(), (int)startNext.getDayOfMonth(), startNext.getHour(), startNext.getMinute() + i);
+				ret.add(predefinedPeriod);
+			}
+			// inserts the last less than an minute period.
+			if (previousEnd.isBefore(to)){
+				predefinedPeriod = new PredefinedPeriod((int)previousEnd.getYear(), (int) previousEnd.getMonthValue(), (int)previousEnd.getDayOfMonth(), previousEnd.getHour(), previousEnd.getMinute());
+				ret.add(predefinedPeriod);
+			}
+		}
+		return ret;
+	}
+	
+	/**
 	 * Returns a list of predefined periods in hours between the initial 
 	 * time and end time.
 	 * 
@@ -130,7 +205,7 @@ public class PeriodUtils
 	static public List<PredefinedPeriod> getPredefinedPeriodHours( LocalDateTime from, LocalDateTime to )
 	{
 		
-		logger.info("getPredefinedPeriodHours from:" + from + " to:" + to);
+		logger.debug("getPredefinedPeriodHours from:" + from + " to:" + to);
 		
 		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
 
@@ -140,27 +215,25 @@ public class PeriodUtils
 		// calculates the number of hours between initial and end dates.
 		long hours = ChronoUnit.HOURS.between(startNext, previousEnd);
 		
-		logger.info("startNext:" + startNext + " previousEnd:" + previousEnd);
-		logger.info("in getPredefinedPeriodHours  NumHours:" + Long.toString(hours));
+		logger.debug("startNext:" + startNext + " previousEnd:" + previousEnd);
+		logger.debug("in getPredefinedPeriodHours  NumHours:" + Long.toString(hours));
 		// if the difference is less than an hour
 		if (hours <= 0) {
 			// Inserts the initial hour
-			PredefinedPeriod predefinedPeriod = new PredefinedPeriod(from, to );
+			PredefinedPeriod predefinedPeriod = new PredefinedPeriod((int)from.getYear(), (int)from.getMonthValue(), (int)from.getDayOfMonth(), from.getHour());
 			ret.add(predefinedPeriod);
-		
 		} else {
 			// inserts the less than an hour period.
-			PredefinedPeriod predefinedPeriod = new PredefinedPeriod(from, startNext );
+			PredefinedPeriod predefinedPeriod = new PredefinedPeriod((int)from.getYear(), (int)from.getMonthValue(), (int)from.getDayOfMonth(), from.getHour());
 			ret.add(predefinedPeriod);
 			// inserts the periods of hours
 			for (int i = 0; i < hours; i++) { 
-				predefinedPeriod = new PredefinedPeriod((int)startNext.getYear(), (int) startNext.getMonthValue(), 
-																		(int)startNext.getDayOfMonth(), startNext.getHour() + i);
+				predefinedPeriod = new PredefinedPeriod((int)startNext.getYear(), (int) startNext.getMonthValue(), (int)startNext.getDayOfMonth(), startNext.getHour() + i);
 				ret.add(predefinedPeriod);
 			}
 			// inserts the last less than an hour period.
 			if (previousEnd.isBefore(to)){
-				predefinedPeriod = new PredefinedPeriod(previousEnd, to );
+				predefinedPeriod = new PredefinedPeriod((int)previousEnd.getYear(), (int)previousEnd.getMonthValue(), (int)previousEnd.getDayOfMonth(), previousEnd.getHour());
 				ret.add(predefinedPeriod);
 			}
 		}
@@ -181,7 +254,7 @@ public class PeriodUtils
 	{
 		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
 
-		logger.info("from date:" + from + " to date:" + to);
+		logger.debug("from date:" + from + " to date:" + to);
 		
 		LocalDateTime temp = from; 
 		while ( temp.isBefore(to)) { 
@@ -192,7 +265,7 @@ public class PeriodUtils
 			logger.debug("temp:" + temp);
 		}
 		
-		logger.info("number of registers:" + ret.size());
+		logger.debug("number of registers:" + ret.size());
 		return ret;		
 	}
 	
@@ -209,7 +282,7 @@ public class PeriodUtils
 	{
 		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
 
-		logger.info("getPredefinedPeriodMonths from:" + from + " to:" + to);
+		logger.debug("getPredefinedPeriodMonths from:" + from + " to:" + to);
 		
 		LocalDateTime temp = from;
 		while ( temp.isBefore(to)) { 
@@ -241,7 +314,7 @@ public class PeriodUtils
 	{
 		List<PredefinedPeriod> ret = new ArrayList<PredefinedPeriod>();
 
-		logger.info("getPredefinedPeriodYears from:" + from + " to" + to );
+		logger.debug("getPredefinedPeriodYears from:" + from + " to" + to );
 		
 		LocalDateTime temp = from;
 		while ( temp.isBefore(to)) { 
@@ -250,7 +323,7 @@ public class PeriodUtils
 			temp = temp.plusYears(1);
 		}
 		
-		logger.info("getPredefinedPeriodYears result count:" + ret.size() );
+		logger.debug("getPredefinedPeriodYears result count:" + ret.size() );
 		
 		return ret;		
 	}
@@ -278,7 +351,7 @@ public class PeriodUtils
 		
 		long hours = ChronoUnit.HOURS.between(from, to);
 		
-		logger.info("Number of hours:" + Long.toString(hours));
+		logger.debug("Number of hours:" + Long.toString(hours));
 		
 		if ( hours < HOURSPERDAY) {
 			 			
@@ -286,7 +359,7 @@ public class PeriodUtils
 			
 		} else if ((hours >= HOURSPERDAY) && (hours <= HOURSPERMONTH )) {
 			
-			logger.info("hours between days and months");
+			logger.debug("hours between days and months");
 			
 			LocalDateTime startDay = getStartNextDay(from);
 			LocalDateTime endDay = getStartOfDay(to);
@@ -300,7 +373,7 @@ public class PeriodUtils
 			
 		} else if ((hours > HOURSPERMONTH) && (hours <= HOURSPERYEAR )) {
 			
-			logger.info("hours between months and years");
+			logger.debug("hours between months and years");
 			
 			LocalDateTime startNextDay = getStartNextDay(from);
 			LocalDateTime startNextMonth = getStartNextMonth(from);
@@ -323,7 +396,7 @@ public class PeriodUtils
 			
 		} else {
 
-			logger.info("hours more than years");
+			logger.debug("hours more than years");
 			
 			LocalDateTime startDay = getStartNextDay(from);
 			LocalDateTime startNextMonth = getStartNextMonth(from);
@@ -369,8 +442,9 @@ public class PeriodUtils
 	 */
 	public static List<PredefinedPeriod> getPredefinedPeriods(LocalDateTime from, LocalDateTime to, String reqInterval )
 	{
-				
-		if (reqInterval.compareTo("H") == 0){
+		if (reqInterval.compareTo("MN") == 0){
+			return getPredefinedPeriodMinutes( from , to );
+		} else if (reqInterval.compareTo("H") == 0){
 			return getPredefinedPeriodHours( from , to );
 		} else if(reqInterval.compareTo("D") == 0) { 
 			return getPredefinedPeriodDays( from , to );

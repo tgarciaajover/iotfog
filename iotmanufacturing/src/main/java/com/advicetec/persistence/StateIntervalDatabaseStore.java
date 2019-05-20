@@ -48,10 +48,10 @@ public class StateIntervalDatabaseStore implements Runnable {
 		
 	    int pages = (int) Math.ceil((double) items.size() / limit);
 	    
-	    logger.info("Pages:" + pages + "Items:" + items.size());
+	    logger.debug("Pages:" + pages + "Items:" + items.size());
 	    for (int i = 0; i < pages; i++) {
 	        List<StateInterval> sub = items.subList(i * limit, ((i+1) * limit > items.size() ? items.size() : (i+1) * limit));
-	        logger.info("Num items in sublist:" + sub.size());
+	        logger.debug("Num items in sublist:" + sub.size());
 	        ret.add(sub);
 	    }
 	    
@@ -61,19 +61,20 @@ public class StateIntervalDatabaseStore implements Runnable {
 	@Override
 	public void run() {
 
-		logger.info("Starting Executing database insert State Interval" + " current Thread:" + Thread.currentThread().getName());
+		logger.debug("Starting Executing database insert State Interval" + " current Thread:" + Thread.currentThread().getName());
 		// Splits the entries in batches of batchRows  
 		List<List<StateInterval>> lists = split(entries, batchRows);
 
-		logger.info("Number of list:" + lists.size() + " current Thread:" + Thread.currentThread().getName());
+		logger.debug("Starting Executing database insert State Intervals Number of list:" + lists.size() + " current Thread:" + Thread.currentThread().getName());
 		
 		// Loop through split lists and insert in the database 
 		for (List<StateInterval> entry : lists) {
 			try {
 
-				logger.info("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
+				logger.debug("Begin getConnection: number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
 				// connect to database
 				conn = StateIntervalCache.getConnection();
+				logger.debug("Finish getConnection");
 				conn.setAutoCommit(false);
 				pst = conn.prepareStatement(StateInterval.SQL_Insert);
 				// prepares the statement
@@ -113,6 +114,6 @@ public class StateIntervalDatabaseStore implements Runnable {
 			}
 		}
 		
-		logger.info("Ending Executing database insert State Intervals" + " current Thread:" + Thread.currentThread().getName());
+		logger.debug("Ending Executing database insert State Intervals" + " current Thread:" + Thread.currentThread().getName());
 	}
 }

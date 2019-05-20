@@ -303,7 +303,7 @@ public class StatusStore {
 			}
 		}
 		
-		logger.info("Nbr Attributes returned:" + ret.size());
+		logger.debug("Nbr Attributes returned:" + ret.size());
 		return ret;
 	}
 }

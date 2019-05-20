@@ -395,6 +395,214 @@ public class OEEAggregationContainer extends Container
 		logger.debug("The oee calculated is: " +  eff.toString());
 		return list;
 	}
+	
+	
+	/**
+	 * Return the list of OEE one minute intervals previously calculated and stored in the DB.
+	 * 
+	 * @param owner: measure entity for which the intervals were calculated.
+	 * @param ownerType: type of measuring entity for which the intervals were calculated.
+	 * @param periodKey: key for the predefined minute that we are quering the intervals
+	 * @param parQueryFrom: start Dttm for the intervals
+	 * @param parQueryTo: End Dttm for the intervals
+	 * @return: List of predefined intervals for the minute.
+	 */
+	public List<OverallEquipmentEffectiveness> intervalsByMinute(
+			Integer owner,MeasuredEntityType ownerType, 
+			String periodKey, String parQueryFrom, String parQueryTo) {
+		
+		List<OverallEquipmentEffectiveness> list = new ArrayList<OverallEquipmentEffectiveness>();
+        Calendar cal = Calendar.getInstance();
+        TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+        cal.setTimeZone(utcTimeZone);
+
+		
+		logger.debug("MeasuredEntity:" + owner + "Measured Entity Type:" + ownerType + "intervalsByHour periodKey:" 
+						+ periodKey + " parQueryFrom:" + parQueryFrom + " parQueryTo:" + parQueryTo );
+		
+		double productiveTime = 0;
+		double qtySchedToProduce = 0;
+		double qtyProduced = 0;
+		double qtyDefective = 0;
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+		
+		try 
+		{
+		    connDB = getConnection();
+		    connDB.setAutoCommit(false);
+			
+		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_RNG_MINUTE);
+
+			int lineIndx = parQueryFrom.lastIndexOf("-");
+			parQueryFrom = parQueryFrom.substring(0, lineIndx)+" "+parQueryFrom.substring(lineIndx + 1);
+			
+			lineIndx = parQueryTo.lastIndexOf("-");
+			parQueryTo = parQueryTo.substring(0, lineIndx)+" "+parQueryTo.substring(lineIndx + 1);
+			
+			logger.debug(" from:" + parQueryFrom + " to:" + parQueryTo);
+			
+			pstDB.setTimestamp(1, Timestamp.valueOf(parQueryFrom));
+			pstDB.setTimestamp(2, Timestamp.valueOf(parQueryFrom));
+			pstDB.setTimestamp(3, Timestamp.valueOf(parQueryTo));
+			pstDB.setTimestamp(4, Timestamp.valueOf(parQueryTo));
+			pstDB.setInt(5, owner);
+			pstDB.setInt(6, ownerType.getValue());
+			pstDB.setTimestamp(7, Timestamp.valueOf(parQueryFrom));
+			pstDB.setTimestamp(8, Timestamp.valueOf(parQueryTo));
+			
+			ConfigurationManager manager = ConfigurationManager.getInstance();
+			ReasonCodeContainer reasonCont =  manager.getReasonCodeContainer();
+
+			ResultSet rs = pstDB.executeQuery();
+
+			while (rs.next()) {
+								
+				Timestamp dsTimeFrom = rs.getTimestamp("datetime_from", cal);
+
+				long timestampTimeFrom = dsTimeFrom.getTime();
+				cal.setTimeInMillis(timestampTimeFrom);
+				LocalDateTime fromDatetime = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+																cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+																 cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+																  cal.get(Calendar.MILLISECOND)*1000000);
+
+						
+				Timestamp dsTimeTo = rs.getTimestamp("datetime_to", cal);
+				
+				long timestampTimeTo = dsTimeTo.getTime();
+				cal.setTimeInMillis(timestampTimeTo);
+				LocalDateTime toDatetime = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+																cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+																 cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+																  cal.get(Calendar.MILLISECOND)*1000000);
+				
+				long reducedTime = 0;
+				double periodProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.MILLIS);
+				periodProductiveTime = periodProductiveTime / 1000;
+				double actualProductiveTime = 0;
+				
+				if (fromDatetime.isBefore(Timestamp.valueOf(parQueryFrom).toLocalDateTime())) {
+
+					reducedTime = fromDatetime.until(Timestamp.valueOf(parQueryFrom).toLocalDateTime(), ChronoUnit.SECONDS);		
+					fromDatetime = Timestamp.valueOf(parQueryFrom).toLocalDateTime();
+					
+				}
+				
+				if (Timestamp.valueOf(parQueryTo).toLocalDateTime().isBefore(toDatetime)) {
+					reducedTime = reducedTime + Timestamp.valueOf(parQueryTo).toLocalDateTime().until(toDatetime, ChronoUnit.SECONDS);
+					toDatetime = Timestamp.valueOf(parQueryTo).toLocalDateTime();
+				}
+								
+				Double rowProductionRate = rs.getDouble("production_rate");
+				Double rowConversion1 = rs.getDouble("conversion1");
+				Double rowConversion2 = rs.getDouble("conversion2");
+				Double rowActualProductionRate = rs.getDouble("actual_production_rate");  
+				Double rowQtyDefective = rs.getDouble("qty_defective");
+				String rowStatus = rs.getString("status");
+				String rowReasonCode = rs.getString("reason_code");
+								
+				MeasuringState state = MeasuringState.getByName(rowStatus);
+				logger.debug("state: " + state + "   " + "rowReasonCode: " + rowReasonCode);
+				if (state == MeasuringState.OPERATING) {
+										
+					actualProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.MILLIS);
+					actualProductiveTime = actualProductiveTime / 1000;
+				
+				} else if (state == MeasuringState.SCHEDULEDOWN)  {
+					
+					logger.debug("Measuring State ScheduleDown");
+					
+					ReasonCode rCode = null;
+					
+					if (rowReasonCode != null) {
+						rCode = (ReasonCode) reasonCont.getObject(Integer.valueOf(rowReasonCode.trim()));
+						
+						if (rCode.includeProductiveTime())
+							actualProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.MILLIS) / 1000;
+					}
+
+					
+				} else if (state == MeasuringState.UNSCHEDULEDOWN) {
+					
+					ReasonCode rCode = null;
+					
+					if (rowReasonCode != null) {
+						rCode = (ReasonCode) reasonCont.getObject(Integer.valueOf(rowReasonCode.trim()));
+						logger.debug(rCode.includeProductiveTime() + "   " + rCode.getId());
+						if (rCode.includeProductiveTime()){
+							actualProductiveTime = fromDatetime.until(toDatetime, ChronoUnit.MILLIS) / 1000;}
+						else {actualProductiveTime = 0;}
+					} else {actualProductiveTime = 0;}
+					
+				} else if (state == MeasuringState.INITIALIZING) {
+										
+					actualProductiveTime = 0;
+				} else if (state == MeasuringState.SYSTEMDOWN) {
+										
+					actualProductiveTime = 0;
+				} else {
+					logger.error("Invalid measuring state" + state.getName());
+				}
+				
+				productiveTime += actualProductiveTime; 
+				
+				qtySchedToProduce += rowConversion1 * rowProductionRate * ( (float) actualProductiveTime / 60);
+				
+				qtyProduced += rowConversion1 * rowActualProductionRate * ( (float) actualProductiveTime / 60);
+				
+				logger.debug("PeriodProductiveTime:" + periodProductiveTime + " actualproductivetime:" + 
+						actualProductiveTime +" productiveTime:" + productiveTime + " reducedTime:" + reducedTime);
+				
+				if (reducedTime == 0) {
+					qtyDefective += rowQtyDefective;
+				}
+				else {
+					double effectiveTime = (double) periodProductiveTime - reducedTime;
+					double percentage = effectiveTime / periodProductiveTime;
+					qtyDefective += (rowQtyDefective * percentage);
+				}
+			}
+			
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			if(pstDB!=null){
+				try{
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null){
+				try	{
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+
+		
+		LocalDateTime from = Timestamp.valueOf(parQueryFrom).toLocalDateTime();
+		LocalDateTime to = Timestamp.valueOf(parQueryTo).toLocalDateTime();
+		PredefinedPeriod pPeriod = new PredefinedPeriod (from, to);
+		OverallEquipmentEffectiveness eff = new OverallEquipmentEffectiveness(pPeriod, owner, ownerType);
+		eff.setProductiveTime(productiveTime);
+		eff.setQtySchedToProduce(qtySchedToProduce);
+		eff.setQtyProduced(qtyProduced);
+		eff.setQtyDefective(qtyDefective);
+		list.add(eff);
+		logger.debug("The oee calculated is: " +  eff.toString());
+		return list;
+	}
 
 	
 	/**
@@ -557,19 +765,12 @@ public class OEEAggregationContainer extends Container
 	public List<OverallEquipmentEffectiveness> getOEEList(Integer owner, 
 			MeasuredEntityType ownerType, PredefinedPeriod predefinedPeriod) 
 	{
-				
 		String parQueryFrom = "";
-		String parQueryTo = "";
-		if(predefinedPeriod.getType() == PredefinedPeriodType.HOUR){
-			parQueryFrom = predefinedPeriod.getKey()+"00:00.001"; //2010-01-05-18
-			parQueryTo = predefinedPeriod.getKey()+"59:59.999"; //2010-01-05-18
-
-			return intervalsByHour(owner, ownerType,predefinedPeriod.getKey(), 
-					parQueryFrom,parQueryTo);
-
-		} else if(predefinedPeriod.getType() == PredefinedPeriodType.DAY || 
-				predefinedPeriod.getType() == PredefinedPeriodType.MONTH ||
-				predefinedPeriod.getType() == PredefinedPeriodType.YEAR){
+		if(predefinedPeriod.getType() == PredefinedPeriodType.HOUR || 
+			predefinedPeriod.getType() == PredefinedPeriodType.DAY || 
+			predefinedPeriod.getType() == PredefinedPeriodType.MONTH ||
+			predefinedPeriod.getType() == PredefinedPeriodType.YEAR ||
+			predefinedPeriod.getType() == PredefinedPeriodType.MINUTE){
 			
 			if (getDriver().compareTo("org.postgresql.Driver") == 0){
 				parQueryFrom = predefinedPeriod.getKey()+"-__"; //2010-01-05
@@ -577,7 +778,7 @@ public class OEEAggregationContainer extends Container
 				parQueryFrom = predefinedPeriod.getKey()+"-[0-9][0-9]"; //2010-01-05
 			}
 			return intervalsByPredefinedPeriod(owner, ownerType, parQueryFrom);
-		}else{
+		} else{
 			logger.error("Invalid predefined time period:" + predefinedPeriod.getType().getName());
 		}
 		return new ArrayList<OverallEquipmentEffectiveness>();
@@ -651,5 +852,128 @@ public class OEEAggregationContainer extends Container
 		}
 		
 		return eff;
+	}
+	
+	/**
+	 * Call stored procedure to calculate or recalculate OEE's indicators in database.
+	 * 
+	 * @param company		: company of machine's canonical key.
+	 * @param location		: location of machine's canonical key.
+	 * @param plant			: plant of machine's canonical key.
+	 * @param machineGroup	: machine group of machine's canonical key.
+	 * @param machineId		: machine's canonical key.
+	 * @param year			: year to calculate or recalculate OEE's indicators.
+	 * @param month			: month to calculate or recalculate OEE's indicators.
+	 * @param day			: day to calculate or recalculate OEE's indicators.
+	 * @param productionOrder	: canonical production order code.
+	 * @param recalculateFlag   : flag to decide whether to calculate or recalculate the indicators
+	 */
+	public void calculatePeriodOEE (String company, String location, String plant, String machineGroup, String machineId, 
+			String year, String month, String day, String productionOrder, String recalculateFlag) {
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+		
+		try 
+		{
+		    connDB = getConnection();
+		    connDB.setAutoCommit(true);
+			
+		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_CAL_OEE);
+			pstDB.setString(1, company);
+			pstDB.setString(2, location);
+			pstDB.setString(3, plant);
+			pstDB.setString(4, machineGroup);
+			pstDB.setString(5, machineId);
+			pstDB.setString(6, productionOrder);
+			pstDB.setString(7, year);
+			pstDB.setString(8, month);
+			pstDB.setString(9, day);
+			pstDB.setString(10, recalculateFlag);
+			
+			boolean result = pstDB.execute();
+			logger.debug("OEE calculator result : " + result);
+			
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			if(pstDB!=null){
+				try{
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null){
+				try	{
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Get availability percentage aggregation defined in the database to predefined period.
+	 * 
+	 * @param owner : measure entity for which the intervals were calculated.
+	 * @param ownerType: type of measuring entity for which the intervals were calculated.
+	 * @param predefinedPeriod: : predefined period prefix to find.
+	 * @return The availability percentage which predefined period was given as parameter
+	 */
+	public double getPeriodAvailabilityOEE(Integer owner, 
+			MeasuredEntityType ownerType, PredefinedPeriod predefinedPeriod) {
+		double availability = 0;
+
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+
+		try 
+		{
+		    connDB = getConnection();
+		    connDB.setAutoCommit(false);
+		    
+		    pstDB = connDB.prepareStatement(OverallEquipmentEffectiveness.SQL_PeriodAvailability);
+			
+		    pstDB.setInt(1, owner);
+		    pstDB.setInt(2, ownerType.getValue());          		// owner_type
+		    pstDB.setString(3, predefinedPeriod.getKey());   		// period key
+		    pstDB.setInt(4, predefinedPeriod.getKey().length());
+
+			ResultSet rs = pstDB.executeQuery();
+
+			while (rs.next()) {
+				availability = rs.getDouble("availability");
+				break;
+			}
+			
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} finally {
+			if(pstDB!=null){
+				try{
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null){
+				try	{
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return availability;
 	}
 }

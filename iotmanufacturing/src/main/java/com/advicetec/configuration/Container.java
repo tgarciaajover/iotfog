@@ -137,8 +137,9 @@ public abstract class Container
 			throw new SQLException(error);
 		}
 		Class.forName(this.driver);
+		logger.debug(this.server + "   " + this.user + "   " + this.password);
 		conn = DriverManager.getConnection(this.server, this.user, this.password);
-
+		logger.debug(conn.toString());
 		conn.setAutoCommit(false);
 
 		pst = conn.createStatement();

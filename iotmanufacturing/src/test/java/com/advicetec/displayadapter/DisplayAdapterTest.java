@@ -32,7 +32,7 @@ public class DisplayAdapterTest {
 	@Test
 	public void messageTest(){
 		LedSignDisplay display = new LedSignDisplay();
-		display.publishMessage("Esto es una prueba!");
+		display.publishMessage("Esto es una prueba!", "temp.Nmg");
 	}
 	
 	@Test
@@ -171,7 +171,7 @@ public class DisplayAdapterTest {
 		System.out.println("connection test: " + display.connectionTest() );
 	//	System.out.println("auto test:"+display.autoTest());
 		
-		System.out.println("message test:"+display.publishMessage("Mensa"));
+		System.out.println("message test:"+display.publishMessage("Mensa","temp.Nmg"));
 		System.out.println("end display: " + display.endBlackScreen() );
 	}
 	

@@ -74,36 +74,28 @@ public class OEEAggregationEventProcessor implements Processor
 			
 			logger.debug("before starting to execute OEE Aggregation Event Processor");
 			
-			// Calculates the current day
+			// Calculates the current hour
 			LocalDateTime current = LocalDateTime.now();
+			LocalDateTime hour = LocalDateTime.of(current.getYear(), current.getMonthValue(), current.getDayOfMonth(), current.getHour(), 0, 0 );
+			logger.debug("Llama calculateHour desde OEEAggregationEventProcessor - " + hour);
+			ret = oeeAggregationCalculator.calculateHour(measuringEntity, measuredEntityType,hour, true, false);
+						
+			for (OverallEquipmentEffectiveness oee : ret){
+				logger.debug(oee.toString());
+			}
+						
+			logger.debug("After executing for the day OEE Aggregation Event Processor");
+			
+			// Calculates the current day
 			LocalDateTime formerDay = PeriodUtils.getStartOfDay(current);
-			ret = oeeAggregationCalculator.calculateDay(measuringEntity, measuredEntityType,formerDay, true, true);
+			logger.debug("Llama calculateDay desde OEEAggregationEventProcessor - " + formerDay);
+			ret = oeeAggregationCalculator.calculateDay(measuringEntity, measuredEntityType,formerDay, true, false);
 			
 			for (OverallEquipmentEffectiveness oee : ret){
 				logger.debug(oee.toString());
 			}
 			
 			logger.debug("After executing for the day OEE Aggregation Event Processor");
-			
-			// Obtains the current month
-			LocalDateTime month = LocalDateTime.of(current.getYear(), current.getMonthValue(), 1, 0, 0, 0 );
-			ret = oeeAggregationCalculator.calculateMonth(measuringEntity, measuredEntityType,month, true, true);
-
-			for (OverallEquipmentEffectiveness oee : ret){
-				logger.debug(oee.toString());
-			}
-			
-			logger.debug("After executing for the month OEE Aggregation Event Processor");
-			
-			// Obtains the current year
-			LocalDateTime year = LocalDateTime.of(current.getYear(), 1, 1, 0, 0, 0 );
-			ret = oeeAggregationCalculator.calculateYear(measuringEntity, measuredEntityType,year, true, true);
-			
-			for (OverallEquipmentEffectiveness oee : ret){
-				logger.debug(oee.toString());
-			}
-
-			logger.debug("After executing for the year OEE Aggregation Event Processor");
 			
 		} else {
 			logger.error("Facade not found" + measuringEntity);

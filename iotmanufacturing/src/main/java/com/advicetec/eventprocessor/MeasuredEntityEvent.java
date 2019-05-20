@@ -2,8 +2,10 @@ package com.advicetec.eventprocessor;
 
 import java.util.List;
 
+import com.advicetec.measuredentitity.BehaviorType;
 import com.advicetec.measuredentitity.MeasuredEntityType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
+
 
 public class MeasuredEntityEvent extends Event 
 {
@@ -38,7 +40,15 @@ public class MeasuredEntityEvent extends Event
 	 * List of attributes given to the event.
 	 */
 	private List<InterpretedSignal> parameters; 
-		
+	
+	/**
+	 * Behavior type to execute. This is used to evaluate from what place bring the behavior definition.
+	 */
+	private BehaviorType behaviorType;
+	
+	
+	private String stateBehaviorType;
+	
 	/**
 	 * Constructor for the class 
 	 * 
@@ -47,8 +57,9 @@ public class MeasuredEntityEvent extends Event
 	 * @param device		measuring device where the information was registered and that triggers this behavior
 	 * @param port			port in the measuring device where the information was registered and that triggers this behavior
 	 * @param parameters	List of interpreted signals result of the transformation.
+	 * @param behaviorType  behavior Type to use.
 	 */
-	public MeasuredEntityEvent(String behavior, Integer entity, MeasuredEntityType entityType, Integer device, Integer port, List<InterpretedSignal> parameters) 
+	public MeasuredEntityEvent(String behavior, Integer entity, MeasuredEntityType entityType, Integer device, Integer port, List<InterpretedSignal> parameters, BehaviorType behaviorType, String stateBehaviorType) 
 	{
 		super(EventType.MEASURING_ENTITY_EVENT, 
 					EventType.MEASURING_ENTITY_EVENT.getName() + "-" + 
@@ -60,6 +71,34 @@ public class MeasuredEntityEvent extends Event
 		this.port = port;
 		this.parameters = parameters;
 		this.entityType = entityType;
+		this.behaviorType = behaviorType;
+		this.stateBehaviorType = stateBehaviorType;
+	}
+
+
+	/**
+	 * Constructor for the class 
+	 * 
+	 * @param behavior		behavior name (program) to execute
+	 * @param entity		measured entity giving the context for the program. 
+	 * @param device		measuring device where the information was registered and that triggers this behavior
+	 * @param port			port in the measuring device where the information was registered and that triggers this behavior
+	 * @param parameters	List of interpreted signals result of the transformation.
+	 */		
+	public MeasuredEntityEvent(String behavior, Integer entity, MeasuredEntityType entityType, Integer device, Integer port, List<InterpretedSignal> parameters ) 
+	{
+		super(EventType.MEASURING_ENTITY_EVENT, 
+					EventType.MEASURING_ENTITY_EVENT.getName() + "-" + 
+						Integer.toString(entity) + "-" + behavior );
+		
+		this.behaviorName = behavior;
+		this.entity = entity;
+		this.device = device;
+		this.port = port;
+		this.parameters = parameters;
+		this.entityType = entityType;
+		this.behaviorType = BehaviorType.COMMON_BEHAVIOR;
+		this.stateBehaviorType = null;
 	}
 
 	/**
@@ -122,5 +161,18 @@ public class MeasuredEntityEvent extends Event
 	@Override
 	public MeasuredEntityType getOwnerType() {
 		return entityType;
+	} 
+	
+	/**
+	 * Gets the behavior type that will be used in this event.
+	 * 
+	 * @return Behavior Type 
+	 */
+	public BehaviorType getBehaviorType() {
+		return behaviorType;
+	}
+	
+	public String getStateBehaviorType() {
+		return stateBehaviorType;
 	}
 }

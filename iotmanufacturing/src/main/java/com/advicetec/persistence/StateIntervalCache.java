@@ -141,6 +141,8 @@ public class StateIntervalCache extends Configurable {
 	 */
 	final private static String sqlExecutedEntityStartNextOperatingInterval = "SELECT min(datetime_from) FROM measuringentitystatusinterval where id_owner = ? and owner_type = ? and related_object = ? and related_object_type = ? and datetime_from >= ? and status = ? and datetime_from <= ?";
 	
+	final private static String sqlDBActualProductionRate = "select actual_production_rate FROM measuringentitystatusinterval a where a.id_owner = ? and a.owner_type = ? and a.datetime_from = (select max(b.datetime_from) FROM measuringentitystatusinterval b where b.id_owner = a.id_owner and b.status = 'Operating')";
+	
 	/**
 	 * A cache is a map with a key and the stateInterval. 
 	 */		
@@ -223,7 +225,8 @@ public class StateIntervalCache extends Configurable {
 		if (StateIntervalCache.DB_DRIVER.compareTo("org.postgresql.Driver") == 0){
 			sqlDownTimeReasons = "SELECT reason_code, COUNT(*) AS counter, SUM(DATE_PART('minute',datetime_to - datetime_from)) AS duration FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? AND ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? AND datetime_to <= ?)) GROUP BY reason_code";
 		} else if (StateIntervalCache.DB_DRIVER.compareTo("com.microsoft.sqlserver.jdbc.SQLServerDriver") == 0){
-			sqlDownTimeReasons = "SELECT reason_code, COUNT(*) AS counter, SUM(DATEDIFF(minute,datetime_from,datetime_to)) AS duration FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? AND ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? AND datetime_to <= ?)) GROUP BY reason_code";
+			//sqlDownTimeReasons = "SELECT reason_code, COUNT(*) AS counter, SUM(DATEDIFF(minute,datetime_from,datetime_to)) AS duration FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? AND ((datetime_from >= ? AND datetime_from <= ?) or (datetime_to >= ? AND datetime_to <= ?)) GROUP BY reason_code";
+			sqlDownTimeReasons = "EXEC dbo.usp_iot_downtimereasons_grouped @id_owner = ?, @owner_type = ?, @dttm_from = ?, @dttm_to = ?, @dttm_from2 = ?, @dttm_to2 = ?";
 		}
 		// This part inserts any pending data in the cache to the database in case of shutdown.  
 		Runtime.getRuntime().addShutdownHook(new Thread()
@@ -280,7 +283,7 @@ public class StateIntervalCache extends Configurable {
 						// WriteAction
 						.writeAction(entries -> {
 							if (entries.size() > 0) {
-								logger.info("to storage num entries:" + entries.size());
+								logger.debug("to storage num entries:" + entries.size());
 								StateIntervalDatabaseStore storedatabase = new StateIntervalDatabaseStore(entries,BATCH_ROWS);
 								threadPool.submit(storedatabase);
 							}
@@ -349,7 +352,9 @@ public class StateIntervalCache extends Configurable {
 			
 			if (entry.size() > 0){
 				try {
+					logger.debug("Begin getConnection bulkCommit");
 					conn = getConnection();
+					logger.debug("Finish getConnection bulkCommit");
 					conn.setAutoCommit(false);
 					// prepare statement
 					pst = conn.prepareStatement(StateInterval.SQL_Insert);
@@ -744,7 +749,7 @@ public class StateIntervalCache extends Configurable {
 			Integer entityId, MeasuredEntityType mType,
 			LocalDateTime from, LocalDateTime to) {
 
-		logger.info("getFromDatabase:" + Integer.toString(entityId) + " MeasureEntityType:" + mType + " from:" + from.toString() + " to:" + to.toString());
+		logger.debug("getFromDatabase:" + Integer.toString(entityId) + " MeasureEntityType:" + mType + " from:" + from.toString() + " to:" + to.toString());
 		// database connection
 		Connection connDB  = null; 
 		PreparedStatement pstDB = null;
@@ -846,6 +851,53 @@ public class StateIntervalCache extends Configurable {
 			}
 		}
 		return list;	
+	}
+	
+	public synchronized double getDBActualProductionRate(Integer owner_id, Integer owner_type) {
+		Double productionRate = 0.0;
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+
+		try{
+			connDB = getConnection();
+			connDB.setAutoCommit(false);
+			pstDB = connDB.prepareStatement(sqlDBActualProductionRate);
+			pstDB.setInt(1, owner_id);
+			pstDB.setInt(2, owner_type);
+			ResultSet rs = pstDB.executeQuery();
+
+			while (rs.next())
+			{
+				productionRate = rs.getDouble("actual_production_rate");
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		finally{
+			if(pstDB!=null)	{
+				try	{
+					pstDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			if(connDB!=null) 
+			{
+				try
+				{
+					connDB.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return productionRate;
 	}
 
 	

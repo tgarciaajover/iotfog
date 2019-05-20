@@ -139,7 +139,7 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 		
 		// Verifies that the reqInterval given is valid.
 		if (!validReqInterval()){
-			logger.error("Invalid request interval - valid values (H Hours ,D Days, M months, Y Years)");
+			logger.error("Invalid request interval - valid values (H Hours ,D Days, M months, Y Years, MN Minutes)");
 			result = new JsonRepresentation("");
 		} else {
 		
@@ -210,41 +210,47 @@ public class OverallEquipmentEffectivenessResource extends ServerResource {
 		if ((this.reqInterval.compareTo("H") == 0) || 
 			 (this.reqInterval.compareTo("D") == 0) || 
 			   (this.reqInterval.compareTo("M") == 0) || 
-			   (this.reqInterval.compareTo("Y") == 0)){
+			   (this.reqInterval.compareTo("Y") == 0) ||
+			   (this.reqInterval.compareTo("MN") == 0)){
 			
 			// Verifies the coherence of the request time interval and the interval 
 			DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s.n");
 			LocalDateTime dttmFrom = LocalDateTime.parse(this.reqStartDateTime,format); 
 			LocalDateTime dttmTo = LocalDateTime.parse(this.reqEndDateTime,format);
 
-			long hours = ChronoUnit.HOURS.between(dttmFrom, dttmTo);
+			long minutes = ChronoUnit.MINUTES.between(dttmFrom, dttmTo);
 			
-			if ( hours < PeriodUtils.HOURSPERDAY) {
-				if (reqInterval.compareTo("H") != 0){
-					logger.error("The time interval given should be expressed in hours and not in" + this.reqInterval);
+			if (minutes < PeriodUtils.MINUTESPERHOUR) {
+				if (reqInterval.compareTo("MN") != 0) {
+					logger.error("The time interval given should be expressed in minutes and not in" + this.reqInterval);
 					return false;
 				} else {
 					return true;
 				}
-			
-			} else if ((hours >= PeriodUtils.HOURSPERDAY) && (hours <= PeriodUtils.HOURSPERMONTH )) {
+			} else if ((minutes >= PeriodUtils.MINUTESPERHOUR) && (minutes < PeriodUtils.MINUTESPERDAY)) {
+				if ((reqInterval.compareTo("D") == 0) || (reqInterval.compareTo("M") == 0) || (reqInterval.compareTo("Y") == 0)) {
+					logger.error("The time interval given should be expressed in minutes or hours and not in" + this.reqInterval);
+					return false;
+				} else {
+					return true;
+				}
+			} else if ((minutes >= PeriodUtils.MINUTESPERDAY) && (minutes < PeriodUtils.MINUTESPERMONTH)) {
 				if ((reqInterval.compareTo("M") == 0) || (reqInterval.compareTo("Y") == 0)) {
-					logger.error("The time interval given should be expressed in days or hours and not in" + this.reqInterval);
+					logger.error("The time interval given should be expressed in minutes or hours or days and not in" + this.reqInterval);
 					return false;
 				} else {
 					return true;
 				}
-			} else if ((hours > PeriodUtils.HOURSPERMONTH) && (hours <= PeriodUtils.HOURSPERYEAR )) {
+			} else if ((minutes >= PeriodUtils.MINUTESPERMONTH) && (minutes < PeriodUtils.MINUTESPERYEAR)) {
 				if (reqInterval.compareTo("Y") == 0) {
 					logger.error("The time interval given should not be expressed in years");
 					return false;
 				} else {
 					return true;
 				}
-
 			} else {
 				return true;
-			}			
+			}		
 		}
 		
 		return false;

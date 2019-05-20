@@ -52,11 +52,13 @@ public class AdapterHandler implements Runnable
 
 
 	public void run() {
-		try {
-			while (true)
-			{
+		boolean interruptedException = false;
+		while (true && !interruptedException)
+		{
+			try {
 				Queueable queueable = (Queueable) fromQueue.pop();
 				logger.debug("a queueable object was found");
+				logger.debug("Elements in queue: " + fromQueue.size()[6] + " Type: " + queueable.getType().toString());
 
 				// queable objet type MQTT
 				if (queueable.getType() == QueueType.MQTT_DEV_MESSAGE)
@@ -82,7 +84,7 @@ public class AdapterHandler implements Runnable
 							| InvocationTargetException e) {
 
 						e.printStackTrace();
-						logger.error("cannot queue unified messages from :" + message.getTopicName() );
+						logger.error("cannot queue unified messages from :" + message.getTopicName() + "   " + e.getMessage());
 					}
 					// TODO: include priority parameter for the type of message. 
 				}
@@ -107,15 +109,14 @@ public class AdapterHandler implements Runnable
 						}
 					} catch ( Exception e) {
 						logger.error("cannot queue unified messages from: "
-								+ dictionary.get("IPAddress") + dictionary.get("UID") );
+								+ dictionary.get("IPAddress") + dictionary.get("UID") + "   " + e.getMessage());
 						e.printStackTrace();
-						
 					} 
 				}
 				
 				if (queueable.getType() == QueueType.MODBUS_ERR_MESSAGE) {
 					
-					logger.info("Processing Modbus Error Message");
+					logger.debug("Processing Modbus Error Message");
 					
 					Map<String, Object> dictionary = (Map<String, Object>) queueable.getContent();
 					Modbus2UnifiedMessage mod2Um = new	Modbus2UnifiedMessage(dictionary);
@@ -132,18 +133,17 @@ public class AdapterHandler implements Runnable
 							}
 						}
 					} catch ( Exception e) {
-						logger.error("cannot queue unified messages from: "
-								+ dictionary.get("IPAddress") + dictionary.get("UID") );
+						logger.error("cannot queue unified messages from: " + dictionary.get("IPAddress") + dictionary.get("UID") + "   " + e.getMessage());
 						e.printStackTrace();
 						
 					} 
 
 				}
-				
+			} catch (InterruptedException e) {
+				interruptedException = true;
+				logger.error("InterruptedException: " + e.getMessage());
+				e.printStackTrace();
 			}
-
-		} catch (InterruptedException e) {
-			e.printStackTrace();
 		}
 
 	}

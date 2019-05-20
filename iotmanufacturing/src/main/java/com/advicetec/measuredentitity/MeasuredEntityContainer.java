@@ -1,7 +1,10 @@
 package com.advicetec.measuredentitity;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -19,13 +22,16 @@ import org.apache.logging.log4j.Logger;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.restlet.data.Status;
 
+import com.advicetec.applicationAdapter.ProductionOrderManager;
 import com.advicetec.configuration.Container;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.eventprocessor.ModBusTcpEvent;
+import com.advicetec.persistence.StateIntervalCache;
 
 /**
  * This class models the data container for Measured Entities.
@@ -40,13 +46,14 @@ public class MeasuredEntityContainer extends Container
 	static Logger logger = LogManager.getLogger(MeasuredEntityContainer.class.getName());
 
 	// String queries for data selection from databases
-	static String sqlSelect1 = "SELECT id, code, descr, create_date, type FROM setup_measuredentity";
+	static String sqlSelect1 = "SELECT a.id, a.code, a.descr, a.create_date, a.type, b.id_compania, b.id_sede, b.id_planta, b.id_grupo_maquina, b.id_maquina FROM setup_measuredentity a left outer join setup_machinehostsystem b on (a.id = b.measuredentity_ptr_id)";
 	static String sqlSelect2 = "SELECT id, name, descr, behavior_text, create_date, last_updttm, measure_entity_id FROM setup_measuredentitybehavior WHERE measure_entity_id = ";
 	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
 	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
 	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
 	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, day_time, create_date, last_updttm FROM setup_measuredentityscheduledevent WHERE measure_entity_id =";
 	static String sqlSelect7 = "SELECT count(*) from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'Q' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
+	static String sqlSelect8 = "SELECT TOP 1 related_object ,related_object_type FROM measuringentitystatusinterval a WHERE id_owner = ? and owner_type = ? and datetime_to <= ? and datetime_to  = ( select max(b.datetime_to) FROM measuringentitystatusinterval b WHERE b.id_owner = a.id_owner and b.owner_type = a.owner_type and b.datetime_to <= ? )";
 
 	static String sqlMachineSelect = "SELECT * FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
@@ -114,12 +121,19 @@ public class MeasuredEntityContainer extends Container
 				String entityCategory   = rs1.getString("type");
 
 				MeasuredEntity measuredEntity = null;
+				String machineCanKey = "";
 
 				logger.debug("measured Entity id:" + id.toString() +  " Entity Category:" + entityCategory);
 				switch (entityCategory)
 				{
 				case "M":
 					measuredEntity = new Machine(id);
+					machineCanKey = rs1.getString("id_compania") + "-" +
+							rs1.getString("id_sede") + "-" +
+							rs1.getString("id_planta") + "-" +
+							rs1.getString("id_grupo_maquina") + "-" +
+							rs1.getString("id_maquina");
+					measuredEntity.setCanonicalKey(machineCanKey);
 					break;
 				case "P":
 					measuredEntity = new Plant(id);
@@ -173,7 +187,7 @@ public class MeasuredEntityContainer extends Container
 				MeasuredEntity measuredEntity = (MeasuredEntity) this.configuationObjects.get(id);
 				loadScheduledEvents(measuredEntity);
 			}
-
+			
 			super.disconnect();
 
 
@@ -574,6 +588,52 @@ public class MeasuredEntityContainer extends Container
 
 	}
 
+	public void loadExecutedEvent(MeasuredEntityFacade measuredEntityFacade, MeasuredEntity entity)
+	{
+		logger.info("Executed object for: " + entity.getId().toString());
+		Connection connDB  = null;
+		PreparedStatement pstDB = null;
+		ResultSet rs8 = null;
+
+		try {
+			connDB = StateIntervalCache.getConnection();
+			connDB.setAutoCommit(false);
+			pstDB = connDB.prepareStatement(sqlSelect8);
+	
+			Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis()); 
+				
+			pstDB.setInt(1, entity.getId());
+			pstDB.setInt(2, entity.getType().getValue());
+			pstDB.setTimestamp(3, currentTimestamp);
+			pstDB.setTimestamp(4, currentTimestamp);
+				
+			logger.debug("sqlSelect executed object");
+			rs8 =  pstDB.executeQuery();
+				
+			ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance();
+				
+			while (rs8.next()) 
+			{
+				Integer relatedObject = rs8.getInt("related_object");
+				if (relatedObject != 0) {
+					try {
+						@SuppressWarnings("unused")
+						boolean ret = productionOrderManager.executeStartProduction(measuredEntityFacade, relatedObject);
+					} catch (PropertyVetoException e) {
+						e.printStackTrace();
+						logger.error(e.getMessage());
+					}
+				}
+			}
+			rs8.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		}
+		
+	}
+	
+	
 	/**
 	 * Deserializes a JSON string and builds a MeasuredEntity.
 	 * 
@@ -632,7 +692,7 @@ public class MeasuredEntityContainer extends Container
 		{
 
 			super.connect();
-			logger.info("in getModbusEvents:" );
+			logger.debug("in getModbusEvents:" );
 
 			String sqlSelect = sqlSelect5;  
 			ResultSet rs5 = super.pst.executeQuery(sqlSelect);
@@ -681,7 +741,7 @@ public class MeasuredEntityContainer extends Container
 	 */
 	public Integer getCanonicalObject(String company, String location, String plant, String machineGroup, String machineId) 
 	{
-		logger.info("Number of measuredEntities registered:" + Integer.toString(this.canonicalMapIndex.size()));
+		logger.debug("Number of measuredEntities registered:" + Integer.toString(this.canonicalMapIndex.size()));
 		return this.canonicalMapIndex.get(getCanonicalKey(company, location, plant, machineGroup, machineId));
 	}
 
@@ -697,7 +757,7 @@ public class MeasuredEntityContainer extends Container
 		{
 			super.connect();
 
-			logger.info("in requireMQTT:");
+			logger.debug("in requireMQTT:");
 
 			String sqlSelect = sqlSelect7;  
 			ResultSet rs7 = super.pst.executeQuery(sqlSelect);
@@ -708,7 +768,7 @@ public class MeasuredEntityContainer extends Container
 				Integer count  = rs7.getInt(1);
 				if (count > 0){
 					ret = true;
-					logger.info("MQTT is required");
+					logger.debug("MQTT is required");
 				}
 			}
 			rs7.close();

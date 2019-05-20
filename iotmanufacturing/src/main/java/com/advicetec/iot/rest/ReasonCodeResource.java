@@ -89,7 +89,7 @@ public class ReasonCodeResource extends ServerResource
 		JSONObject jsonobject = jsonRepresentation.getJsonObject();
 		String jsonText = jsonobject.toString();
 
-		logger.info("jsonText:" + jsonText);
+		logger.debug("jsonText:" + jsonText);
 
 		// Look for it in the Reason Code database.
 		ConfigurationManager confManager = ConfigurationManager.getInstance();

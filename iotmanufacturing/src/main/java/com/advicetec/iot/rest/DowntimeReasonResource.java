@@ -138,7 +138,7 @@ public class DowntimeReasonResource extends ServerResource {
 			Integer uniqueID = MeasuredEntityManager.getInstance()
 					.getMeasuredEntityId(canCompany,canLocation,canPlant,canMachineGroup,canMachineId);
 
-			logger.info("Measured Entity for company:" + this.canCompany +
+			logger.debug("Measured Entity for company:" + this.canCompany +
 					 " location:" + this.canLocation + " Plant:" + this.canPlant +
 					 " machineId:" + this.canMachineId);
 

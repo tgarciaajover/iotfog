@@ -108,7 +108,11 @@ public class MeasureAttributeValueCache extends Configurable {
 	 * SQL to select a set of AttributeValue given owner id and type, attribute
 	 * value name, and time range.  
 	 */	
-	final private static String sqlMeasureAttributeValueRangeSelect = "select timestamp, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time from measuredattributevalue where id_owner = ? and owner_type = ? and attribute_name = ? and timestamp >= ? and timestamp <= ?";  
+	final private static String sqlMeasureAttributeValueRangeSelect = "select timestamp, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time from measuredattributevalue where id_owner = ? and owner_type = ? and attribute_name = ? and timestamp >= ? and timestamp <= ?";
+	
+	final private static String sqlMeasuredEntityTemporalitySelect = "select temporality from [iotajover].[dbo].[setup_machinehostsystem] where measuredentity_ptr_id = ?";
+	
+	final private static String sqlActualRateVariableNameSelect = "select variable_rate from [iotajover].[dbo].[setup_machinehostsystem] where measuredentity_ptr_id = ?";
 
 	/**
 	 * Column name from the query
@@ -254,7 +258,7 @@ public class MeasureAttributeValueCache extends Configurable {
 						// WriteAction
 						.writeAction(entries -> {
 							if (entries.size() > 0) {
-								logger.debug("to storage num entries:" + entries.size());
+								logger.info("Builder Write Action: to storage num entries:" + entries.size());
 								MeasureAttributeDatabaseStore storedatabase;
 								storedatabase = new MeasureAttributeDatabaseStore(entries, BATCH_ROWS);
 								threadPool.submit(storedatabase);
@@ -343,7 +347,7 @@ public class MeasureAttributeValueCache extends Configurable {
 		MeasureAttributeDatabaseStore storedatabase;
 		
 		storedatabase = new MeasureAttributeDatabaseStore(subSet, BATCH_ROWS);
-		
+		logger.info("Bulk Commit Method: to storage num entries:" + subSet.size());
 		threadPool.submit(storedatabase);
 		
 	}
@@ -488,6 +492,128 @@ public class MeasureAttributeValueCache extends Configurable {
 		}
 		
 		return list;
+	}
+	
+	/**
+	 * Return the temporality of rates from a measured entity.  
+	 * 
+	 * @param entityId measured entity id.
+	 * @return a string with the temporality of rates.
+	 * 
+	 */
+	public String getTemporality(
+			Integer entityId) {
+
+		logger.debug("In getTemporality");
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+
+		String temporality = "";
+		ResultSet rs = null;
+
+		try {
+			// get the database connection from the pool
+			connDB = getConnection();
+			connDB.setAutoCommit(false);
+			// prepare the statement
+			pstDB = connDB.prepareStatement(sqlMeasuredEntityTemporalitySelect);
+			pstDB.setInt(1, entityId);
+			rs =  pstDB.executeQuery();
+
+			// brings the attribute data
+			while (rs.next())
+			{
+				temporality = rs.getString("temporality");
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			if (rs!=null){
+				try{
+					logger.debug("result set close");
+					rs.close();
+				} catch (SQLException e) {  }
+			}
+			
+			if(pstDB!=null){
+				try{
+					logger.debug("prepared statement close");
+					pstDB.close();
+				} catch (SQLException e) { 	}
+			}
+
+			if(connDB!=null){
+				try	{
+					logger.debug("close connection");
+					connDB.close();
+				} catch (SQLException e) { 	}
+			}
+		}
+		
+		return temporality;
+	}
+	
+	/**
+	 * Return the variable name of actual rate.  
+	 * 
+	 * @param entityId measured entity id.
+	 * @return Variable name.
+	 * 
+	 */
+	public String getVariableName(
+			Integer entityId) {
+
+		logger.debug("In getVariableName");
+		Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+
+		String variableName = "";
+		ResultSet rs = null;
+
+		try {
+			// get the database connection from the pool
+			connDB = getConnection();
+			connDB.setAutoCommit(false);
+			// prepare the statement
+			pstDB = connDB.prepareStatement(sqlActualRateVariableNameSelect);
+			pstDB.setInt(1, entityId);
+			rs =  pstDB.executeQuery();
+
+			// brings the attribute data
+			while (rs.next())
+			{
+				variableName = rs.getString("variable_rate");
+			}
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} finally{
+			if (rs!=null){
+				try{
+					logger.debug("result set close");
+					rs.close();
+				} catch (SQLException e) {  }
+			}
+			
+			if(pstDB!=null){
+				try{
+					logger.debug("prepared statement close");
+					pstDB.close();
+				} catch (SQLException e) { 	}
+			}
+
+			if(connDB!=null){
+				try	{
+					logger.debug("close connection");
+					connDB.close();
+				} catch (SQLException e) { 	}
+			}
+		}
+		
+		return variableName;
 	}
 
 

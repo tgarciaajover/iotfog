@@ -256,7 +256,7 @@ public class MonitoringDevice extends ConfigurationObject
 	 * @param iop Input - Output port object to add.
 	 */
 	public void putInputOutputPort(InputOutputPort iop){
-		logger.info("port label:" + iop.getPortLabel() + "Id:" + iop.getId());
+		logger.debug("port label:" + iop.getPortLabel() + "Id:" + iop.getId());
 		this.inputOutputPorts.add(iop);
 		this.portsByLabel.put(iop.getPortLabel(), iop.getId());
 	}
@@ -309,7 +309,7 @@ public class MonitoringDevice extends ConfigurationObject
 		
 		for (int i = 0; i < this.inputOutputPorts.size(); i++){
 			InputOutputPort inputOutputPort = this.inputOutputPorts.get(i);
-			logger.info("Type of protocol of the port signal:" + inputOutputPort.getSignalType().getType().getProtocol() );
+			logger.debug("Type of protocol of the port signal:" + inputOutputPort.getSignalType().getType().getProtocol() );
 			if (inputOutputPort.getSignalType().getType().getProtocol().equals("M")) {
 				
 				String portLabel = inputOutputPort.getPortLabel();

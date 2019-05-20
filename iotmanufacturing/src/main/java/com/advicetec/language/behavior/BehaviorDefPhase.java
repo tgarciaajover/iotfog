@@ -160,7 +160,7 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 			if (name != null) {
 				dottedNames.add(name.getText());
 				if (name.AS() != null) {
-					logger.info(name.AS().getText());
+					logger.debug(name.AS().getText());
 					nickname = name.AS().getText(); 
 				}
 			}
@@ -384,18 +384,19 @@ public class BehaviorDefPhase extends BehaviorGrammarBaseListener
 	 * 		Create the display symbol
 	 * 		include the symbol in the current scope.
 	 */
-	public void enterDisplay(@NotNull BehaviorGrammarParser.DisplayContext ctx) 
+	public void enterDisplay(BehaviorGrammarParser.DisplayContext ctx) 
 	{ 
 		String name = ctx.deviceId.getText(); 
-		Symbol s = currentScope.resolve(name);
-		
-		if (s == null){
+		Symbol s = currentScope.resolve(name);		
+		if (s == null){			
 			DisplaySymbol displaySymbol = new DisplaySymbol(name);
-
-			// Define the symbol in the current scope
-			currentScope.define(displaySymbol);
 			
-		} 
+			// Define the symbol in the current scope
+			globals.define(displaySymbol);
+			
+		} 	
+		
+		logger.debug("Enter display");
 			
 	}	
 	

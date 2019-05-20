@@ -161,7 +161,7 @@ public class SampleProcessor implements Processor
 							String behavior = getBehavior(((TimerSymbol) symbol).getCompleteName());
 							
 							
-							logger.info("Symbol:" + symbolId + "behavior:" + behavior);
+							logger.debug("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
 							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, entityFacade.getType(), mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
 							event.setRepeated(repeated);
@@ -209,6 +209,7 @@ public class SampleProcessor implements Processor
 				}
 
 			} catch (Exception e1) {
+				logger.error(measuringEntity.toString());
 				logger.error("Error:" + e1.getMessage());
 				e1.printStackTrace();
 			}		

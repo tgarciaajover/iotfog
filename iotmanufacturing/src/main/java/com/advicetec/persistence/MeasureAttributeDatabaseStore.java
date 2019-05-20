@@ -69,6 +69,8 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 	
 	@Override
 	public void run() {
+		// FC Instancia lista de atributos para controlar duplicidad de llave
+		List<String> controlList = new ArrayList<String>();
 
 		logger.debug("Starting Executing database insert MeasuringAttributeValue" + " current Thread:" + Thread.currentThread().getName());
 		// Splits the entries in batches of batchRows  
@@ -79,7 +81,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 		for (List<AttributeValue> entry : lists) {
 			try {
 
-				logger.debug("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
+				logger.info("number of rows to insert withlin list:" + entry.size() + " current Thread:" + Thread.currentThread().getName() );
 				// connect to database
 				conn = MeasureAttributeValueCache.getConnection();
 				conn.setAutoCommit(false);
@@ -87,20 +89,27 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 				// prepares the statement
 				entry.forEach((v)-> {
 					logger.debug( "db write key:" + ((MeasuredAttributeValue)v).getKey() );
+					logger.info("DB Write Key: " + ((MeasuredAttributeValue)v).getKey() + "_" + ((MeasuredAttributeValue)v).getTimeStamp().toString() + "_" + String.valueOf(((MeasuredAttributeValue)v).getGeneratorType().getValue()) + "_" + ((MeasuredAttributeValue)v).getAttr().getName().toString());
+					// FC Evalua si el atributo existe o no en la lista de control para determinar si se inserta en la descarga a la DB en batch.
+					if (controlList.indexOf(((MeasuredAttributeValue)v).getKey() + "_" + ((MeasuredAttributeValue)v).getTimeStamp().toString() + "_" + String.valueOf(((MeasuredAttributeValue)v).getGeneratorType().getValue()) + "_" + ((MeasuredAttributeValue)v).getAttr().getName().toString()) < 0) {
+						controlList.add(((MeasuredAttributeValue)v).getKey() + "_" + ((MeasuredAttributeValue)v).getTimeStamp().toString() + "_" + String.valueOf(((MeasuredAttributeValue)v).getGeneratorType().getValue()) + "_" + ((MeasuredAttributeValue)v).getAttr().getName().toString());
+						((MeasuredAttributeValue)v).dbInsert(pst);
+					} else {
+						logger.info("Duplicate key element:   " + ((MeasuredAttributeValue)v).getKey() + "   " + ((MeasuredAttributeValue)v).getTimeStamp().toString() + "   " + String.valueOf(((MeasuredAttributeValue)v).getGeneratorType().getValue()) + "   " + ((MeasuredAttributeValue)v).getAttr().getName().toString() + "   " + ((MeasuredAttributeValue)v).getValue().toString());
+					}
+					
 					if (lastStore == null){
 						lastStore = ((MeasuredAttributeValue)v).getTimeStamp(); 
 					} else {
 						if (lastStore.compareTo(((MeasuredAttributeValue)v).getTimeStamp()) <= 0){
 							lastStore = ((MeasuredAttributeValue)v).getTimeStamp();
 						}
-					}
-					
-					((MeasuredAttributeValue)v).dbInsert(pst);
+					}					
 
 				});
 				// execute the insertion
 				int ret[] = pst.executeBatch();
-				logger.info("Number of Attribute Values inserted:" + ret.length);
+				logger.debug("Number of Attribute Values inserted:" + ret.length);
 				conn.commit();
 
 			} catch (SQLException e) {
@@ -109,7 +118,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 			} finally{
 				if(pst!=null){
 					try{
-						logger.info("closing prepared statement");
+						logger.debug("closing prepared statement");
 						pst.close();
 					} catch (SQLException e) {
 						logger.error(e.getMessage());
@@ -119,7 +128,7 @@ public class MeasureAttributeDatabaseStore implements Runnable {
 				
 				if(conn!=null) {
 					try {
-						logger.info("closing connection");
+						logger.debug("closing connection");
 						conn.close();
 					} catch (SQLException e) {
 						logger.error(e.getMessage());

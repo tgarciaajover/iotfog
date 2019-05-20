@@ -1,11 +1,17 @@
 package com.advicetec.measuredentitity;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
@@ -29,8 +35,7 @@ import com.advicetec.core.AttributeValue;
 import com.advicetec.core.Entity;
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
-import com.advicetec.eventprocessor.AggregationEvent;
-import com.advicetec.eventprocessor.AggregationEventType;
+import com.advicetec.persistence.StateIntervalCache;
 
 /**
  * Represents an entity being monitored by the measuring process.
@@ -51,7 +56,8 @@ import com.advicetec.eventprocessor.AggregationEventType;
 public abstract class MeasuredEntity extends Entity 
 {
 	static final Logger logger = LogManager.getLogger(MeasuredEntity.class.getName());
-
+	
+	static String sqlSelect = "SELECT MAX(datetime_to) as datetime_to FROM measuringentitystatusinterval WHERE id_owner = ? and owner_type = ? and datetime_to <= ?";
 
 	/**
 	 * Code assigned to the measured entity to make easier the user interface. 
@@ -123,7 +129,7 @@ public abstract class MeasuredEntity extends Entity
 	public MeasuredEntity( Integer id, MeasuredEntityType type) 
 	{
 		super(id, type);
-		
+		//LocalDateTime datetime_to = getLastDatetimetoInterval(id, type.getValue());
 		this.createDate = LocalDateTime.now();
 		this.behaviors = new ArrayList<MeasuredEntityBehavior>();
 		this.state = new EntityState(MeasuringState.SYSTEMDOWN, null, LocalDateTime.now());
@@ -132,6 +138,56 @@ public abstract class MeasuredEntity extends Entity
 		this.stateTransitions = new ArrayList<MeasuredEntityStateTransition>();
 		this.executedEntities = new ConcurrentHashMap<Integer, ExecutedEntity>();
 
+	}
+	
+	/**
+	 * Return the last datetime_to interval for a Measured Entity
+	 * 
+	 * @param measuredEntityID measured entity id
+	 * @param measuredEntityType measured entity type
+	 * 
+	 * @return LocalDateTime of last datetime_to interval
+	 */
+	public LocalDateTime getLastDatetimetoInterval(Integer measuredEntityID, Integer measuredEntityType) {
+		LocalDateTime datetime_to = null;
+		Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis()); 
+		
+		Calendar cal = Calendar.getInstance();
+        TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+        cal.setTimeZone(utcTimeZone);
+        
+		Connection connDB  = null;
+		PreparedStatement pstDB = null;
+		ResultSet rs = null;
+		
+		try 
+		{			
+			connDB = StateIntervalCache.getConnection();
+			connDB.setAutoCommit(false);
+			pstDB = connDB.prepareStatement(sqlSelect);
+			pstDB.setInt(1, measuredEntityID);
+			pstDB.setInt(2, measuredEntityType);
+			pstDB.setTimestamp(3, currentTimestamp);
+			
+			rs =  pstDB.executeQuery();
+			while (rs.next()) 
+			{				
+				Timestamp dsTimeTo = rs.getTimestamp("datetime_to", cal);
+				long timestampTimeFrom = dsTimeTo.getTime();
+				cal.setTimeInMillis(timestampTimeFrom);
+				datetime_to = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+																cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+																 cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+																  cal.get(Calendar.MILLISECOND)*1000000);
+			}
+			rs.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		return datetime_to;
 	}
 
 	/**
@@ -558,6 +614,17 @@ public abstract class MeasuredEntity extends Entity
 		}
 		return null;
 	}
+	
+	/**
+	 * Get the measured entity behavior list
+	 * 
+	 * @return  Measured Entity Behavior list. 
+	 */
+	public synchronized List<MeasuredEntityBehavior> getBehaviorList()
+	{
+		return this.behaviors;
+	}
+	
 
 	/**
 	 * Get the behavior object from its internal identifier
@@ -717,11 +784,11 @@ public abstract class MeasuredEntity extends Entity
 	 */
 	public synchronized void addExecutedEntity(ExecutedEntity executedEntity)
 	{
-		logger.info("Measure entity Id:" + getId() + " Adding executed Entity:" + executedEntity.getId());
+		logger.debug("Measure entity Id:" + getId() + " Adding executed Entity:" + executedEntity.getId());
 
 		this.executedEntities.put(executedEntity.getId(), executedEntity);
 		
-		logger.info("Num of executed entities being executed: ",  this.executedEntities.size());
+		logger.debug("Num of executed entities being executed: ",  this.executedEntities.size());
 	}
 
 	/**

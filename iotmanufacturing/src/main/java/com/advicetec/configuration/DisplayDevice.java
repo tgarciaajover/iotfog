@@ -50,6 +50,7 @@ public class DisplayDevice extends ConfigurationObject
 	@JsonProperty("port") 
     Integer port;
 
+	Integer entityId;
 	
 	/**
 	 * Constructor for the class 
@@ -68,7 +69,10 @@ public class DisplayDevice extends ConfigurationObject
 		return referenceCd;
 	}
 
-
+	public Integer getEntityId() {
+		return entityId;
+	}
+	
 	/**
 	 * Sets the alternative identifier for the display device.
 	 * @param referenceCd  alternative identifier 
@@ -77,7 +81,9 @@ public class DisplayDevice extends ConfigurationObject
 		this.referenceCd = referenceCd;
 	}
 
-
+	public void setEntityId(Integer entityId) {
+		this.entityId = entityId;
+	}
 	/**
 	 * Gets the display type, which is used to configure display options.
 	 * @return

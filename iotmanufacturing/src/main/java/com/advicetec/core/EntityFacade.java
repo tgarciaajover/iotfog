@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -14,6 +15,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -118,7 +120,7 @@ public abstract class EntityFacade  {
 	 */
 	public EntityFacade(Entity entity, Integer purgeFacadeCacheMapEntries)
 	{
-		
+		logger.debug("EntityFacade Start " + String.valueOf(entity.getId()));
 		logger.debug("Creating entity facade");
 		
 		this.entity = entity;
@@ -146,7 +148,7 @@ public abstract class EntityFacade  {
 			logger.error("Error creating the purge event in the queue for measured entity:" + entity.getId());
 			e.printStackTrace();
 		}
-		
+		logger.debug("EntityFacade End " + String.valueOf(entity.getId()));
 		logger.debug("Finish Creating entity facade");
 		
 	}
@@ -157,6 +159,7 @@ public abstract class EntityFacade  {
 	 * @return  measured entity
 	 */
 	public synchronized Entity getEntity() {
+		logger.debug("getEntity called");
 		return entity;
 	}
 
@@ -165,7 +168,9 @@ public abstract class EntityFacade  {
 	 * @param entity	measured entity being referenced. 
 	 */
 	public synchronized void setEntity(Entity entity) {
+		logger.debug("setEntity Start " + String.valueOf(entity.getId()));
 		this.entity = entity;
+		logger.debug("setEntity End " + String.valueOf(entity.getId()));
 	}
 
 	/**
@@ -174,6 +179,7 @@ public abstract class EntityFacade  {
 	 * @return	measure entity type
 	 */
 	public synchronized MeasuredEntityType getType(){
+		logger.debug("getType called");
 		return entity.getType();
 	}
 
@@ -186,7 +192,9 @@ public abstract class EntityFacade  {
 	 */
 	public synchronized void setAttribute(Attribute attribute) throws Exception{
 		// returns the previous value
+		logger.debug("setAttribute Start");
 		status.setAttribute(attribute);
+		logger.debug("setAttribute End");
 	}
 
 	/**
@@ -196,7 +204,7 @@ public abstract class EntityFacade  {
 	 */
 	public synchronized void setAttributeValue(AttributeValue attrValue)
 	{
-
+		logger.debug("setAttributeValue Start");
 		MeasuredAttributeValue mav = new MeasuredAttributeValue(attrValue.getAttr(), attrValue.getValue(),
 				attrValue.getGenerator(), attrValue.getGeneratorType(), LocalDateTime.now());
 		// stores this attributeValue into cache
@@ -214,6 +222,7 @@ public abstract class EntityFacade  {
 			internalMap = attMap.get(attName);
 		}
 		internalMap.put(mav.getTimeStamp(), mav.getKey());
+		logger.debug("setAttributeValue End");
 	}
 
 	/**
@@ -224,6 +233,7 @@ public abstract class EntityFacade  {
 	 * @return Last measure attribute value created.
 	 */
 	public synchronized AttributeValue getNewestByAttributeName(String attName){
+		logger.debug("getNewestByAttributeName called");
 		return status.getAttributeValueByName(attName);
 	}
 
@@ -236,7 +246,7 @@ public abstract class EntityFacade  {
 	 */
 	public synchronized void importAttributeValues(Map<String, ASTNode> valueMap) {
 		
-		
+		logger.debug("importAttributeValues Start");
 		logger.debug("entering importAttributeValues" + valueMap.size() + " attribute status count:" + status.getAttributeSize()); 
 
 		for ( String attrName : valueMap.keySet()){
@@ -293,6 +303,7 @@ public abstract class EntityFacade  {
 				logger.error("The attribute: " + attrName + " is not in the status");
 			}
 		}
+		logger.debug("importAttributeValues End");
 	}
 
 
@@ -305,10 +316,10 @@ public abstract class EntityFacade  {
 	 * @param parentType 	Type of measured entity.
 	 */
 	public synchronized void setAttributeValue(Attribute att, Object value) {
-
+		logger.debug("setAttributeValue Start");
 		logger.debug("inserting attribute value -attr:" + att.getName() + " value:" + value.toString() );
 		setAttributeValue(new AttributeValue(att.getName(), att, value, getEntity().getId(), getEntity().getType()));
-
+		logger.debug("setAttributeValue End");
 	}	
 
 	/**
@@ -321,14 +332,16 @@ public abstract class EntityFacade  {
 	 */
 	public synchronized List<AttributeValue> getByIntervalByAttributeName(
 			String attrName, LocalDateTime from, LocalDateTime to){
-
+		logger.debug("getByIntervalByAttributeName Start");
 		LocalDateTime oldest = attValueCache.getOldestTime();
 
 		
 		logger.debug("getByIntervalByAttributeValue from:" + from + " to:" + to);
 		if(!attMap.containsKey(attrName)){
-			logger.error("attribute:"+attrName+" is not in facade");
-			return new ArrayList<AttributeValue>();
+			logger.debug("attribute:"+attrName+" is not in facade");
+			List<AttributeValue> newList = new ArrayList<AttributeValue>();
+			logger.debug("getByIntervalByAttributeName End");
+			return newList;
 		}
 		SortedMap<LocalDateTime,String> internalMap = attMap.get(attrName);
 
@@ -337,12 +350,16 @@ public abstract class EntityFacade  {
 			SortedMap<LocalDateTime,String> subMap = internalMap.subMap(from, to);
 			Collection<String> keys = subMap.values();
 			String[] keyArray = keys.toArray( new String[keys.size()]);
-			return getFromCache(keyArray);
+			List<AttributeValue> newList = getFromCache(keyArray);
+			logger.debug("getByIntervalByAttributeName End");
+			return newList;
 			
 		} else if(oldest.isAfter(to)) {
 			// get all values from database
-			return attValueCache.getFromDatabase(entity.getId(),entity.getType(),
+			List<AttributeValue> newList = attValueCache.getFromDatabase(entity.getId(),entity.getType(),
 					status.getAttribute(attrName),from, oldest);
+			logger.debug("getByIntervalByAttributeName End");
+			return newList;
 		} else {
 			SortedMap<LocalDateTime,String> subMap = 
 					internalMap.subMap(oldest, to);
@@ -353,9 +370,31 @@ public abstract class EntityFacade  {
 			ArrayList<AttributeValue> newList = attValueCache.getFromDatabase(entity.getId(),entity.getType(),
 							status.getAttribute(attrName),from, oldest);
 			newList.addAll(getFromCache(keyArray));
-
+			logger.debug("getByIntervalByAttributeName End");
 			return newList;
 		}
+	}
+	
+	/**
+	 * Return the temporality of rates from a measured entity.
+	 *
+	 * @return a string with the temporality of rates.
+	 */
+	public synchronized String getTemporalityRate(){
+		logger.debug("in getTemporalityRate");
+		String temporality = attValueCache.getTemporality(entity.getId());
+		return temporality;
+	}
+	
+	/**
+	 * Return the variable name of actual rate.
+	 *
+	 * @return Variable name.
+	 */
+	public synchronized String getActualRateVariableName(){
+		logger.debug("in getActualRateVariableName");
+		String variableName = attValueCache.getVariableName(entity.getId());
+		return variableName;
 	}
 
 
@@ -365,6 +404,7 @@ public abstract class EntityFacade  {
 	 * @param oldest
 	 */
 	public synchronized void deleteOldValues(LocalDateTime oldest){
+		logger.debug("deleteOldValues Start");
 		for(SortedMap<LocalDateTime, String> internalMap : attMap.values()){
 			// replace the map with the last entries. 
 			Set<LocalDateTime> keysToDelete = internalMap.headMap(oldest).keySet();
@@ -372,6 +412,7 @@ public abstract class EntityFacade  {
 				internalMap.remove(datetime);
 			}
 		}
+		logger.debug("deleteOldValues End");
 	}
 
 	/**
@@ -380,11 +421,12 @@ public abstract class EntityFacade  {
 	 * @param oldest this corresponds to the oldest state that must be maintained on the map. 
 	 */
 	public synchronized void deleteOldStates(LocalDateTime oldest){
+		logger.debug("deleteOldStates Start");
 		Set<LocalDateTime> keysToDelete = statesMap.headMap(oldest).keySet();
 		for (LocalDateTime datetime : keysToDelete){
 			statesMap.remove(datetime);
 		}
-		
+		logger.debug("deleteOldStates End");
 	}
 
 	/**
@@ -396,7 +438,7 @@ public abstract class EntityFacade  {
 	 * @return			values stored for the attribute during the time interval given as parameter. 
 	 */
 	public synchronized String getByIntervalByAttributeNameJSON(String attrName, LocalDateTime from, LocalDateTime to){
-
+		logger.debug("getByIntervalByAttributeNameJSON Start");
 		List<AttributeValue> ret = getByIntervalByAttributeName(attrName, from, to);
 
 		ObjectMapper mapper = new ObjectMapper();
@@ -415,7 +457,7 @@ public abstract class EntityFacade  {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
-
+		logger.debug("getByIntervalByAttributeNameJSON End");
 		return jsonText;
 	}
 
@@ -430,20 +472,25 @@ public abstract class EntityFacade  {
 	 * 
 	 */
 	public synchronized List<AttributeValue> getLastNbyAttributeName(String attrName, int n){
+		logger.debug("getLastNbyAttributeName Start");
 		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
 
 		if(!attMap.containsKey(attrName)){
+			logger.debug("getLastNbyAttributeName End");
 			return null;
 		}
 
 		SortedMap<LocalDateTime,String> internalMap = attMap.get(attrName);
 		String[] keyArray = (String[]) internalMap.values().toArray();
 		if(n>= internalMap.size()){
-			return getFromCache(keyArray);
+			maValues = getFromCache(keyArray);
+			logger.debug("getLastNbyAttributeName End");
+			return maValues;
 		} else{
 			for (int i = keyArray.length - n - 1; i < keyArray.length; i++) {
 				maValues.add(attValueCache.getFromCache(keyArray[i]));
 			}
+			logger.debug("getLastNbyAttributeName End");
 			return maValues;
 		}
 	}
@@ -456,6 +503,7 @@ public abstract class EntityFacade  {
 	 * @return			Measure attribute values from the cache.
 	 */
 	private ArrayList<AttributeValue> getFromCache(String[] keyArray){
+		logger.debug("getFromCache Start");
 		ArrayList<AttributeValue> maValues = new ArrayList<AttributeValue>();
 		for (String key : keyArray) {
 			AttributeValue value = attValueCache.getFromCache(key);
@@ -467,6 +515,7 @@ public abstract class EntityFacade  {
 				
 			
 		}
+		logger.debug("getFromCache End");
 		return maValues;
 	}
 
@@ -478,7 +527,9 @@ public abstract class EntityFacade  {
 	 * @throws Exception
 	 */
 	public synchronized void importSymbols(Map<String, Symbol> symbolMap, AttributeOrigin origin) throws Exception {
+		logger.debug("importSymbols Start");
 		status.importSymbols(symbolMap, origin);
+		logger.debug("importSymbols End");
 	}
 
 	/**
@@ -487,6 +538,7 @@ public abstract class EntityFacade  {
 	 * @return set of attributes registered in the measured entity. 
 	 */
 	public synchronized Collection<Attribute> getStatus(){
+		logger.debug("getStatus called");
 		return status.getStatus();
 	}
 
@@ -496,11 +548,13 @@ public abstract class EntityFacade  {
 	 * @return json array
 	 */
 	public synchronized JSONArray getStatusJSON(){
+		logger.debug("getStatusJSON called");
 		return new JSONArray(getStatusValues());
 	}
 
 
 	public synchronized Collection<AttributeValue> getStatusValues(){
+		logger.debug("getStatusValues called");
 		return status.getAttributeValues();
 	}
 
@@ -512,13 +566,17 @@ public abstract class EntityFacade  {
 	 * @return			true if the attribute name is registered, false otherwise.
 	 */
 	public synchronized boolean isAttribute(String attrName) {
-
+		logger.debug("isAttribute Start");
 		Attribute att = status.getAttribute(attrName);
 
-		if( att != null )
+		if( att != null ) {
+			logger.debug("isAttribute End");
 			return true;
-		else
+		}
+		else {
+			logger.debug("isAttribute End");
 			return false;
+		}
 	}
 
 	/**
@@ -529,7 +587,7 @@ public abstract class EntityFacade  {
 	 * @return 			String representation of the json information.
 	 */
 	public synchronized String getJsonStatesByInterval(LocalDateTime from, LocalDateTime to){
-
+		logger.debug("getJsonStatesByInterval Start");
 		List<StateInterval> intervals = getStatesByInterval(from, to);
 
 		ObjectMapper mapper = new ObjectMapper();
@@ -547,7 +605,8 @@ public abstract class EntityFacade  {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		
+		logger.debug("getJsonStatesByInterval End");
 		return jsonText;
 
 	}
@@ -562,6 +621,7 @@ public abstract class EntityFacade  {
 	 * @throws PropertyVetoException 
 	 */
 	public synchronized JSONArray getJsonStates(LocalDateTime from, LocalDateTime to) {
+		logger.debug("getJsonStates Start");
 		logger.debug("getJsonStates" + " from: " + from.toString() + " to: " + to.toString());
 		JSONArray array = null;
 		String cannonicalMachine = "";
@@ -573,7 +633,10 @@ public abstract class EntityFacade  {
 		for (StateInterval interval : intervals) {
 			if (interval != null)
 			{
-				//logger.info(interval.toString());
+				List<AttributeValue> valuesEmp;
+				List<AttributeValue> valuesEng;
+				String emp;
+				String eng;
 				// create the json object
 				JSONObject jsob = new JSONObject();
 				jsob.append("machine", cannonicalMachine);
@@ -589,13 +652,80 @@ public abstract class EntityFacade  {
 				jsob.append("executedObject", interval.getRelatedObject().toString());
 				jsob.append("executedObjectType", interval.getRelatedObjectType().toString());
 				jsob.append("executedObjectCanonical", interval.getExecutedObjectCanonical());
+				valuesEmp = this.getByIntervalByAttributeName("empacadora", interval.getInterval().getStart(), interval.getInterval().getEnd());
+				if (valuesEmp.size() == 0) {
+					emp = "N";
+				} else {
+					emp = "Y";
+				}
+				valuesEng = this.getByIntervalByAttributeName("gasto_energia", interval.getInterval().getStart(), interval.getInterval().getEnd());
+				if (valuesEng.size() == 0) {
+					eng = "N";
+				} else {
+					eng = "Y";
+				}
+				jsob.append("withPacking", emp);
+				jsob.append("wasteEnergy", eng);
+				jsob.append("productionRate", interval.getProductionRate());
+				jsob.append("actualProductionRate", interval.getActualProductionRate());
 				array.put(jsob);
 			}
 		}
-
+		logger.debug("getJsonStates End");
 		return array;
 	}
 
+	
+	
+	public synchronized double getEntityAvailability(LocalDateTime from){
+		
+		PredefinedPeriod predefinedPeriod = new PredefinedPeriod(from.getYear(), from.getMonthValue(), from.getDayOfMonth(), from.getHour(), from.getMinute());
+		double availability = 0;
+		logger.info(predefinedPeriod.getKey());
+		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
+		availability = oeeAggregation.getOeeAggregationContainer().getPeriodAvailabilityOEE(this.getEntity().getId(), this.getEntity().getType(), predefinedPeriod);
+		return availability;
+	}
+	
+	/**
+	 * Recalculate the OEE for the measured entity within the interval given as parameter  
+	 * 
+	 * @param dttmFrom		start date time 
+	 * @param dttmTo		end date time
+	 * @param reqInterval	specifies the granularity required for the response.
+	 */
+	public synchronized void calculateOverallEquipmentEffectiveness(String company, String location, String plant, 
+			String machineGroup, String machineId, String year, String month, String day, String productionOrder) {
+		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
+		
+		oeeAggregation.getOeeAggregationContainer().calculatePeriodOEE(company, location, plant, machineGroup, machineId, 
+				year, month, day, productionOrder, "N");		
+	}
+	
+	public synchronized LocalDateTime getBeginDttmCurrentShift(){
+		logger.debug("getBeginDttmCurrentShift Start");
+		LocalDateTime beginpivot = LocalDate.now().atTime(7, 0);
+		LocalDateTime endpivot = LocalDate.now().atTime(19, 0);
+		
+		if(LocalDateTime.now().isBefore(beginpivot)){
+			return beginpivot.minusHours(12);
+		}
+		if(LocalDateTime.now().isAfter(beginpivot) && LocalDateTime.now().isBefore(endpivot)){
+			return beginpivot;			
+		}
+		if(LocalDateTime.now().isAfter(endpivot)){
+			return endpivot;
+		}
+		if(LocalDateTime.now().isEqual(beginpivot)){
+			return beginpivot.minusHours(12);
+		}
+		if(LocalDateTime.now().isEqual(endpivot)){
+			return beginpivot;			
+		}
+		logger.debug("getBeginDttmCurrentShift End");
+		return null;
+	}
+	
 	/**
 	 * Returns Json array with the format:<br>
 	 * [ ... {"machine":machine,"variable":var,"dttmStamp":stamp,"variableValue":val}...]
@@ -607,6 +737,7 @@ public abstract class EntityFacade  {
 	 * @throws PropertyVetoException 
 	 */
 	public synchronized JSONArray getJsonTrend(String trendVar,LocalDateTime from, LocalDateTime to){
+		logger.debug("getJsonTrend Start");
 		JSONArray array = null;
 		String cannonicalMachine ="";
 			
@@ -627,7 +758,7 @@ public abstract class EntityFacade  {
 				array.put(jsob);
 			}
 		}
-			
+		logger.debug("getJsonTrend End");
 		return array;
 	}
 
@@ -639,6 +770,7 @@ public abstract class EntityFacade  {
 	 * @return	json array in string.
 	 */
 	public synchronized String statesByInterval(TimeInterval interval){
+		logger.debug("statesByInterval Start");
 		List<StateInterval> intervals = getStatesByInterval(interval.getStart(), interval.getEnd());
 
 		ObjectMapper mapper = new ObjectMapper();
@@ -655,7 +787,7 @@ public abstract class EntityFacade  {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		logger.debug("statesByInterval End");
 		return jsonText;
 	}
 
@@ -669,14 +801,14 @@ public abstract class EntityFacade  {
 	 * @return List of intervals.
 	 */
 	public synchronized List<StateInterval> getStatesByInterval(LocalDateTime from, LocalDateTime to){
-
+		logger.debug("getStatesByInterval Start");
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 		String formattedFrom = from.format(formatter);
 		String formattedTo = to.format(formatter);
-		logger.info("getStatesByInterval from:" + formattedFrom + " to:" + formattedTo );
 		
 		List<StateInterval> list = new ArrayList<StateInterval>();
 		LocalDateTime oldest = stateCache.getOldestTime();
+		LocalDateTime current = LocalDateTime.now();
 
 		// all values are in the cache
 		if(oldest.isBefore(from)){
@@ -684,6 +816,7 @@ public abstract class EntityFacade  {
 			for (Map.Entry<LocalDateTime, String> entry : subMap.entrySet()) {
 				list.add(stateCache.getFromCache(entry.getValue()));
 			}
+			
 		} else if(oldest.isAfter(to)){
 			// all values are in the database 
 			list.addAll(stateCache.getFromDatabase(entity.getId(),entity.getType(),from,to));
@@ -699,6 +832,7 @@ public abstract class EntityFacade  {
 			}
 
 		}
+		logger.debug("getStatesByInterval End");
 		return list;
 	}
 
@@ -709,11 +843,14 @@ public abstract class EntityFacade  {
 	 * This method is used when the measured facade must be removed because the measured entity is deleted.
 	 */
 	public synchronized void storeAllStateIntervals(){
+		logger.debug("storeAllStateIntervals Start");
+		//logger.debug("storeAllStateIntervals purge map facade");
 		LocalDateTime oldest = stateCache.getOldestTime();
 		
 		deleteOldStates(oldest);
 		
 		stateCache.bulkCommit(new ArrayList<String>(statesMap.values()));
+		logger.debug("storeAllStateIntervals End");
 	}
 	
 	
@@ -723,6 +860,7 @@ public abstract class EntityFacade  {
 	
 	public synchronized void removeOldCacheReferences()
 	{
+		logger.debug("removeOldCacheReferences Start");
 		// Remove References from the attribute cache.
 		LocalDateTime oldestAttr = attValueCache.getOldestTime();		
 		deleteOldValues(oldestAttr);
@@ -731,7 +869,7 @@ public abstract class EntityFacade  {
 		// Delete References from the state cache.
 		LocalDateTime oldestState = stateCache.getOldestTime();		
 		deleteOldStates(oldestState);
-		
+		logger.debug("removeOldCacheReferences End");
 	}
 	
 	/***
@@ -739,8 +877,9 @@ public abstract class EntityFacade  {
 	 * entity into the database and cleans itself. 
 	 */
 	public synchronized void storeAllMeasuredAttributeValues(){
+		logger.debug("storeAllMeasuredAttributeValues Start");
 		
-		logger.info("in storeAllMeasuredAttributeValues");
+		//logger.debug("in storeAllMeasuredAttributeValues");
 		
 		LocalDateTime oldest = attValueCache.getOldestTime();
 		
@@ -755,7 +894,8 @@ public abstract class EntityFacade  {
 		
 		attValueCache.bulkCommit(keys);
 		
-		logger.info("it is going out from storeAllMeasuredAttributeValues");
+		//logger.debug("it is going out from storeAllMeasuredAttributeValues");
+		logger.debug("storeAllMeasuredAttributeValues End");
 	}
 
 	
@@ -767,6 +907,7 @@ public abstract class EntityFacade  {
 	 * @throws JAXBException
 	 */
 	public Document getXmlStatus() throws ParserConfigurationException, JAXBException{
+		logger.debug("getXmlStatus called");
 		return status.toXml();
 	}
 
@@ -791,7 +932,7 @@ public abstract class EntityFacade  {
 	 * @return	list of downtime reasons.
 	 */
 	protected List<DowntimeReason> getDowntimeReasons(LocalDateTime from,	LocalDateTime to){
-	
+		logger.debug("getDowntimeReasons Start");
 		List<StateInterval> list = new ArrayList<StateInterval>();
 		LocalDateTime oldest = stateCache.getOldestTime();
 
@@ -838,6 +979,7 @@ public abstract class EntityFacade  {
 		}
 
 		logger.debug("num Reasons:" + reasons.size());
+		logger.debug("getDowntimeReasons End");
 		return reasons;
 	}
 	
@@ -850,24 +992,13 @@ public abstract class EntityFacade  {
 	protected abstract Map<Integer,DowntimeReason> sumarizeDowntimeReason(List<StateInterval> list);
 				
 	
-	/**
-	 * Gets the OEE for the measured entity within the interval given as parameter  
-	 * 
-	 * @param dttmFrom		start datetime 
-	 * @param dttmTo		end datetime
-	 * @param reqInterval	specifies the granurality required for the response.
-	 * 
-	 * @return	Array of OEEs calculated with the granurality defined by reqInterval.  
-	 */
-	public synchronized JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo, String reqInterval) {
-				
-        // Bring different predefined periods required
-		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods( dttmFrom, dttmTo, reqInterval ); 
-		
-		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
+	private List<OverallEquipmentEffectiveness> getOEESSegments(LocalDateTime dttmFrom, LocalDateTime dttmTo, String reqInterval){
+		logger.debug("getOEESSegments Start");
 		List<OverallEquipmentEffectiveness> oees = new ArrayList<OverallEquipmentEffectiveness>();
-		
-		logger.debug("Number of elements to calculate in the final list:" + periods.size());
+		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
+		// Bring different predefined periods required
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods( dttmFrom, dttmTo, reqInterval );
+		//logger.debug("Number of elements to calculate in the final list:" + periods.size());
 		
 		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
 		for (int i = 0; i < periods.size(); i++)
@@ -875,7 +1006,7 @@ public abstract class EntityFacade  {
 					
 			PredefinedPeriod period = periods.get(i);
 			
-			logger.debug("Period Type:" + period.getType().getName());
+			//logger.debug("Period Key: " + period.getKey().toString());
 			
 			if (period.getType() == PredefinedPeriodType.INT_LT_HOUR)
 			{
@@ -890,7 +1021,7 @@ public abstract class EntityFacade  {
 						period.getCalendarFrom().get(Calendar.DAY_OF_MONTH),
 						period.getCalendarFrom().get(Calendar.HOUR_OF_DAY)); 
 				
-				List<OverallEquipmentEffectiveness> oeesHour = oeeAggregation.getOeeAggregationContainer().intervalsByHour(
+				List<OverallEquipmentEffectiveness> oeesHour = oeeAggregation.getOeeAggregationContainer().intervalsByMinute(
 															this.getEntity().getId(), this.getEntity().getType(), periodTmp.getKey(), parQueryFrom, parQueryTo);
 				
 				if (oeesHour.size() == 0) {
@@ -900,14 +1031,25 @@ public abstract class EntityFacade  {
 				}
 				
 			} else if ( period.getType() == PredefinedPeriodType.HOUR ){
+				//logger.debug(period.getKey());
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+				if (oee2 !=null) {
+					//logger.debug("Exist Period");
+					oees.add(oee2);
+				} else {
+					//logger.debug("Don't Exist Period");
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, false));
+				}
+			} else if ( period.getType() == PredefinedPeriodType.MINUTE ){
 				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
 						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
 				if (oee2 !=null) {
 					oees.add(oee2);
 				} else {
-					logger.debug("calculating oee for hour");
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false, false));
+					oees.addAll(oeeCalculator.calculateMinute(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, false));
 				}
 			} else if ( period.getType() == PredefinedPeriodType.DAY ) {
 				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
@@ -916,7 +1058,7 @@ public abstract class EntityFacade  {
 					oees.add(oee2);
 				} else {
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateDay(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false, false));
+					oees.addAll(oeeCalculator.calculateDay(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, false));
 				}
 				
 			} else if ( period.getType() == PredefinedPeriodType.MONTH ) {
@@ -926,7 +1068,7 @@ public abstract class EntityFacade  {
 					oees.add(oee2);
 				} else {
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateMonth(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false, false));
+					oees.addAll(oeeCalculator.calculateMonth(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, false));
 				}
 				
 			} else if ( period.getType() == PredefinedPeriodType.YEAR )  {
@@ -937,7 +1079,182 @@ public abstract class EntityFacade  {
 					oees.add(oee2);
 				} else {
 					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
-					oees.addAll(oeeCalculator.calculateYear(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), false, false));
+					oees.addAll(oeeCalculator.calculateYear(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, false));
+				}
+									
+			} else {
+				logger.error("Invalid Predefined Period type:" + period.getType().getName());			
+			}			
+		}
+			
+		logger.debug("Number of elements in the final list:" + oees.size());
+		logger.debug("getOEESSegments End");
+		return oees;
+	}
+	
+	/**
+	 * Recalculate the OEE for the measured entity within the interval given as parameter  
+	 * 
+	 * @param dttmFrom		start date time 
+	 * @param dttmTo		end date time
+	 * @param reqInterval	specifies the granularity required for the response.
+	 */
+	public synchronized void recalculateOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo, String reqInterval) {
+		logger.debug("recalculateOverallEquipmentEffectiveness Start");
+        // Bring different predefined periods required
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods( dttmFrom, dttmTo, reqInterval ); 
+		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
+		List<OverallEquipmentEffectiveness> oees = new ArrayList<OverallEquipmentEffectiveness>();
+		//logger.debug("Number of elements to calculate in the final list:" + periods.size());
+		// loop through the different intervals and calculate total schedule down time, availability loss, etc..
+		for (int i = 0; i < periods.size(); i++)
+		{
+			PredefinedPeriod period = periods.get(i);
+			//logger.debug("Period Type:" + period.getType().getName());
+			if (period.getType() == PredefinedPeriodType.INT_LT_HOUR)
+			{
+				//logger.debug(period.getKey());
+				// Search for intervals in the requested hour.
+				DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
+				String parQueryFrom = formatter.format(period.getCalendarFrom().getTime());
+				String parQueryTo = formatter.format(period.getCalendarTo().getTime());
+				PredefinedPeriod periodTmp = new PredefinedPeriod(period.getCalendarFrom().get(Calendar.YEAR), 
+						period.getCalendarFrom().get(Calendar.MONTH) +1,
+						period.getCalendarFrom().get(Calendar.DAY_OF_MONTH),
+						period.getCalendarFrom().get(Calendar.HOUR_OF_DAY)); 
+				List<OverallEquipmentEffectiveness> oeesHour = oeeAggregation.getOeeAggregationContainer().intervalsByMinute(this.getEntity().getId(), this.getEntity().getType(), periodTmp.getKey(), parQueryFrom, parQueryTo);				
+				if (oeesHour.size() == 0) {
+					logger.error("The aggregation interval could not be calculated predefined Period:" + parQueryFrom );
+				} else {
+					oees.addAll(oeesHour);
+				}
+			} else if ( period.getType() == PredefinedPeriodType.HOUR ){
+				//logger.debug(period.getKey());
+				OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+				oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, true));
+			} else if ( period.getType() == PredefinedPeriodType.MINUTE ){
+				//logger.debug(period.getKey());
+				OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+				oees.addAll(oeeCalculator.calculateMinute(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, true));
+			} else if ( period.getType() == PredefinedPeriodType.DAY ) {
+				//logger.debug(period.getKey());
+				OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+				oees.addAll(oeeCalculator.calculateDay(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, true));				
+			} else if ( period.getType() == PredefinedPeriodType.MONTH ) {
+				//logger.debug(period.getKey());
+				OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+				oees.addAll(oeeCalculator.calculateMonth(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, true));				
+			} else if ( period.getType() == PredefinedPeriodType.YEAR )  {
+				//logger.debug(period.getKey());
+				OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+				oees.addAll(oeeCalculator.calculateYear(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, true));
+			} else {
+				logger.error("Invalid Predefined Period type:" + period.getType().getName());			
+			}
+		}
+		logger.debug("Number of elements in the final recalculated list:" + oees.size());
+		logger.debug("recalculateOverallEquipmentEffectiveness End");
+	}
+	
+	/**
+	 * Gets the OEE for the measured entity within the interval given as parameter  
+	 * 
+	 * @param dttmFrom		start datetime 
+	 * @param dttmTo		end datetime
+	 * @param reqInterval	specifies the granurality required for the response.
+	 * 
+	 * @return	Array of OEEs calculated with the granurality defined by reqInterval.  
+	 */
+	public synchronized JSONArray getOverallEquipmentEffectiveness(LocalDateTime dttmFrom, LocalDateTime dttmTo, String reqInterval) {
+		logger.debug("getOverallEquipmentEffectiveness Start");
+        // Bring different predefined periods required
+		List<PredefinedPeriod> periods = PeriodUtils.getPredefinedPeriods( dttmFrom, dttmTo, reqInterval ); 
+		
+		OEEAggregationManager oeeAggregation = OEEAggregationManager.getInstance();
+		List<OverallEquipmentEffectiveness> oees = new ArrayList<OverallEquipmentEffectiveness>();
+		
+		//logger.debug("Number of elements to calculate in the final list:" + periods.size());
+		
+		// loop through the different intervals and calculate total schedule downtime, availability loss, etc..
+		for (int i = 0; i < periods.size(); i++)
+		{
+					
+			PredefinedPeriod period = periods.get(i);
+			
+			//logger.debug("Period Type:" + period.getType().getName());
+			
+			if (period.getType() == PredefinedPeriodType.INT_LT_HOUR)
+			{
+				
+				// Search for intervals in the requested hour.
+				DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
+				String parQueryFrom = formatter.format(period.getCalendarFrom().getTime());
+				String parQueryTo = formatter.format(period.getCalendarTo().getTime());
+				
+				PredefinedPeriod periodTmp = new PredefinedPeriod(period.getCalendarFrom().get(Calendar.YEAR), 
+						period.getCalendarFrom().get(Calendar.MONTH) +1,
+						period.getCalendarFrom().get(Calendar.DAY_OF_MONTH),
+						period.getCalendarFrom().get(Calendar.HOUR_OF_DAY)); 
+				
+				List<OverallEquipmentEffectiveness> oeesHour = oeeAggregation.getOeeAggregationContainer().intervalsByMinute(
+															this.getEntity().getId(), this.getEntity().getType(), periodTmp.getKey(), parQueryFrom, parQueryTo);
+				
+				if (oeesHour.size() == 0) {
+					logger.error("The aggregation interval could not be calculated predefined Period:" + parQueryFrom );
+				} else {
+					oees.addAll(oeesHour);
+				}
+				
+			} else if ( period.getType() == PredefinedPeriodType.HOUR ){
+				//logger.debug(period.getKey());
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+				if (oee2 !=null) {
+					//logger.debug("Exist Period: " + period.getKey().toString());
+					oees.add(oee2);
+				} else {
+					//logger.debug("Don't Exist Period: " + period.getKey().toString());
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateHour(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, false));
+				}
+			} else if ( period.getType() == PredefinedPeriodType.MINUTE ){
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateMinute(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, false));
+				}
+			} else if ( period.getType() == PredefinedPeriodType.DAY ) {
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateDay(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, false));
+				}
+				
+			} else if ( period.getType() == PredefinedPeriodType.MONTH ) {
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateMonth(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, false));
+				}
+				
+			} else if ( period.getType() == PredefinedPeriodType.YEAR )  {
+				
+				OverallEquipmentEffectiveness oee2 = oeeAggregation.getOeeAggregationContainer().
+						getPeriodOEE(this.getEntity().getId(), this.getEntity().getType(), period);
+				if (oee2 !=null) {
+					oees.add(oee2);
+				} else {
+					OEEAggregationCalculator oeeCalculator = new OEEAggregationCalculator();
+					oees.addAll(oeeCalculator.calculateYear(this.getEntity().getId(), this.getEntity().getType(), period.getLocalDateTime(), true, false));
 				}
 									
 			} else {
@@ -992,7 +1309,7 @@ public abstract class EntityFacade  {
 			// adding jsonObject to JsonArray
 			array.put(jsob);
 		}
-		
+		logger.debug("getOverallEquipmentEffectiveness End");
 		return array;
 	}
 
@@ -1000,7 +1317,7 @@ public abstract class EntityFacade  {
 	 * This method returns a JSON Array with those attributes marked as trend in the language.
 	 */
 	public synchronized JSONArray getJsonAttributeTrend() {
-		
+		logger.debug("getJsonAttributeTrend Start");
 		logger.debug("In getJsonAttributeTrend");
 		
 		List<Attribute> trendAttributes = status.getTrendAttributes();
@@ -1015,6 +1332,7 @@ public abstract class EntityFacade  {
 			// adding jsonObject to JsonArray
 			array.put(jsob);			
 		}
+		logger.debug("getJsonAttributeTrend End");
 		return array;
 	}
 

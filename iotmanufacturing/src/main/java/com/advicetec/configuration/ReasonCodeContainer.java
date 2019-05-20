@@ -266,7 +266,7 @@ public class ReasonCodeContainer extends Container
 	 * @return Reason code identifier
 	 */
 	public Integer getReasonCodeId(String canCompany, String canLocation, String canPlant, String canStopReason) {
-		logger.info("Number of reason codes registered:" + Integer.toString(this.canonicalMapIndex.size()));
+		logger.debug("Number of reason codes registered:" + Integer.toString(this.canonicalMapIndex.size()));
 		return this.canonicalMapIndex.get(getCanonicalKey(canCompany, canLocation, canPlant, canStopReason));
 	}
 		

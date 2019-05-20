@@ -97,11 +97,11 @@ public class EventHandler implements Runnable
 	public void runSchedAggregateEntityEvent(SchedAggregateEntityEvent schedAggrEntyEvt) throws SQLException, InterruptedException {
 
 		SchedAggregateEntityEventProcessor processor = new SchedAggregateEntityEventProcessor(schedAggrEntyEvt);
-		logger.info("processing sched_aggregate entity event");
+		logger.debug("processing sched_aggregate entity event");
 		
 		List<DelayEvent> eventsToCreate = processor.process();
 		
-		logger.info("Num events returned after processing:" + eventsToCreate.size());
+		logger.debug("Num events returned after processing:" + eventsToCreate.size());
 		for ( int i=0; i < eventsToCreate.size(); i++){
 			DelayEvent event = eventsToCreate.get(i);
 			this.delayQueue.put(event);
@@ -173,7 +173,7 @@ public class EventHandler implements Runnable
 
 		// Sleep the thread by 10 milliseconds.
 		Thread.sleep(50);
-		logger.info("Finished running test Id: " + testEvent.getTestId());
+		logger.debug("Finished running test Id: " + testEvent.getTestId());
 		
 		repeat(testEvent);
 
@@ -204,16 +204,15 @@ public class EventHandler implements Runnable
 	 *  	AGGREGATION_EVENT	   - Executes an aggregation.
 	 */
 	public void run() {
-
-		try {
-
-			while (true)
-			{		
+		boolean interruptedException = false;
+		while (true && !interruptedException)
+		{	
+			try {
 
 				Queueable obj = (Queueable) queue.pop();
 				Event evnt = (Event) obj.getContent();
 
-				logger.debug("elements in queue:" + queue.size()[6] );
+				logger.debug("start to process event:" + evnt.getId() + " type:" + evnt.getEvntType().getName() + " elements in queue: " + queue.size()[6]);
 
 				boolean reserved = EventManager.getInstance().blockProcessingHandler(evnt.getEvntType());
 
@@ -228,7 +227,6 @@ public class EventHandler implements Runnable
 				} else {
 
 					// It can process the event.	
-					logger.debug("start to process event:" + evnt.getId() + " type:" + evnt.getEvntType().getName());
 
 
 					if  (evnt.getEvntType() == EventType.MEASURING_ENTITY_EVENT)
@@ -236,7 +234,6 @@ public class EventHandler implements Runnable
 						runMeasuredEntityEvent((MeasuredEntityEvent) evnt);
 
 					} else if (evnt.getEvntType() == EventType.DISPLAY_EVENT) {
-
 						runDisplayEvent( (DisplayEvent) evnt);
 
 					} else if (evnt.getEvntType() == EventType.MODBUS_READ_EVENT) {
@@ -268,17 +265,16 @@ public class EventHandler implements Runnable
 
 					logger.debug("finish processing event:" + evnt.getId());
 				}
-			}
 
-		} catch (InterruptedException e) {
-			logger.error("Interruped Operation - Error:" + e.getMessage());
-			e.printStackTrace();
-		} catch (Exception e){
-			logger.error("Exception:" + e.getMessage() );
-			e.printStackTrace();
+			} catch (InterruptedException e) {
+				interruptedException = true;
+				logger.error("InterruptedException: " + e.getMessage());
+				e.printStackTrace();
+			} catch (Exception e){
+				logger.error("Exception:" + e.getMessage() );
+				e.printStackTrace();
+			}
 		}
-		
-		logger.info("Handler finished");
 	}
 
 

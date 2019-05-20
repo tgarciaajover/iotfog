@@ -122,7 +122,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 								    String actualProductionCountId, Integer purgeFacadeCacheMapEntries) throws PropertyVetoException 
 	{
 		super(pOrder,purgeFacadeCacheMapEntries);
-				
+		logger.debug("ExecutedEntityFacade Start " + String.valueOf(pOrder.getId()));
 		this.productionRateId = productionRateId;
 		this.unit1PerCycles = unit1PerCycles; 
 		this.unit2PerCycles = unit2PerCycles;
@@ -142,7 +142,8 @@ public final class ExecutedEntityFacade extends EntityFacade {
 		} catch (InterruptedException e) {
 			logger.error("Error creating the purge event in the queue for measured entity:" + pOrder.getId());
 			e.printStackTrace();
-		}		
+		}
+		logger.debug("ExecutedEntityFacade End " + String.valueOf(pOrder.getId()));
 	}
 
 	/**
@@ -150,6 +151,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * @return The field that establishes the production rate.
 	 */
 	public String getProductionRateId() {
+		logger.debug("getProductionRateId called");
 		return productionRateId;
 	}
 
@@ -158,7 +160,9 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * @param productionRateId production rate field to set.
 	 */
 	public void setProductionRateId(String productionRateId) {
+		logger.debug("setProductionRateId Start");
 		this.productionRateId = productionRateId;
+		logger.debug("setProductionRateId End");
 	}
 
 	/**
@@ -166,6 +170,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * @return conversion unit 1 from cycle to product's unit
 	 */
 	public String getConversion1() {
+		logger.debug("getConversion1 called");
 		return unit1PerCycles;
 	}
 
@@ -174,7 +179,9 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * @param unit1PerCycles : conversion unit 1 from cycle to product's unit
 	 */
 	public void setConversion1(String unit1PerCycles) {
+		logger.debug("setConversion1 Start");
 		this.unit1PerCycles = unit1PerCycles;
+		logger.debug("setConversion1 End");
 	}
 
 	/**
@@ -182,6 +189,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * @return  : conversion unit 2 from cycle to product's unit
 	 */
 	public String getConversion2() {
+		logger.debug("getConversion2 called");
 		return unit2PerCycles;
 	}
 
@@ -190,21 +198,24 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * @param unit2PerCycles conversion unit 2 from cycle to product's unit
 	 */
 	public void setConversion2(String unit2PerCycles) {
+		logger.debug("setConversion2 Start");
 		this.unit2PerCycles = unit2PerCycles;
+		logger.debug("setConversion2 End");
 	}
 		
 	/**
-	 * Register a new state interval in the measured entity.
+	 * Creates a new interval from the measuring state, reason code and data in the executed entity
 	 * 
-	 * @param status : 			Measured entity state during the interval. 
-	 * @param reasonCode : 		Reason code for that state
-	 * @param interval : 		date from and to when the interval happens.
-	 * @param measuringEntityId Measured entity identifier where the executed entiti is being processed.
+	 * @param status		new status for the measured entity 
+	 * @param reasonCode	reason code of the new status
+	 * @param interval		Time interval in which the measure entity remains in the status defined.
+	 * 
+	 * @return new state interval
 	 */
-	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval, Integer measuringEntityId)
+	private StateInterval BuildStateInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval, Integer measuringEntityId)
 	{
-		
-		logger.info("In registerInterval:" + status.getName());
+		logger.debug("BuildStateInterval Start " + String.valueOf(measuringEntityId));
+		//logger.debug("In registerInterval:" + status.getName());
 		
 		Double rate = null;
 		Double conversion1 = null;
@@ -267,7 +278,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 				
 					List<AttributeValue> list = measuringEntityFacade.getByIntervalByAttributeName(actualProductionCountId, interval.getStart(), interval.getEnd());
 					
-					logger.info("Registering interval - number of rows:" + list.size() );
+					//logger.debug("Registering interval - number of rows:" + list.size() );
 					
 					double sum = 0;
 					// Calculates the actual rate as the sum(count) / Interval.duration (minutes)
@@ -287,6 +298,9 @@ public final class ExecutedEntityFacade extends EntityFacade {
 							break;
 						}
 					}
+					
+					//logger.debug("The production count attribute: " + actualProductionCountId + ": " + sum );
+					
 					LocalDateTime tempDateTime = LocalDateTime.from( interval.getStart() );
 					long seconds = tempDateTime.until( interval.getEnd(), ChronoUnit.SECONDS);
 					double tmp = 0;
@@ -320,9 +334,31 @@ public final class ExecutedEntityFacade extends EntityFacade {
 		}
 		
 		stateInterval.setKey(this.getEntity().getId()+ ":" + stateInterval.getKey());
+		
+		logger.debug("BuildStateInterval End " + String.valueOf(measuringEntityId));
+		return stateInterval;
+		
+	}
+	
+	/**
+	 * Register a new state interval in the executed entity.
+	 * 
+	 * @param status : 			Measured entity state during the interval. 
+	 * @param reasonCode : 		Reason code for that state
+	 * @param interval : 		date from and to when the interval happens.
+	 * @param measuringEntityId Measured entity identifier where the executed entiti is being processed.
+	 */
+	public synchronized void registerInterval(MeasuringState status, ReasonCode reasonCode, TimeInterval interval, Integer measuringEntityId)
+	{
+		logger.debug("registerInterval Start " + String.valueOf(measuringEntityId));
+		
+		StateInterval stateInterval = BuildStateInterval(status, reasonCode, interval, measuringEntityId);
+		
 		// key in the map and the cache must be consistent
 		statesMap.put(interval.getStart(),stateInterval.getKey());
 		StateIntervalCache.getInstance().storeToCache(stateInterval);
+		
+		logger.debug("registerInterval End " + String.valueOf(measuringEntityId));
 		
 	}
 
@@ -333,7 +369,9 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 */
 	public synchronized void addMeasuredEntity(MeasuredEntityFacade entityFacade)
 	{
+		logger.debug("addMeasuredEntity Start " + String.valueOf(entityFacade.getEntity().getId()));
 		this.processedOn.put(entityFacade.getEntity().getId(), entityFacade);
+		logger.debug("addMeasuredEntity End " + String.valueOf(entityFacade.getEntity().getId()));
 	}
 
 	/**
@@ -343,16 +381,21 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 */
 	public synchronized boolean deleteMeasuredEntity(Integer measuredEntityId)
 	{
-		if (this.processedOn.remove(measuredEntityId) != null)
+		logger.debug("deleteMeasuredEntity Start " + String.valueOf(measuredEntityId));
+		if (this.processedOn.remove(measuredEntityId) != null) {
+			logger.debug("deleteMeasuredEntity End " + String.valueOf(measuredEntityId));
 			return true;
-		else
+		}
+		else {
+			logger.debug("deleteMeasuredEntity End " + String.valueOf(measuredEntityId));
 			return false;
-	
+		}
 	}
 	
 	
 	public synchronized MeasuredEntityFacade getMeasuredEntity(Integer measuredEntityId)
 	{
+		logger.debug("getMeasuredEntity call");
 		return this.processedOn.get(measuredEntityId); 
 	}
 	
@@ -367,6 +410,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 */
  	public synchronized JSONArray getJsonDowntimeReasons(LocalDateTime from,	LocalDateTime to) 
 	{
+ 		logger.debug("getJsonDowntimeReasons Start");
 		logger.debug("In getJsonDowntimeReasons + from:" + from.toString() + " to:" + to.toString());
 		
 		JSONArray array = null;
@@ -384,6 +428,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			// adding jsonObject to JsonArray
 			array.put(jsob);
 		}
+		logger.debug("getJsonDowntimeReasons End");
 		return array;
 	}
 
@@ -394,6 +439,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * @return
 	 */
 	protected Map<Integer,DowntimeReason> sumarizeDowntimeReason(List<StateInterval> list) {
+		logger.debug("sumarizeDowntimeReason Start");
 		Map<Integer,DowntimeReason> map = new HashMap<Integer, DowntimeReason>();
 		DowntimeReason reason = null;
 		for (StateInterval interval : list) {
@@ -420,6 +466,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 				}
 			}
 		}
+		logger.debug("sumarizeDowntimeReason End");
 		return map;
 	}
 
@@ -431,7 +478,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 */
 	public synchronized void start(Integer measuredEntityId)
 	{
-
+		logger.debug("start Start " + String.valueOf(measuredEntityId));
 		if (((ExecutedEntity)getEntity()).getCurrentState(measuredEntityId) != MeasuringState.UNDEFINED) {
 			
 			// This case happens when the executed object has already been processing in the executed entity and it is going to be reprocessed.
@@ -446,7 +493,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 		
 		((ExecutedEntity) getEntity()).startInterval(measuredEntityId, LocalDateTime.now(), MeasuringState.OPERATING, null);
 
-		
+		logger.debug("start End " + String.valueOf(measuredEntityId));
 	}
 	
 	/**
@@ -459,11 +506,12 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	public synchronized void stop(Integer measuringEntityId)
 	
 	{
+		logger.debug("stop Start " + String.valueOf(measuringEntityId));
 		logger.debug("Stopping the production order");
 
 		if ( this.processedOn.containsKey(measuringEntityId) ) {
 			
-			logger.info("Registering the final interval for the production order");
+			//logger.debug("Registering the final interval for the production order");
 
 			TimeInterval tInterval= new TimeInterval( ((ExecutedEntity)getEntity()).getCurrentStatDateTime(measuringEntityId), 
 													  LocalDateTime.now());
@@ -477,6 +525,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 		}
 
 		logger.debug("Finish production order stop ");
+		logger.debug("stop End " + String.valueOf(measuringEntityId));
 	}
 
 	/**
@@ -488,14 +537,15 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * @return the current value or null
 	 */
 	public synchronized AttributeValue getProcessEntityAttribute(String attributeId, Integer measuredEntityId) {
-		
+		logger.debug("getProcessEntityAttribute Start " + String.valueOf(measuredEntityId));
 		MeasuredEntityFacade measuredEntityFacade = this.processedOn.get(measuredEntityId);
 		
 		if (measuredEntityFacade != null) {
-			
+			logger.debug("getProcessEntityAttribute End " + String.valueOf(measuredEntityId));
 			return measuredEntityFacade.getNewestByAttributeName(attributeId);
 			
 		} else {
+			logger.debug("getProcessEntityAttribute End " + String.valueOf(measuredEntityId));
 			return null;
 		}
 	}
@@ -508,12 +558,13 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 */
 	public boolean isProcessed() 
 	{
+		logger.debug("isProcessed Start");
 		if (this.processedOn.size() > 0) {
-			
+			logger.debug("isProcessed End");
 			return true;
 		
 		} else {
-		
+			logger.debug("isProcessed End");
 			return false;
 		}
 	}
@@ -524,15 +575,18 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * @return  If there is not entity assigned return undefined.
 	 */    
 	public synchronized MeasuringState getCurrentState(Integer measuredEntityId){
+		logger.debug("getCurrentState Start " + String.valueOf(measuredEntityId));
     	 if (this.entity == null){
+    		 logger.debug("getCurrentState End " + String.valueOf(measuredEntityId));
     		 return MeasuringState.UNDEFINED;
     	 } else {
+    		 logger.debug("getCurrentState End " + String.valueOf(measuredEntityId));
     		 return ((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId);
     	 }
      }
 
-	private void changeState(Integer measuredEntityId, MeasuringState newState) {
-		
+	private void changeState(Integer measuredEntityId, MeasuringState newState, boolean persistReason) {
+		logger.debug("changeState Start " + String.valueOf(measuredEntityId));
 		LocalDateTime localDateTime = LocalDateTime.now();
 		
 		// Creates the time interval, from the last status change to now.
@@ -543,9 +597,14 @@ public final class ExecutedEntityFacade extends EntityFacade {
 							  ((ExecutedEntity) this.getEntity()).getCurrentReason(measuredEntityId), 
 							  interval, measuredEntityId);
 		
-		((ExecutedEntity) this.getEntity()).startInterval(measuredEntityId, localDateTime, newState, null);
-		
-		logger.info ("current state:" + (((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId)));
+		//Starts a new Interval depending of new state and origin.
+		if (persistReason) {
+			((ExecutedEntity) this.getEntity()).startInterval(measuredEntityId, localDateTime, newState, ((ExecutedEntity) this.getEntity()).getCurrentReason(measuredEntityId));
+		} else {
+			((ExecutedEntity) this.getEntity()).startInterval(measuredEntityId, localDateTime, newState, null);
+		}
+		logger.debug("changeState End " + String.valueOf(measuredEntityId));
+		//logger.debug ("current state:" + (((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId)));
 	}
 
 	/**
@@ -557,8 +616,8 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * 								It is required only for executed entities needing to register intervals on particular machines.
 	 */
 	public synchronized void setCurrentState(Map<String, ASTNode> symbolMap, Integer measuredEntityId) {
-
-		logger.info("In set current state");
+		logger.debug("setCurrentState Start " + String.valueOf(measuredEntityId));
+		logger.debug("In set current state");
 		
 		for (Map.Entry<String, ASTNode> entry : symbolMap.entrySet()) 
 		{
@@ -567,14 +626,14 @@ public final class ExecutedEntityFacade extends EntityFacade {
 				
 				MeasuringState newState = node.asMeasuringState();
 				
-				logger.info("In set current state - new state:" + newState.getName());
+				logger.debug("In set current state - new state:" + newState.getName());
 				 
 				if (newState == MeasuringState.OPERATING){
 					
 					if ( (((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.OPERATING) || 
 							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId)) ) {
 						
-						changeState(measuredEntityId, MeasuringState.OPERATING);
+						changeState(measuredEntityId, MeasuringState.OPERATING, false);
 						
 					}
 					
@@ -583,7 +642,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 					if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.SCHEDULEDOWN) || 
 							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
 						
-						changeState(measuredEntityId, MeasuringState.SCHEDULEDOWN);
+						changeState(measuredEntityId, MeasuringState.SCHEDULEDOWN, false);
 												
 					}
 					
@@ -592,7 +651,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 					if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.UNSCHEDULEDOWN) || 
 							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
 						
-						changeState(measuredEntityId, MeasuringState.UNSCHEDULEDOWN);
+						changeState(measuredEntityId, MeasuringState.UNSCHEDULEDOWN, true);
 						
 					}
 					
@@ -601,7 +660,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 					if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.INITIALIZING) || 
 							(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
 						
-						changeState(measuredEntityId, MeasuringState.INITIALIZING);
+						changeState(measuredEntityId, MeasuringState.INITIALIZING, false);
 						
 					}
 					
@@ -610,15 +669,16 @@ public final class ExecutedEntityFacade extends EntityFacade {
 				}	
 			}
 		}
+		logger.debug("setCurrentState End " + String.valueOf(measuredEntityId));
 	}
 	
 	public synchronized void setCurrentState(MeasuringState newState, Integer measuredEntityId) {
-	
+		logger.debug("setCurrentState Start " + String.valueOf(measuredEntityId));
 		if (newState == MeasuringState.OPERATING) {
 			if ( (((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.OPERATING) || 
 					(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId)) ) {
 
-				changeState(measuredEntityId, MeasuringState.OPERATING);
+				changeState(measuredEntityId, MeasuringState.OPERATING, false);
 
 			}
 
@@ -627,7 +687,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.SCHEDULEDOWN) || 
 					(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
 
-				changeState(measuredEntityId, MeasuringState.SCHEDULEDOWN);
+				changeState(measuredEntityId, MeasuringState.SCHEDULEDOWN, false);
 
 			}
 
@@ -636,7 +696,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.UNSCHEDULEDOWN) || 
 					(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
 
-				changeState(measuredEntityId, MeasuringState.UNSCHEDULEDOWN);
+				changeState(measuredEntityId, MeasuringState.UNSCHEDULEDOWN, false);
 
 			}
 
@@ -645,7 +705,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.SYSTEMDOWN) || 
 					(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
 
-				changeState(measuredEntityId, MeasuringState.SYSTEMDOWN);
+				changeState(measuredEntityId, MeasuringState.SYSTEMDOWN, false);
 
 			}
 
@@ -654,7 +714,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			if ((((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) != MeasuringState.INITIALIZING) || 
 					(((ExecutedEntity) this.getEntity()).startNewInterval(measuredEntityId))) {
 
-				changeState(measuredEntityId, MeasuringState.INITIALIZING);
+				changeState(measuredEntityId, MeasuringState.INITIALIZING, false);
 
 			}
 
@@ -663,7 +723,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 		else {
 			logger.error("The new state is being set to undefined, which is incorrect");
 		}	
-		
+		logger.debug("setCurrentState End " + String.valueOf(measuredEntityId));
 	}
 	/**
 	 * Update a previously defined stat, assigning its reason code. 
@@ -674,7 +734,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 	 * @return	true if the intervals was found and updated, false otherwise.
 	 */
 	public synchronized boolean updateStateInterval(Integer measuredEntityId, MeasuredEntityType measuredEntityType,  String startDttmStr, ReasonCode reasonCode) {
-
+		logger.debug("updateStateInterval Start " + String.valueOf(measuredEntityId));
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 		LocalDateTime startDttm = LocalDateTime.parse(startDttmStr, formatter);
 		
@@ -682,7 +742,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 		
 		boolean ret = false;
 		
-		if ( ((ExecutedEntity) this.getEntity()).getCurrentStatDateTime(measuredEntityId).equals(startDttm)){
+		if ( ((ExecutedEntity) this.getEntity()).getCurrentStatDateTime(measuredEntityId).withNano(0).equals(startDttm)){
 			
 			logger.debug("Updating the current state interval");
 			
@@ -699,6 +759,7 @@ public final class ExecutedEntityFacade extends EntityFacade {
 			
 
 			LocalDateTime enddttm; 
+			boolean updateEntityReason;
 			if(oldest.isAfter(startDttm) )
 			{
 				logger.debug("the datetime given is after");
@@ -708,10 +769,12 @@ public final class ExecutedEntityFacade extends EntityFacade {
 				
 				// We have to continue updating the intervals in the cache.
 				if (enddttm == null) {
+					updateEntityReason = false;
 					SortedMap<LocalDateTime, String> tail = this.statesMap.tailMap(enddttm);
 					for (Map.Entry<LocalDateTime, String> entry : tail.entrySet()) {
 						StateInterval tmp = stateCache.getFromCache(entry.getValue());
 						if ( tmp.getState() == MeasuringState.OPERATING) {
+							updateEntityReason = true;
 							break;
 						}
 						
@@ -721,15 +784,20 @@ public final class ExecutedEntityFacade extends EntityFacade {
 							}
 						}
 					}
+					if (((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) == MeasuringState.UNSCHEDULEDOWN && !(updateEntityReason)) {
+						((ExecutedEntity) this.getEntity()).setCurrentReasonCode(measuredEntityId, reasonCode);
+					}
 				}
 					 				
 			} else if(oldest.isBefore(startDttm)){
 				// all values are in the state cache
 				logger.debug("the datetime given is before");
+				updateEntityReason = false;
 				SortedMap<LocalDateTime, String> tail = this.statesMap.tailMap(startDttm);
 				for (Map.Entry<LocalDateTime, String> entry : tail.entrySet()) {
 					StateInterval tmp = stateCache.getFromCache(entry.getValue());
 					if ( tmp.getState() == MeasuringState.OPERATING) {
+						updateEntityReason = true;
 						break;
 					}
 					
@@ -739,13 +807,79 @@ public final class ExecutedEntityFacade extends EntityFacade {
 						}
 					}
 				}
+				if (((ExecutedEntity) this.getEntity()).getCurrentState(measuredEntityId) == MeasuringState.UNSCHEDULEDOWN && !(updateEntityReason)) {
+					((ExecutedEntity) this.getEntity()).setCurrentReasonCode(measuredEntityId, reasonCode);
+				}
 			}
 		
 		}
-		
+		logger.debug("updateStateInterval End " + String.valueOf(measuredEntityId));
 		return ret;
 	}
 
+	/**
+	 * This method converts the current state in the executed entity in a StateInterval and returns as list.
+	 * 
+	 * @return current State Interval in list.
+	 */
+	public synchronized List<StateInterval> getCurrentStateInterval(Integer measuredEntityId) {
+		logger.debug("getCurrentStateInterval Start " + String.valueOf(measuredEntityId));
+		LocalDateTime localDateTime = LocalDateTime.now();
+
+		// Creates the time interval, from the last status change to now.
+		TimeInterval interval = new TimeInterval(((MeasuredEntity)this.getEntity()).getCurrentStatDateTime(), localDateTime);
+
+		StateInterval current = BuildStateInterval(((MeasuredEntity)this.getEntity()).getCurrentState(), 
+													((MeasuredEntity)this.getEntity()).getCurrentReason(), interval, measuredEntityId);
+		
+		List<StateInterval> list = new ArrayList<StateInterval>();
+		
+		list.add(current);
+		logger.debug("getCurrentStateInterval End " + String.valueOf(measuredEntityId));
+		return list;
+	}
+
+	/**
+	 * Returns the json array with the format:<br>
+	 * [ ... {"machine":machine,"status":sts,"startDttm":start,"endDttm":end,"reason":reason}...]
+	 * 
+	 * @return Json Array of current states. Actually is only one entry.
+	 * @throws PropertyVetoException 
+	 */
+	public synchronized JSONArray getJsonCurrentState(Integer measuredEntityId) {
+		logger.debug("getJsonCurrentState Start " + String.valueOf(measuredEntityId));
+		logger.debug("getJsonCurrentState");
+		JSONArray array = null;
+		String cannonicalMachine = "";
+			
+		cannonicalMachine = entity.getCanonicalKey();
+
+		List<StateInterval> intervals = getCurrentStateInterval(measuredEntityId);
+		array = new JSONArray();
+		for (StateInterval interval : intervals) {
+			if (interval != null)
+			{
+				// create the json object
+				JSONObject jsob = new JSONObject();
+				jsob.append("machine", cannonicalMachine);
+				jsob.append("status", interval.getState().getName());
+				jsob.append("startDttm", interval.getInterval().getStart().toString());
+				jsob.append("endDttm", interval.getInterval().getEnd().toString());
+				if (interval.getReason() != null)
+					jsob.append("reason", interval.getReason().getDescription());
+				else 
+					jsob.append("reason", null);
+				// adding the jsonObject to array
+
+				jsob.append("executedObject", interval.getRelatedObject().toString());
+				jsob.append("executedObjectType", interval.getRelatedObjectType().toString());
+				jsob.append("executedObjectCanonical", interval.getExecutedObjectCanonical());
+				array.put(jsob);
+			}
+		}
+		logger.debug("getJsonCurrentState End " + String.valueOf(measuredEntityId));
+		return array;
+	}
 	
 }
 

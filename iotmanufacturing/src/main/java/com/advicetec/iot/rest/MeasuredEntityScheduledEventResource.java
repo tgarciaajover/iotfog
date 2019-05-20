@@ -208,7 +208,7 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 				
 				if (scheduleEvent == null) {
 					
-					logger.info("Event with Id:" + eventId + " was not found in measured entity:" + uniqueID);
+					logger.debug("Event with Id:" + eventId + " was not found in measured entity:" + uniqueID);
 					
 					// If not found, we send ok.
 					getResponse().setStatus(Status.SUCCESS_OK);
@@ -226,14 +226,14 @@ public class MeasuredEntityScheduledEventResource extends ServerResource
 							events.add(aggEvent);
 						}
 						
-						logger.info("schedule events to delete:" + events.size());
+						logger.debug("schedule events to delete:" + events.size());
 						
 						// Removes the events from the delay queue.
 						for (Event evt : events){						
 							DelayEvent dEvent = new DelayEvent(evt,0);
 							
 							boolean deleted = EventManager.getInstance().removeEvent(dEvent);
-							logger.info( "Event: " + dEvent.getKey() + " deleted:" + deleted); 
+							logger.debug( "Event: " + dEvent.getKey() + " deleted:" + deleted); 
 						}
 
 					} else {

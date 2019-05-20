@@ -1,5 +1,6 @@
 package com.advicetec.iot.rest;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.ServerResource;
 
+import com.advicetec.applicationAdapter.ProductionOrder;
 import com.advicetec.applicationAdapter.ProductionOrderManager;
 import com.advicetec.measuredentitity.ExecutedEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
@@ -216,6 +218,20 @@ public class OverallEquipmentEffectivenessExecutedEntityResource extends ServerR
 			// Look for it in the database.
 			ExecutedEntityFacade facade = ProductionOrderManager.getInstance()
 					.getFacadeOfPOrderById(uniqueID);
+			if(facade == null){
+				ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance();
+				
+				ProductionOrder oProd = (ProductionOrder) productionOrderManager.getProductionOrderContainer().getObject(uniqueID);
+	    		if (oProd != null) {
+	    			try{
+	    				productionOrderManager.addProductionOrder(oProd);
+	    				facade = productionOrderManager.getFacadeOfPOrderById(uniqueID);
+	    			} catch(PropertyVetoException e) {
+    					logger.error("PropertyVetoException."+e.getMessage());
+    					e.printStackTrace();
+	    			} 
+	    		}
+			}
 
 			if(facade == null){
 				result = new JsonRepresentation("");

@@ -1615,13 +1615,10 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
 
 		String name = ctx.deviceId.getText();
 		Symbol symbol =  currentScope.resolve(name);
-		
 		if (symbol instanceof DisplaySymbol){
-			
 			DisplaySymbol display = (DisplaySymbol) symbol;
 			
 			ASTNode dataToShow = this.visit(ctx.toShow);
-			
 			display.setDisplayText(dataToShow.asString());
 			
 			GlobalScope global = getGlobalScope();
@@ -1713,7 +1710,7 @@ public class Interpreter extends TransformationGrammarBaseVisitor<ASTNode>
     @Override
     public ASTNode visitLog(TransformationGrammarParser.LogContext  ctx) {
         ASTNode value = this.visit(ctx.expression());
-        logger.info("Log" + value);
+        logger.debug("Log" + value);
         return value;
     }    
     

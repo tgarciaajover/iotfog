@@ -76,7 +76,7 @@ public class BehaviorSyntaxChecking
     	if ((program == null) || program.isEmpty())
     	{
     		listErrors = new ArrayList<SyntaxError>();
-    		logger.info("Defphase finished - The program given is empty");
+    		logger.debug("Defphase finished - The program given is empty");
     		return listErrors;
     	}
     	CharStream  stream = (CharStream) new ANTLRInputStream(program);

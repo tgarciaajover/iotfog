@@ -79,7 +79,7 @@ import com.advicetec.measuredentitity.MeasuredEntityManager;
     	if ((program == null) || program.isEmpty())
     	{
     		listErrors = new ArrayList<SyntaxError>();
-    		logger.info("Defphase finished - The program given is empty");
+    		logger.debug("Defphase finished - The program given is empty");
     		return listErrors;
     	}
     	    	

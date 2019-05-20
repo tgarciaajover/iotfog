@@ -96,6 +96,24 @@ public class PredefinedPeriod
 	}
 	
 	/**
+	 * Constructs an open predefined period in minutes from the given parameters.
+	 * Final time will be null.
+	 * 
+	 * @param year Initial year.
+	 * @param month Initial month.
+	 * @param day Initial day.
+	 * @param hour Initial hour.
+	 * @param minute Initial minute.
+	 */
+	public PredefinedPeriod(int year, int month, int day, int hour, int minute) {
+		super();
+		this.type = PredefinedPeriodType.MINUTE;
+		month = month - 1; // January is equals to 0
+		calendarFrom = new GregorianCalendar(year, month, day, hour, minute);
+		calendarTo = null;
+	}
+	
+	/**
 	 * Constructs a predefined period between two dates.
 	 * Commonly used for less than an hour period.
 	 * The type will be LESS_THAN_HOUR.
@@ -136,6 +154,8 @@ public class PredefinedPeriod
 				return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]) );
 			} else if (tokens.length == 4){ // it is the year, month, day, hour
 				return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]) );
+			} else if (tokens.length == 5){ // it is the year, month, day, hour, minute
+				return new PredefinedPeriod(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]), Integer.parseInt(tokens[4]) );
 			} else{
 				Logger logger = LogManager.getLogger(PredefinedPeriod.class.getName());
 				logger.error("error creating a predefined period from String key numParts:" + tokens.length + " key given:" + periodKey);
@@ -200,7 +220,13 @@ public class PredefinedPeriod
 							"-" + String.format("%02d", this.calendarFrom.get(Calendar.DAY_OF_MONTH)) +
 								"-" + String.format("%02d", this.calendarFrom.get(Calendar.HOUR_OF_DAY)); 
 				break;
-			
+			case MINUTE:
+				ret = String.format("%04d", this.calendarFrom.get(Calendar.YEAR)) + 
+						"-" + String.format("%02d", this.calendarFrom.get(Calendar.MONTH) + 1 ) +
+							"-" + String.format("%02d", this.calendarFrom.get(Calendar.DAY_OF_MONTH)) +
+								"-" + String.format("%02d", this.calendarFrom.get(Calendar.HOUR_OF_DAY)) + 
+									"-" + String.format("%02d", this.calendarFrom.get(Calendar.MINUTE));
+				break;
 			case INT_LT_HOUR:
 				ret = "From-" + String.format("%04d", this.calendarFrom.get(Calendar.YEAR)) + 
 						"-" + String.format("%02d", this.calendarFrom.get(Calendar.MONTH) + 1 ) +
@@ -245,7 +271,12 @@ public class PredefinedPeriod
 						 this.calendarFrom.get(Calendar.MONTH) + 1, 
 						  this.calendarFrom.get(Calendar.DAY_OF_MONTH), 
 						  	this.calendarFrom.get(Calendar.HOUR_OF_DAY), 0);				
-			
+			case MINUTE:
+				return LocalDateTime.of(this.calendarFrom.get(Calendar.YEAR), 
+						 this.calendarFrom.get(Calendar.MONTH) + 1, 
+						  this.calendarFrom.get(Calendar.DAY_OF_MONTH), 
+						  	this.calendarFrom.get(Calendar.HOUR_OF_DAY), 
+						  	 this.calendarFrom.get(Calendar.MINUTE));
 			case INT_LT_HOUR:
 				return LocalDateTime.of(this.calendarFrom.get(Calendar.YEAR), 
 						 this.calendarFrom.get(Calendar.MONTH) + 1, 

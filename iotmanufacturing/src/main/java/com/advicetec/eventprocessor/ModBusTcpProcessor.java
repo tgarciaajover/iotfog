@@ -17,6 +17,7 @@ import com.advicetec.monitorAdapter.AdapterManager;
 import com.advicetec.mpmcqueue.QueueType;
 import com.advicetec.mpmcqueue.Queueable;
 import com.advicetec.utils.UdpUtils;
+import com.ghgande.j2mod.modbus.ModbusException;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
 import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesResponse;
@@ -171,7 +172,7 @@ public class ModBusTcpProcessor implements Processor {
 				trans = new ModbusTCPTransaction(con);
 				trans.setRequest(req3);
 
-				trans.execute();
+				trans.execute();				
 				res3 = (ReadMultipleRegistersResponse) trans.getResponse();
 
 				dictionary.put("IPAddress", event.getIpAddress());
@@ -268,5 +269,7 @@ public class ModBusTcpProcessor implements Processor {
 		return retEvts;
 		
 	}
+		
 
 }
+

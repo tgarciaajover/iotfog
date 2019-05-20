@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.Processor;
+import com.advicetec.eventprocessor.EventManager;
 import com.advicetec.eventprocessor.MeasuredEntityEvent;
 import com.advicetec.language.ast.ArraySymbol;
 import com.advicetec.language.ast.AttributeSymbol;
@@ -24,6 +25,8 @@ import com.advicetec.language.ast.TransformationSymbol;
 import com.advicetec.language.ast.UnitMeasureSymbol;
 import com.advicetec.language.transformation.InterpreterSw;
 import com.advicetec.language.transformation.SyntaxChecking;
+import com.advicetec.measuredentitity.MeasuredEntity;
+import com.advicetec.measuredentitity.MeasuredEntityBehavior;
 import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.measuredentitity.MeasuredEntityManager;
 import com.advicetec.measuredentitity.MeasuredEntityType;
@@ -72,23 +75,30 @@ public class ErrorMessageSampleProcessor implements Processor
 	 * @see SyntaxChecking
 	 */
 	public List<DelayEvent> process() throws SQLException 
-	{
-		logger.info("In Error Message Sample Processor");
-		
+	{		
 		// Finds the measuring Entity involved. The string value is always not null
 		Integer measuringEntity = message.getmEntity();
+		logger.debug("In Error Message Sample Processor " + message.getmEntity());
 
 		MeasuredEntityManager entityManager = MeasuredEntityManager.getInstance();
 		MeasuredEntityFacade entityFacade = entityManager.getFacadeOfEntityById(measuringEntity);
-
+		
 		ArrayList<DelayEvent> ret = new ArrayList<DelayEvent>();
 
 		if (entityFacade == null){
 			logger.error("Measured Entity not found - id:"+ measuringEntity );
 		} else {
-
+			/*//FCH: Removes the behavior event
+			EventManager eventManager = EventManager.getInstance();
+			//Get measured entity behavior list
+			List<MeasuredEntityBehavior> behaviors = ((MeasuredEntity) entityFacade.getEntity()).getBehaviorList();
+			for (int i = 0; i < behaviors.size(); i++){
+				MeasuredEntityBehavior measuredBehavior = behaviors.get(i);
+				MeasuredEntityEvent measuredEvent = new MeasuredEntityEvent(measuredBehavior.getName(), measuringEntity, entityFacade.getEntity().getType(), 0,0, new ArrayList<InterpretedSignal>()) ;
+				DelayEvent delEvent = new DelayEvent(measuredEvent, 0);
+				eventManager.removeEvent(delEvent);
+			}*/
 			((MeasuredEntityFacade) entityFacade).setCurrentState(MeasuringState.SYSTEMDOWN);
-
 		}
 		
 		return ret;

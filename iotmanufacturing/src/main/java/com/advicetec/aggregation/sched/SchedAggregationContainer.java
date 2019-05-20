@@ -333,7 +333,7 @@ public class SchedAggregationContainer extends Container
 					
 					ReasonCode rCode = null;
 					
-					logger.info("ReasonCode: " + rowReasonCode);
+					logger.debug("ReasonCode: " + rowReasonCode);
 					if (rowReasonCode != null) {
 						rCode = (ReasonCode) reasonCont.getObject(Integer.valueOf(rowReasonCode.trim()));
 						

@@ -7,9 +7,12 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.restlet.data.Status;
 
 import com.advicetec.core.Configurable;
+import com.advicetec.measuredentitity.ExecutedEntity;
 import com.advicetec.measuredentitity.ExecutedEntityFacade;
+import com.advicetec.measuredentitity.MeasuredEntityFacade;
 import com.advicetec.persistence.MeasureAttributeValueCache;
 
 /**
@@ -208,4 +211,64 @@ public class ProductionOrderManager extends Configurable {
 		return  this.productionOrders.getCanonicalObject(company, location, plant, machineGroup, machineId, year, month, productionOrder);
 		
 	}
+	
+	/** 
+	 * Method to start a production order within a measured entity. 
+	 * 
+	 * This method stops all production orders being executed in the measured entity. Likewise, 
+	 * it puts to run the production order given by parameter.  
+	 * 
+	 * It is important to say that only one production can be operating in the measured entity. In other words, we can have many
+	 * production orders assigned to the measured entity, but only one can be in operating state.  
+	 * 
+	 * @param measuredEntityFacade Measured entity where the production should be started
+	 * @param idProduction    	   Internal production order identifier
+	 * @throws SQLException	  	   It is triggered if an error occurs during the production order information retrieval  
+	 * @throws PropertyVetoException 
+	 * 
+	 * True if the production order was found, else False.
+	 */
+	public synchronized boolean executeStartProduction(MeasuredEntityFacade measuredEntityFacade, int idProduction) throws SQLException, PropertyVetoException 
+	{
+    	logger.debug("in register production order start");
+                	
+    	// Start of the production order
+    	ExecutedEntityFacade productionOrderFacade = getFacadeOfPOrderById(idProduction);
+    	
+    	if (productionOrderFacade == null)
+    	{
+    		ProductionOrder oProd = (ProductionOrder) getProductionOrderContainer().getObject(idProduction);
+    		if (oProd != null) {
+    			addProductionOrder(oProd);
+    			productionOrderFacade = getFacadeOfPOrderById(idProduction);
+    		}
+    	}
+
+    	if (productionOrderFacade == null) {
+    		logger.error("The production order with number:" + Integer.toString(idProduction) + " was not found");
+    		return false;
+    		
+    	} else {
+    	
+    		logger.debug("Production Order found, it is going to be put in execution: " + Integer.toString(idProduction));
+
+    		measuredEntityFacade.ExecutedEntityChange();
+
+    		// Add a reference to measured entity facade.  
+    		productionOrderFacade.addMeasuredEntity(measuredEntityFacade);
+
+    		// Stop all other executed Objects
+    		measuredEntityFacade.stopExecutedObjects();
+
+        	// start production
+        	measuredEntityFacade.addExecutedObject((ExecutedEntity) productionOrderFacade.getEntity());
+
+    		// put the production order in execution.
+    		productionOrderFacade.start(measuredEntityFacade.getEntity().getId());
+        	
+    		return true;
+	        	
+    	}		
+	}
+
 }

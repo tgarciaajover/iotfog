@@ -1,16 +1,22 @@
 package com.advicetec.applicationAdapter;
 
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.TimeZone;
 import java.sql.PreparedStatement;
+import java.time.LocalDateTime;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
 
 import com.advicetec.configuration.ConfigurationObject;
 import com.advicetec.configuration.Container;
@@ -19,6 +25,7 @@ import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
 import com.advicetec.core.AttributeValue;
 import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.advicetec.persistence.StateIntervalCache;
 
 public class ProductionOrderContainer extends Container
 {
@@ -33,12 +40,24 @@ public class ProductionOrderContainer extends Container
 	/**
 	 * SQL Statement used to bring the id of a production order giving as parameters the canonical production order data
 	 */
-	static String sqlProductionOrderSelect = "SELECT id FROM canonical_ordenproduccionplaneada where id_compania = ? and id_sede = ? and id_planta = ? and id_grupo_maquina = ? and id_maquina =? and ano = ? and mes = ? and id_produccion = ? ";
+	static String sqlProductionOrderSelect = "SELECT id FROM canonical_ordenproduccionplaneada where id_compania = ? and id_sede = ? and id_planta = ? and (replace(id_grupo_maquina, ' ', '') = ? or id_grupo_maquina = ?) and id_maquina =? and ano = ? and mes = ? and id_produccion = ? ";
 	
 	/**
 	 * SQL Statement used to bring the canonical production order data from its id registered in the production order.
 	 */
 	static String sqlCanonicalSelect = "SELECT id_compania, id_sede, id_planta, id_grupo_maquina, id_maquina, ano, mes, id_produccion FROM canonical_ordenproduccionplaneada WHERE id = ?";
+	
+	/**
+	 * SQL Statement used to bring the canonical production order data from its id registered in the production order.
+	 */
+	static String sqlProductionOrderStartDateSelect = "SELECT MIN(datetime_from) AS datetime_from FROM measuringentitystatusinterval WHERE id_owner = ? and related_object = ?";
+	
+	/**
+	 * SQL Statement used to bring the canonical production order data from its id registered in the production order.
+	 */
+	static String sqlProductionOrderEndDateSelect = "SELECT MAX(datetime_to) AS datetime_to FROM measuringentitystatusinterval WHERE id_owner = ? and related_object = ?";
+	
+	static String sqlProductionOrderItemDetail = "SELECT id_articulo, descr_articulo FROM canonical_ordenproduccionplaneada where id_compania = ? and id_sede = ? and id_planta = ? and id_grupo_maquina = ? and ano = ? and mes = ? and id_produccion = ?";
 	
 	/**
 	 * Constructor for the production order 
@@ -71,11 +90,13 @@ public class ProductionOrderContainer extends Container
 			
 			String[] fixedFieldNames = {"id", "create_date", "last_updttm"};
 			
-			logger.info("it was executed the query for bringing the order production");
+			logger.debug("it was executed the query for bringing the order production");
+			logger.debug(id);
 			while (rs1.next())
 			{
-
+				logger.info(id.toString());
 				prdOrderTmp =  new ProductionOrder(id);
+				
 
 				for (int i = 1; i <= rsmd.getColumnCount(); i++) {
 					int type = rsmd.getColumnType(i);
@@ -250,7 +271,7 @@ public class ProductionOrderContainer extends Container
 	 */
 	public synchronized ConfigurationObject getObject(Integer id) 
 	{
-
+		logger.info(id.toString());
 		// Load the object previously held on the container 
 		ConfigurationObject obj = super.configuationObjects.get(id);
 
@@ -289,10 +310,11 @@ public class ProductionOrderContainer extends Container
 			(( PreparedStatement) super.pst).setString(2, location);
 			(( PreparedStatement) super.pst).setString(3, plant);
 			(( PreparedStatement) super.pst).setString(4, machineGroup);
-			(( PreparedStatement) super.pst).setString(5, machineId);
-			(( PreparedStatement) super.pst).setInt(6, year);
-			(( PreparedStatement) super.pst).setInt(7, month);
-			(( PreparedStatement) super.pst).setString(8, productionOrder);
+			(( PreparedStatement) super.pst).setString(5, machineGroup);
+			(( PreparedStatement) super.pst).setString(6, machineId);
+			(( PreparedStatement) super.pst).setInt(7, year);
+			(( PreparedStatement) super.pst).setInt(8, month);
+			(( PreparedStatement) super.pst).setString(9, productionOrder);
 
 			
 			ResultSet rs1 = (( PreparedStatement) super.pst).executeQuery();
@@ -334,6 +356,7 @@ public class ProductionOrderContainer extends Container
 		try 
 		{
 			super.prepare_statement(sqlCanonicalSelect);
+			logger.debug(prodOrder.getId());
 			(( PreparedStatement) super.pst).setInt(1, prodOrder.getId());
 			ResultSet rs = (( PreparedStatement) super.pst).executeQuery();
 
@@ -363,4 +386,117 @@ public class ProductionOrderContainer extends Container
 		return canonicalKey;
 	}
 	
+	/**
+	 * Returns the start LocalDateTime production order into measured entity  
+	 * 
+	 * @param measuredEntity measured entity id
+	 * @param prodOrder production order id
+	 * 
+	 * @return LocalDateTime of start a production order
+	 */
+	public JSONObject getProductionOrderStartDate(Integer measuredEntity, Integer prodOrder) {
+		
+		JSONObject jsob = null;
+		LocalDateTime startDate = null;
+		LocalDateTime endDate = null;
+		
+		Calendar cal = Calendar.getInstance();
+        TimeZone utcTimeZone = TimeZone.getTimeZone("UTC");
+        cal.setTimeZone(utcTimeZone);
+        
+        Connection connDB  = null; 
+		PreparedStatement pstDB = null;
+		ResultSet rs = null;
+		
+		try 
+		{
+			jsob = new JSONObject();
+			
+			connDB = StateIntervalCache.getConnection();
+			connDB.setAutoCommit(false);
+			pstDB = connDB.prepareStatement(sqlProductionOrderStartDateSelect);
+			pstDB.setInt(1, measuredEntity);
+			pstDB.setInt(2, prodOrder);
+			rs =  pstDB.executeQuery();
+			while (rs.next()) 
+			{				
+				Timestamp dsTimeFrom = rs.getTimestamp("datetime_from", cal);
+				long timestampTimeFrom = dsTimeFrom.getTime();
+				cal.setTimeInMillis(timestampTimeFrom);
+				startDate = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+																cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+																 cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+																  cal.get(Calendar.MILLISECOND)*1000000);
+				jsob.append("datetime_from", startDate);
+			}
+			rs.close();
+			
+			connDB = StateIntervalCache.getConnection();
+			connDB.setAutoCommit(false);
+			pstDB = connDB.prepareStatement(sqlProductionOrderEndDateSelect);
+			pstDB.setInt(1, measuredEntity);
+			pstDB.setInt(2, prodOrder);
+			rs =  pstDB.executeQuery();
+			while (rs.next()) 
+			{				
+				Timestamp dsTimeTo = rs.getTimestamp("datetime_to", cal);
+				long timestampTimeTo = dsTimeTo.getTime();
+				cal.setTimeInMillis(timestampTimeTo);
+				endDate = LocalDateTime.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, 
+																cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.HOUR_OF_DAY),
+																 cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND), 
+																  cal.get(Calendar.MILLISECOND)*1000000);
+				jsob.append("datetime_to", endDate);
+			}
+			rs.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		return jsob;
+	}
+	
+	public ArrayList<String> getItemDetail(String company, String location, String plant, String machineGroup, 
+			int year, int month, String productionOrder){
+		ArrayList<String> detail = new ArrayList<String>();
+		
+		try 
+		{
+			super.connect_prepared(sqlProductionOrderItemDetail);
+			(( PreparedStatement) super.pst).setString(1, company);
+			(( PreparedStatement) super.pst).setString(2, location);
+			(( PreparedStatement) super.pst).setString(3, plant);
+			(( PreparedStatement) super.pst).setString(4, machineGroup);			
+			(( PreparedStatement) super.pst).setInt(5, year);
+			(( PreparedStatement) super.pst).setInt(6, month);
+			(( PreparedStatement) super.pst).setString(7, productionOrder);
+
+			
+			ResultSet rs1 = (( PreparedStatement) super.pst).executeQuery();
+			
+			while (rs1.next())
+			{
+				 detail.add(rs1.getString("id_articulo"));
+				 detail.add(rs1.getString("descr_articulo"));
+			}
+			
+			rs1.close();			
+			
+			super.disconnect();
+			
+			
+		} catch (ClassNotFoundException e){
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
+        	e.printStackTrace();
+        } catch (SQLException e) {
+        	String error = "Container:" + this.getClass().getName() +  "Error connecting to the database - error:" + e.getMessage();
+        	logger.error(error);
+        	e.printStackTrace();        	
+        }
+		
+		return detail;
+	}
 }

@@ -59,7 +59,7 @@ public class ActivityRegistrationResource extends ServerResource
 	/**
 	 * Canonical company location
 	 */
-	private String canLocation;
+	private String canLocation;		
 	
 	/**
 	 * Canonical company plant
@@ -383,44 +383,18 @@ public class ActivityRegistrationResource extends ServerResource
 	 */
 	private void executeStartProduction(MeasuredEntityFacade measuredEntityFacade, int idProduction) throws SQLException, PropertyVetoException 
 	{
-    	logger.info("in register production order start");
+    	logger.debug("in register production order start");
         
     	ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance(); 
-        	
-    	// Start of the production order
-    	ExecutedEntityFacade productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduction);
-    	
-    	if (productionOrderFacade == null)
-    	{
-    		ProductionOrder oProd = (ProductionOrder) productionOrderManager.getProductionOrderContainer().getObject(idProduction);
-    		if (oProd != null) {
-    			productionOrderManager.addProductionOrder(oProd);
-    			productionOrderFacade = productionOrderManager.getFacadeOfPOrderById(idProduction);
-    		}
-    	}
 
-    	if (productionOrderFacade == null) {
+    	boolean ret = productionOrderManager.executeStartProduction(measuredEntityFacade, idProduction);
+
+    	if (ret == false) {
     		getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE);
     		logger.error("The production order with number:" + Integer.toString(idProduction) + " was not found");
     		
     	} else {
-    	
-    		logger.info("Production Order found, it is going to be put in execution");
-
-    		measuredEntityFacade.ExecutedEntityChange();
-
-    		// Add a reference to measured entity facade.  
-    		productionOrderFacade.addMeasuredEntity(measuredEntityFacade);
-
-    		// Stop all other executed Objects
-    		measuredEntityFacade.stopExecutedObjects();
-
-        	// start production
-        	measuredEntityFacade.addExecutedObject((ExecutedEntity) productionOrderFacade.getEntity());
-
-    		// put the production order in execution.
-    		productionOrderFacade.start(measuredEntityFacade.getEntity().getId());
-        	
+    	        	
         	getResponse().setStatus(Status.SUCCESS_OK);
 	        	
     	}		
@@ -503,7 +477,7 @@ public class ActivityRegistrationResource extends ServerResource
 		}
 		else{
 			String error = "It could not find the interval to update";
-			logger.info("It could not find the interval to update");
+			logger.debug("It could not find the interval to update");
 			getResponse().setStatus(Status.CLIENT_ERROR_NOT_ACCEPTABLE, error);
 		}
 			

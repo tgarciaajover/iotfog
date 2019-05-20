@@ -91,7 +91,7 @@ public class MeasuredEntityStateTransitionResource extends ServerResource
 	@Put("json")
 	public Representation putMeasuredEntityStateTransition(Representation representation) throws Exception {
 
-		logger.info("putMeasureEntityStateTransition");
+		logger.debug("putMeasureEntityStateTransition");
 		Representation result = null;
 
 		// Get the Json representation of the SignalUnit.
