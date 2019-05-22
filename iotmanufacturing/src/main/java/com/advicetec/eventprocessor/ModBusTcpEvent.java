@@ -32,7 +32,12 @@ public abstract class ModBusTcpEvent extends Event
 	 * Slave Unit Id within the modbus slave.
 	 */
 	private Integer Uid;
-		
+	
+	/**
+	 * Specifies whether the slave acts as a concentrator.
+	 */
+	private boolean concentrator;
+	
 	/**
 	 * Constructor for the class, specifies the event as modbus read event
 	 * @param ipAddress  Listening IP address of the modbus unit
@@ -50,8 +55,30 @@ public abstract class ModBusTcpEvent extends Event
 		this.port = port;
 		this.Uid = uid;
 		this.type = type;
+		this.concentrator = false;
 	}
 
+	/**
+	 * Constructor for the class, specifies the event as modbus read event
+	 * @param ipAddress  	Listening IP address of the modbus unit
+	 * @param port		 	Listening Port of the modbus unit
+	 * @param uid		 	Id of the unit to contact
+	 * @param type		 	Type of read to execute. Valid types are defined in the enumeration ModBusTcpEventType. 
+	 * @param concentrator  Specifies whether or not the remote slave is a concentrator
+	 */
+	public ModBusTcpEvent(String ipAddress, int port, Integer uid, ModBusTcpEventType type, boolean concentrator) {
+		super(EventType.MODBUS_READ_EVENT, 
+				EventType.MODBUS_READ_EVENT.getName() + "-" + 
+						ipAddress + "-" + Integer.toString(port) + "-" 
+						+ Integer.toString(uid));
+		
+		this.ipAddress = ipAddress;
+		this.port = port;
+		this.Uid = uid;
+		this.type = type;
+		this.concentrator = concentrator;
+	}
+	
 	/**
 	 * Gets the listening IP Address of the modbus Slave
 	 * @return IP address 
@@ -170,8 +197,11 @@ public abstract class ModBusTcpEvent extends Event
 	
 	@Override
 	public MeasuredEntityType getOwnerType() {
-		
 		return MeasuredEntityType.UNDEFINED;
+	}
+	
+	public boolean getIsConcentrator() {
+		return this.concentrator;
 	}
 	
 }

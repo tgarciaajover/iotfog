@@ -11,6 +11,7 @@ import com.advicetec.MessageProcessor.MeasuringErrorMessage;
 import com.advicetec.MessageProcessor.SampleMessage;
 import com.advicetec.MessageProcessor.UnifiedMessage;
 import com.advicetec.configuration.ConfigurationManager;
+import com.advicetec.configuration.InputOutputPort;
 import com.advicetec.configuration.MonitoringDevice;
 import com.advicetec.eventprocessor.ModBusTcpEventType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
@@ -37,7 +38,8 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	private Integer port;  // Concentrator's port
 	private Integer uid;   // id of device measure
 	private Integer offSet; // Number of the first register
-	private Integer count;   // Number of elements read. 
+	private Integer count;   // Number of elements read.
+	private boolean isConcentrator; // the slave corresponds to a concentrator.
 	private ModBusTcpEventType type; // type of modbus event
 	private byte[] dataMeasured;   // measures
 
@@ -49,49 +51,31 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 		offSet = (Integer) dictionary.get("Offset");
 		count = (Integer) dictionary.get("Count");
 		type = ModBusTcpEventType.from( ((int) dictionary.get("Type")) );
+		isConcentrator = (boolean) dictionary.get("IsConcentrator");
 		dataMeasured = (byte[]) dictionary.get("Read");
 	}
 
-
-	/**
-	 * Overrides <code>ProtocolConverter</code> interface.
-	 * In this case, translate a Modbus message into the UnifiedMessage structure.
-	 * The type of Modbus event defines the class to be loaded.
-	 * The returning list contains <code>SampleMessage</code> objects with the 
-	 * measured data.
-	 * 
-	 * @return a list of <code>UnifiedMessage</code> objects.
-	 * @throws ClassNotFoundException if the loader cannot find the correct 
-	 * class to transform the message.
-	 * @throws IllegalAccessException if the default constructor of the class
-	 * cannot be accessed. 
-	 * @throws InstantiationException if the translator class has not a default
-	 * constructor. 
-	 * @see ModBusTcpEventType
-	 * @see SampleMessage
-	 */
-	@Override
-	public List<UnifiedMessage> getUnifiedMessage() throws InstantiationException, 
+	public List<UnifiedMessage> getUnifiedMessageSingleSignal() throws InstantiationException, 
 	IllegalAccessException, ClassNotFoundException  {
 
 
-		logger.debug("entering getUnifiedMessage" + "port:"
+		logger.debug("entering getUnifiedMessageSingleSignal" + "port:"
 				+ Integer.toString(port) + "type: " + this.type + 
 				" uid:" + this.uid + " offset: " + this.offSet + 
 				"count: " + this.count);
 
-		
 		ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
+				
 		// get the portlabel from configuration environment.
 		String portLabel = ModBusUtils.buildPortLabel(this.type, this.port, 
 				this.uid, this.offSet, this.count);
-		
 		
 		if (portLabel == null){
 			return theList;
 		} else {
 			ConfigurationManager confManager = ConfigurationManager.getInstance();
 			MonitoringDevice device = confManager.getMonitoringDevice(ipAddr);
+			
 			String transformation = confManager.getTransformation(ipAddr, portLabel);
 			String className = confManager.getClassName(ipAddr, portLabel);
 	
@@ -145,6 +129,124 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	
 			return theList;
 		}
+	}
+
+	
+	
+	public List<UnifiedMessage> getUnifiedMessageConcentrator() throws InstantiationException, 
+	IllegalAccessException, ClassNotFoundException  {
+
+
+		logger.debug("entering getUnifiedMessageConcentrator" + "port:"
+				+ Integer.toString(port) + "type: " + this.type + 
+				" uid:" + this.uid + " offset: " + this.offSet + 
+				"count: " + this.count);
+		
+
+		ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
+		
+		ConfigurationManager confManager = ConfigurationManager.getInstance();
+		MonitoringDevice device = confManager.getMonitoringDevice(ipAddr);
+			
+		List<InputOutputPort> ports = device.getInputOutputPorts();
+		
+		// This variable has the current position being read on the byte array.
+		int start_position = 0;
+		
+		for (int i = 0; i < ports.size(); i++) { 
+			String transformation = ports.get(i).getTransformationText();
+			String className = ports.get(i).getSignalType().getType().getClassName();
+	
+			logger.debug("ClassName param:" + className);
+			String packageStr = this.getClass().getPackage().getName() + ".protocolconverter";
+			String classToLoad = packageStr + "." + className;
+	
+			List<InterpretedSignal> values;
+			Integer measuringEntityId = ports.get(i).getMeasuringEntity();
+			
+			// Depending on the Modbus Event, a different class is loaded.
+			if (type.equals(ModBusTcpEventType.READ_DISCRETE)) {
+				Translator object = (Translator) Class.forName(classToLoad).newInstance();
+				values = object.translate(dataMeasured);
+				theList.add(new SampleMessage(device, ports.get(i), 
+						measuringEntityId, values, transformation));
+				
+			} else if (type.equals(ModBusTcpEventType.READ_REGISTER)) {
+				Translator object = (Translator) Class.forName(classToLoad).newInstance();
+				values = object.translate(dataMeasured);				
+				// Build the port label as: PREFIX + "-" + offset + "-" + count 
+				theList.add(new SampleMessage(device, ports.get(i), 
+						measuringEntityId, values, transformation));
+				
+			} else if (type.equals(ModBusTcpEventType.READ_HOLDING_REGISTER)) {
+				Translator object = (Translator) Class.forName(classToLoad).newInstance();
+				values = object.translate(dataMeasured);				
+				// Build the port label as: PREFIX + "-" + offset + "-" + count 
+				theList.add(new SampleMessage(device, ports.get(i), 
+						measuringEntityId, values, transformation));
+				
+			} else if (type == ModBusTcpEventType.ERROR_READ_DISCRETE) {
+				
+				theList.add(new MeasuringErrorMessage(device, ports.get(i), measuringEntityId));
+				
+			} else if (type == ModBusTcpEventType.ERROR_READ_REGISTER) {
+				
+				theList.add(new MeasuringErrorMessage(device, ports.get(i), measuringEntityId));
+				
+			} else if (type == ModBusTcpEventType.ERROR_READ_HOLDING) {
+				
+				theList.add(new MeasuringErrorMessage(device, ports.get(i), measuringEntityId));
+				
+			} else {
+				
+				logger.error("The event type given:" + type.getName() +
+						"has not an associated unified message");
+			}
+			
+			logger.debug("Exit getUnifiedMessage - Number of Unified Messages:" + theList.size());
+	
+			return theList;
+		}
+
+	
+	}
+	
+	
+
+	/**
+	 * Overrides <code>ProtocolConverter</code> interface.
+	 * In this case, translate a Modbus message into the UnifiedMessage structure.
+	 * The type of Modbus event defines the class to be loaded.
+	 * The returning list contains <code>SampleMessage</code> objects with the 
+	 * measured data.
+	 * 
+	 * @return a list of <code>UnifiedMessage</code> objects.
+	 * @throws ClassNotFoundException if the loader cannot find the correct 
+	 * class to transform the message.
+	 * @throws IllegalAccessException if the default constructor of the class
+	 * cannot be accessed. 
+	 * @throws InstantiationException if the translator class has not a default
+	 * constructor. 
+	 * @see ModBusTcpEventType
+	 * @see SampleMessage
+	 */
+	@Override
+	public List<UnifiedMessage> getUnifiedMessage() throws InstantiationException, 
+	IllegalAccessException, ClassNotFoundException  {
+
+
+		logger.debug("entering getUnifiedMessage" + "port:"
+				+ Integer.toString(port) + "type: " + this.type + 
+				" uid:" + this.uid + " offset: " + this.offSet + 
+				"count: " + this.count);
+
+		if (!this.isConcentrator) { 
+			return getUnifiedMessageSingleSignal();
+		} else {
+			return getUnifiedMessageConcentrator();
+		}
+
+		
 	}
 	
 

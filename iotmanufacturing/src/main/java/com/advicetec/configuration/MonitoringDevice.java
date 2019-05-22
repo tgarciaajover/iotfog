@@ -262,6 +262,15 @@ public class MonitoringDevice extends ConfigurationObject
 	}
 	
 	/**
+	 * Returns all input-output ports within the measured device
+	 * 
+	 */
+	public List<InputOutputPort> getInputOutputPorts(){		
+		return this.inputOutputPorts;
+	}
+	
+	
+	/**
 	 * Gets the class name that will be used to interpret the signal. 
 	 * This is configured in the port's signal.
 	 * 

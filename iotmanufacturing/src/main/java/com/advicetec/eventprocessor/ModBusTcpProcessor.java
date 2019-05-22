@@ -120,6 +120,7 @@ public class ModBusTcpProcessor implements Processor {
 				dictionary.put("Offset", evt.getOffset());
 				dictionary.put("Count", evt.getCount());
 				dictionary.put("Type", (Integer) event.getType().getValue());
+				dictionary.put("IsConcentrator", evt.getIsConcentrator());
 				dictionary.put("Read", byteRes);
 
 				Queueable obj = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
@@ -149,6 +150,7 @@ public class ModBusTcpProcessor implements Processor {
 				dictionary.put("Offset", evt2.getOffset());
 				dictionary.put("Count", evt2.getCount());
 				dictionary.put("Type", (Integer) event.getType().getValue());
+				dictionary.put("IsConcentrator", evt2.getIsConcentrator());
 				dictionary.put("Read", res2.getMessage());
 
 				logger.debug("UID:" + event.getUid() + " Offset:" + evt2.getOffset() + " Count:" + evt2.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res2.getMessage()));
@@ -181,6 +183,7 @@ public class ModBusTcpProcessor implements Processor {
 				dictionary.put("Offset", evt3.getOffset());
 				dictionary.put("Count", evt3.getCount());
 				dictionary.put("Type", (Integer) event.getType().getValue());
+				dictionary.put("IsConcentrator", evt3.getIsConcentrator());
 				dictionary.put("Read", res3.getMessage());
 
 				logger.debug("Connection  IpAddress:" + event.getIpAddress() + "Port" + event.getPort() + "UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
@@ -197,7 +200,6 @@ public class ModBusTcpProcessor implements Processor {
 				break;
 			case INVALID:
 				break;
-
 
 			}
 			// eventManager.releaseModbusConnection(event.getIpAddress(), event.getPort(), con);

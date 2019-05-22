@@ -29,35 +29,35 @@ public class InputOutputPort extends ConfigurationObject  {
 	 *   Reference to the signal type configured for this input output port. 
 	 */
 	@JsonProperty("signal_type")
-	private Signal signalType;
+	protected Signal signalType;
 	
 	/**
 	 * Transformation text.
 	 */
 	@JsonProperty("transformation_text") 
-	private String transformationText;
+	protected String transformationText;
 	
 	/**
 	 * Identifier for identifying and connecting to the corresponding sensor. 
 	 * This value has multiple meaning according to the protocol used for the communication.
 	 */
 	@JsonProperty("port_label")
-	private String portLabel;
+	protected String portLabel;
 
 	/**
 	 * Measured entity that is the target of the signal. This value is the identifier of that entity.
 	 */
 	@JsonProperty("measured_entity")
-	private Integer measuringEntity; 
+	protected Integer measuringEntity; 
 	
 	/**
 	 * In case of modbus, this property defines how often a new reading or writing should be performed.
 	 */
 	@JsonProperty("refresh_time_ms")
-	private Integer refreshTimeMs; 
+	protected Integer refreshTimeMs; 
 	
 	/**
-	 * Constuctor for the class, it receives the  identifier for the input output port.
+	 * Constructor for the class, it receives the  identifier for the input output port.
 	 * @param id  Identifier for the instance.
 	 */
 	@JsonCreator
