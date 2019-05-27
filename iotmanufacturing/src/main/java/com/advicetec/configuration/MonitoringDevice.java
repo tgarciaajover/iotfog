@@ -59,14 +59,14 @@ public class MonitoringDevice extends ConfigurationObject
 	 * Equipment's mac address
 	 */
 	@JsonProperty("mac_address") 
-	private String mac_addres;
+	private String macAddress;
 	
 	/**
 	 * Equipment's IP address (Ipv4)
 	 */
 	@JsonProperty("ip_address") 
-	private String ip_address;
-	
+	private String ipAddress;
+		
 	/**
 	 * List of ports included in the measuring device.
 	 */
@@ -79,7 +79,7 @@ public class MonitoringDevice extends ConfigurationObject
 	@JsonProperty("create_date") 
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
-    private LocalDateTime create_date;
+    private LocalDateTime createDate;
 	
 	
 	/**
@@ -87,7 +87,7 @@ public class MonitoringDevice extends ConfigurationObject
 	 * This maps is a helper structure to make faster port look ups by port label.
 	 */
 	@JsonIgnore
-	private Map<String, Integer> portsByLabel; 
+	protected Map<String, Integer> portsByLabel; 
 	
 	/**
 	 * Constructor for the class. It receives the identifier of the measuring entity.
@@ -156,7 +156,7 @@ public class MonitoringDevice extends ConfigurationObject
 	 * @return data and time registration date.
 	 */
 	public LocalDateTime getCreate_date() {
-		return create_date;
+		return createDate;
 	}
 	
 	/**
@@ -165,7 +165,7 @@ public class MonitoringDevice extends ConfigurationObject
 	 * @param create_date  registration datetime.
 	 */
 	public void setCreate_date(LocalDateTime create_date) {
-		this.create_date = create_date;
+		this.createDate = create_date;
 	}  
 	
 	/**
@@ -174,7 +174,7 @@ public class MonitoringDevice extends ConfigurationObject
 	 * @return mac address.
 	 */
 	public String getMac_addres() {
-		return mac_addres;
+		return macAddress;
 	}
 	
 	/**
@@ -182,7 +182,7 @@ public class MonitoringDevice extends ConfigurationObject
 	 * @param mac_addres 
 	 */
 	public void setMac_addres(String mac_addres) {
-		this.mac_addres = mac_addres;
+		this.macAddress = mac_addres;
 	}
 	
 	/**
@@ -190,7 +190,7 @@ public class MonitoringDevice extends ConfigurationObject
 	 * @return equipment Ip address
 	 */
 	public String getIp_address() {
-		return ip_address;
+		return ipAddress;
 	}
 	
 	/**
@@ -198,7 +198,7 @@ public class MonitoringDevice extends ConfigurationObject
 	 * @param ip_address
 	 */
 	public void setIp_address(String ip_address) {
-		this.ip_address = ip_address;
+		this.ipAddress = ip_address;
 	}
 	
 	/**
@@ -211,26 +211,13 @@ public class MonitoringDevice extends ConfigurationObject
 
 		for (int i = 0; i < this.inputOutputPorts.size(); i++){
 			if (this.inputOutputPorts.get(i).getId().equals(id)){
-				return this.inputOutputPorts.get(i);
+				return (MqttInputOutputPort) this.inputOutputPorts.get(i);
 			}
 		}
 		
 		return null;
+	}
 		
-	}
-	
-	/**
-	 * Gets an input output port by port label
-	 * 
-	 * @param portLabel  port label to find.
-	 * @return input output port object or null if there is not a port with that port label.
-	 */
-	@JsonIgnore
-	public InputOutputPort getInputOutputPort(String portLabel){
-		Integer id = this.portsByLabel.get(portLabel);
-		return  getInputOutputPort(id);
-	}
-	
 	/**
 	 * Gets the transformation text associated to the port, it search the port by port label.  
 	 * 
@@ -305,40 +292,6 @@ public class MonitoringDevice extends ConfigurationObject
 		
 	}
 	
-	/**
-	 * Gets the Modbus events that are required to schedule for this measuring device
-	 * 
-	 * @return List fo modbus events.
-	 */
-	public List<ModBusTcpEvent> getModbusEvents(){
-		
-		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
-		
-		String ipAddress = this.getIp_address();
-		
-		for (int i = 0; i < this.inputOutputPorts.size(); i++){
-			InputOutputPort inputOutputPort = this.inputOutputPorts.get(i);
-			logger.debug("Type of protocol of the port signal:" + inputOutputPort.getSignalType().getType().getProtocol() );
-			if (inputOutputPort.getSignalType().getType().getProtocol().equals("M")) {
-				
-				String portLabel = inputOutputPort.getPortLabel();
-				Integer refreshTimeMs = inputOutputPort.getRefreshTimeMs();
-				Integer measuredEntity = inputOutputPort.getMeasuringEntity();
-
-				if (refreshTimeMs.compareTo(0) > 0){
-					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(ipAddress, measuredEntity, portLabel, refreshTimeMs);
-					if (modBusEvent != null)
-						events.add(modBusEvent);
-				} else {
-					logger.error("Refresh time is zero for Port label:" + portLabel + " which is invalid");
-				}
-
-			}
-		}
-		
-		return events;
-		
-	}
 
 	public List<InputOutputPort> getInputOutputPortReferingMeasuredEntity(Integer measuredEntity){
 		
@@ -353,7 +306,6 @@ public class MonitoringDevice extends ConfigurationObject
 		
 		return ports;
 	}
-	
 	
 	/**
 	 * Creates a JSON representation for the object.

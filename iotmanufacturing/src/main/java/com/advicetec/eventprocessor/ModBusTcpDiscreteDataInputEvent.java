@@ -1,5 +1,7 @@
 package com.advicetec.eventprocessor;
 
+import com.advicetec.configuration.ModbusInputOutputPort;
+
 /**
  * This class represents the event designed to process a modbus tcp discrete data input. 
  * 
@@ -41,9 +43,10 @@ public class ModBusTcpDiscreteDataInputEvent extends ModBusTcpEvent
 	 * @param repeat	 Number of consecutive reads that should be done to get a new scan. 
 	 * 					 For example if we have to read three times the sensor to get the average value. 
 	 */
-	public ModBusTcpDiscreteDataInputEvent(String ipAddress, int port,
-			Integer uid, int offset, int count, boolean repeat, long milliseconds) {
-		super(ipAddress, port, uid, ModBusTcpEventType.READ_DISCRETE);
+	public ModBusTcpDiscreteDataInputEvent(boolean isConcentrator, ModbusInputOutputPort inputOutputPort, 
+										  String ipAddress, int port, Integer uid, int offset, int count, 
+										  boolean repeat, long milliseconds) {
+		super(isConcentrator, inputOutputPort, ipAddress, port, uid, ModBusTcpEventType.READ_DISCRETE);
 
 		super.setRepeated(repeat);
 		super.setMilliseconds(milliseconds);

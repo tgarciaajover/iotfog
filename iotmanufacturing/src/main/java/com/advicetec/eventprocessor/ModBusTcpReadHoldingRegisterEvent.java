@@ -1,5 +1,7 @@
 package com.advicetec.eventprocessor;
 
+import com.advicetec.configuration.ModbusInputOutputPort;
+
 /**
  * This class represents the event designed to process a modbus tcp Read Holding data input. 
  * 
@@ -44,8 +46,10 @@ public class ModBusTcpReadHoldingRegisterEvent extends ModBusTcpEvent
 	 * @param repeat		Number of times that it should write the data.
 	 * @param milliseconds  It says the time in milliseconds between event recurrences.
 	 */
-	public ModBusTcpReadHoldingRegisterEvent(String ipAddress, int port, Integer uid, int offset, int count, boolean repeat, long milliseconds) {
-		super(ipAddress, port, uid, ModBusTcpEventType.READ_HOLDING_REGISTER);
+	public ModBusTcpReadHoldingRegisterEvent(boolean isConcentrator, ModbusInputOutputPort inputOutputPort, String ipAddress, 
+											 int port, Integer uid, int offset, int count, boolean repeat, long milliseconds) {
+		
+		super(isConcentrator, inputOutputPort, ipAddress, port, uid, ModBusTcpEventType.READ_HOLDING_REGISTER );
 
 		super.setRepeated(repeat);
 		super.setMilliseconds(milliseconds);

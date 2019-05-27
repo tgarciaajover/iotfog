@@ -269,19 +269,18 @@ public class MonitoringDeviceContainer extends Container
 	 * @param json  json object representing the measuring device. 
 	 * 
 	 */
-	public synchronized MonitoringDevice fromJSON(String json){
+	public synchronized ModbusMonitoringDevice FromJSONModbus(String json){
 		
 		ObjectMapper mapper = new ObjectMapper();
 		
-		//Convert object to JSON string and pretty print
-		MonitoringDevice mDeviceTemp = null;
+		// Convert object to JSON string and pretty print
+		ModbusMonitoringDevice mDeviceTemp = null;
+		try 
+		{
 		
-		try {
-		
-			mDeviceTemp = mapper.readValue(json, MonitoringDevice.class);
+			mDeviceTemp = mapper.readValue(json, ModbusMonitoringDevice.class);
 			
 			logger.debug("Json object read:" + mDeviceTemp.toJson());
-			
 			logger.debug("Monitoring device id given:" + mDeviceTemp.getId()  );
 			logger.debug("Monitoring address given:" + mDeviceTemp.getIp_address()  );
 			
@@ -296,7 +295,7 @@ public class MonitoringDeviceContainer extends Container
 			
 			SignalContainer signalContainer = (SignalContainer) this.getReferenceContainer("Signal");
 			for (int i=0; i < mDeviceTemp.inputOutputPorts.size(); i++){
-				InputOutputPort inputOutputPort = mDeviceTemp.inputOutputPorts.get(i);
+				ModbusInputOutputPort inputOutputPort = (ModbusInputOutputPort) mDeviceTemp.inputOutputPorts.get(i);
 				Signal signal = (Signal) signalContainer.getObject(inputOutputPort.getSignalType().getId());
 				
 				if (signal == null){
@@ -322,7 +321,65 @@ public class MonitoringDeviceContainer extends Container
 		return mDeviceTemp;
 	}
 	
-	public List<ModBusTcpEvent> getModbusEvents(MonitoringDevice monitoring) throws SQLException {
+	/**
+	 * Builds a Mqtt Measuring device from a json representation
+	 * 
+	 * @param json  json object representing the measuring device. 
+	 * 
+	 */
+	public synchronized MqttMonitoringDevice fromJSONMqtt(String json){
+		
+		ObjectMapper mapper = new ObjectMapper();
+		
+		// Convert object to JSON string and pretty print
+		MqttMonitoringDevice mDeviceTemp = null;
+		try {
+		
+			mDeviceTemp = mapper.readValue(json, MqttMonitoringDevice.class);
+			
+			logger.debug("Json object read:" + mDeviceTemp.toJson());
+			logger.debug("Monitoring device id given:" + mDeviceTemp.getId());
+			logger.debug("Monitoring address given:" + mDeviceTemp.getIp_address());
+			
+			DeviceTypeContainer deviceTypeContainer = (DeviceTypeContainer) this.getReferenceContainer("DeviceType");			
+			DeviceType deviceTypeTmp = (DeviceType) deviceTypeContainer.getObject(mDeviceTemp.getType().getId());
+			
+			if (deviceTypeTmp != null) {
+				mDeviceTemp.setType(deviceTypeTmp);
+			} else {
+				deviceTypeContainer.fromJSON(mDeviceTemp.getType().toJson());
+			}
+			
+			SignalContainer signalContainer = (SignalContainer) this.getReferenceContainer("Signal");
+			for (int i=0; i < mDeviceTemp.inputOutputPorts.size(); i++){
+				MqttInputOutputPort inputOutputPort = (MqttInputOutputPort) mDeviceTemp.inputOutputPorts.get(i);
+				Signal signal = (Signal) signalContainer.getObject(inputOutputPort.getSignalType().getId());
+				
+				if (signal == null){
+					signalContainer.fromJSON(inputOutputPort.getSignalType().toJson());
+				} else { 
+					inputOutputPort.setSignalType(signal);
+				}
+			}
+
+			mDeviceTemp.updateIndexes();
+
+		} catch (JsonParseException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+		
+		return mDeviceTemp;
+	}
+
+	/*
+	 public List<ModBusTcpEvent> getModbusEvents(MonitoringDevice monitoring) throws SQLException {
 		
 		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
 
@@ -368,7 +425,8 @@ public class MonitoringDeviceContainer extends Container
 		
 		return events;
 	}
-
+	*/
+	
 	public Map<Integer, List<InputOutputPort>> getInputOutputPortReferingMeasuredEntity(Integer measuredEntity) {
 				
 		Map<Integer, List<InputOutputPort>> ports = new HashMap<Integer,List<InputOutputPort>>();

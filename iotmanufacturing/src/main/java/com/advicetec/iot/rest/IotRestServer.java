@@ -84,8 +84,11 @@ public class IotRestServer extends Application {
       // Resource for Implementing Reason code CRUD
       router.attach("/ReasonCode/{uniqueID}", ReasonCodeResource.class);
       
-      // Resource for Implementing Monitoring Device CRUD
-      router.attach("/MonitoringDevice/{uniqueID}", MonitoringDeviceResource.class);
+      // Resource for Implementing Mqtt Monitoring Device CRUD
+      router.attach("/MqttMonitoringDevice/{uniqueID}", MqttMonitoringDeviceResource.class);
+
+      // Resource for Implementing Modbus Monitoring Device CRUD
+      router.attach("/ModbusMonitoringDevice/{uniqueID}", ModbusMonitoringDeviceResource.class);
       
       // Resource for Implementing Measuring Entity CRUD, it assumes components are previously deleted
       router.attach("/MeasuredEntity/{uniqueID}", MeasuredEntityResource.class);

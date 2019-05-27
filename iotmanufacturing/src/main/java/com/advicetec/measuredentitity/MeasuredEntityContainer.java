@@ -25,7 +25,13 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.restlet.data.Status;
 
 import com.advicetec.applicationAdapter.ProductionOrderManager;
+import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.Container;
+import com.advicetec.configuration.ModbusAccess;
+import com.advicetec.configuration.ModbusInputOutputPort;
+import com.advicetec.configuration.ModbusMonitoringDevice;
+import com.advicetec.configuration.ModbusObjectType;
+import com.advicetec.configuration.MonitoringDeviceContainer;
 import com.advicetec.core.Attribute;
 import com.advicetec.core.AttributeOrigin;
 import com.advicetec.core.AttributeType;
@@ -50,11 +56,30 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect2 = "SELECT id, name, descr, behavior_text, create_date, last_updttm, measure_entity_id FROM setup_measuredentitybehavior WHERE measure_entity_id = ";
 	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
 	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
-	static String sqlSelect5 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
+	static String sqlSelect5 = "SELECT c.id, d.ip_address, c.measured_entity_id, f.port, f.unit_id, f.offset, c.refresh_time_ms, f.object_type, f.access, f.nbr_read" + 
+								 "from setup_signal a, setup_signaltype b," + 
+								 "setup_inputoutputport c, setup_modbusinputoutputport f," + 
+								 "setup_monitoringdevice d, setup_modbusmonitoringdevice e " + 
+								 "where b.protocol = 'M' " + 
+								 "  and a.type_id = b.id " + 
+								 "  and c.signal_type_id = a.id " + 
+								 "  and d.id = c.device_id " + 
+								 "  and e.monitoringdevice_ptr_id = d.id " + 
+								 "  and e.is_concentrator = false" + 
+								 "  and f.inputoutputport_ptr_id = c.id";
 	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, day_time, create_date, last_updttm FROM setup_measuredentityscheduledevent WHERE measure_entity_id =";
 	static String sqlSelect7 = "SELECT count(*) from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'Q' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
 	static String sqlSelect8 = "SELECT TOP 1 related_object ,related_object_type FROM measuringentitystatusinterval a WHERE id_owner = ? and owner_type = ? and datetime_to <= ? and datetime_to  = ( select max(b.datetime_to) FROM measuringentitystatusinterval b WHERE b.id_owner = a.id_owner and b.owner_type = a.owner_type and b.datetime_to <= ? )";
-
+	static String sqlSelect9 = "SELECT d.ip_address, c.measured_entity_id, e.port, e.unit_id, e.offset, e.refresh_time_ms, e.object_type, e.access, e.nbr_read " + 
+								"from setup_signal a, setup_signaltype b, setup_inputoutputport c, " + 
+								" setup_monitoringdevice d, setup_modbusmonitoringdevice e " + 
+								"where b.protocol = 'M' " + 
+								"  and a.type_id = b.id " + 
+								"  and c.signal_type_id = a.id " + 
+								"  and d.id = c.device_id " + 
+								"  and e.monitoringdevice_ptr_id = d.id " + 
+								"  and e.is_concentrator = true";
+	
 	static String sqlMachineSelect = "SELECT * FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
 
@@ -699,13 +724,24 @@ public class MeasuredEntityContainer extends Container
 
 			while (rs5.next()) 
 			{
+				Integer id_measuring_device = rs5.getInt("id_measuring_device");
+				Integer id_port 			= rs5.getInt("id_port");
 				String ipaddress        	= rs5.getString("ip_address");
 				Integer measured_entity_id  = rs5.getInt("measured_entity_id");  
-				String portLabel        	= rs5.getString("port_label");
+				Integer port        		= rs5.getInt("port");
+				Integer unitId 				= rs5.getInt("unit_id");
+				Integer offSet 				= rs5.getInt("offset");
 				Integer refreshTimeMs       = rs5.getInt("refresh_time_ms");
-
+				ModbusObjectType objectType = ModbusObjectType.from(rs5.getInt("object_type"));
+				ModbusAccess access 		= ModbusAccess.from(rs5.getInt("access"));
+				Integer nbrRead 			= rs5.getInt("nbr_read");
+				
+				MonitoringDeviceContainer monitoringDeviceCon = ConfigurationManager.getInstance().getMonitoringDeviceContainer();
+				ModbusMonitoringDevice monitoring_device = (ModbusMonitoringDevice) monitoringDeviceCon.getObject(id_measuring_device);
+				ModbusInputOutputPort inputOutputPort = monitoring_device.getInputOutputPort("id_port");
+				
 				if (refreshTimeMs > 0){
-					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(ipaddress, measured_entity_id, portLabel, refreshTimeMs);
+					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(false, inputOutputPort, ipaddress, measured_entity_id, portLabel, refreshTimeMs);
 					if (modBusEvent != null)
 						events.add(modBusEvent);
 				} else {

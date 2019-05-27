@@ -26,7 +26,7 @@ import com.advicetec.configuration.SignalContainer;
 public class SignalResource extends ServerResource  
 {
 
-	static Logger logger = LogManager.getLogger(MonitoringDeviceResource.class.getName());
+	static Logger logger = LogManager.getLogger(MqttMonitoringDeviceResource.class.getName());
 	
 	/**
 	 * Returns the Signal instance requested by the URL. 

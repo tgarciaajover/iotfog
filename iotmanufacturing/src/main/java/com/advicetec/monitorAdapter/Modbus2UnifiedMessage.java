@@ -12,6 +12,7 @@ import com.advicetec.MessageProcessor.SampleMessage;
 import com.advicetec.MessageProcessor.UnifiedMessage;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.InputOutputPort;
+import com.advicetec.configuration.ModbusInputOutputPort;
 import com.advicetec.configuration.MonitoringDevice;
 import com.advicetec.eventprocessor.ModBusTcpEventType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
@@ -41,6 +42,7 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	private Integer count;   // Number of elements read.
 	private boolean isConcentrator; // the slave corresponds to a concentrator.
 	private ModBusTcpEventType type; // type of modbus event
+	private ModbusInputOutputPort inputOutputPort; // Modbus input output port when it is triggered by a single signal.
 	private byte[] dataMeasured;   // measures
 
 
@@ -52,6 +54,7 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 		count = (Integer) dictionary.get("Count");
 		type = ModBusTcpEventType.from( ((int) dictionary.get("Type")) );
 		isConcentrator = (boolean) dictionary.get("IsConcentrator");
+		inputOutputPort = (ModbusInputOutputPort) dictionary.get("InputOutputPort");
 		dataMeasured = (byte[]) dictionary.get("Read");
 	}
 
@@ -65,70 +68,58 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 				"count: " + this.count);
 
 		ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
+						
+		ConfigurationManager confManager = ConfigurationManager.getInstance();
+		MonitoringDevice device = confManager.getMonitoringDevice(ipAddr);
+			
+		String transformation = this.inputOutputPort.getTransformationText();
+		String className = this.inputOutputPort.getSignalType().getType().getClassName();
+	
+		logger.debug("ClassName param:" + className);
+		String packageStr = this.getClass().getPackage().getName() + ".protocolconverter";
+		String classToLoad = packageStr + "." + className;
+	
+		List<InterpretedSignal> values;
+		Integer measuringEntityId = this.inputOutputPort.getMeasuringEntity();
+			
+		// Depending on the Modbus Event, a different class is loaded.
+		if (type.equals(ModBusTcpEventType.READ_DISCRETE)) {
+			Translator object = (Translator) Class.forName(classToLoad).newInstance();
+			values = object.translate(dataMeasured);
+			theList.add(new SampleMessage(device, this.inputOutputPort, measuringEntityId, values, transformation));
 				
-		// get the portlabel from configuration environment.
-		String portLabel = ModBusUtils.buildPortLabel(this.type, this.port, 
-				this.uid, this.offSet, this.count);
-		
-		if (portLabel == null){
-			return theList;
+		} else if (type.equals(ModBusTcpEventType.READ_REGISTER)) {
+			Translator object = (Translator) Class.forName(classToLoad).newInstance();
+			values = object.translate(dataMeasured);				
+			// Build the port label as: PREFIX + "-" + offset + "-" + count 
+			theList.add(new SampleMessage(device, this.inputOutputPort, measuringEntityId, values, transformation));
+				
+		} else if (type.equals(ModBusTcpEventType.READ_HOLDING_REGISTER)) {
+			Translator object = (Translator) Class.forName(classToLoad).newInstance();
+			values = object.translate(dataMeasured);				
+			// Build the port label as: PREFIX + "-" + offset + "-" + count 
+			theList.add(new SampleMessage(device, this.inputOutputPort, measuringEntityId, values, transformation));
+				
+		} else if (type == ModBusTcpEventType.ERROR_READ_DISCRETE) {	
+			theList.add(new MeasuringErrorMessage(device, this.inputOutputPort, measuringEntityId));
+				
+		} else if (type == ModBusTcpEventType.ERROR_READ_REGISTER) {
+				
+			theList.add(new MeasuringErrorMessage(device, this.inputOutputPort, measuringEntityId));
+				
+		} else if (type == ModBusTcpEventType.ERROR_READ_HOLDING) {
+				
+			theList.add(new MeasuringErrorMessage(device, this.inputOutputPort, measuringEntityId));
+				
 		} else {
-			ConfigurationManager confManager = ConfigurationManager.getInstance();
-			MonitoringDevice device = confManager.getMonitoringDevice(ipAddr);
-			
-			String transformation = confManager.getTransformation(ipAddr, portLabel);
-			String className = confManager.getClassName(ipAddr, portLabel);
-	
-			logger.debug("ClassName param:" + className);
-			String packageStr = this.getClass().getPackage().getName() + ".protocolconverter";
-			String classToLoad = packageStr + "." + className;
-	
-			List<InterpretedSignal> values;
-			Integer measuringEntityId = confManager.getMeasuredEntity(ipAddr, portLabel);
-			
-			// Depending on the Modbus Event, a different class is loaded.
-			if (type.equals(ModBusTcpEventType.READ_DISCRETE)) {
-				Translator object = (Translator) Class.forName(classToLoad).newInstance();
-				values = object.translate(dataMeasured);
-				theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), 
-						measuringEntityId, values, transformation));
 				
-			} else if (type.equals(ModBusTcpEventType.READ_REGISTER)) {
-				Translator object = (Translator) Class.forName(classToLoad).newInstance();
-				values = object.translate(dataMeasured);				
-				// Build the port label as: PREFIX + "-" + offset + "-" + count 
-				theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), 
-						measuringEntityId, values, transformation));
-				
-			} else if (type.equals(ModBusTcpEventType.READ_HOLDING_REGISTER)) {
-				Translator object = (Translator) Class.forName(classToLoad).newInstance();
-				values = object.translate(dataMeasured);				
-				// Build the port label as: PREFIX + "-" + offset + "-" + count 
-				theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), 
-						measuringEntityId, values, transformation));
-				
-			} else if (type == ModBusTcpEventType.ERROR_READ_DISCRETE) {
-				
-				theList.add(new MeasuringErrorMessage(device, device.getInputOutputPort(portLabel), measuringEntityId));
-				
-			} else if (type == ModBusTcpEventType.ERROR_READ_REGISTER) {
-				
-				theList.add(new MeasuringErrorMessage(device, device.getInputOutputPort(portLabel), measuringEntityId));
-				
-			} else if (type == ModBusTcpEventType.ERROR_READ_HOLDING) {
-				
-				theList.add(new MeasuringErrorMessage(device, device.getInputOutputPort(portLabel), measuringEntityId));
-				
-			} else {
-				
-				logger.error("The event type given:" + type.getName() +
+			logger.error("The event type given:" + type.getName() +
 						"has not an associated unified message");
-			}
-			
-			logger.debug("Exit getUnifiedMessage - Number of Unified Messages:" + theList.size());
-	
-			return theList;
 		}
+			
+		logger.debug("Exit getUnifiedMessage - Number of Unified Messages:" + theList.size());
+	
+		return theList;
 	}
 
 	
@@ -205,10 +196,9 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 			
 			logger.debug("Exit getUnifiedMessage - Number of Unified Messages:" + theList.size());
 	
-			return theList;
 		}
 
-	
+		return theList;
 	}
 	
 	

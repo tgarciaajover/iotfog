@@ -1,5 +1,7 @@
 package com.advicetec.eventprocessor;
 
+import com.advicetec.configuration.ModbusInputOutputPort;
+
 public class ModBusTcpInputRegisterEvent extends ModBusTcpEvent
 {
 
@@ -26,8 +28,11 @@ public class ModBusTcpInputRegisterEvent extends ModBusTcpEvent
 	 * @param repeat		it says if the event is repeated or not
 	 * @param milliseconds	It says the time in milliseconds between event recurrences.
 	 */
-	public ModBusTcpInputRegisterEvent(String ipAddress, int port, Integer uid, int offset, int count, boolean repeat, long milliseconds) {
-		super(ipAddress, port, uid, ModBusTcpEventType.READ_REGISTER);
+	public ModBusTcpInputRegisterEvent(boolean isConcentrator, ModbusInputOutputPort inputOutputPort, 
+									   String ipAddress, int port, Integer uid, int offset, int count, 
+									   boolean repeat, long milliseconds) {
+		
+		super(isConcentrator, inputOutputPort, ipAddress, port, uid, ModBusTcpEventType.READ_REGISTER);
 
 		super.setRepeated(repeat);
 		super.setMilliseconds(milliseconds);

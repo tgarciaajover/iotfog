@@ -2,6 +2,8 @@ package com.advicetec.eventprocessor;
 
 import java.util.List;
 
+import com.advicetec.configuration.ModbusInputOutputPort;
+
 /**
  * This class represents the event designed to process a modbus tcp discrete data output (write). 
  * 	
@@ -47,9 +49,11 @@ import java.util.List;
 	 * @param count			Number of registers to read
 	 * @param repeat		Number of times that it should write the data.
 	 */
-	public ModBusTcpDiscreteDataOutputEvent(String ipAddress, int port,
-			Integer uid, int offset, int count, List<Boolean> values, boolean repeat, long milliseconds) {
-		super(ipAddress, port, uid, ModBusTcpEventType.WRITE_DISCRETE);
+	public ModBusTcpDiscreteDataOutputEvent(boolean isConcentrator, ModbusInputOutputPort inputOutputPort, 
+											 String ipAddress, int port, Integer uid, int offset, 
+											 int count, List<Boolean> values, boolean repeat, long milliseconds) {
+		
+		super(isConcentrator, inputOutputPort, ipAddress, port, uid, ModBusTcpEventType.WRITE_DISCRETE);
 
 		super.setRepeated(repeat);
 		super.setMilliseconds(milliseconds);
