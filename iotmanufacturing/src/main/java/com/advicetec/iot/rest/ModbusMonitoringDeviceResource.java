@@ -191,7 +191,7 @@ public class ModbusMonitoringDeviceResource extends ServerResource
 		// Make sure it is no longer present in the Monitoring Device database.
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
 		MonitoringDeviceContainer monitoringDeviceCon = confManager.getMonitoringDeviceContainer();
-		MonitoringDevice monDevice = (MonitoringDevice) monitoringDeviceCon.getObject(uniqueID);
+		ModbusMonitoringDevice monDevice = (ModbusMonitoringDevice) monitoringDeviceCon.getObject(uniqueID);
 		
 		// Deletes Modbus events being executed for this measuring device.
 		List<ModBusTcpEvent> events = monDevice.getModbusEvents();

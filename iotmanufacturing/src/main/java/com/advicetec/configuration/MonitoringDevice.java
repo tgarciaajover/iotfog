@@ -34,7 +34,7 @@ import com.advicetec.eventprocessor.ModBusTcpEvent;
  */
 public class MonitoringDevice extends ConfigurationObject
 {
-
+ 
 	static Logger logger = LogManager.getLogger(MonitoringDevice.class.getName());
 	
 	/**
@@ -81,14 +81,7 @@ public class MonitoringDevice extends ConfigurationObject
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)	
     private LocalDateTime createDate;
 	
-	
-	/**
-	 * Map between the label of the part and its identifier. 
-	 * This maps is a helper structure to make faster port look ups by port label.
-	 */
-	@JsonIgnore
-	protected Map<String, Integer> portsByLabel; 
-	
+		
 	/**
 	 * Constructor for the class. It receives the identifier of the measuring entity.
 	 * @param id Identifier of the measuring entity.
@@ -97,7 +90,6 @@ public class MonitoringDevice extends ConfigurationObject
 	public MonitoringDevice(@JsonProperty("id") Integer id) {
 		super(id);
 		inputOutputPorts = new ArrayList<InputOutputPort>();
-		portsByLabel = new HashMap<String, Integer>();
 	}
 	
 	/**
@@ -217,26 +209,7 @@ public class MonitoringDevice extends ConfigurationObject
 		
 		return null;
 	}
-		
-	/**
-	 * Gets the transformation text associated to the port, it search the port by port label.  
-	 * 
-	 * @param portLabel  port label to search.
-	 * @return transformation text assigned or null if port label not found.
-	 */
-	@JsonIgnore
-	public String getTranformation(String portLabel){
-		Integer id = this.portsByLabel.get(portLabel);
-		logger.debug("Port requested:" + portLabel + "Port id:" + id);
-		if (getInputOutputPort(id) == null){
-			logger.debug("Error Label Port: " + id + " not found");
-			return null;
-		} else {
-			return  getInputOutputPort(id).getTransformationText();
-		}
-		
-	}
-		
+				
 	/**
 	 * Adds a port into the list of input output ports.
 	 * 
@@ -245,7 +218,6 @@ public class MonitoringDevice extends ConfigurationObject
 	public void putInputOutputPort(InputOutputPort iop){
 		logger.debug("port label:" + iop.getPortLabel() + "Id:" + iop.getId());
 		this.inputOutputPorts.add(iop);
-		this.portsByLabel.put(iop.getPortLabel(), iop.getId());
 	}
 	
 	/**
@@ -256,43 +228,7 @@ public class MonitoringDevice extends ConfigurationObject
 		return this.inputOutputPorts;
 	}
 	
-	
-	/**
-	 * Gets the class name that will be used to interpret the signal. 
-	 * This is configured in the port's signal.
-	 * 
-	 * @param portLabel port label which is being searched.
-	 * @return class name associated to the port with label PortLabel. Null if not found.
-	 */
-	@JsonIgnore
-	public String getClassName(String portLabel){
-		Integer id = this.portsByLabel.get(portLabel);
-
-		if (getInputOutputPort(id) == null){
-			logger.debug("Error Label Port: " + id + " not found");
-			return null;
-		} else {
-			return getInputOutputPort(id).getSignalType().getType().getClassName();
-		}
-	}
-	
-	/**
-	 * Indexes are maps used to speed up looks ups of instances.
-	 * 
-	 * for now the portsByLabel index is the only one. 
-	 */
-	public void updateIndexes() {
 		
-		this.portsByLabel.clear();
-		
-		for (int i = 0; i < this.inputOutputPorts.size(); i++){
-			InputOutputPort inputOutputPort = this.inputOutputPorts.get(i);
-			this.portsByLabel.put(inputOutputPort.getPortLabel(), inputOutputPort.getId());
-		}
-		
-	}
-	
-
 	public List<InputOutputPort> getInputOutputPortReferingMeasuredEntity(Integer measuredEntity){
 		
 		List<InputOutputPort> ports = new ArrayList<InputOutputPort>();

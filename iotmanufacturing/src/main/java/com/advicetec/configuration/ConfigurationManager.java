@@ -271,14 +271,14 @@ public class ConfigurationManager extends Configurable
 	 * 
 	 * @return Transformation text registered for the monitoring device and port label. If not found returns null.
 	 */
-	public String getTransformation(String macAddress, String portLabel){
-		logger.debug("In getTransformation macAddress:" + macAddress + "portLabel:" + portLabel );
+	public String getTransformation(String macAddress, String topicName){
+		logger.debug("In getTransformation macAddress:" + macAddress + "topicName:" + topicName );
 		
 		if (this.getMonitoringDevice(macAddress) == null){
 			logger.error("Monitoring Device with address:" + macAddress +" not Found");
 			return null;
 		} else { 
-			return	this.getMonitoringDevice(macAddress).getTranformation(portLabel);
+			return	((MqttMonitoringDevice)this.getMonitoringDevice(macAddress)).getTranformation(topicName);
 		}
 	}
 		
@@ -286,38 +286,43 @@ public class ConfigurationManager extends Configurable
 	 * Gets the Class Name configured in the monitoring device that has the given deviceAddress and portLabel.
 	 * 
 	 * @param macAddress : an string representing any of the MacAddress, Ip Address, or Serial fields.
-	 * @param portLabel : port label identifying the port to which the transformation belongs to.
+	 * @param topicName : topic Name for identifying the port to which the transformation belongs to.
 	 * 
 	 * @return Class name registered for the monitoring device and port label. If not found returns null.
 	 */
-	public String getClassName(String macAddress, String portLabel){
-		return this.getMonitoringDevice(macAddress).getClassName(portLabel);
+	public String getClassName(String macAddress, String topicName){
+		return ((MqttMonitoringDevice)this.getMonitoringDevice(macAddress)).getClassName(topicName);
 	}
 	
 	/**
-	 * Gets the measured entity configured in the monitoring device that has the given deviceAddress and portLabel.
+	 * Gets the measured entity configured in the monitoring device that has the given deviceAddress and topicName.
 	 * 
 	 * @param macAddress : an string representing any of the MacAddress, Ip Address, or Serial fields.
-	 * @param portLabel : port label identifying the port to which the transformation belongs to.
+	 * @param topicName : topic name.
 	 * 
 	 * @return measured entity registered for the monitoring device and port label. If not found returns null.
 	 */
-	public Integer getMeasuredEntity(String monitoringAddress, String portLabel){
-		logger.debug("start getMeasuredEntity params:" + monitoringAddress + "|" + portLabel);
+	public Integer getMeasuredEntity(String monitoringAddress, String topicName){
+		logger.debug("start getMeasuredEntity params:" + monitoringAddress + "|" + topicName);
 		
 		MonitoringDevice mDevice = this.getMonitoringDevice(monitoringAddress); 
 		if ( mDevice == null){
 			logger.error("Monitoring Device with address:"+ monitoringAddress +" not found");
 			return null;
 		}
-		else { 		
-			if (mDevice.getInputOutputPort(portLabel) == null){
-				logger.error("Port:"+ portLabel + " not found in monitoring device");
+		else if (mDevice instanceof MqttMonitoringDevice) {
+			if (((MqttMonitoringDevice) mDevice).getMqttInputOutputPort(topicName) == null){
+				logger.error("topicName:"+ topicName + " not found in monitoring device");
 				return null;
 			} 
 			else {
-				return mDevice.getInputOutputPort(portLabel).getMeasuringEntity();
+				return ((MqttMonitoringDevice) mDevice).getMqttInputOutputPort(topicName).getMeasuringEntity();
 			}
+			
+		} else { 		
+
+			logger.error("Monitoring Device with address:" + monitoringAddress + " is not a Mqtt Device");
+			return null;
 		}
 	}
 }

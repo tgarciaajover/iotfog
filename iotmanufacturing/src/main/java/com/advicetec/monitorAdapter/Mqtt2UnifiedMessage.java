@@ -13,6 +13,7 @@ import com.advicetec.MessageProcessor.SampleMessage;
 import com.advicetec.MessageProcessor.UnifiedMessage;
 import com.advicetec.configuration.ConfigurationManager;
 import com.advicetec.configuration.MonitoringDevice;
+import com.advicetec.configuration.MqttMonitoringDevice;
 import com.advicetec.configuration.SystemConstants;
 import com.advicetec.eventprocessor.ModBusTcpEventType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
@@ -87,8 +88,8 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
 
-		MonitoringDevice device = confManager.getMonitoringDevice(deviceID);
-		String transformation = confManager.getTransformation(deviceID, portLabel);
+		MqttMonitoringDevice device = (MqttMonitoringDevice) confManager.getMonitoringDevice(deviceID);
+		String transformation = confManager.getTransformation(deviceID, topic);
 		String className = confManager.getClassName(deviceID, portLabel);
 
 		logger.debug("className param:" + className);
@@ -108,7 +109,7 @@ public class Mqtt2UnifiedMessage implements ProtocolConverter
 			// creates the SampleMessage object.
 			if (measuringEntityId != null){
 				ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
-				theList.add(new SampleMessage(device, device.getInputOutputPort(portLabel), 
+				theList.add(new SampleMessage(device, device.getMqttInputOutputPort(portLabel), 
 						measuringEntityId, values, transformation));
 				return theList;
 			} else {

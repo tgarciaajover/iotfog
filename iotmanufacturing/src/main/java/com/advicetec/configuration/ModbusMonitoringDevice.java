@@ -220,19 +220,6 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 		return null;
 		
 	}
-
-	
-	/**
-	 * Gets an input output port by port label
-	 * 
-	 * @param portLabel  port label to find.
-	 * @return input output port object or null if there is not a port with that port label.
-	 */
-	@JsonIgnore
-	public ModbusInputOutputPort getInputOutputPort(String portLabel){
-		Integer id = this.portsByLabel.get(portLabel);
-		return (ModbusInputOutputPort) getInputOutputPort(id);
-	}
 	
 	/**
 	 * Gets the Modbus events that are required to schedule for this measuring device
@@ -245,8 +232,9 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 		
 		if (this.isConcentrator) {
 			
-			ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(this.isConcentrator(), this.getIp_address(), this.getPort(),
-					this.getRefreshTime(), this.getObject_type(), this.getAccess(), 
+			ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(   			
+					this.isConcentrator(), null, this.getIp_address(), 
+					this.getPort(), this.getRefreshTime(), this.getObject_type(), this.getAccess(), 
 					this.getUnit_id(), this.getOffset(), this.getNbr_read());
 			
 		} else {
@@ -269,8 +257,9 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 					Integer refreshTimeMs = inputOutputPort.getRefreshTimeMs();
 	
 					if (refreshTimeMs.compareTo(0) > 0){
-						ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(this.isConcentrator(), ipAddress,  
-										port, refreshTimeMs, objectType, access, unit_id, offset, nbrRead);
+						ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(
+								this.isConcentrator(), inputOutputPort, ipAddress, port, refreshTimeMs, 
+								objectType, access, unit_id, offset, nbrRead);
 						if (modBusEvent != null)
 							events.add(modBusEvent);
 					} else {

@@ -715,7 +715,6 @@ public class MeasuredEntityContainer extends Container
 
 		try 
 		{
-
 			super.connect();
 			logger.debug("in getModbusEvents:" );
 
@@ -726,7 +725,7 @@ public class MeasuredEntityContainer extends Container
 			{
 				Integer id_measuring_device = rs5.getInt("id_measuring_device");
 				Integer id_port 			= rs5.getInt("id_port");
-				String ipaddress        	= rs5.getString("ip_address");
+				String ipAddress        	= rs5.getString("ip_address");
 				Integer measured_entity_id  = rs5.getInt("measured_entity_id");  
 				Integer port        		= rs5.getInt("port");
 				Integer unitId 				= rs5.getInt("unit_id");
@@ -738,15 +737,16 @@ public class MeasuredEntityContainer extends Container
 				
 				MonitoringDeviceContainer monitoringDeviceCon = ConfigurationManager.getInstance().getMonitoringDeviceContainer();
 				ModbusMonitoringDevice monitoring_device = (ModbusMonitoringDevice) monitoringDeviceCon.getObject(id_measuring_device);
-				ModbusInputOutputPort inputOutputPort = monitoring_device.getInputOutputPort("id_port");
+				ModbusInputOutputPort inputOutputPort = monitoring_device.getInputOutputPort(id_port);
 				
 				if (refreshTimeMs > 0){
-					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(false, inputOutputPort, ipaddress, 
-																				measured_entity_id, portLabel, refreshTimeMs);
+					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(false, inputOutputPort, ipAddress, port,
+							refreshTimeMs, objectType, access, unitId, offSet, nbrRead);
+
 					if (modBusEvent != null)
 						events.add(modBusEvent);
 				} else {
-					logger.error("Refresh time is zero for Port label:" + portLabel + " which is invalid");
+					logger.error("Refresh time is zero for modbus port:" + id_port + " which is invalid");
 				}
 			}
 			rs5.close();

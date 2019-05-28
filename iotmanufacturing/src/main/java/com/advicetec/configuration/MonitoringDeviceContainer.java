@@ -305,8 +305,6 @@ public class MonitoringDeviceContainer extends Container
 				}
 			}
 
-			mDeviceTemp.updateIndexes();
-
 		} catch (JsonParseException e) {
 			logger.error(e.getMessage());
 			e.printStackTrace();

@@ -1,7 +1,8 @@
 package com.advicetec.configuration;
 
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -17,6 +18,14 @@ public class MqttMonitoringDevice extends MonitoringDevice {
 	 * This property establishes the port to be connected
 	 */
 	protected int port;
+	
+	/**
+	 * Map between the label of the part and its identifier. 
+	 * This maps is a helper structure to make faster port look ups by port label.
+	 */
+	@JsonIgnore
+	protected Map<String, Integer> portsByTopic; 
+
 	
 	/**
 	 * Gets the port for the monitoring device. This value is used when the monitoring device is a
@@ -45,6 +54,8 @@ public class MqttMonitoringDevice extends MonitoringDevice {
 	@JsonCreator
 	public MqttMonitoringDevice(@JsonProperty("id") Integer id) {
 		super(id);
+		portsByTopic = new HashMap<String, Integer>();
+
 	}
 
 	/**
@@ -64,6 +75,7 @@ public class MqttMonitoringDevice extends MonitoringDevice {
 		return null;
 	}
 	
+
 	/**
 	 * Gets an input output port by port label
 	 * 
@@ -71,13 +83,77 @@ public class MqttMonitoringDevice extends MonitoringDevice {
 	 * @return input output port object or null if there is not a port with that port label.
 	 */
 	@JsonIgnore
-	public MqttInputOutputPort 
-	getInputOutputPort(String portLabel){
-		Integer id = this.portsByLabel.get(portLabel);
+	public MqttInputOutputPort  getMqttInputOutputPort(String topicName){
+		Integer id = this.portsByTopic.get(topicName);
 		return (MqttInputOutputPort) getInputOutputPort(id);
 	}
 
+	/**
+	 * Gets the transformation text associated to the port, it search the port by port label.  
+	 * 
+	 * @param topicName  Topic Name to search.
+	 * @return transformation text assigned or null if port label not found.
+	 */
+	@JsonIgnore
+	public String getTranformation(String topicName){
+		logger.debug("Topic name requested:" + topicName + "Port id:" + id);
+		Integer id = this.portsByTopic.get(topicName);
+		if (getInputOutputPort(id) == null){
+			logger.debug("Error Label Port: " + id + " not found");
+			return null;
+		} else {
+			return  getInputOutputPort(id).getTransformationText();
+		}
+		
+	}
+	
+	/**
+	 * Gets the class name that will be used to interpret the signal. 
+	 * This is configured in the port's signal.
+	 * 
+	 * @param topicName topic name which is being searched.
+	 * @return class name associated to the port with topic name. Null if not found.
+	 */
+	
+	@JsonIgnore
+	public String getClassName(String topicName){
+		Integer id = this.portsByTopic.get(topicName);
 
+		if (getInputOutputPort(id) == null){
+			logger.debug("Error Label Port: " + id + " not found");
+			return null;
+		} else {
+			return getInputOutputPort(id).getSignalType().getType().getClassName();
+		}
+	}
+	
+
+	/**
+	 * Adds a port into the list of input output ports.
+	 * 
+	 * @param iop Input - Output port object to add.
+	 */
+	public void putInputOutputPort(MqttInputOutputPort iop){
+		logger.debug("port label:" + iop.getPortLabel() + "Id:" + iop.getId());
+		this.inputOutputPorts.add(iop);
+		this.portsByTopic.put(iop.getTopicName(), iop.getId());
+	}
+
+	/**
+	 * Indexes are maps used to speed up looks ups of instances.
+	 * 
+	 * for now the portsByLabel index is the only one. 
+	 */
+	public void updateIndexes() {
+		
+		this.portsByTopic.clear();
+		
+		for (int i = 0; i < this.inputOutputPorts.size(); i++){
+			MqttInputOutputPort inputOutputPort = (MqttInputOutputPort) this.inputOutputPorts.get(i);
+			this.portsByTopic.put(inputOutputPort.getTopicName(), inputOutputPort.getId());
+		}
+		
+	}
 
 	
 }

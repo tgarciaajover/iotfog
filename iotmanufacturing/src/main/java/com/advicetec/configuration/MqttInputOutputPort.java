@@ -20,11 +20,19 @@ public class MqttInputOutputPort extends InputOutputPort {
 		super(id);
 	}
 
-	public String getTopic_name() {
+	/**
+	 * Gets topic name used in mqtt
+	 * @return topic name
+	 */
+	public String getTopicName() {
 		return topicName;
 	}
 
-	public void setTopic_name(String topic_name) {
+	/**
+	 * Sets topic name used in mqtt
+	 * @param topicName
+	 */
+	public void setTopicName(String topic_name) {
 		this.topicName = topic_name;
 	}
 		
