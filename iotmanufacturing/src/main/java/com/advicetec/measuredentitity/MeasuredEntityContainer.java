@@ -741,7 +741,8 @@ public class MeasuredEntityContainer extends Container
 				ModbusInputOutputPort inputOutputPort = monitoring_device.getInputOutputPort("id_port");
 				
 				if (refreshTimeMs > 0){
-					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(false, inputOutputPort, ipaddress, measured_entity_id, portLabel, refreshTimeMs);
+					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(false, inputOutputPort, ipaddress, 
+																				measured_entity_id, portLabel, refreshTimeMs);
 					if (modBusEvent != null)
 						events.add(modBusEvent);
 				} else {
