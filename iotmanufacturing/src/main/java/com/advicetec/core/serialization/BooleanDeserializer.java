@@ -24,6 +24,9 @@ public class BooleanDeserializer extends JsonDeserializer<Boolean>
     	if (arg0.getText().compareTo("Y") == 0){
     		return new Boolean(true);
     	} 
+    	if (arg0.getText().toLowerCase().compareTo("true") == 0){
+    		return new Boolean(true);
+    	}
     	
         return new Boolean(false);
     }

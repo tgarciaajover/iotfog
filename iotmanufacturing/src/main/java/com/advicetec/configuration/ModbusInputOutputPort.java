@@ -2,6 +2,13 @@ package com.advicetec.configuration;
 
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
+import com.advicetec.core.serialization.ModbusAccessDeserializer;
+import com.advicetec.core.serialization.ModbusAccessSerializer;
+import com.advicetec.core.serialization.ModbusObjectTypeDeserializer;
+import com.advicetec.core.serialization.ModbusObjectTypeSerializer;
 
 public class ModbusInputOutputPort extends InputOutputPort {
 
@@ -36,6 +43,8 @@ public class ModbusInputOutputPort extends InputOutputPort {
 	 * In the case of concentrator it is null. 
 	 */	
 	@JsonProperty("object_type")
+	@JsonSerialize(using = ModbusObjectTypeSerializer.class)
+	@JsonDeserialize(using = ModbusObjectTypeDeserializer.class)	
 	protected ModbusObjectType objectType;
 
 	/**
@@ -43,6 +52,8 @@ public class ModbusInputOutputPort extends InputOutputPort {
 	 * In the case of concentrator it is null. 
 	 */	
 	@JsonProperty("access")
+	@JsonSerialize(using = ModbusAccessSerializer.class)
+	@JsonDeserialize(using = ModbusAccessDeserializer.class)	
 	protected ModbusAccess access;
 	
 	/**

@@ -110,9 +110,9 @@ public class MeasureAttributeValueCache extends Configurable {
 	 */	
 	final private static String sqlMeasureAttributeValueRangeSelect = "select timestamp, value_decimal, value_datetime, value_string, value_int, value_boolean, value_date, value_time from measuredattributevalue where id_owner = ? and owner_type = ? and attribute_name = ? and timestamp >= ? and timestamp <= ?";
 	
-	final private static String sqlMeasuredEntityTemporalitySelect = "select temporality from [iotajover].[dbo].[setup_machinehostsystem] where measuredentity_ptr_id = ?";
+	final private static String sqlMeasuredEntityTemporalitySelect = "select temporality from setup_machinehostsystem where measuredentity_ptr_id = ?";
 	
-	final private static String sqlActualRateVariableNameSelect = "select variable_rate from [iotajover].[dbo].[setup_machinehostsystem] where measuredentity_ptr_id = ?";
+	final private static String sqlActualRateVariableNameSelect = "select variable_rate from setup_machinehostsystem where measuredentity_ptr_id = ?";
 
 	/**
 	 * Column name from the query

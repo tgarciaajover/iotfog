@@ -18,7 +18,10 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.advicetec.eventprocessor.ModBusTcpEvent;
+import com.advicetec.measuredentitity.Machine;
 import com.advicetec.measuredentitity.MeasuredEntity;
+import com.advicetec.measuredentitity.MeasuredEntityType;
+import com.advicetec.measuredentitity.Plant;
 
 public class MonitoringDeviceContainer extends Container
 {
@@ -28,18 +31,48 @@ public class MonitoringDeviceContainer extends Container
 	/**
 	 * SQL statement to select configured data of monitoring devices. 
 	 */
-	static String sqlSelect1 = "SELECT id, device_type_id, descr, ip_address, mac_address, serial, create_date FROM setup_monitoringdevice";
+	static String sqlSelect1 = "SELECT id, device_type_id, type, descr, ip_address, mac_address, serial, create_date FROM setup_monitoringdevice";
 	
 	/**
-	 * SQL statement to select configured data of input output port related to monitoring devices. 
+	 * SQL statement to select configured data of modbus input output port related to monitoring devices. 
 	 */
-	static String sqlSelect2 = "SELECT id, transformation_text, device_id, signal_type_id, port_label, refresh_time_ms,  measured_entity_id FROM setup_inputoutputport";
-
+	static String sqlSelect2_modbus = " SELECT a.id, a.transformation_text, a.signal_type_id, a.port_label, " +
+									  " a.refresh_time_ms,  a.measured_entity_id, b.device_id, b.port, b.unit_id, " +
+									  " b.offset, b.nbr_read, b.object_type, b.access " +
+									  " FROM setup_inputoutputport a, setup_modbusinputoutputport b " +
+									  " WHERE a.id = b.inputoutputport_ptr_id";
+	
+	/**
+	 * SQL statement to select configured data of mqtt input output port related to monitoring devices. 
+	 */
+	static String sqlSelect2_mqtt = " SELECT a.id, a.transformation_text, a.signal_type_id, a.port_label, " + 
+									"		 a.refresh_time_ms,  a.measured_entity_id, b.device_id, b.topic_name " + 
+									" FROM setup_inputoutputport a, setup_mqttinputoutputport b " + 
+									" WHERE a.id = b.inputoutputport_ptr_id";		
+	
 	/**
 	 * SQL statement to select modbus ports that must create new events. 
 	 */
-	static String sqlSelect3 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id and d.id = ";
+	static String sqlSelect3 = "SELECT d.ip_address, c.measured_entity_id, c.port_label, c.refresh_time_ms " +
+			                   " from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d " +
+			                   " where b.protocol = 'M' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id and d.id = ";
+
+	static String sqlSelect4 = "SELECT is_concentrator, port, unit_id, \"offset\", \"access\", nbr_read, object_type, refresh_time_ms " + 
+							   " from setup_modbusmonitoringdevice " + 
+							   " where monitoringdevice_ptr_id = ";
 	
+	static String sqlSelect5 = "SELECT port " + 
+							   " from setup_mqttmonitoringdevice " + 
+							   " where monitoringdevice_ptr_id = ";
+
+	static String sqlSelect6 = "select object_type, \"access\", nbr_read, \"offset\", port, unit_id" + 
+				" from setup_modbusinputoutputport " + 
+				" where inputoutputport_ptr_id = ";
+
+	static String sqlSelect7 = "SELECT topic_name " + 
+			   " from setup_mqttinputoutputport " + 
+			   " where inputoutputport_ptr_id = ";
+
 	/**
 	 * Maps to make faster lookups by macaddresses. Given the mac address, it returns the identifier of the measuring device configured with that address.
 	 */
@@ -88,71 +121,156 @@ public class MonitoringDeviceContainer extends Container
 			ResultSet rs1 = super.pst.executeQuery(sqlSelect1);
 			while (rs1.next())
 			{
-				Integer id     			= rs1.getInt("id");
-		        String descr   			= rs1.getString("descr");
-		        Integer deviceTypeId    = rs1.getInt("device_type_id");
-		        String ipAddress   		= rs1.getString("ip_address");
-		        String macAddress 		= rs1.getString("mac_address");
-		        String serial	 		= rs1.getString("serial");
-		        Timestamp timestamp 	= rs1.getTimestamp("create_date");
+				Integer id     				= rs1.getInt("id");
+		        String descr   				= rs1.getString("descr");
+		        Integer deviceTypeId    	= rs1.getInt("device_type_id");
+		        String monitoringDeviceType = rs1.getString("type");
+		        String ipAddress   			= rs1.getString("ip_address");
+		        String macAddress 			= rs1.getString("mac_address");
+		        String serial	 			= rs1.getString("serial");
+		        Timestamp timestamp 		= rs1.getTimestamp("create_date");
 		        		        
 		        DeviceType deviceType = (DeviceType) this.getReferencedObject("DeviceType", deviceTypeId);
+		        MonitoringDeviceType monitoringDType = MonitoringDeviceType.from(Integer.parseInt(monitoringDeviceType));
 		        
-		        MonitoringDevice object = new MonitoringDevice(id);
-		        object.setDescr(descr);
-		        object.setIp_address(ipAddress);
-		        object.setMac_addres(macAddress);
-		        object.setSerial(serial);
-		        object.setType(deviceType);
-		        object.setCreate_date(timestamp.toLocalDateTime());
+		        MonitoringDevice object = null;
 		        
-		        super.configuationObjects.put(id, object);
-		        
-		        if (macAddress != null){
-			        if (!macAddress.isEmpty())
-			        	indexByMac.put(macAddress,id);
+		        switch (monitoringDType)
+		        {
+		        	case MODBUS:
+		        		object = new ModbusMonitoringDevice(id);
+		        		break;
+		        	case MQTT:
+		        		object = new MqttMonitoringDevice(id);
+		        		break;
+		        	case INVALID:
+		        		logger.error("Invalid monitoring device type - value:" + monitoringDType.getValue() );
+		        		break;
 		        }
 		        
-		        if (ipAddress != null){
-			        if (!ipAddress.isEmpty())
-			        	indexByIpAddress.put(ipAddress, id);
-		        }
-		        
-		        if (serial != null){
-			        if (!serial.isEmpty())
-			        	indexBySerial.put(serial,id);
+		        if (object != null) {
+			        object.setDescr(descr);
+			        object.setIp_address(ipAddress);
+			        object.setMac_addres(macAddress);
+			        object.setSerial(serial);
+			        object.setType(deviceType);
+			        object.setCreate_date(timestamp.toLocalDateTime());
+			        object.setMonitoringDeviceType(monitoringDType);
+			        
+			        super.configuationObjects.put(id, object);
+			        
+			        if (macAddress != null){
+				        if (!macAddress.isEmpty())
+				        	indexByMac.put(macAddress,id);
+			        }
+			        
+			        if (ipAddress != null){
+				        if (!ipAddress.isEmpty())
+				        	indexByIpAddress.put(ipAddress, id);
+			        }
+			        
+			        if (serial != null){
+				        if (!serial.isEmpty())
+				        	indexBySerial.put(serial,id);
+			        }
 		        }
 			}
 			
 			rs1.close();
 			
-			ResultSet rs2 = super.pst.executeQuery(sqlSelect2);
+			// loop through the measuring devices and load their data
+			for( Integer id : this.configuationObjects.keySet()){
+				MonitoringDevice measuringDevice = (MonitoringDevice) this.configuationObjects.get(id);
+				if (measuringDevice.getMonitoringDeviceType() == MonitoringDeviceType.MODBUS){
+					// load modbus measuring device information
+					loadModBusMonitoringDevice((ModbusMonitoringDevice) measuringDevice);
+				} else if (measuringDevice.getMonitoringDeviceType() == MonitoringDeviceType.MQTT){
+					// load Mqtt measuring device information
+					loadMqttMonitoringDevice((MqttMonitoringDevice) measuringDevice);
+				} else {
+					logger.error("Measuring device: " + Integer.toString(id) + "has not a valid measuring device type");
+				}				
+			}
+		
+			
+			ResultSet rs2 = super.pst.executeQuery(sqlSelect2_modbus);
 			while (rs2.next())
 			{		     
 
 				Integer id     			= rs2.getInt("id"); 
 		        String transformation	= rs2.getString("transformation_text");
-		        Integer deviceId    	= rs2.getInt("device_id");
 		        Integer signalTypeId	= rs2.getInt("signal_type_id");
 		        String portLabel		= rs2.getString("port_label");
 		        Integer refreshTimeMs   = rs2.getInt("refresh_time_ms");
 		        Integer measuredEntityId = rs2.getInt("measured_entity_id");
-		        		        
-		        MonitoringDevice device= (MonitoringDevice) this.getObject(deviceId);
-		        Signal signal = (Signal)  this.getReferencedObject("Signal", signalTypeId);
+		        Integer deviceId    	= rs2.getInt("device_id");
+		        Integer port			= rs2.getInt("port");
+		        Integer unitId			= rs2.getInt("unit_id");
+		        Integer offset			= rs2.getInt("offset");
+		        Integer nbrRead			= rs2.getInt("nbr_read");
+		        String objectType		= rs2.getString("object_type");
+		        String access			= rs2.getString("access");
+		          
+		        ModbusMonitoringDevice device = (ModbusMonitoringDevice) this.getObject(deviceId);
+		        Signal signal = (Signal) this.getReferencedObject("Signal", signalTypeId);
 		        
-		        InputOutputPort port = new InputOutputPort(id);
-		        port.setSignalType(signal);
-		        port.setTransformationText(transformation);
-		        port.setPortLabel(portLabel);
-		        port.setMeasuringEntity(measuredEntityId);
-		        port.setRefreshTimeMs(refreshTimeMs);
+		        ModbusInputOutputPort inputOutputPort = new ModbusInputOutputPort(id);		        
+		        inputOutputPort.setSignalType(signal);
+		        inputOutputPort.setTransformationText(transformation);
+		        inputOutputPort.setPortLabel(portLabel);
+		        inputOutputPort.setMeasuringEntity(measuredEntityId);
+		        inputOutputPort.setRefreshTimeMs(refreshTimeMs);
+		        inputOutputPort.setPort(port);
+		        inputOutputPort.setUnit_id(unitId);
+		        inputOutputPort.setOffset(offset);
+		        inputOutputPort.setNbr_read(nbrRead);
 		        
-		        device.putInputOutputPort(port);
+		        if ((objectType.isEmpty()) || (objectType == null)) {
+		        	inputOutputPort.setObjectType(ModbusObjectType.INVALID);
+		        } else {
+		        	inputOutputPort.setObjectType(ModbusObjectType.from(Integer.parseInt(objectType)));
+		        }
+		        
+		        if ((access.isEmpty()) || (access == null)) {
+		        	inputOutputPort.setAccess(ModbusAccess.INVALID);
+		        } else {
+		        	inputOutputPort.setAccess(ModbusAccess.from(Integer.parseInt(access)));
+		        }
+
+		        device.putInputOutputPort(inputOutputPort);
 			}
 			
 			rs2.close();
+
 			
+			rs2 = super.pst.executeQuery(sqlSelect2_mqtt);
+			while (rs2.next())
+			{		     
+
+				Integer id     			= rs2.getInt("id"); 
+		        String transformation	= rs2.getString("transformation_text");
+		        Integer signalTypeId	= rs2.getInt("signal_type_id");
+		        String portLabel		= rs2.getString("port_label");
+		        Integer refreshTimeMs   = rs2.getInt("refresh_time_ms");
+		        Integer measuredEntityId = rs2.getInt("measured_entity_id");
+		        Integer deviceId    	= rs2.getInt("device_id");
+		        String topicName		= rs2.getString("topic_name");
+		          
+		        MqttMonitoringDevice device = (MqttMonitoringDevice) this.getObject(deviceId);
+		        Signal signal = (Signal) this.getReferencedObject("Signal", signalTypeId);
+		        
+		        MqttInputOutputPort inputOutputPort = new MqttInputOutputPort(id);		        
+		        inputOutputPort.setSignalType(signal);
+		        inputOutputPort.setTransformationText(transformation);
+		        inputOutputPort.setPortLabel(portLabel);
+		        inputOutputPort.setMeasuringEntity(measuredEntityId);
+		        inputOutputPort.setRefreshTimeMs(refreshTimeMs);
+		        inputOutputPort.setTopicName(topicName);
+		        
+		        device.putInputOutputPort(inputOutputPort);
+			}
+			
+			rs2.close();
 			super.disconnect();
 			
 		} catch (ClassNotFoundException e){
@@ -374,6 +492,169 @@ public class MonitoringDeviceContainer extends Container
 		}
 		
 		return mDeviceTemp;
+	}
+
+	/**
+	 * Reads information from the database and sets that data into the 
+	 * ModBus Monitoring Device object given by parameter.
+	 * 
+	 * @param Monitoring Device to store read data.
+	 * @see Mod Bus Monitoring Device
+	 */
+	private void loadModBusMonitoringDevice(ModbusMonitoringDevice modbusDevice) {
+
+		try 
+		{
+			String sqlSelect = sqlSelect4 + String.valueOf(modbusDevice.getId());  
+			ResultSet rs = super.pst.executeQuery(sqlSelect);
+
+			while (rs.next()) 
+			{
+				
+				boolean isConcentrator 	= rs.getBoolean("is_concentrator");
+				int port      			= rs.getInt("port");
+				int unit_id 			= rs.getInt("unit_id");				
+				int offset 				= rs.getInt("offset");
+				String access 			= rs.getString("access");				
+				int nbrRead 			= rs.getInt("nbr_read");
+				String objectType 		= rs.getString("object_type");
+				int refreshTimeMs  		= rs.getInt("refresh_time_ms");
+
+				modbusDevice.setConcentrator(isConcentrator);
+				modbusDevice.setPort(port);
+				modbusDevice.setUnit_id(unit_id);
+				modbusDevice.setOffset(offset);
+				modbusDevice.setNbr_read(nbrRead);
+				modbusDevice.setRefreshTime(refreshTimeMs);
+				
+				if ((access != null) && (access.compareTo("") != 0))
+					modbusDevice.setAccess(ModbusAccess.from(Integer.parseInt(access)));
+				else
+					modbusDevice.setAccess(ModbusAccess.INVALID);
+				
+				if ((objectType != null) && (objectType.compareTo("") != 0))
+					modbusDevice.setObject_type(ModbusObjectType.from(Integer.parseInt(objectType)));
+				else
+					modbusDevice.setObject_type(ModbusObjectType.INVALID);
+
+			}
+			
+			rs.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+
+	/**
+	 * Reads information from the database and sets that data into the 
+	 * Mqtt Monitoring Device object given by parameter.
+	 * 
+	 * @param Mqtt Monitoring Device to store read data.
+	 * @see Mqtt Monitoring Device
+	 */
+	private void loadMqttMonitoringDevice(MqttMonitoringDevice mqttDevice) {
+
+		try 
+		{
+			String sqlSelect = sqlSelect5 + String.valueOf(mqttDevice.getId());  
+			ResultSet rs = super.pst.executeQuery(sqlSelect);
+
+			while (rs.next()) 
+			{
+				
+				int port      			= rs.getInt("port");
+
+				mqttDevice.setPort(port);
+				
+			}
+			rs.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Reads information from the database and sets that data into the 
+	 * Modbus Input Output Port object given by parameter.
+	 * 
+	 * @param Modbus Input Output Port to store read data.
+	 * @see Modbus Input Output Port
+	 */
+	private void loadModbusInputOutputPort(ModbusInputOutputPort modbusInputOutputPort) {
+
+		try 
+		{
+			String sqlSelect = sqlSelect6 + String.valueOf(modbusInputOutputPort.getId());  
+			ResultSet rs = super.pst.executeQuery(sqlSelect);
+
+			while (rs.next()) 
+			{
+				
+				int port      			= rs.getInt("port");
+				int unitId 				= rs.getInt("unit_id");				
+				int offset 				= rs.getInt("offset");
+				String access 			= rs.getString("access");				
+				int nbrRead 			= rs.getInt("nbr_read");
+				String objectType 		= rs.getString("object_type");
+
+				modbusInputOutputPort.setPort(port);
+				modbusInputOutputPort.setUnit_id(unitId);
+				modbusInputOutputPort.setOffset(offset);
+				modbusInputOutputPort.setNbr_read(nbrRead);
+				
+				if ((objectType != null) && (objectType.compareTo("") != 0))
+					modbusInputOutputPort.setObjectType(ModbusObjectType.from(Integer.parseInt(objectType)));
+				else
+					modbusInputOutputPort.setObjectType(ModbusObjectType.INVALID);
+				
+				if ((access != null) && (access.compareTo("") != 0))
+					modbusInputOutputPort.setAccess(ModbusAccess.from(Integer.parseInt(access)));
+				else
+					modbusInputOutputPort.setAccess(ModbusAccess.INVALID);
+			}
+			
+			rs.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+
+	/**
+	 * Reads information from the database and sets that data into the 
+	 * Mqtt Input Output Port object given by parameter.
+	 * 
+	 * @param Mqtt Input Output Port to store read data.
+	 * @see Mqtt Input Output Port
+	 */
+	private void loadMqttInputOutputPort(MqttInputOutputPort mqttInputOutputPort) {
+
+		try 
+		{
+			String sqlSelect = sqlSelect7 + String.valueOf(mqttInputOutputPort.getId());  
+			ResultSet rs = super.pst.executeQuery(sqlSelect);
+
+			while (rs.next()) 
+			{
+				
+				String topicName	= rs.getString("topic_name");
+				mqttInputOutputPort.setTopicName(topicName);
+				
+			}
+			
+			rs.close();
+
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	/*

@@ -83,7 +83,7 @@ public class SampleProcessor implements Processor
 	{
 		// Finds the measuring Entity involved. The string value is always not null
 		Integer measuringEntity = sample.getmEntity();
-		Integer mearuringDevice = sample.getmDevice().getId();
+		Integer measuringDevice = sample.getmDevice().getId();
 		Integer ioPort = sample.getPort().getId();
 		// Finds the program Transformation related to the sample.
 		String program = sample.getMeaningTransformation();
@@ -163,7 +163,7 @@ public class SampleProcessor implements Processor
 							
 							logger.debug("Symbol:" + symbolId + "behavior:" + behavior);
 							// We don't send parameters to the event. 
-							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, entityFacade.getType(), mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
+							MeasuredEntityEvent event = new MeasuredEntityEvent(behavior, measuringEntity, entityFacade.getType(), measuringDevice, ioPort, new ArrayList<InterpretedSignal>());
 							event.setRepeated(repeated);
 							event.setMilliseconds(duetime);
 
@@ -181,7 +181,7 @@ public class SampleProcessor implements Processor
 							
 							logger.debug("Symbol:" + symbolId + " aggregateMethod:" + aggregateMethod+" : measuringEntity "+measuringEntity);
 							// We don't send parameters to the event. 
-							SchedAggregateEntityEvent event = new SchedAggregateEntityEvent(aggregateMethod, measuringEntity,mearuringDevice, ioPort, new ArrayList<InterpretedSignal>());
+							SchedAggregateEntityEvent event = new SchedAggregateEntityEvent(aggregateMethod, measuringEntity,measuringDevice, ioPort, new ArrayList<InterpretedSignal>());
 							event.setRepeated(repeated);
 							event.setMilliseconds(duetime);
 

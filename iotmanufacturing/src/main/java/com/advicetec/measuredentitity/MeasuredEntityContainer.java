@@ -56,29 +56,48 @@ public class MeasuredEntityContainer extends Container
 	static String sqlSelect2 = "SELECT id, name, descr, behavior_text, create_date, last_updttm, measure_entity_id FROM setup_measuredentitybehavior WHERE measure_entity_id = ";
 	static String sqlSelect3 = "SELECT id, state_behavior_type, descr, behavior_text, create_date, last_updttm from setup_measuredentitystatebehavior WHERE measure_entity_id = ";
 	static String sqlSelect4 = "SELECT id, state_from, behavior_id, measure_entity_id, reason_code_id, create_date, last_updttm FROM setup_measuredentitytransitionstate WHERE measure_entity_id = ";
-	static String sqlSelect5 = "SELECT c.id, d.ip_address, c.measured_entity_id, f.port, f.unit_id, f.offset, c.refresh_time_ms, f.object_type, f.access, f.nbr_read" + 
-								 "from setup_signal a, setup_signaltype b," + 
-								 "setup_inputoutputport c, setup_modbusinputoutputport f," + 
-								 "setup_monitoringdevice d, setup_modbusmonitoringdevice e " + 
-								 "where b.protocol = 'M' " + 
+	static String sqlSelect5 = "SELECT c.id as id_port, d.id as id_measuring_device, d.ip_address, c.measured_entity_id, f.port, f.unit_id, f.offset, c.refresh_time_ms, f.object_type, f.access, f.nbr_read" + 
+								 " from setup_signal a, setup_signaltype b," + 
+								 " setup_inputoutputport c, setup_modbusinputoutputport f," + 
+								 " setup_monitoringdevice d, setup_modbusmonitoringdevice e " + 
+								 " where b.protocol = 'M' " + 
 								 "  and a.type_id = b.id " + 
 								 "  and c.signal_type_id = a.id " + 
-								 "  and d.id = c.device_id " + 
+								 "  and d.id = f.device_id " + 
 								 "  and e.monitoringdevice_ptr_id = d.id " + 
 								 "  and e.is_concentrator = false" + 
 								 "  and f.inputoutputport_ptr_id = c.id";
+		
 	static String sqlSelect6 = "SELECT id, scheduled_event_type, descr, recurrences, day_time, create_date, last_updttm FROM setup_measuredentityscheduledevent WHERE measure_entity_id =";
-	static String sqlSelect7 = "SELECT count(*) from setup_signal a, setup_signaltype b, setup_inputoutputport c, setup_monitoringdevice d where b.protocol = 'Q' and a.type_id = b.id and c.signal_type_id = a.id and d.id = c.device_id";
-	static String sqlSelect8 = "SELECT TOP 1 related_object ,related_object_type FROM measuringentitystatusinterval a WHERE id_owner = ? and owner_type = ? and datetime_to <= ? and datetime_to  = ( select max(b.datetime_to) FROM measuringentitystatusinterval b WHERE b.id_owner = a.id_owner and b.owner_type = a.owner_type and b.datetime_to <= ? )";
-	static String sqlSelect9 = "SELECT d.ip_address, c.measured_entity_id, e.port, e.unit_id, e.offset, e.refresh_time_ms, e.object_type, e.access, e.nbr_read " + 
-								"from setup_signal a, setup_signaltype b, setup_inputoutputport c, " + 
+	
+	static String sqlSelect7 = "SELECT count(*) " +
+			  				   "  FROM setup_signal a, setup_signaltype b, " +
+			  				   " setup_inputoutputport c, setup_modbusinputoutputport f, " +
+			  				   " setup_monitoringdevice d, setup_mqttmonitoringdevice e " +
+			  				   " WHERE b.protocol = 'Q' and a.type_id = b.id " +
+			  				   " AND c.signal_type_id = a.id " +
+			  				   " AND f.inputoutputport_ptr_id = c.id " +
+			  				   " AND d.id = f.device_id " +
+			  				   " AND e.monitoringdevice_ptr_id = d.id ";
+	
+	static String sqlSelect8 = "SELECT related_object ,related_object_type " +
+							   " FROM measuringentitystatusinterval a WHERE id_owner = ? and " +
+						       " owner_type = ? and datetime_to <= ? and datetime_to = ( select max(b.datetime_to) " +
+ 							   " FROM measuringentitystatusinterval b WHERE b.id_owner = a.id_owner " +
+						       " and b.owner_type = a.owner_type and b.datetime_to <= ? ) limit 1";
+	
+	static String sqlSelect9 = "SELECT distinct d.id as id_measuring_device, d.ip_address, e.port, e.unit_id, e.offset, e.refresh_time_ms, e.object_type, e.access, e.nbr_read " + 
+								" from setup_signal a, setup_signaltype b,  " +
+								" setup_inputoutputport c, setup_modbusinputoutputport f, " +
 								" setup_monitoringdevice d, setup_modbusmonitoringdevice e " + 
-								"where b.protocol = 'M' " + 
-								"  and a.type_id = b.id " + 
-								"  and c.signal_type_id = a.id " + 
-								"  and d.id = c.device_id " + 
-								"  and e.monitoringdevice_ptr_id = d.id " + 
-								"  and e.is_concentrator = true";
+								"WHERE b.protocol = 'M' " + 
+								" and a.type_id = b.id " + 
+								" and c.signal_type_id = a.id " + 
+								" and c.id = f.inputoutputport_ptr_id " +
+								" and d.id = f.device_id " + 
+								" and e.monitoringdevice_ptr_id = d.id " + 
+								" and e.is_concentrator = true" +
+								" and exists ( select 'x' from setup_measuredentity g where g.id = c.measured_entity_id)";
 	
 	static String sqlMachineSelect = "SELECT * FROM setup_machinehostsystem WHERE measuredentity_ptr_id =";
 	static String sqlPlantSelect = "SELECT measuredentity_ptr_id, id_compania, id_sede, id_planta FROM setup_planthostsystem WHERE measuredentity_ptr_id =";
@@ -621,19 +640,18 @@ public class MeasuredEntityContainer extends Container
 		ResultSet rs8 = null;
 
 		try {
-			connDB = StateIntervalCache.getConnection();
-			connDB.setAutoCommit(false);
-			pstDB = connDB.prepareStatement(sqlSelect8);
-	
+
+			super.connect_prepared(sqlSelect8);
+
 			Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis()); 
-				
-			pstDB.setInt(1, entity.getId());
-			pstDB.setInt(2, entity.getType().getValue());
-			pstDB.setTimestamp(3, currentTimestamp);
-			pstDB.setTimestamp(4, currentTimestamp);
-				
+			
+			(( PreparedStatement) super.pst).setInt(1, entity.getId());
+			(( PreparedStatement) super.pst).setInt(2, entity.getType().getValue());
+			(( PreparedStatement) super.pst).setTimestamp(3, currentTimestamp);
+			(( PreparedStatement) super.pst).setTimestamp(4, currentTimestamp);
+			
 			logger.debug("sqlSelect executed object");
-			rs8 =  pstDB.executeQuery();
+			rs8 = (( PreparedStatement) super.pst).executeQuery();
 				
 			ProductionOrderManager productionOrderManager = ProductionOrderManager.getInstance();
 				
@@ -650,7 +668,15 @@ public class MeasuredEntityContainer extends Container
 					}
 				}
 			}
+			
 			rs8.close();
+			
+			super.disconnect();
+			
+		} catch (ClassNotFoundException e){
+        	String error = "Could not find the driver class - Error" + e.getMessage(); 
+        	logger.error(error);
+        	e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
 			logger.error(e.getMessage());
@@ -731,26 +757,102 @@ public class MeasuredEntityContainer extends Container
 				Integer unitId 				= rs5.getInt("unit_id");
 				Integer offSet 				= rs5.getInt("offset");
 				Integer refreshTimeMs       = rs5.getInt("refresh_time_ms");
-				ModbusObjectType objectType = ModbusObjectType.from(rs5.getInt("object_type"));
-				ModbusAccess access 		= ModbusAccess.from(rs5.getInt("access"));
+				
+				String objectType 			= rs5.getString("object_type");
+				String access 				= rs5.getString("access");
 				Integer nbrRead 			= rs5.getInt("nbr_read");
 				
+				ModbusObjectType modbusObjectType;
+				ModbusAccess modbusAccess;
+								
 				MonitoringDeviceContainer monitoringDeviceCon = ConfigurationManager.getInstance().getMonitoringDeviceContainer();
 				ModbusMonitoringDevice monitoring_device = (ModbusMonitoringDevice) monitoringDeviceCon.getObject(id_measuring_device);
-				ModbusInputOutputPort inputOutputPort = monitoring_device.getInputOutputPort(id_port);
-				
-				if (refreshTimeMs > 0){
-					ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(false, inputOutputPort, ipAddress, port,
-							refreshTimeMs, objectType, access, unitId, offSet, nbrRead);
 
-					if (modBusEvent != null)
-						events.add(modBusEvent);
+		        if ((objectType.isEmpty()) || (objectType == null)) {
+		        	modbusObjectType = ModbusObjectType.INVALID;
+		        } else {
+		        	modbusObjectType = ModbusObjectType.from(Integer.parseInt(objectType));
+		        }
+
+		        if ((access.isEmpty()) || (access == null)) {
+		        	modbusAccess = ModbusAccess.INVALID;
+		        } else {
+		        	modbusAccess = ModbusAccess.from(Integer.parseInt(access));
+		        }
+				
+				if (monitoring_device == null)
+					logger.error("Monitoring device not found" + id_measuring_device.toString());
+
+				if ((modbusObjectType == ModbusObjectType.INVALID) || (modbusAccess == ModbusAccess.INVALID)) {
+					logger.error("the port with id:" + String.valueOf(id_port) + " is not correctly parameterized" + id_measuring_device.toString());
 				} else {
-					logger.error("Refresh time is zero for modbus port:" + id_port + " which is invalid");
+				
+					ModbusInputOutputPort inputOutputPort = monitoring_device.getInputOutputPort(id_port);
+					
+					if (refreshTimeMs > 0){
+						ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(false, inputOutputPort, ipAddress, port,
+								refreshTimeMs, modbusObjectType, modbusAccess, unitId, offSet, nbrRead);
+	
+						if (modBusEvent != null)
+							events.add(modBusEvent);
+					} else {
+						logger.error("Refresh time is zero for modbus port:" + id_port + " which is invalid");
+					}
 				}
 			}
 			rs5.close();
 
+			
+			rs5 = super.pst.executeQuery(sqlSelect9);
+
+			while (rs5.next()) 
+			{
+				
+				Integer id_measuring_device = rs5.getInt("id_measuring_device");
+				String ipAddress			= rs5.getString("ip_address");
+				Integer port        		= rs5.getInt("port");
+				Integer unitId 				= rs5.getInt("unit_id");
+				Integer offSet 				= rs5.getInt("offset");
+				Integer refreshTimeMs       = rs5.getInt("refresh_time_ms");
+				String objectType 			= rs5.getString("object_type");
+				String access				= rs5.getString("access");
+				Integer nbrRead 			= rs5.getInt("nbr_read");
+
+				ModbusObjectType modbusObjectType;
+				ModbusAccess modbusAccess;
+
+		        if ((objectType.isEmpty()) || (objectType == null)) {
+		        	modbusObjectType = ModbusObjectType.INVALID;
+		        } else {
+		        	modbusObjectType = ModbusObjectType.from(Integer.parseInt(objectType));
+		        }
+
+		        if ((access.isEmpty()) || (access == null)) {
+		        	modbusAccess = ModbusAccess.INVALID;
+		        } else {
+		        	modbusAccess = ModbusAccess.from(Integer.parseInt(access));
+		        }
+
+				if ((modbusObjectType == ModbusObjectType.INVALID) || (modbusAccess == ModbusAccess.INVALID)) {
+					logger.error("The concentrator with id:" + String.valueOf(id_measuring_device) + " is not correctly parameterized" + id_measuring_device.toString());
+				} else {
+					MonitoringDeviceContainer monitoringDeviceCon = ConfigurationManager.getInstance().getMonitoringDeviceContainer();
+					ModbusMonitoringDevice monitoring_device = (ModbusMonitoringDevice) monitoringDeviceCon.getObject(id_measuring_device);
+											
+					if (refreshTimeMs > 0){
+						ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(true, null, ipAddress, port,
+								refreshTimeMs, modbusObjectType, modbusAccess, unitId, offSet, nbrRead);
+	
+						if (modBusEvent != null)
+							events.add(modBusEvent);
+					} else {
+						logger.error("Refresh time is zero for concentrator id:" + String.valueOf(id_measuring_device) + " which is invalid");
+					}
+				}
+			}
+			rs5.close();
+
+			
 			super.disconnect();
 
 		} catch (ClassNotFoundException e){

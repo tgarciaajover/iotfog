@@ -6,26 +6,25 @@ import java.util.Map;
 public enum ModbusAccess {
 
 	/**
+	 * Not a valid modbus access.
+	 */
+	INVALID(0, "Invalid"),
+	
+	/**
 	 * Read from the modbus slave
 	 */
-	READ(0, "Read"),
+	READ(1, "Read"),
 		
-	
 	/**
 	* Write from the modbus slave. 
 	*/
-	WRITE(1, "Write"),
+	WRITE(2, "Write"),
 		
 	/**
 	* Read/Write from the modbus slave. 
 	*/
-	READ_WRITE(2, "Read_Write"),
-			
-	/**
-	 * Not a valid modbus access.
-	 */
-	INVALID(3, "Invalid");
-		
+	READ_WRITE(3, "Read_Write");
+					
 	/**
 	* Unique code defining the modbus access
 	*/
@@ -40,10 +39,19 @@ public enum ModbusAccess {
 	* map to search for modbus access by codes.
 	*/
 	private static final Map<Integer, ModbusAccess> _map = new HashMap<Integer, ModbusAccess>();
+	
+	/**
+	* map to search for modbus access by name.
+	*/
+	private static final Map<String, ModbusAccess> _map_name = new HashMap<String, ModbusAccess>();
 		
 	static {
 		for(ModbusAccess access: ModbusAccess.values()){
 			_map.put(access.code, access);
+		}
+
+		for(ModbusAccess access: ModbusAccess.values()){
+			_map_name.put(access.name, access);
 		}
 	}
 		
@@ -74,7 +82,16 @@ public enum ModbusAccess {
 	public static ModbusAccess from(int value){
 		return _map.get(value);
 	}
-		
+
+	/**
+	* Returns the modbus access from its name
+	* @param name  name of the modbus access that needs to be returned
+	* @return The modbus access or null if not found in the map.
+	*/
+	public static ModbusAccess from_name(String name){
+		return _map_name.get(name);
+	}
+
 	/**
 	* Gets the name of the modbus access.
 	* @return

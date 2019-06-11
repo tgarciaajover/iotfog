@@ -7,7 +7,17 @@ import java.util.List;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import com.advicetec.core.serialization.BooleanDeserializer;
+import com.advicetec.core.serialization.BooleanSerializer;
+import com.advicetec.core.serialization.LocalDateTimeDeserializer;
+import com.advicetec.core.serialization.LocalDateTimeSerializer;
+import com.advicetec.core.serialization.ModbusAccessDeserializer;
+import com.advicetec.core.serialization.ModbusAccessSerializer;
+import com.advicetec.core.serialization.ModbusObjectTypeDeserializer;
+import com.advicetec.core.serialization.ModbusObjectTypeSerializer;
 import com.advicetec.eventprocessor.ModBusTcpEvent;
 import com.advicetec.eventprocessor.ModBusTcpEventType;
 
@@ -17,44 +27,63 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 	/**
 	 * This property tells whether or not the monitoring device is a concentrator
 	 */
+	@JsonProperty("is_concentrator")
+	@JsonSerialize(using = BooleanSerializer.class)
+	@JsonDeserialize(using = BooleanDeserializer.class)		
 	protected boolean isConcentrator;
 	
 	/**
 	 * This property establishes the port to be connected
 	 */
+	@JsonProperty("port")
 	protected int port;
 	
 	/**
 	 * This property establishes the unit to be connected
 	 */
+	@JsonProperty("unit_id")
 	protected int unitId;
 	
 	/**
 	 * This property establishes the positions from where to start reading or writing
 	 */
+	@JsonProperty("offset")	
 	protected int offset;
 	
 	/**
 	 * This property establishes the number of registers (coils) to read or write
 	 */
+	@JsonProperty("nbr_read")	
 	protected int nbrRead;
 	
 	/**
 	 * This property establishes the type of object (Modbus: coil, discrete unit, 
 	 * 						input register, holding register) 
 	 */
+	@JsonProperty("object_type") 
+	@JsonSerialize(using = ModbusObjectTypeSerializer.class)
+	@JsonDeserialize(using = ModbusObjectTypeDeserializer.class)		
 	protected ModbusObjectType objectType;
 	
 	/**
 	 * This property establishes the action to be done (read, write, read/write).
 	 */
+	@JsonProperty("access") 
+	@JsonSerialize(using = ModbusAccessSerializer.class)
+	@JsonDeserialize(using = ModbusAccessDeserializer.class)		
 	protected ModbusAccess access;
 		
 	/**
 	 * This property establishes the refresh time for the unit.
 	 */
+	@JsonProperty("refresh_time_ms")		
 	protected int refreshTime;
 
+	/**
+	 * List of ports included in the measuring device.
+	 */
+	@JsonProperty("modbus_io_ports")
+	protected List<ModbusInputOutputPort> inputOutputPorts;
 	
 	/**
 	 * Constructor for the class. It receives the identifier of the measuring entity.
@@ -63,6 +92,7 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 	@JsonCreator
 	public ModbusMonitoringDevice(@JsonProperty("id") Integer id) {
 		super(id);
+		inputOutputPorts = new ArrayList<ModbusInputOutputPort>();
 	}
 	
 	/**
@@ -210,7 +240,8 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 	 */
 	@JsonIgnore
 	public ModbusInputOutputPort getInputOutputPort(Integer id){
-
+		
+		logger.debug("Reading Modbus InputOutPut Port id:" + id.toString() + " Num Ports:" + this.inputOutputPorts.size() );
 		for (int i = 0; i < this.inputOutputPorts.size(); i++){
 			if (this.inputOutputPorts.get(i).getId().equals(id)){
 				return (ModbusInputOutputPort) this.inputOutputPorts.get(i);
@@ -218,7 +249,41 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Adds a port into the list of input output ports.
+	 * 
+	 * @param iop Input - Output port object to add.
+	 */
+	@JsonIgnore
+	public void putInputOutputPort(InputOutputPort iop){
+		logger.debug("port label:" + iop.getPortLabel() + "Id:" + iop.getId());
+		this.inputOutputPorts.add((ModbusInputOutputPort)iop);
+	}
+	
+	/**
+	 * Returns all input-output ports within the measured device
+	 * 
+	 */
+	@JsonIgnore
+	public List<ModbusInputOutputPort> getInputOutputPorts(){		
+		return this.inputOutputPorts;
+	}
+	
+	@JsonIgnore
+	public List<InputOutputPort> getInputOutputPortReferingMeasuredEntity(Integer measuredEntity){
 		
+		List<InputOutputPort> ports = new ArrayList<InputOutputPort>();
+		
+		for (int i = 0; i < this.inputOutputPorts.size(); i++){
+			InputOutputPort inputOutputPort = this.inputOutputPorts.get(i);
+			if (inputOutputPort.getMeasuringEntity().equals(measuredEntity)) {
+				ports.add(inputOutputPort);
+			}
+		}
+		
+		return ports;
 	}
 	
 	/**
@@ -226,7 +291,8 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 	 * 
 	 * @return List fo modbus events.
 	 */
-	public List<ModBusTcpEvent> getModbusEvents(){
+	@JsonIgnore
+	public List<ModBusTcpEvent> getModbusEvents() {
 		
 		List<ModBusTcpEvent> events = new ArrayList<ModBusTcpEvent>();
 		
@@ -236,6 +302,9 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 					this.isConcentrator(), null, this.getIp_address(), 
 					this.getPort(), this.getRefreshTime(), this.getObject_type(), this.getAccess(), 
 					this.getUnit_id(), this.getOffset(), this.getNbr_read());
+			
+			if (modBusEvent != null)
+				events.add(modBusEvent);
 			
 		} else {
 		
@@ -248,7 +317,7 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 					
 					int port = inputOutputPort.getPort();
 					int offset = inputOutputPort.getOffset();
-					int unit_id = inputOutputPort.getUnit_id();
+					int unitId = inputOutputPort.getUnit_id();
 					int nbrRead = inputOutputPort.getNbr_read();
 					String portLabel = inputOutputPort.getPortLabel();
 					ModbusObjectType objectType = inputOutputPort.getObjectType();
@@ -259,7 +328,7 @@ public class ModbusMonitoringDevice extends MonitoringDevice {
 					if (refreshTimeMs.compareTo(0) > 0){
 						ModBusTcpEvent modBusEvent = ModBusTcpEvent.createModbusEvent(
 								this.isConcentrator(), inputOutputPort, ipAddress, port, refreshTimeMs, 
-								objectType, access, unit_id, offset, nbrRead);
+								objectType, access, unitId, offset, nbrRead);
 						if (modBusEvent != null)
 							events.add(modBusEvent);
 					} else {

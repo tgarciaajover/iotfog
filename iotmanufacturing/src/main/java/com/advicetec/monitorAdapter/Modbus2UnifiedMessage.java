@@ -11,13 +11,12 @@ import com.advicetec.MessageProcessor.MeasuringErrorMessage;
 import com.advicetec.MessageProcessor.SampleMessage;
 import com.advicetec.MessageProcessor.UnifiedMessage;
 import com.advicetec.configuration.ConfigurationManager;
-import com.advicetec.configuration.InputOutputPort;
 import com.advicetec.configuration.ModbusInputOutputPort;
+import com.advicetec.configuration.ModbusMonitoringDevice;
 import com.advicetec.configuration.MonitoringDevice;
 import com.advicetec.eventprocessor.ModBusTcpEventType;
 import com.advicetec.monitorAdapter.protocolconverter.InterpretedSignal;
 import com.advicetec.monitorAdapter.protocolconverter.Translator;
-import com.advicetec.utils.ModBusUtils;
 
 /**
  * This class implements the protocol conversion from Modbus to 
@@ -62,7 +61,7 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 	IllegalAccessException, ClassNotFoundException  {
 
 
-		logger.debug("entering getUnifiedMessageSingleSignal" + "port:"
+		logger.info("entering getUnifiedMessageSingleSignal" + "ipAddr" + ipAddr + "port:"
 				+ Integer.toString(port) + "type: " + this.type + 
 				" uid:" + this.uid + " offset: " + this.offSet + 
 				"count: " + this.count);
@@ -71,7 +70,10 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 						
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
 		MonitoringDevice device = confManager.getMonitoringDevice(ipAddr);
-			
+		
+		if (device == null)
+			logger.error("Device with ip address:" + ipAddr + "was not found" );
+		
 		String transformation = this.inputOutputPort.getTransformationText();
 		String className = this.inputOutputPort.getSignalType().getType().getClassName();
 	
@@ -122,8 +124,6 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 		return theList;
 	}
 
-	
-	
 	public List<UnifiedMessage> getUnifiedMessageConcentrator() throws InstantiationException, 
 	IllegalAccessException, ClassNotFoundException  {
 
@@ -137,56 +137,79 @@ public class Modbus2UnifiedMessage implements ProtocolConverter {
 		ArrayList<UnifiedMessage> theList = new ArrayList<UnifiedMessage>();
 		
 		ConfigurationManager confManager = ConfigurationManager.getInstance();
-		MonitoringDevice device = confManager.getMonitoringDevice(ipAddr);
+		ModbusMonitoringDevice device = (ModbusMonitoringDevice) confManager.getMonitoringDevice(ipAddr);
 			
-		List<InputOutputPort> ports = device.getInputOutputPorts();
+		List<ModbusInputOutputPort> ports = device.getInputOutputPorts();
 		
 		// This variable has the current position being read on the byte array.
-		int start_position = 0;
+		int startPosition = 1;
+
+		logger.info("len data returned" +  String.valueOf(dataMeasured.length));
+		for (byte b : dataMeasured) {
+			logger.info("Orig Response:" + String.format("0x%02X", b));
+		}
+
 		
 		for (int i = 0; i < ports.size(); i++) { 
-			String transformation = ports.get(i).getTransformationText();
-			String className = ports.get(i).getSignalType().getType().getClassName();
+			ModbusInputOutputPort port = ports.get(i);
+			
+			int nbrBytes = port.getNbr_read()*2;
+			byte [] dataMeasuredForPort = new byte[nbrBytes + 1];
+			
+			dataMeasuredForPort[0] = (byte) nbrBytes;
+			
+			for (int k=0; k < nbrBytes; k++) {
+				dataMeasuredForPort[k+1] = dataMeasured[k+startPosition];
+			}
+			
+			for (byte b : dataMeasuredForPort) {
+				logger.info("Response:" + String.format("0x%02X", b));
+			}
+			
+			startPosition = startPosition + nbrBytes;
+			
+			String transformation = port.getTransformationText();
+			String className = port.getSignalType().getType().getClassName();
 	
 			logger.debug("ClassName param:" + className);
 			String packageStr = this.getClass().getPackage().getName() + ".protocolconverter";
 			String classToLoad = packageStr + "." + className;
 	
 			List<InterpretedSignal> values;
-			Integer measuringEntityId = ports.get(i).getMeasuringEntity();
+			Integer measuringEntityId = port.getMeasuringEntity();
 			
 			// Depending on the Modbus Event, a different class is loaded.
 			if (type.equals(ModBusTcpEventType.READ_DISCRETE)) {
 				Translator object = (Translator) Class.forName(classToLoad).newInstance();
-				values = object.translate(dataMeasured);
-				theList.add(new SampleMessage(device, ports.get(i), 
+				values = object.translate(dataMeasuredForPort);
+				theList.add(new SampleMessage(device, port,  
 						measuringEntityId, values, transformation));
 				
 			} else if (type.equals(ModBusTcpEventType.READ_REGISTER)) {
 				Translator object = (Translator) Class.forName(classToLoad).newInstance();
-				values = object.translate(dataMeasured);				
+				values = object.translate(dataMeasuredForPort);				
 				// Build the port label as: PREFIX + "-" + offset + "-" + count 
-				theList.add(new SampleMessage(device, ports.get(i), 
+				theList.add(new SampleMessage(device, port, 
 						measuringEntityId, values, transformation));
 				
 			} else if (type.equals(ModBusTcpEventType.READ_HOLDING_REGISTER)) {
 				Translator object = (Translator) Class.forName(classToLoad).newInstance();
-				values = object.translate(dataMeasured);				
+				values = object.translate(dataMeasuredForPort);				
 				// Build the port label as: PREFIX + "-" + offset + "-" + count 
-				theList.add(new SampleMessage(device, ports.get(i), 
+				theList.add(new SampleMessage(device, port, 
 						measuringEntityId, values, transformation));
 				
 			} else if (type == ModBusTcpEventType.ERROR_READ_DISCRETE) {
 				
-				theList.add(new MeasuringErrorMessage(device, ports.get(i), measuringEntityId));
+				theList.add(new MeasuringErrorMessage(device, port, measuringEntityId));
 				
 			} else if (type == ModBusTcpEventType.ERROR_READ_REGISTER) {
 				
-				theList.add(new MeasuringErrorMessage(device, ports.get(i), measuringEntityId));
+				theList.add(new MeasuringErrorMessage(device, port, measuringEntityId));
 				
 			} else if (type == ModBusTcpEventType.ERROR_READ_HOLDING) {
 				
-				theList.add(new MeasuringErrorMessage(device, ports.get(i), measuringEntityId));
+				theList.add(new MeasuringErrorMessage(device, port, measuringEntityId));
 				
 			} else {
 				

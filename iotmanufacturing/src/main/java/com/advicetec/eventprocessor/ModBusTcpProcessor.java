@@ -121,6 +121,7 @@ public class ModBusTcpProcessor implements Processor {
 				dictionary.put("Count", evt.getCount());
 				dictionary.put("Type", (Integer) event.getType().getValue());
 				dictionary.put("IsConcentrator", evt.getIsConcentrator());
+				dictionary.put("InputOutputPort", evt.getInputOutputPort());
 				dictionary.put("Read", byteRes);
 
 				Queueable obj = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
@@ -151,6 +152,7 @@ public class ModBusTcpProcessor implements Processor {
 				dictionary.put("Count", evt2.getCount());
 				dictionary.put("Type", (Integer) event.getType().getValue());
 				dictionary.put("IsConcentrator", evt2.getIsConcentrator());
+				dictionary.put("InputOutputPort", evt2.getInputOutputPort());
 				dictionary.put("Read", res2.getMessage());
 
 				logger.debug("UID:" + event.getUid() + " Offset:" + evt2.getOffset() + " Count:" + evt2.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res2.getMessage()));
@@ -184,9 +186,10 @@ public class ModBusTcpProcessor implements Processor {
 				dictionary.put("Count", evt3.getCount());
 				dictionary.put("Type", (Integer) event.getType().getValue());
 				dictionary.put("IsConcentrator", evt3.getIsConcentrator());
+				dictionary.put("InputOutputPort", evt3.getInputOutputPort());
 				dictionary.put("Read", res3.getMessage());
 
-				logger.debug("Connection  IpAddress:" + event.getIpAddress() + "Port" + event.getPort() + "UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
+				logger.info("Connection  IpAddress:" + event.getIpAddress() + "Port" + event.getPort() + "UID:" + event.getUid() + " Offset:" + evt3.getOffset() + " Count:" + evt3.getCount() + " Ret: " + UdpUtils.byteArray2Ascii(res3.getMessage()));
 
 				Queueable obj3 = new Queueable(QueueType.MODBUS_DEV_MESSAGE, dictionary);
 				adapterManager.getQueue().enqueue(6, obj3);						
@@ -211,6 +214,7 @@ public class ModBusTcpProcessor implements Processor {
 			dictionary.put("IPAddress", event.getIpAddress());
 			dictionary.put("Port", event.getPort());
 			dictionary.put("UID", event.getUid());
+			dictionary.put("IsConcentrator", event.getIsConcentrator());
 			
 			int offset = 0;
 			int count = 0;
@@ -245,7 +249,7 @@ public class ModBusTcpProcessor implements Processor {
 			
 			dictionary.put("Offset", offset);
 			dictionary.put("Count", count);
-			dictionary.put("Type", modbusType.getValue());
+			dictionary.put("Type", modbusType.getName());
 
 			Queueable obj3 = new Queueable(QueueType.MODBUS_ERR_MESSAGE, dictionary);
 			

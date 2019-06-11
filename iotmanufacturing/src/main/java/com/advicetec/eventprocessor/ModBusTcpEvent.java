@@ -61,7 +61,7 @@ public abstract class ModBusTcpEvent extends Event {
 	public ModBusTcpEvent(boolean concentrator, ModbusInputOutputPort inputOutputPort, String ipAddress, 
 							int port, Integer uid, ModBusTcpEventType type) {
 		
-		super(EventType.MODBUS_READ_EVENT, EventType.MODBUS_READ_EVENT.getName() + "-" + ipAddress + "-"
+		super(EventType.MODBUS_READ_EVENT, EventType.MODBUS_READ_EVENT.getName() + "-" + Boolean.toString(concentrator) + "-" + ipAddress + "-"
 				+ Integer.toString(port) + "-" + Integer.toString(uid));
 
 		this.ipAddress = ipAddress;
@@ -135,8 +135,9 @@ public abstract class ModBusTcpEvent extends Event {
 		return type;
 	}
 
-	public static ModBusTcpEvent createModbusEvent(boolean isConcentrator, ModbusInputOutputPort inputOutputPort, String ipAddress, int port,
-			Integer refreshTimeMs, ModbusObjectType type, ModbusAccess access, int unitId, int offset, int count) {
+	public static ModBusTcpEvent createModbusEvent(boolean isConcentrator, ModbusInputOutputPort inputOutputPort, 
+			String ipAddress, int port, Integer refreshTimeMs, ModbusObjectType type, 
+			ModbusAccess access, int unitId, int offset, int count) {
 		ModBusTcpEvent retEvent = null;
 
 		switch (type) {
@@ -188,7 +189,11 @@ public abstract class ModBusTcpEvent extends Event {
 			} else if (access == ModbusAccess.READ_WRITE) {
 				logger.error("The type of modbus event register - read/write is not implemented" );
 			} else {
-				logger.error("The type of modbus access is invalid :" + access.name);
+				if (access != null) {
+					logger.error("The type of modbus access is invalid :" + access);
+				} else {
+					logger.error("The type of modbus access is null");
+				}
 				break;
 			}
 			
@@ -203,7 +208,11 @@ public abstract class ModBusTcpEvent extends Event {
 			} else if (access == ModbusAccess.READ_WRITE) {
 				logger.error("The type of modbus event holding register - read/write is not implemented" );
 			} else {
-				logger.error("The type of modbus access is invalid :" + access.name);
+				if (access != null) {
+					logger.error("The type of modbus access is invalid :" + access);
+				} else {
+					logger.error("The type of modbus access is null");
+				}
 				break;
 			}
 			

@@ -3,9 +3,7 @@ package com.advicetec.configuration;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,7 +18,6 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.advicetec.core.serialization.LocalDateTimeDeserializer;
 import com.advicetec.core.serialization.LocalDateTimeSerializer;
-import com.advicetec.eventprocessor.ModBusTcpEvent;
 
 /**
  * A monitoring device represents the entity installed for a machine that is actually receiving and sending information to sensors.
@@ -32,7 +29,7 @@ import com.advicetec.eventprocessor.ModBusTcpEvent;
  * @author Andrés Marentes
  *
  */
-public class MonitoringDevice extends ConfigurationObject
+public abstract class MonitoringDevice extends ConfigurationObject
 {
  
 	static Logger logger = LogManager.getLogger(MonitoringDevice.class.getName());
@@ -66,13 +63,10 @@ public class MonitoringDevice extends ConfigurationObject
 	 */
 	@JsonProperty("ip_address") 
 	private String ipAddress;
-		
-	/**
-	 * List of ports included in the measuring device.
-	 */
-	@JsonProperty("io_ports")
-	protected List<InputOutputPort> inputOutputPorts;
-
+	
+	@JsonProperty("type")
+	private MonitoringDeviceType monitoringDeviceType;
+	
 	/**
 	 * Date and time when the equipment was registered in the system.
 	 */
@@ -89,7 +83,6 @@ public class MonitoringDevice extends ConfigurationObject
 	@JsonCreator
 	public MonitoringDevice(@JsonProperty("id") Integer id) {
 		super(id);
-		inputOutputPorts = new ArrayList<InputOutputPort>();
 	}
 	
 	/**
@@ -199,49 +192,16 @@ public class MonitoringDevice extends ConfigurationObject
 	 * @return input output port object or null if there is not a port with that identifier.
 	 */
 	@JsonIgnore
-	public InputOutputPort getInputOutputPort(Integer id){
-
-		for (int i = 0; i < this.inputOutputPorts.size(); i++){
-			if (this.inputOutputPorts.get(i).getId().equals(id)){
-				return (MqttInputOutputPort) this.inputOutputPorts.get(i);
-			}
-		}
-		
-		return null;
-	}
+	public abstract InputOutputPort getInputOutputPort(Integer id);
 				
 	/**
 	 * Adds a port into the list of input output ports.
 	 * 
 	 * @param iop Input - Output port object to add.
 	 */
-	public void putInputOutputPort(InputOutputPort iop){
-		logger.debug("port label:" + iop.getPortLabel() + "Id:" + iop.getId());
-		this.inputOutputPorts.add(iop);
-	}
-	
-	/**
-	 * Returns all input-output ports within the measured device
-	 * 
-	 */
-	public List<InputOutputPort> getInputOutputPorts(){		
-		return this.inputOutputPorts;
-	}
-	
-		
-	public List<InputOutputPort> getInputOutputPortReferingMeasuredEntity(Integer measuredEntity){
-		
-		List<InputOutputPort> ports = new ArrayList<InputOutputPort>();
-		
-		for (int i = 0; i < this.inputOutputPorts.size(); i++){
-			InputOutputPort inputOutputPort = this.inputOutputPorts.get(i);
-			if (inputOutputPort.getMeasuringEntity().equals(measuredEntity)) {
-				ports.add(inputOutputPort);
-			}
-		}
-		
-		return ports;
-	}
+	public abstract void putInputOutputPort(InputOutputPort iop);
+			
+	public abstract List<InputOutputPort> getInputOutputPortReferingMeasuredEntity(Integer measuredEntity);
 	
 	/**
 	 * Creates a JSON representation for the object.
@@ -271,5 +231,17 @@ public class MonitoringDevice extends ConfigurationObject
 		
 		return jsonInString;
 	}
+
+	public MonitoringDeviceType getMonitoringDeviceType() 
+	{
+		return monitoringDeviceType;
+	}
+
+	public void setMonitoringDeviceType(MonitoringDeviceType monitoringDeviceType) 
+	{
+		this.monitoringDeviceType = monitoringDeviceType;
+	}
+
+	
 	
 }

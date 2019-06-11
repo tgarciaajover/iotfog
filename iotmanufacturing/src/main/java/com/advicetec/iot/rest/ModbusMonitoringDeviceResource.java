@@ -121,6 +121,8 @@ public class ModbusMonitoringDeviceResource extends ServerResource
 			
 			if (previousMDevice != null) {
 				
+				System.out.print("is concentrator:" + monitoringDev.isConcentrator());
+				
 				// gets the list of modbus events for the monitoring device.
 				List<ModBusTcpEvent> oldEvents = previousMDevice.getModbusEvents();
 
@@ -144,7 +146,12 @@ public class ModbusMonitoringDeviceResource extends ServerResource
 					oldEvents.remove(evt);
 					events.remove(evt);
 				}
+
+				logger.debug("Nbr elements to delete:" + oldEvents.size());
 				
+				for (ModBusTcpEvent evt : oldEvents) {
+					logger.debug("event to delete:" + evt.getKey());
+				}
 				// Delete modbus events
 				deleteModBusEvents(oldEvents);
 				
@@ -161,9 +168,12 @@ public class ModbusMonitoringDeviceResource extends ServerResource
 				// We could create the monitoring device, It is going to create modbus events.
 				List<ModBusTcpEvent> events = monitoringDev.getModbusEvents();
 				
+				for (ModBusTcpEvent evt : events) {
+					logger.debug("event to insert:" + evt.getKey());
+				}
 				// Inserts modbus events.
 				insertModBusEvents(events);
-				
+
 				logger.debug("Num modbus events created:" + events.size());
 
 			}
@@ -195,8 +205,13 @@ public class ModbusMonitoringDeviceResource extends ServerResource
 		
 		// Deletes Modbus events being executed for this measuring device.
 		List<ModBusTcpEvent> events = monDevice.getModbusEvents();
+		
+		for (ModBusTcpEvent evt : events) {
+			logger.debug("event to delete:" + evt.getKey());
+		}
+		
 		deleteModBusEvents(events);
-
+		
 		// Deletes the monitoring device from the container.
 		monitoringDeviceCon.deleteMonitoringDevice(uniqueID);
 		return null;
@@ -225,7 +240,8 @@ public class ModbusMonitoringDeviceResource extends ServerResource
 	 * 
 	 * @param events	List of events to remove.
 	 */
-	private void deleteModBusEvents(List<ModBusTcpEvent> events) {
+	private void deleteModBusEvents(List<ModBusTcpEvent> events) 
+	{
 
 		logger.debug("Current delayed events:" + EventManager.getInstance().evntsToString());
 		

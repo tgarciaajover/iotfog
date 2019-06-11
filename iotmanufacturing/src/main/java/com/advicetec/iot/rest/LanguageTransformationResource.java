@@ -62,6 +62,8 @@ public class LanguageTransformationResource extends ServerResource
 			
 			// gets the measured entity where the program should be executed
 			this.measuredEntity = Integer.parseInt(jsonobject.getString("measured_entity"));
+			
+			logger.debug("measuredEntity:" + jsonobject.getString("measured_entity") );
 
 		} catch (JSONException e) {
 			logger.error("Error:" + e.getMessage() );

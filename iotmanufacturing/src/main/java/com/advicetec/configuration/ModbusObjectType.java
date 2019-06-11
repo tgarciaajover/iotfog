@@ -8,28 +8,28 @@ public enum ModbusObjectType {
 	/**
 	 * Read a coil (digital input) from the modbus slave. Modbus Function FC02 
 	 */
-	COIL(0, "Coil"),
+	COIL(1, "Coil"),
 		
 	
 	/**
 	* Read a discrete (digital input) from the modbus slave. Modbus Function FC02 
 	*/
-	DISCRETE(1, "Discrete"),
+	DISCRETE(2, "Discrete"),
 		
 	/**
 	* Read a input register from the modbus slave. Modbus Function FC04 
 	*/
-	REGISTER(2, "register"),
+	REGISTER(3, "register"),
 		
 	/**
 	 * Read a holding register from the modbus slave.  Modbus Function FC03.
 	*/
-	HOLDING_REGISTER(3, "Holding register"),
+	HOLDING_REGISTER(4, "Holding register"),
 	
 	/**
 	 * Not a valid modbus object type.
 	 */
-	INVALID(4, "Invalid");
+	INVALID(0, "Invalid");
 		
 	/**
 	* Unique code defining the modbus object type 
@@ -45,11 +45,22 @@ public enum ModbusObjectType {
 	* map to search for modbus object types by codes.
 	*/
 	private static final Map<Integer, ModbusObjectType> _map = new HashMap<Integer, ModbusObjectType>();
-		
+
+	/**
+	* map to search for modbus object type by name.
+	*/
+	private static final Map<String, ModbusObjectType> _map_name = new HashMap<String, ModbusObjectType>();
+
+	
 	static {
 		for(ModbusObjectType type: ModbusObjectType.values()){
 			_map.put(type.code, type);
 		}
+
+		for(ModbusObjectType type: ModbusObjectType.values()){
+			_map_name.put(type.name, type);
+		}
+
 	}
 		
 	/**
@@ -79,7 +90,16 @@ public enum ModbusObjectType {
 	public static ModbusObjectType from(int value){
 		return _map.get(value);
 	}
-		
+
+	/**
+	* Returns the modbus object type from its name
+	* @param name  name of the modbus object type that needs to be returned
+	* @return The modbus object type or null if not found in the map.
+	*/
+	public static ModbusObjectType from_name(String name){
+		return _map_name.get(name);
+	}
+
 	/**
 	* Gets the name of the modbus object type.
 	* @return

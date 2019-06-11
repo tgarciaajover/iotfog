@@ -93,6 +93,9 @@ public class AdapterHandler implements Runnable
 				// queueable object with type MODBUS Message
 				if(queueable.getType() == QueueType.MODBUS_DEV_MESSAGE ){
 					// creates a dictionary (map) from the origin queue. 
+
+					logger.info("in modbus dev message");
+
 					@SuppressWarnings("unchecked")
 					Map<String, Object> dictionary = (Map<String, Object>) queueable.getContent();
 					Modbus2UnifiedMessage mod2Um = new	Modbus2UnifiedMessage(dictionary);
@@ -119,24 +122,10 @@ public class AdapterHandler implements Runnable
 					logger.debug("Processing Modbus Error Message");
 					
 					Map<String, Object> dictionary = (Map<String, Object>) queueable.getContent();
-					Modbus2UnifiedMessage mod2Um = new	Modbus2UnifiedMessage(dictionary);
-
-					List<UnifiedMessage> ums;
-					// tries to queue the Unified Message into destination queue
-					// sets the DEFAULT_PRITORY into destination queue
-					try {
-						ums = mod2Um.getUnifiedMessage();
-						if (ums != null){
-							for(UnifiedMessage um : ums){
-								Queueable obj = new Queueable(QueueType.UNIFIED_MESSAGE, um);
-								toQueue.enqueue(DEFAULT_PRIORITY, obj);
-							}
-						}
-					} catch ( Exception e) {
-						logger.error("cannot queue unified messages from: " + dictionary.get("IPAddress") + dictionary.get("UID") + "   " + e.getMessage());
-						e.printStackTrace();
-						
-					} 
+					logger.error("Error reading modbus Message from " + dictionary.get("IPAddress") +":" + 
+								  dictionary.get("Port") + " Unit:" + dictionary.get("UID") + " Offset:" + dictionary.get("Offset") +
+								  " Count:" + dictionary.get("Count") + " Err Message:" + dictionary.get("Type"));
+					
 
 				}
 			} catch (InterruptedException e) {

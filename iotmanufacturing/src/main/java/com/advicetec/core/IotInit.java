@@ -75,6 +75,9 @@ public class IotInit extends Configurable
 		logger.info("Start IOT engine");
 		
 		configManager = ConfigurationManager.getInstance();
+
+		// Init the configuration  
+		configManager.loadConfiguration();
 		
 		logger.info("Configuration Manager loaded");
 		
@@ -93,9 +96,6 @@ public class IotInit extends Configurable
 		entityManager = MeasuredEntityManager.getInstance();
 		
 		logger.info("Entity Manager loaded");
-
-		// Init the configuration  
-		configManager.loadConfiguration();
 		
 		logger.info("IOT engine Loaded");
 		

@@ -1,7 +1,9 @@
 package com.advicetec.configuration;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.codehaus.jackson.annotate.JsonCreator;
@@ -47,6 +49,14 @@ public class MqttMonitoringDevice extends MonitoringDevice {
 		this.port = port;
 	}
 	
+	
+	/**
+	 * List of ports included in the measuring device.
+	 */
+	@JsonProperty("io_ports")
+	protected List<MqttInputOutputPort> inputOutputPorts;
+
+	
 	/**
 	 * Constructor for the class. It receives the identifier of the measuring entity.
 	 * @param id Identifier of the measuring entity.
@@ -88,6 +98,16 @@ public class MqttMonitoringDevice extends MonitoringDevice {
 		return (MqttInputOutputPort) getInputOutputPort(id);
 	}
 
+	/**
+	 * Adds a port into the list of input output ports.
+	 * 
+	 * @param iop Input - Output port object to add.
+	 */
+	public void putInputOutputPort(InputOutputPort iop){
+		logger.debug("port label:" + iop.getPortLabel() + "Id:" + iop.getId());
+		this.inputOutputPorts.add((MqttInputOutputPort)iop);
+	}
+	
 	/**
 	 * Gets the transformation text associated to the port, it search the port by port label.  
 	 * 
@@ -155,5 +175,26 @@ public class MqttMonitoringDevice extends MonitoringDevice {
 		
 	}
 
+	/**
+	 * Returns all input-output ports within the measured device
+	 * 
+	 */
+	public List<MqttInputOutputPort> getInputOutputPorts(){		
+		return this.inputOutputPorts;
+	}
+	
+	public List<InputOutputPort> getInputOutputPortReferingMeasuredEntity(Integer measuredEntity){
+		
+		List<InputOutputPort> ports = new ArrayList<InputOutputPort>();
+		
+		for (int i = 0; i < this.inputOutputPorts.size(); i++){
+			InputOutputPort inputOutputPort = this.inputOutputPorts.get(i);
+			if (inputOutputPort.getMeasuringEntity().equals(measuredEntity)) {
+				ports.add(inputOutputPort);
+			}
+		}
+		
+		return ports;
+	}
 	
 }
